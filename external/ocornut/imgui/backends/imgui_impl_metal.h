@@ -48,6 +48,12 @@ IMGUI_IMPL_API void ImGui_ImplMetal_DestroyDeviceObjects();
 #ifdef IMGUI_IMPL_METAL_CPP
 
 #include <Metal/Metal.hpp>
+#import <QuartzCore/QuartzCore.hpp>
+
+MTL::Device *ImGui_ImplMetal_Layer_GetDevice(void* layer);
+void ImGui_ImplMetal_Layer_SetDrawableSize(void* layer, int iWidth, int iHeight);
+void ImGui_ImplMetal_Layer_SetPixelFormat(void* layer, int pixelFormat);
+CA::MetalDrawable* ImGui_ImplMetal_Layer_GetNextDrawable(void* layer);
 
 #ifndef __OBJC__
 

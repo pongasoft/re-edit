@@ -23,4 +23,8 @@ endif()
 
 add_library(imgui STATIC "${imgui_BUILD_SOURCES}")
 target_include_directories(imgui PUBLIC "${imgui_CPP_SRC_DIR}")
-target_link_libraries(imgui PUBLIC "${SDL2Fwk}" "-framework QuartzCore" "-framework Cocoa" "-framework Metal")
+
+if(APPLE)
+  target_include_directories(imgui PUBLIC "metal-cpp")
+  target_link_libraries(imgui PUBLIC "${SDL2Fwk}" "-framework QuartzCore" "-framework Cocoa" "-framework Metal")
+endif()

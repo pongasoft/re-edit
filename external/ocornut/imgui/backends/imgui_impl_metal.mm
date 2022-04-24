@@ -32,6 +32,7 @@
 #import <Metal/Metal.h>
 // #import <QuartzCore/CAMetalLayer.h> // Not supported in XCode 9.2. Maybe a macro to detect the SDK version can be used (something like #if MACOS_SDK >= 10.13 ...)
 #import <simd/simd.h>
+#import <QuartzCore/QuartzCore.h>
 
 #pragma mark - Support classes
 
@@ -113,6 +114,31 @@ bool ImGui_ImplMetal_CreateFontsTexture(MTL::Device* device)
 bool ImGui_ImplMetal_CreateDeviceObjects(MTL::Device* device)
 {
     return ImGui_ImplMetal_CreateDeviceObjects((id<MTLDevice>)(device));
+}
+
+MTL::Device *ImGui_ImplMetal_Layer_GetDevice(void* layer)
+{
+  auto metalLayer = (CAMetalLayer*) layer;
+  return (__bridge MTL::Device *) metalLayer.device;
+}
+
+void ImGui_ImplMetal_Layer_SetPixelFormat(void* layer, int pixelFormat)
+{
+  auto metalLayer = (CAMetalLayer*) layer;
+  metalLayer.pixelFormat = (MTLPixelFormat) pixelFormat;
+}
+
+void ImGui_ImplMetal_Layer_SetDrawableSize(void* layer, int iWidth, int iHeight)
+{
+  auto metalLayer = (CAMetalLayer*) layer;
+  metalLayer.drawableSize = CGSizeMake(iWidth, iHeight);
+}
+
+CA::MetalDrawable* ImGui_ImplMetal_Layer_GetNextDrawable(void* layer)
+{
+  auto metalLayer = (CAMetalLayer*) layer;
+  id <CAMetalDrawable> metalDrawable = [metalLayer nextDrawable];
+  return ( __bridge CA::MetalDrawable*) metalDrawable;
 }
 
 #endif // #ifdef IMGUI_IMPL_METAL_CPP

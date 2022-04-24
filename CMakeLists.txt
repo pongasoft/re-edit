@@ -43,7 +43,8 @@ set(re-edit_BUILD_SOURCES
 
 # Defines the macos main
 if(APPLE)
-  set(re-edit_MAIN_SRC "${re-edit_CPP_SRC_DIR}/re/edit/macos/main.mm")
+  set(re-edit_MAIN_SRC "${re-edit_CPP_SRC_DIR}/re/edit/macos/main.cpp" "${re-edit_CPP_SRC_DIR}/re/edit/macos/metal.cpp")
+#  set(re-edit_MAIN_SRC "${re-edit_CPP_SRC_DIR}/re/edit/macos/main.mm")
 endif()
 
 # Build the executable

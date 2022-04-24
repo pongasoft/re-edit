@@ -10,8 +10,8 @@
 #include <SDL2/SDL.h>
 #include "../Application.h"
 
-#import <Metal/Metal.h>
-#import <QuartzCore/QuartzCore.h>
+#import <Metal/Metal.hpp>
+#import <Metal/MTLPixelFormat.hpp>
 
 int main(int, char **)
 {
@@ -70,13 +70,14 @@ int main(int, char **)
   }
 
   // Setup Platform/Renderer backends
-  CAMetalLayer *layer = (__bridge CAMetalLayer *) SDL_RenderGetMetalLayer(renderer);
-  layer.pixelFormat = MTLPixelFormatBGRA8Unorm;
-  ImGui_ImplMetal_Init(layer.device);
+  auto layer = SDL_RenderGetMetalLayer(renderer);
+  auto device = ImGui_ImplMetal_Layer_GetDevice(layer);
+  ImGui_ImplMetal_Layer_SetPixelFormat(layer, MTL::PixelFormatBGRA8Unorm);
+  ImGui_ImplMetal_Init(device);
   ImGui_ImplSDL2_InitForMetal(window);
 
-  id <MTLCommandQueue> commandQueue = [layer.device newCommandQueue];
-  MTLRenderPassDescriptor *renderPassDescriptor = [MTLRenderPassDescriptor new];
+  auto commandQueue = device->newCommandQueue();
+  auto renderPassDescriptor = MTL::RenderPassDescriptor::alloc()->init();
 
   // Our state
   re::edit::Application application{};
@@ -85,8 +86,9 @@ int main(int, char **)
   bool done = false;
   while(!done)
   {
-    @autoreleasepool
     {
+      NS::AutoreleasePool* pPool = NS::AutoreleasePool::alloc()->init();
+
       // Poll and handle events (inputs, window resize, etc.)
       // You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to tell if dear imgui wants to use your inputs.
       // - When io.WantCaptureMouse is true, do not dispatch mouse input data to your main application, or clear/overwrite your copy of the mouse data.
@@ -105,19 +107,20 @@ int main(int, char **)
 
       int width, height;
       SDL_GetRendererOutputSize(renderer, &width, &height);
-      layer.drawableSize = CGSizeMake(width, height);
-      id <CAMetalDrawable> drawable = [layer nextDrawable];
+      ImGui_ImplMetal_Layer_SetDrawableSize(layer, width, height);
+      auto drawable = ImGui_ImplMetal_Layer_GetNextDrawable(layer);
 
-      id <MTLCommandBuffer> commandBuffer = [commandQueue commandBuffer];
-      renderPassDescriptor.colorAttachments[0].clearColor = MTLClearColorMake(application.clear_color[0] * application.clear_color[3],
-                                                                              application.clear_color[1] * application.clear_color[3],
-                                                                              application.clear_color[2] * application.clear_color[3],
-                                                                              application.clear_color[3]);
-      renderPassDescriptor.colorAttachments[0].texture = drawable.texture;
-      renderPassDescriptor.colorAttachments[0].loadAction = MTLLoadActionClear;
-      renderPassDescriptor.colorAttachments[0].storeAction = MTLStoreActionStore;
-      id <MTLRenderCommandEncoder> renderEncoder = [commandBuffer renderCommandEncoderWithDescriptor:renderPassDescriptor];
-      [renderEncoder pushDebugGroup:@"RE Edit"];
+      auto commandBuffer = commandQueue->commandBuffer();
+      auto ca0 = renderPassDescriptor->colorAttachments()->object(0);
+      ca0->setClearColor(MTL::ClearColor::Make(application.clear_color[0] * application.clear_color[3],
+                                               application.clear_color[1] * application.clear_color[3],
+                                               application.clear_color[2] * application.clear_color[3],
+                                               application.clear_color[3]));
+      ca0->setTexture(drawable->texture());
+      ca0->setLoadAction(MTL::LoadActionClear);
+      ca0->setStoreAction(MTL::StoreActionStore);
+      auto renderEncoder = commandBuffer->renderCommandEncoder(renderPassDescriptor);
+      renderEncoder->pushDebugGroup(NS::String::string("Hello World", NS::ASCIIStringEncoding));
 
       // Start the Dear ImGui frame
       ImGui_ImplMetal_NewFrame(renderPassDescriptor);
@@ -131,11 +134,11 @@ int main(int, char **)
       ImGui::Render();
       ImGui_ImplMetal_RenderDrawData(ImGui::GetDrawData(), commandBuffer, renderEncoder);
 
-      [renderEncoder popDebugGroup];
-      [renderEncoder endEncoding];
+      renderEncoder->popDebugGroup();
+      renderEncoder->endEncoding();
 
-      [commandBuffer presentDrawable:drawable];
-      [commandBuffer commit];
+      commandBuffer->presentDrawable(drawable);
+      commandBuffer->commit();
     }
   }
 
