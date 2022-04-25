@@ -16,28 +16,28 @@
  * @author Yan Pujante
  */
 
-#ifndef RE_EDIT_APPLICATION_H
-#define RE_EDIT_APPLICATION_H
+#ifndef RE_EDIT_MTL_TEXTURE_MANAGER_H
+#define RE_EDIT_MTL_TEXTURE_MANAGER_H
 
 #include "TextureManager.h"
+#include "imgui.h"
+#include <Metal/Metal.hpp>
 
 namespace re::edit {
 
-class Application
+class MTLTextureManager : public TextureManager
 {
 public:
-  explicit Application(TextureManager *iTextureManager) : fTextureManager{iTextureManager} {}
+  MTLTextureManager(MTL::Device *iDevice) : fDevice{iDevice} {}
+  ~MTLTextureManager() override = default;
 
-  void render();
-
-  float clear_color[4] = {0.45f, 0.55f, 0.60f, 1.00f};
+  void *loadTexture(char const *iPath) override;
 
 private:
-  TextureManager *fTextureManager;
-  bool show_demo_window{false};
-  bool show_another_window{false};
+  MTL::Device *fDevice;
+  void *fTexture{};
 };
 
 }
 
-#endif //RE_EDIT_APPLICATION_H
+#endif //RE_EDIT_MTL_TEXTURE_MANAGER_H

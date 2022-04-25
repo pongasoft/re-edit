@@ -16,28 +16,21 @@
  * @author Yan Pujante
  */
 
-#ifndef RE_EDIT_APPLICATION_H
-#define RE_EDIT_APPLICATION_H
-
-#include "TextureManager.h"
+#ifndef RE_EDIT_TEXTURE_MANAGER_H
+#define RE_EDIT_TEXTURE_MANAGER_H
 
 namespace re::edit {
 
-class Application
+class TextureManager
 {
 public:
-  explicit Application(TextureManager *iTextureManager) : fTextureManager{iTextureManager} {}
-
-  void render();
-
-  float clear_color[4] = {0.45f, 0.55f, 0.60f, 1.00f};
+  virtual ~TextureManager() = default;
+  virtual void* loadTexture(char const *iPath) = 0;
 
 private:
-  TextureManager *fTextureManager;
-  bool show_demo_window{false};
-  bool show_another_window{false};
+
 };
 
 }
 
-#endif //RE_EDIT_APPLICATION_H
+#endif //RE_EDIT_TEXTURE_MANAGER_H

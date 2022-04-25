@@ -49,8 +49,15 @@ void Application::render()
     ImGui::SameLine();
     ImGui::Text("counter = %d", counter);
 
+    if(counter > 0)
+    {
+      auto texture = fTextureManager->loadTexture("/test");
+      ImGui::Image(texture, {static_cast<float>(32 * counter), static_cast<float>(32 * counter)});
+    }
+
     ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate,
                 ImGui::GetIO().Framerate);
+
     ImGui::End();
   }
 

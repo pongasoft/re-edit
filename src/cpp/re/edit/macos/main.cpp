@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <SDL2/SDL.h>
 #include "../Application.h"
+#include "../MTLTextureManager.h"
 
 #import <Metal/Metal.hpp>
 #import <Metal/MTLPixelFormat.hpp>
@@ -79,8 +80,10 @@ int main(int, char **)
   auto commandQueue = device->newCommandQueue();
   auto renderPassDescriptor = MTL::RenderPassDescriptor::alloc()->init();
 
+  auto textureManager = std::make_unique<re::edit::MTLTextureManager>(device);
+
   // Our state
-  re::edit::Application application{};
+  re::edit::Application application{textureManager.get()};
 
   // Main loop
   bool done = false;

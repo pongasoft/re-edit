@@ -39,7 +39,10 @@ set(re-edit_CPP_SRC_DIR "${CMAKE_CURRENT_LIST_DIR}/src/cpp")
 # Defines all the common sources
 set(re-edit_BUILD_SOURCES
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/Application.h"
-    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/Application.cpp")
+    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/Application.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/TextureManager.h"
+    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/MTLTextureManager.cpp"
+    )
 
 # Defines the macos main
 if(APPLE)
