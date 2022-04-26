@@ -1,0 +1,2 @@
+Version af1a5bc352164740c1cc1354942b1c6b72eacb8a from https://github.com/nothings/stb
+stb_image.h version 2.27

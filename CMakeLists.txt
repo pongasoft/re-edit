@@ -33,6 +33,9 @@ set(target "re-edit")
 # Including Dear ImGui
 add_subdirectory(external/ocornut/imgui EXCLUDE_FROM_ALL)
 
+# Include stb
+add_subdirectory(external/nothings/stb EXCLUDE_FROM_ALL)
+
 # Defines the location of the sources
 set(re-edit_CPP_SRC_DIR "${CMAKE_CURRENT_LIST_DIR}/src/cpp")
 
@@ -52,4 +55,4 @@ endif()
 
 # Build the executable
 add_executable(${target} "${re-edit_BUILD_SOURCES}" "${re-edit_MAIN_SRC}")
-target_link_libraries(${target} PRIVATE imgui)
+target_link_libraries(${target} PRIVATE imgui stb)

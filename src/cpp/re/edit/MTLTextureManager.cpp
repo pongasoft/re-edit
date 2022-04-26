@@ -17,6 +17,7 @@
  */
 
 #include "MTLTextureManager.h"
+#include <stb_image.h>
 #include <vector>
 
 namespace re::edit {
@@ -44,19 +45,21 @@ std::vector<uint8_t> computeTexture(int iWidth, int iHeight)
 //------------------------------------------------------------------------
 void *MTLTextureManager::loadTexture(char const *iPath)
 {
-  auto const width = 128;
-  auto const height = 128;
   if(!fTexture)
   {
-    auto desc = MTL::TextureDescriptor::texture2DDescriptor(MTL::PixelFormatRGBA8Unorm, width, height, false);
-    auto texture = fDevice->newTexture(desc);
+    int width, height, channels;
+    auto data = stbi_load(iPath, &width, &height, &channels, 4);
+    if(data != nullptr)
+    {
+      auto desc = MTL::TextureDescriptor::texture2DDescriptor(MTL::PixelFormatRGBA8Unorm, width, height, false);
+      auto texture = fDevice->newTexture(desc);
 
-    auto pixels = computeTexture(width, height);
+      auto region = MTL::Region::Make2D(0, 0, width, height);
+      texture->replaceRegion(region, 0, data, 4 * width);
 
-    auto region = MTL::Region::Make2D(0, 0, width, height);
-    texture->replaceRegion(region, 0, pixels.data(), 4 * width);
-
-    fTexture = texture;
+      fTexture = texture;
+      stbi_image_free(data);
+    }
   }
   return fTexture;
 }

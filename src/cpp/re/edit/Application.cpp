@@ -51,8 +51,15 @@ void Application::render()
 
     if(counter > 0)
     {
-      auto texture = fTextureManager->loadTexture("/test");
-      ImGui::Image(texture, {static_cast<float>(32 * counter), static_cast<float>(32 * counter)});
+      auto texture = fTextureManager->loadTexture("/Users/ypujante/Pictures/Yan/yan.png");
+      if(texture)
+      {
+        ImGui::Image(texture, {static_cast<float>(32 * counter), static_cast<float>(32 * counter)});
+      }
+      else
+      {
+        ImGui::Text("Failed to load texture");
+      }
     }
 
     ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate,
