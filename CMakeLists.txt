@@ -41,14 +41,20 @@ set(re-edit_CPP_SRC_DIR "${CMAKE_CURRENT_LIST_DIR}/src/cpp")
 
 # Defines all the common sources
 set(re-edit_BUILD_SOURCES
+    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/logging/logging.h"
+    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/logging/loguru.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/logging/loguru.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/Application.h"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/Application.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/FilmStrip.h"
+    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/FilmStrip.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/TextureManager.h"
-    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/MTLTextureManager.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/TextureManager.cpp"
     )
 
 # Defines the macos main
 if(APPLE)
+  list(APPEND re-edit_BUILD_SOURCES "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/MTLTextureManager.cpp")
   set(re-edit_MAIN_SRC "${re-edit_CPP_SRC_DIR}/re/edit/macos/main.cpp" "${re-edit_CPP_SRC_DIR}/re/edit/macos/metal.cpp")
 #  set(re-edit_MAIN_SRC "${re-edit_CPP_SRC_DIR}/re/edit/macos/main.mm")
 endif()

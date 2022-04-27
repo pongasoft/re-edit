@@ -16,6 +16,9 @@
  * @author Yan Pujante
  */
 
-#define STB_IMAGE_IMPLEMENTATION
-#define STBI_FAILURE_USERMSG
-#include "stb_image.h"
+#ifndef RE_EDIT_LOGGING_H
+#define RE_EDIT_LOGGING_H
+
+#include "loguru.hpp"
+
+#endif //RE_EDIT_LOGGING_H

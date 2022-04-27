@@ -28,14 +28,16 @@ namespace re::edit {
 class MTLTextureManager : public TextureManager
 {
 public:
-  MTLTextureManager(MTL::Device *iDevice) : fDevice{iDevice} {}
+  explicit MTLTextureManager(MTL::Device *iDevice);
   ~MTLTextureManager() override = default;
 
-  void *loadTexture(char const *iPath) override;
+protected:
+  Texture createTexture(std::shared_ptr<FilmStrip> const &iFilmStrip, int iFrameNumber) const override;
+  Texture replaceTexture(Texture const &iTexture, std::shared_ptr<FilmStrip> const &iFilmStrip, int iFrameNumber) const override;
+  void removeTexture(Texture const &iTexture) const override;
 
 private:
   MTL::Device *fDevice;
-  void *fTexture{};
 };
 
 }
