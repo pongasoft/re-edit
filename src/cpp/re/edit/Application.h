@@ -20,6 +20,7 @@
 #define RE_EDIT_APPLICATION_H
 
 #include "TextureManager.h"
+#include "imgui.h"
 
 namespace re::edit {
 
@@ -31,6 +32,9 @@ public:
   void render();
 
   float clear_color[4] = {0.45f, 0.55f, 0.60f, 1.00f};
+
+private:
+  bool Texture(std::string const &iName, int iFrameNumber, ImVec2 const &iRoot, ImVec2 const &iPosition, float zoom);
 
 private:
   TextureManager *fTextureManager;

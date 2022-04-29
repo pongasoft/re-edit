@@ -32,7 +32,7 @@ void Application::render()
 
   // 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
   {
-    static float zoom = 1.0f;
+    static float zoom = 0.25f;
     static int frame = 0;
     static int counter = 0;
 
@@ -52,22 +52,16 @@ void Application::render()
     ImGui::SameLine();
     ImGui::Text("counter = %d", counter);
 
-    if(counter > 0)
+    ImVec2 pos;
+    if(ImGui::BeginChild("Panel", {0, 200}, true, ImGuiWindowFlags_HorizontalScrollbar))
     {
-      auto texture =
-        fTextureManager->getTexture("/Volumes/Development/github/pongasoft/re-cva-7/GUI2D/Knob_17_matte_63frames.png", frame);
-      if(texture.fFilmStrip->isValid())
-      {
-        ImGui::Image(texture.fData, {
-          static_cast<float>(texture.fFilmStrip->frameWidth()) * zoom,
-          static_cast<float>(texture.fFilmStrip->frameHeight()) * zoom,
-        });
-      }
-      else
-      {
-        ImGui::Text("Failed to load texture %s", texture.fFilmStrip->errorMessage().c_str());
-      }
+      pos = ImGui::GetCursorPos();
+      Texture("/Volumes/Development/github/pongasoft/re-cva-7/GUI2D/Panel_Front.png", 0, pos, {0, 0}, zoom);
+      Texture("/Volumes/Development/github/pongasoft/re-cva-7/GUI2D/Knob_17_matte_63frames.png", frame, pos, {3414, 440}, zoom);
     }
+    ImGui::EndChild();
+
+    ImGui::Text("cursor %f x %f", pos.x, pos.y);
 
     ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate,
                 ImGui::GetIO().Framerate);
@@ -84,6 +78,29 @@ void Application::render()
     if(ImGui::Button("Close Me"))
       show_another_window = false;
     ImGui::End();
+  }
+}
+
+//------------------------------------------------------------------------
+// Application::Texture
+//------------------------------------------------------------------------
+bool Application::Texture(std::string const &iName, int iFrameNumber, ImVec2 const &iRoot, ImVec2 const &iPosition, float zoom)
+{
+  auto texture =
+    fTextureManager->getTexture(iName, iFrameNumber);
+  if(texture.fFilmStrip->isValid())
+  {
+    ImGui::SetCursorPos({iRoot.x + (iPosition.x * zoom), iRoot.y + (iPosition.y * zoom)});
+    ImGui::Image(texture.fData, {
+      static_cast<float>(texture.fFilmStrip->frameWidth()) * zoom,
+      static_cast<float>(texture.fFilmStrip->frameHeight()) * zoom,
+    });
+    return true;
+  }
+  else
+  {
+    ImGui::Text("Failed to load texture %s", texture.fFilmStrip->errorMessage().c_str());
+    return false;
   }
 }
 

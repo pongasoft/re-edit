@@ -82,6 +82,7 @@ int main(int, char **)
 
   auto textureManager = std::make_unique<re::edit::MTLTextureManager>(device);
 
+  textureManager->loadFilmStrip("/Volumes/Development/github/pongasoft/re-cva-7/GUI2D/Panel_Front.png", 1);
   textureManager->loadFilmStrip("/Volumes/Development/github/pongasoft/re-cva-7/GUI2D/Knob_17_matte_63frames.png", 63);
 
   // Our state

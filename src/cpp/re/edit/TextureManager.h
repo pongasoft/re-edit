@@ -40,7 +40,7 @@ public:
   TextureManager() = default;
   virtual ~TextureManager() = default;
 
-  Texture getTexture(std::string const &iPath, int iFrameNumber) const;
+  Texture getTexture(std::string const &iPath, int iFrameNumber = 0) const;
 
   bool loadFilmStrip(char const *iPath, int iNumFrames = 1) { return fFilmStripMgr.maybeAddFilmStrip(iPath, iNumFrames); }
 
