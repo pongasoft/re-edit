@@ -34,12 +34,15 @@ public:
   float clear_color[4] = {0.45f, 0.55f, 0.60f, 1.00f};
 
 private:
+  void Panel();
   bool Texture(std::string const &iName, int iFrameNumber, ImVec2 const &iRoot, ImVec2 const &iPosition, float zoom);
 
 private:
   TextureManager *fTextureManager;
   bool show_demo_window{false};
   bool show_another_window{false};
+
+  float fPanelZoom{0.25f};
 };
 
 }
