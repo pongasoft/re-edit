@@ -145,6 +145,8 @@ int main(int, char **)
 
       commandBuffer->presentDrawable(drawable);
       commandBuffer->commit();
+
+      pPool->release();
     }
   }
 
