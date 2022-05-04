@@ -20,6 +20,7 @@
 #define RE_EDIT_TEXTURE_MANAGER_H
 
 #include "FilmStrip.h"
+#include "Texture.h"
 #include <map>
 #include <memory>
 
@@ -28,31 +29,20 @@ namespace re::edit {
 class TextureManager
 {
 public:
-  struct Texture
-  {
-    std::shared_ptr<FilmStrip> fFilmStrip{};
-    int fFrameNumber{};
-    void *fData{};
-  };
-
-public:
-
   TextureManager() = default;
   virtual ~TextureManager() = default;
 
-  Texture getTexture(std::string const &iPath, int iFrameNumber = 0) const;
+  std::shared_ptr<Texture> getTexture(std::string const &iPath) const;
 
   bool loadFilmStrip(char const *iPath, int iNumFrames = 1) { return fFilmStripMgr.maybeAddFilmStrip(iPath, iNumFrames); }
 
 protected:
-  virtual Texture createTexture(std::shared_ptr<FilmStrip> const &iFilmStrip, int iFrameNumber) const = 0;
-  virtual Texture replaceTexture(Texture const &iTexture, std::shared_ptr<FilmStrip> const &iFilmStrip, int iFrameNumber) const = 0;
-  virtual void removeTexture(Texture const &iTexture) const = 0;
+  virtual std::unique_ptr<Texture> createTexture(std::shared_ptr<FilmStrip> const &iFilmStrip) const = 0;
 
 private:
   FilmStripMgr fFilmStripMgr{};
 
-  mutable std::map<std::string, Texture> fTextures{};
+  mutable std::map<std::string, std::shared_ptr<Texture>> fTextures{};
 };
 
 }

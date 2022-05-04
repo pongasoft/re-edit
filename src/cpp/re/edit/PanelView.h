@@ -16,35 +16,29 @@
  * @author Yan Pujante
  */
 
-#ifndef RE_EDIT_MTL_TEXTURE_MANAGER_H
-#define RE_EDIT_MTL_TEXTURE_MANAGER_H
+#ifndef RE_EDIT_PANELVIEW_H
+#define RE_EDIT_PANELVIEW_H
 
-#include "TextureManager.h"
-#include "imgui.h"
-#include <Metal/Metal.hpp>
+#include "Widget.h"
+#include <re/mock/ObjectManager.hpp>
+
+using namespace re::mock;
 
 namespace re::edit {
 
-class MTLTexture : public Texture
+class PanelView : public View
 {
 public:
-  MTLTexture(std::shared_ptr<FilmStrip> iFilmStrip, ImTextureID iData);
-  ~MTLTexture() override;
-};
+  void draw(DrawContext &iCtx) override;
 
-class MTLTextureManager : public TextureManager
-{
-public:
-  explicit MTLTextureManager(MTL::Device *iDevice);
-  ~MTLTextureManager() override = default;
-
-protected:
-  std::unique_ptr<Texture> createTexture(std::shared_ptr<FilmStrip> const &iFilmStrip) const override;
+  inline void setTexture(std::shared_ptr<Texture> iTexture) { fTexture = std::move(iTexture); }
+  int addWidget(std::unique_ptr<Widget> iWidget);
 
 private:
-  MTL::Device *fDevice;
+  std::shared_ptr<Texture> fTexture{};
+  ObjectManager<std::unique_ptr<Widget>> fWidgets{};
 };
 
 }
 
-#endif //RE_EDIT_MTL_TEXTURE_MANAGER_H
+#endif //RE_EDIT_PANELVIEW_H

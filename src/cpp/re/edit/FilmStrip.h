@@ -44,7 +44,6 @@ public:
   constexpr int width() const { return fWidth; }
   constexpr int height() const { return fHeight; }
   constexpr int numFrames() const { return fNumFrames; }
-  constexpr int startFrameY(int iFrameNumber) const { DCHECK_F(iFrameNumber < numFrames()); return frameHeight() * iFrameNumber; }
 
   constexpr int frameWidth() const { return fWidth; }
   constexpr int frameHeight() const { return fHeight / fNumFrames; }

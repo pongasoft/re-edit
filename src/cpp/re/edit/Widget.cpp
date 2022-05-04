@@ -16,35 +16,17 @@
  * @author Yan Pujante
  */
 
-#ifndef RE_EDIT_MTL_TEXTURE_MANAGER_H
-#define RE_EDIT_MTL_TEXTURE_MANAGER_H
-
-#include "TextureManager.h"
-#include "imgui.h"
-#include <Metal/Metal.hpp>
+#include "Widget.h"
 
 namespace re::edit {
 
-class MTLTexture : public Texture
+
+//------------------------------------------------------------------------
+// Widget::draw
+//------------------------------------------------------------------------
+void Widget::draw(DrawContext &iCtx)
 {
-public:
-  MTLTexture(std::shared_ptr<FilmStrip> iFilmStrip, ImTextureID iData);
-  ~MTLTexture() override;
-};
-
-class MTLTextureManager : public TextureManager
-{
-public:
-  explicit MTLTextureManager(MTL::Device *iDevice);
-  ~MTLTextureManager() override = default;
-
-protected:
-  std::unique_ptr<Texture> createTexture(std::shared_ptr<FilmStrip> const &iFilmStrip) const override;
-
-private:
-  MTL::Device *fDevice;
-};
-
+  iCtx.drawTexture(fTexture.get(), fPosition, fFrameNumber);
 }
 
-#endif //RE_EDIT_MTL_TEXTURE_MANAGER_H
+}

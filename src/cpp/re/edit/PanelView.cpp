@@ -16,34 +16,33 @@
  * @author Yan Pujante
  */
 
-#include "TextureManager.h"
+#include "PanelView.h"
 
 namespace re::edit {
 
 //------------------------------------------------------------------------
-// TextureManager::getTexture
+// PanelView::draw
 //------------------------------------------------------------------------
-std::shared_ptr<Texture> TextureManager::getTexture(std::string const &iPath) const
+void PanelView::draw(DrawContext &iCtx)
 {
-  // get the filmstrip associated to the path
-  auto filmStrip = fFilmStripMgr.getFilmStrip(iPath);
-
-  // do we already have a GPU texture associated to this path?
-  auto iter = fTextures.find(iPath);
-  if(iter != fTextures.end())
+  auto top = ImGui::GetCursorPos();
+  if(fTexture)
+    iCtx.drawTexture(fTexture.get());
+  auto bottom = ImGui::GetCursorPos();
+  for(auto &widget: fWidgets)
   {
-    auto texture = iter->second;
-
-    // same filmstrip
-    if(texture->getFilmStrip() == filmStrip)
-    {
-      return texture; // nothing has changed
-    }
+    ImGui::SetCursorPos(top);
+    widget.second->draw(iCtx);
   }
+  ImGui::SetCursorPos(bottom);
+}
 
-  // create a new texture
-  fTextures[filmStrip->path()] = filmStrip->isValid() ? createTexture(filmStrip) : std::make_unique<Texture>(Texture{filmStrip, nullptr});
-  return fTextures.at(filmStrip->path());
+//------------------------------------------------------------------------
+// PanelView::addWidget
+//------------------------------------------------------------------------
+int PanelView::addWidget(std::unique_ptr<Widget> iWidget)
+{
+  return fWidgets.add(std::move(iWidget));
 }
 
 }

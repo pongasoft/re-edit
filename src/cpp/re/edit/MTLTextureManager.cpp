@@ -49,57 +49,49 @@ MTLTextureManager::MTLTextureManager(MTL::Device *iDevice) :
 //------------------------------------------------------------------------
 // MTLTextureManager::createTexture
 //------------------------------------------------------------------------
-TextureManager::Texture MTLTextureManager::createTexture(std::shared_ptr<FilmStrip> const &iFilmStrip, int iFrameNumber) const
+std::unique_ptr<Texture> MTLTextureManager::createTexture(std::shared_ptr<FilmStrip> const &iFilmStrip) const
 {
   DCHECK_F(iFilmStrip->isValid());
 
-  auto const width = iFilmStrip->frameWidth();
-  auto const height = iFilmStrip->frameHeight();
+  auto const width = iFilmStrip->width();
+  auto const height = iFilmStrip->height();
 
   auto desc = MTL::TextureDescriptor::texture2DDescriptor(MTL::PixelFormatRGBA8Unorm,
                                                           width,
                                                           height,
                                                           false);
   auto mtlTexture = fDevice->newTexture(desc);
+
   DLOG_F(INFO, "createTexture(%s) : %lu", iFilmStrip->path().c_str(), mtlTexture->retainCount());
+
+  auto res = std::unique_ptr<MTLTexture>(new MTLTexture(iFilmStrip, mtlTexture));
+
+  // copy the texture from memory (filmstrip) to GPU
+  auto region = MTL::Region::Make2D(0, 0, width, height);
+  mtlTexture->replaceRegion(region, 0, iFilmStrip->data(), 4 * width);
+
+  return res;
+}
+
+//------------------------------------------------------------------------
+// MTLTexture::MTLTexture
+//------------------------------------------------------------------------
+MTLTexture::MTLTexture(std::shared_ptr<FilmStrip> iFilmStrip, ImTextureID iData) : Texture{std::move(iFilmStrip), iData}
+{
+  auto mtlTexture = reinterpret_cast<MTL::Texture *>(fData);
   mtlTexture->retain();
-  DLOG_F(INFO, "createTexture(%s) : %lu (after)", iFilmStrip->path().c_str(), mtlTexture->retainCount());
-
-  auto region = MTL::Region::Make2D(0, 0, width, height);
-  mtlTexture->replaceRegion(region, 0, iFilmStrip->data(iFrameNumber), 4 * width);
-
-  return Texture{iFilmStrip, iFrameNumber, mtlTexture};
+  DLOG_F(INFO, "createTexture(%s) : %lu (after)", fFilmStrip->path().c_str(), mtlTexture->retainCount());
 }
 
 //------------------------------------------------------------------------
-// MTLTextureManager::replaceTexture
+// MTLTexture::~MTLTexture
 //------------------------------------------------------------------------
-TextureManager::Texture MTLTextureManager::replaceTexture(Texture const &iTexture,
-                                                          std::shared_ptr<FilmStrip> const &iFilmStrip,
-                                                          int iFrameNumber) const
+MTLTexture::~MTLTexture()
 {
-  DCHECK_F(iFilmStrip->isValid());
-  DCHECK_F(iTexture.fFilmStrip->frameWidth() == iFilmStrip->frameWidth());
-  DCHECK_F(iTexture.fFilmStrip->frameHeight() == iFilmStrip->frameHeight());
-
-  auto mtlTexture = reinterpret_cast<MTL::Texture *>(iTexture.fData);
-  auto const width = iFilmStrip->frameWidth();
-  auto const height = iFilmStrip->frameHeight();
-  auto region = MTL::Region::Make2D(0, 0, width, height);
-  mtlTexture->replaceRegion(region, 0, iFilmStrip->data(iFrameNumber), 4 * width);
-
-  return Texture{iFilmStrip, iFrameNumber, mtlTexture};
-}
-
-//------------------------------------------------------------------------
-// MTLTextureManager::removeTexture
-//------------------------------------------------------------------------
-void MTLTextureManager::removeTexture(Texture const &iTexture) const
-{
-  auto mtlTexture = reinterpret_cast<MTL::Texture *>(iTexture.fData);
-  DLOG_F(INFO, "removeTexture(%s) : %lu", iTexture.fFilmStrip->path().c_str(), mtlTexture->retainCount());
+  auto mtlTexture = reinterpret_cast<MTL::Texture *>(fData);
+  DLOG_F(INFO, "removeTexture(%s) : %lu", fFilmStrip->path().c_str(), mtlTexture->retainCount());
   mtlTexture->release();
-  DLOG_F(INFO, "removeTexture(%s) : %lu (after)", iTexture.fFilmStrip->path().c_str(), mtlTexture->retainCount());
+  DLOG_F(INFO, "removeTexture(%s) : %lu (after)", fFilmStrip->path().c_str(), mtlTexture->retainCount());
 }
 
 

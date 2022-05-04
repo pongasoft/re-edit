@@ -80,13 +80,13 @@ int main(int, char **)
   auto commandQueue = device->newCommandQueue();
   auto renderPassDescriptor = MTL::RenderPassDescriptor::alloc()->init();
 
-  auto textureManager = std::make_unique<re::edit::MTLTextureManager>(device);
-
-  textureManager->loadFilmStrip("/Volumes/Development/github/pongasoft/re-cva-7/GUI2D/Panel_Front.png", 1);
-  textureManager->loadFilmStrip("/Volumes/Development/github/pongasoft/re-cva-7/GUI2D/Knob_17_matte_63frames.png", 63);
-
   // Our state
-  re::edit::Application application{textureManager.get()};
+  re::edit::Application application{std::make_shared<re::edit::MTLTextureManager>(device)};
+
+  application.loadFilmStrip("/Volumes/Development/github/pongasoft/re-cva-7/GUI2D/Panel_Front.png", 1);
+  application.loadFilmStrip("/Volumes/Development/github/pongasoft/re-cva-7/GUI2D/Knob_17_matte_63frames.png", 63);
+
+  application.init();
 
   // Main loop
   bool done = false;

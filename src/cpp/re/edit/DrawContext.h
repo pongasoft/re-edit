@@ -16,45 +16,32 @@
  * @author Yan Pujante
  */
 
-#ifndef RE_EDIT_APPLICATION_H
-#define RE_EDIT_APPLICATION_H
+#ifndef RE_EDIT_DRAWCONTEXT_H
+#define RE_EDIT_DRAWCONTEXT_H
 
+#include <imgui.h>
 #include "TextureManager.h"
-#include "imgui.h"
-#include "DrawContext.h"
-#include "PanelView.h"
 
 namespace re::edit {
 
-class Application
+class DrawContext
 {
 public:
-  explicit Application(std::shared_ptr<TextureManager> const &iTextureManager);
+  explicit DrawContext(std::shared_ptr<TextureManager> iTextureManager) : fTextureManager{std::move(iTextureManager)} {}
 
-  void init();
+  constexpr float getZoom() const { return fZoom; }
+  float &getZoom() { return fZoom; }
+  constexpr void setZoom(float iZoom) { fZoom = iZoom; }
 
-  bool loadFilmStrip(char const *iPath, int iNumFrames = 1);
-
-  void render();
-
-  float clear_color[4] = {0.45f, 0.55f, 0.60f, 1.00f};
-
-private:
-  struct PanelState
-  {
-    explicit PanelState(std::shared_ptr<TextureManager> iTextureManager);
-    DrawContext fDrawContext;
-    PanelView fPanelView{};
-    bool fVisible{true};
-  };
+public:
+  inline std::shared_ptr<Texture> getTexture(std::string const &iPath) const { return fTextureManager->getTexture(iPath); }
+  void drawTexture(Texture const *iTexture, ImVec2 const &iPosition = {0,0}, int iFrameNumber = 0) const;
 
 private:
   std::shared_ptr<TextureManager> fTextureManager;
-  PanelState fFrontPanel;
-  bool show_demo_window{false};
-  bool show_another_window{false};
+  float fZoom{0.25f};
 };
 
 }
 
-#endif //RE_EDIT_APPLICATION_H
+#endif //RE_EDIT_DRAWCONTEXT_H
