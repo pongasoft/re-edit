@@ -36,10 +36,20 @@ Application::Application(std::shared_ptr<TextureManager> const &iTextureManager)
 void Application::init()
 {
   fFrontPanel.fPanelView.setTexture(fTextureManager->getTexture("/Volumes/Development/github/pongasoft/re-cva-7/GUI2D/Panel_Front.png"));
-  auto knob = std::make_unique<AnalogKnobWidget>();
-  knob->setTexture(fTextureManager->getTexture("/Volumes/Development/github/pongasoft/re-cva-7/GUI2D/Knob_17_matte_63frames.png"));
-  knob->setPosition({3414, 440});
-  fFrontPanel.fPanelView.addWidget(std::move(knob));
+  {
+    auto knob = std::make_unique<AnalogKnobWidget>();
+    knob->setTexture(
+      fTextureManager->getTexture("/Volumes/Development/github/pongasoft/re-cva-7/GUI2D/Knob_17_matte_63frames.png"));
+    knob->setPosition({3414, 440});
+    fFrontPanel.fPanelView.addWidget(std::move(knob));
+  }
+  {
+    auto knob = std::make_unique<AnalogKnobWidget>();
+    knob->setTexture(
+      fTextureManager->getTexture("/Volumes/Development/github/pongasoft/re-cva-7/GUI2D/Knob_17_matte_63frames.png"));
+    knob->setPosition({200, 440});
+    fFrontPanel.fPanelView.addWidget(std::move(knob));
+  }
 }
 
 //------------------------------------------------------------------------

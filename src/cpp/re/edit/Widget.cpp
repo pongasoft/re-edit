@@ -26,7 +26,11 @@ namespace re::edit {
 //------------------------------------------------------------------------
 void Widget::draw(DrawContext &iCtx)
 {
-  iCtx.drawTexture(fTexture.get(), fPosition, fFrameNumber);
+  if(fSelected)
+    iCtx.drawTexture(fTexture.get(), fPosition, fFrameNumber, {1,1,0,1});
+  else
+    iCtx.drawTexture(fTexture.get(), fPosition, fFrameNumber);
+
 }
 
 }

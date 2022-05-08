@@ -21,6 +21,7 @@
 
 #include "Widget.h"
 #include <re/mock/ObjectManager.hpp>
+#include <set>
 
 using namespace re::mock;
 
@@ -35,8 +36,12 @@ public:
   int addWidget(std::unique_ptr<Widget> iWidget);
 
 private:
+  void clearSelectedWidgets();
+
+private:
   std::shared_ptr<Texture> fTexture{};
   ObjectManager<std::unique_ptr<Widget>> fWidgets{};
+  std::set<Widget *> fSelectedWidgets{};
 };
 
 }

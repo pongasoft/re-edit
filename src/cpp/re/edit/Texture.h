@@ -37,12 +37,12 @@ public:
 
   constexpr bool isValid() const { return fFilmStrip->isValid(); }
 
-  constexpr int width() const { return fFilmStrip->width(); }
-  constexpr int height() const { return fFilmStrip->height(); }
+  constexpr float width() const { return fFilmStrip->width(); }
+  constexpr float height() const { return fFilmStrip->height(); }
 
   constexpr int numFrames() const { return fFilmStrip->numFrames(); }
-  constexpr int frameWidth() const { return fFilmStrip->frameWidth(); }
-  constexpr int frameHeight() const { return fFilmStrip->frameHeight(); }
+  constexpr float frameWidth() const { return fFilmStrip->frameWidth(); }
+  constexpr float frameHeight() const { return fFilmStrip->frameHeight(); }
 
   constexpr ImTextureID data() const { return fData; }
 

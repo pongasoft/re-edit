@@ -33,6 +33,9 @@ public:
   constexpr ImVec2 getPosition() const { return fPosition; }
   constexpr void setPosition(ImVec2 const &iPosition) { fPosition = iPosition; }
 
+  constexpr bool isSelected() const { return fSelected; }
+  constexpr void setSelected(bool iSelected) { fSelected = iSelected; }
+
   inline void setTexture(std::shared_ptr<Texture> iTexture) { fTexture = std::move(iTexture); }
   constexpr void setFrameNumber(int iFrameNumber) { fFrameNumber = iFrameNumber; }
 
@@ -42,6 +45,7 @@ protected:
   ImVec2 fPosition{};
   std::shared_ptr<Texture> fTexture{};
   int fFrameNumber{};
+  bool fSelected{false};
 };
 
 class AnalogKnobWidget : public Widget

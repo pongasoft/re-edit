@@ -26,15 +26,38 @@ namespace re::edit {
 void PanelView::draw(DrawContext &iCtx)
 {
   auto top = ImGui::GetCursorPos();
+  bool clearAllWidgets = false;
   if(fTexture)
+  {
     iCtx.drawTexture(fTexture.get());
-  auto bottom = ImGui::GetCursorPos();
+    if(ImGui::IsItemClicked()) // true when a widget is clicked as well
+      clearAllWidgets = true;
+  }
   for(auto &widget: fWidgets)
   {
-    ImGui::SetCursorPos(top);
-    widget.second->draw(iCtx);
+    auto &w = widget.second;
+    w->draw(iCtx);
+    if(ImGui::IsItemClicked())
+    {
+      auto &io = ImGui::GetIO();
+      if(!io.KeyShift)
+      {
+        clearSelectedWidgets();
+      }
+      w->setSelected(true);
+      fSelectedWidgets.emplace(w.get());
+      clearAllWidgets = false;
+    }
   }
-  ImGui::SetCursorPos(bottom);
+
+  if(clearAllWidgets)
+    clearSelectedWidgets();
+
+  ImGui::SetCursorPos(top + ImVec2{0, fTexture->height() * iCtx.getZoom()});
+
+  ImGui::Text("Selected widgets = %lu", fSelectedWidgets.size());
+  auto &io = ImGui::GetIO();
+  ImGui::Text("Shift=%s", io.KeyShift ? "true" : "false");
 }
 
 //------------------------------------------------------------------------
@@ -43,6 +66,16 @@ void PanelView::draw(DrawContext &iCtx)
 int PanelView::addWidget(std::unique_ptr<Widget> iWidget)
 {
   return fWidgets.add(std::move(iWidget));
+}
+
+//------------------------------------------------------------------------
+// PanelView::clearSelectedWidgets
+//------------------------------------------------------------------------
+void PanelView::clearSelectedWidgets()
+{
+  for(auto w: fSelectedWidgets)
+    w->setSelected(false);
+  fSelectedWidgets.clear();
 }
 
 }
