@@ -42,6 +42,7 @@ public:
 
   inline void setBackground(std::shared_ptr<Texture> iBackground) { fBackground = std::move(iBackground); }
   int addWidget(std::unique_ptr<Widget> iWidget);
+  Widget *getSelectedControl() const;
 
 private:
   void clearSelectedWidgets();

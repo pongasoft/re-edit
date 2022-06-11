@@ -69,7 +69,6 @@ void PanelView::draw(DrawContext &iCtx)
 
   if(ImGui::Begin("Debug"))
   {
-    ImGui::Text("Selected widgets = %lu", fSelectedWidgets.size());
     auto &io = ImGui::GetIO();
     ImGui::Text("Shift=%s", io.KeyShift ? "true" : "false");
     auto mousePos = ImGui::GetMousePos() - backgroundScreenPosition; // accounts for scrollbars
@@ -81,6 +80,26 @@ void PanelView::draw(DrawContext &iCtx)
   }
   ImGui::End();
 
+  if(ImGui::Begin("Control"))
+  {
+    auto selectedControl = getSelectedControl();
+    if(selectedControl)
+    {
+      auto texture = selectedControl->getTexture();
+      if(texture->numFrames() > 2)
+      {
+        int frame = selectedControl->getFrameNumber();
+        ImGui::SliderInt("Frame", &frame, 0, texture->numFrames() - 1);
+        if(frame != selectedControl->getFrameNumber())
+          selectedControl->setFrameNumber(frame);
+      }
+    }
+    else
+    {
+      ImGui::Text("Select 1 control to view details.");
+    }
+  }
+  ImGui::End();
 }
 
 //------------------------------------------------------------------------
@@ -99,6 +118,17 @@ void PanelView::clearSelectedWidgets()
   for(auto w: fSelectedWidgets)
     w->setSelected(false);
   fSelectedWidgets.clear();
+}
+
+//------------------------------------------------------------------------
+// PanelView::getSelectedControl
+//------------------------------------------------------------------------
+Widget *PanelView::getSelectedControl() const
+{
+  if(std::count_if(fWidgets.begin(), fWidgets.end(), [](auto const &p) { return p.second->isSelected(); }) == 1)
+    return std::find_if(fWidgets.begin(), fWidgets.end(), [](auto const &p) { return p.second->isSelected(); })->second.get();
+  else
+    return nullptr;
 }
 
 //------------------------------------------------------------------------
@@ -163,5 +193,6 @@ void PanelView::endMoveControls(ImVec2 const &iPosition)
   moveControls(iPosition);
   fLastMovePosition = std::nullopt;
 }
+
 
 }

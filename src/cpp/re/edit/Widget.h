@@ -40,7 +40,10 @@ public:
   constexpr void move(ImVec2 const &iDelta) { fPosition = fPosition + iDelta; }
 
   inline void setTexture(std::shared_ptr<Texture> iTexture) { fTexture = std::move(iTexture); }
+  constexpr int getFrameNumber() const { return fFrameNumber; }
   constexpr void setFrameNumber(int iFrameNumber) { fFrameNumber = iFrameNumber; }
+
+  constexpr Texture const *getTexture() const { return fTexture.get(); }
 
   constexpr bool contains(ImVec2 const &iPosition)
   {
