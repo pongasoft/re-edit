@@ -72,10 +72,7 @@ void Application::render()
 
   // 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
   {
-    static int frame = 0;
-    static int counter = 0;
-
-    ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
+    ImGui::Begin("Main");
 
     ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
     ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
@@ -83,15 +80,6 @@ void Application::render()
     ImGui::Checkbox("Show/Hide Front Panel", &fFrontPanel.fVisible);
 
     ImGui::SliderFloat("zoom", &fFrontPanel.fDrawContext.getZoom(), 0.25f, 1.5f);
-    ImGui::SliderInt("Frame", &frame, 0, 62);
-
-    ImGui::ColorEdit3("clear color", (float *) &clear_color); // Edit 3 floats representing a color
-
-    if(ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
-      counter++;
-    ImGui::SameLine();
-    ImGui::Text("counter = %d", counter);
-
 
     ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate,
                 ImGui::GetIO().Framerate);

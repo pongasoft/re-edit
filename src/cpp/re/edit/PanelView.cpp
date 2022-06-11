@@ -35,7 +35,7 @@ void PanelView::draw(DrawContext &iCtx)
     auto mousePos = ImGui::GetMousePos() - backgroundScreenPosition; // accounts for scrollbars
     if(fMouseDrag)
     {
-      if(ImGui::IsMouseReleased(0))
+      if(ImGui::IsMouseReleased(ImGuiMouseButton_::ImGuiMouseButton_Left))
       {
         fMouseDrag = std::nullopt;
         dragState = "onRelease";
@@ -53,7 +53,7 @@ void PanelView::draw(DrawContext &iCtx)
         else
           dragState = "waiting for drag";
       }
-    } else if(ImGui::IsItemClicked(0))
+    } else if(ImGui::IsItemClicked(ImGuiMouseButton_::ImGuiMouseButton_Left))
     {
       fMouseDrag = MouseDrag{mousePos, mousePos};
       auto &io = ImGui::GetIO();
@@ -85,6 +85,14 @@ void PanelView::draw(DrawContext &iCtx)
     auto selectedControl = getSelectedControl();
     if(selectedControl)
     {
+      auto pos = selectedControl->getPosition();
+      auto x = static_cast<int>(std::round(pos.x));
+      ImGui::InputInt("x", &x, 1.0, 5.0);
+      auto y = static_cast<int>(std::round(pos.y));
+      ImGui::InputInt("y", &y, 1.0, 5.0);
+      if(x != static_cast<int>(std::round(pos.x)) || y != static_cast<int>(std::round(pos.y)))
+        selectedControl->setPosition({static_cast<float>(x), static_cast<float>(y)});
+
       auto texture = selectedControl->getTexture();
       if(texture->numFrames() > 2)
       {
@@ -190,7 +198,17 @@ void PanelView::moveControls(ImVec2 const &iPosition)
 //------------------------------------------------------------------------
 void PanelView::endMoveControls(ImVec2 const &iPosition)
 {
-  moveControls(iPosition);
+  std::for_each(fWidgets.begin(), fWidgets.end(), [](auto const &p) {
+    auto &control = p.second;
+    if(control->isSelected())
+    {
+      auto position = control->getPosition();
+      position.x = std::round(position.x);
+      position.y = std::round(position.y);
+      control->setPosition(position);
+    }
+  });
+
   fLastMovePosition = std::nullopt;
 }
 
