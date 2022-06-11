@@ -22,26 +22,39 @@
 #include "Widget.h"
 #include <re/mock/ObjectManager.hpp>
 #include <set>
+#include <optional>
 
 using namespace re::mock;
 
 namespace re::edit {
+
+struct MouseDrag
+{
+  ImVec2 fInitialPosition{};
+  ImVec2 fCurrentPosition{};
+};
+
 
 class PanelView : public View
 {
 public:
   void draw(DrawContext &iCtx) override;
 
-  inline void setTexture(std::shared_ptr<Texture> iTexture) { fTexture = std::move(iTexture); }
+  inline void setBackground(std::shared_ptr<Texture> iBackground) { fBackground = std::move(iBackground); }
   int addWidget(std::unique_ptr<Widget> iWidget);
 
 private:
   void clearSelectedWidgets();
+  void selectControl(ImVec2 const &iPosition, bool iMultiple);
+  void moveControls(ImVec2 const &iPosition);
+  void endMoveControls(ImVec2 const &iPosition);
 
 private:
-  std::shared_ptr<Texture> fTexture{};
+  std::shared_ptr<Texture> fBackground{};
   ObjectManager<std::unique_ptr<Widget>> fWidgets{};
+  std::optional<ImVec2> fLastMovePosition{};
   std::set<Widget *> fSelectedWidgets{};
+  std::optional<MouseDrag> fMouseDrag{};
 };
 
 }

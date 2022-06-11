@@ -19,7 +19,6 @@
 #ifndef RE_EDIT_VIEW_H
 #define RE_EDIT_VIEW_H
 
-
 #include "DrawContext.h"
 
 namespace re::edit {

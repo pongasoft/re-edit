@@ -35,9 +35,20 @@ public:
 
   constexpr bool isSelected() const { return fSelected; }
   constexpr void setSelected(bool iSelected) { fSelected = iSelected; }
+  constexpr void toggleSelection() { fSelected = !fSelected; }
+
+  constexpr void move(ImVec2 const &iDelta) { fPosition = fPosition + iDelta; }
 
   inline void setTexture(std::shared_ptr<Texture> iTexture) { fTexture = std::move(iTexture); }
   constexpr void setFrameNumber(int iFrameNumber) { fFrameNumber = iFrameNumber; }
+
+  constexpr bool contains(ImVec2 const &iPosition)
+  {
+    return iPosition.x > fPosition.x
+           && iPosition.y > fPosition.y
+           && iPosition.x < fPosition.x + fTexture->frameWidth()
+           && iPosition.y < fPosition.y + fTexture->frameHeight();
+  }
 
   void draw(DrawContext &iCtx) override;
 
