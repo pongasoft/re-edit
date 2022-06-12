@@ -28,9 +28,10 @@ void PanelView::draw(DrawContext &iCtx)
   std::string dragState{"N/A"};
 
   ImVec2 backgroundScreenPosition;
+  auto const cp = ImGui::GetCursorScreenPos();
   if(fBackground)
   {
-    iCtx.drawTexture(fBackground.get());
+    iCtx.TextureItem(fBackground.get());
     backgroundScreenPosition = ImGui::GetItemRectMin(); // accounts for scrollbar!
     auto mousePos = ImGui::GetMousePos() - backgroundScreenPosition; // accounts for scrollbars
     if(fMouseDrag)
@@ -61,6 +62,7 @@ void PanelView::draw(DrawContext &iCtx)
       selectControl(mousePos / iCtx.getZoom(), io.KeyShift);
     }
   }
+  ImGui::SetCursorScreenPos(cp); // TextureItem moves the cursor so we restore it
   for(auto &control: fControls)
   {
     auto &w = control.second;

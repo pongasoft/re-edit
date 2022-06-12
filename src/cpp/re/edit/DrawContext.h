@@ -51,11 +51,15 @@ public:
 
 public:
   inline std::shared_ptr<Texture> getTexture(std::string const &iPath) const { return fTextureManager->getTexture(iPath); }
+
+  void TextureItem(Texture const *iTexture, ImVec2 const &iPosition = {0,0}, int iFrameNumber = 0, const ImVec4& iBorderCol = ImVec4(0,0,0,0)) const;
+
   void drawTexture(Texture const *iTexture, ImVec2 const &iPosition = {0,0}, int iFrameNumber = 0, const ImVec4& iBorderCol = ImVec4(0,0,0,0)) const;
   void drawRect(ImVec2 const &iPosition, ImVec2 const &iSize, const ImVec4& iColor) const;
 
 private:
   static void Image(ImTextureID user_texture_id, const ImVec2& size, const ImVec2& uv0, const ImVec2& uv1, const ImVec4& border_col = ImVec4(0,0,0,0));
+  static void drawImage(ImTextureID user_texture_id, ImVec2 const &iPosition, const ImVec2& size, const ImVec2& uv0, const ImVec2& uv1, const ImVec4& border_col = ImVec4(0,0,0,0));
 
 private:
   std::shared_ptr<TextureManager> fTextureManager;

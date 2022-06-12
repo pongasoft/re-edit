@@ -22,9 +22,9 @@
 namespace re::edit {
 
 //------------------------------------------------------------------------
-// DrawContext::drawTexture
+// DrawContext::TextureItem
 //------------------------------------------------------------------------
-void DrawContext::drawTexture(Texture const *iTexture, ImVec2 const &iPosition, int iFrameNumber, const ImVec4& iBorderCol) const
+void DrawContext::TextureItem(Texture const *iTexture, ImVec2 const &iPosition, int iFrameNumber, const ImVec4& iBorderCol) const
 {
   if(iTexture->isValid())
   {
@@ -43,7 +43,32 @@ void DrawContext::drawTexture(Texture const *iTexture, ImVec2 const &iPosition, 
           ImVec2((0 + frameWidth) / width, (frameY + frameHeight) / height),
           iBorderCol
     );
-    ImGui::SetCursorScreenPos(cp);
+  }
+}
+
+//------------------------------------------------------------------------
+// DrawContext::drawTexture
+//------------------------------------------------------------------------
+void DrawContext::drawTexture(Texture const *iTexture, ImVec2 const &iPosition, int iFrameNumber, const ImVec4& iBorderCol) const
+{
+  if(iTexture->isValid())
+  {
+    auto frameWidth = iTexture->frameWidth();
+    auto frameHeight = iTexture->frameHeight();
+    auto frameY = frameHeight * static_cast<float>(iFrameNumber);
+    auto width = iTexture->width();
+    auto height = iTexture->height();
+
+    auto position = iPosition * fZoom;
+    auto size = ImVec2{frameWidth * fZoom, frameHeight * fZoom};
+
+    drawImage(iTexture->data(),
+              position,
+              size,
+              ImVec2(0, (frameY) / height),
+              ImVec2((0 + frameWidth) / width, (frameY + frameHeight) / height),
+              iBorderCol
+    );
   }
 }
 
@@ -56,11 +81,10 @@ void DrawContext::drawRect(ImVec2 const &iPosition, ImVec2 const &iSize, ImVec4 
   ImVec2 pos(cp + iPosition * fZoom);
   auto drawList = ImGui::GetWindowDrawList();
   drawList->AddRect(pos, {pos.x + (iSize.x * fZoom), pos.y + (iSize.y * fZoom)}, ImGui::GetColorU32(iColor));
-  ImGui::SetCursorScreenPos(cp);
 }
 
 //------------------------------------------------------------------------
-// DrawContext::drawRect
+// DrawContext::Image
 //------------------------------------------------------------------------
 void DrawContext::Image(ImTextureID user_texture_id,
                         ImVec2 const &size,
@@ -81,6 +105,24 @@ void DrawContext::Image(ImTextureID user_texture_id,
 
   if(border_col.w > 0.0f)
     window->DrawList->AddRect(bb.Min, bb.Max, ImGui::GetColorU32(border_col), 0.0f);
+}
+
+//------------------------------------------------------------------------
+// DrawContext::drawImage
+//------------------------------------------------------------------------
+void DrawContext::drawImage(ImTextureID user_texture_id,
+                            ImVec2 const &iPosition,
+                            ImVec2 const &size,
+                            ImVec2 const &uv0,
+                            ImVec2 const &uv1,
+                            ImVec4 const &border_col)
+{
+  auto const cp = ImGui::GetCursorScreenPos();
+  ImDrawList* drawList = ImGui::GetWindowDrawList();
+  ImRect rect{cp + iPosition, cp + iPosition + size};
+  drawList->AddImage(user_texture_id, rect.Min, rect.Max, uv0, uv1, ImGui::GetColorU32(ImVec4{1, 1, 1, 1}));
+  if(border_col.w > 0.0f)
+    drawList->AddRect(rect.Min, rect.Max, ImGui::GetColorU32(border_col), 0.0f);
 }
 
 }
