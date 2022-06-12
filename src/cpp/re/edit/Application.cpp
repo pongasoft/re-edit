@@ -72,11 +72,9 @@ void Application::render()
 
   // 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
   {
-    ImGui::Begin("Main");
+    ImGui::Begin("re-edit");
 
-    ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
     ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
-    ImGui::Checkbox("Another Window", &show_another_window);
     ImGui::Checkbox("Show/Hide Front Panel", &fFrontPanel.fVisible);
 
     ImGui::SliderFloat("zoom", &fFrontPanel.fDrawContext.getZoom(), 0.25f, 1.5f);
@@ -93,17 +91,6 @@ void Application::render()
     {
       fFrontPanel.fPanelView.draw(fFrontPanel.fDrawContext);
     }
-    ImGui::End();
-  }
-
-  // 3. Show another simple window.
-  if(show_another_window)
-  {
-    ImGui::Begin("Another Window",
-                 &show_another_window);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
-    ImGui::Text("Hello from another window!");
-    if(ImGui::Button("Close Me"))
-      show_another_window = false;
     ImGui::End();
   }
 }

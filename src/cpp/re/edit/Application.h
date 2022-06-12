@@ -52,7 +52,6 @@ private:
   std::shared_ptr<TextureManager> fTextureManager;
   PanelState fFrontPanel;
   bool show_demo_window{false};
-  bool show_another_window{false};
 };
 
 }

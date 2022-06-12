@@ -126,7 +126,7 @@ int main(int, char **)
       ca0->setLoadAction(MTL::LoadActionClear);
       ca0->setStoreAction(MTL::StoreActionStore);
       auto renderEncoder = commandBuffer->renderCommandEncoder(renderPassDescriptor);
-      renderEncoder->pushDebugGroup(NS::String::string("Hello World", NS::ASCIIStringEncoding));
+      renderEncoder->pushDebugGroup(NS::String::string("re-edit", NS::ASCIIStringEncoding));
 
       // Start the Dear ImGui frame
       ImGui_ImplMetal_NewFrame(renderPassDescriptor);
