@@ -96,10 +96,7 @@ void PanelView::draw(DrawContext &iCtx)
       auto texture = selectedControl->getTexture();
       if(texture->numFrames() > 2)
       {
-        int frame = selectedControl->getFrameNumber();
-        ImGui::SliderInt("Frame", &frame, 0, texture->numFrames() - 1);
-        if(frame != selectedControl->getFrameNumber())
-          selectedControl->setFrameNumber(frame);
+        ImGui::SliderInt("Frame", &selectedControl->getFrameNumber(), 0, texture->numFrames() - 1);
       }
     }
     else
