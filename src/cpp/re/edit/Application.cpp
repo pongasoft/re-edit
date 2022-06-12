@@ -77,8 +77,6 @@ void Application::render()
     ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
     ImGui::Checkbox("Show/Hide Front Panel", &fFrontPanel.fVisible);
 
-    ImGui::SliderFloat("zoom", &fFrontPanel.fDrawContext.getZoom(), 0.25f, 1.5f);
-
     ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate,
                 ImGui::GetIO().Framerate);
 

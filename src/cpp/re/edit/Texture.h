@@ -43,6 +43,7 @@ public:
   constexpr int numFrames() const { return fFilmStrip->numFrames(); }
   constexpr float frameWidth() const { return fFilmStrip->frameWidth(); }
   constexpr float frameHeight() const { return fFilmStrip->frameHeight(); }
+  constexpr ImVec2 frameSize() const { return {frameWidth(), frameHeight()}; }
 
   constexpr ImTextureID data() const { return fData; }
 

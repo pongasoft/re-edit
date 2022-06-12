@@ -21,7 +21,7 @@
 
 #include "ControlView.h"
 #include <re/mock/ObjectManager.hpp>
-#include <set>
+#include <vector>
 #include <optional>
 
 using namespace re::mock;
@@ -43,9 +43,9 @@ public:
   inline void setBackground(std::shared_ptr<Texture> iBackground) { fBackground = std::move(iBackground); }
   int addControl(std::unique_ptr<ControlView> iControl);
   ControlView *getSelectedControl() const;
+  std::vector<ControlView *> getSelectedControls() const;
 
 private:
-  void clearSelectedControls();
   void selectControl(ImVec2 const &iPosition, bool iMultiple);
   void moveControls(ImVec2 const &iPosition);
   void endMoveControls(ImVec2 const &iPosition);
@@ -54,7 +54,6 @@ private:
   std::shared_ptr<Texture> fBackground{};
   ObjectManager<std::unique_ptr<ControlView>> fControls{};
   std::optional<ImVec2> fLastMovePosition{};
-  std::set<ControlView *> fSelectedControls{};
   std::optional<MouseDrag> fMouseDrag{};
 };
 

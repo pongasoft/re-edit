@@ -69,6 +69,34 @@ void PanelView::draw(DrawContext &iCtx)
     w->draw(iCtx);
   }
 
+  auto selectedControls = getSelectedControls();
+
+  if(fMouseDrag && !selectedControls.empty())
+  {
+    auto min = selectedControls[0]->getTopLeft();
+    auto max = selectedControls[0]->getBottomRight();
+
+    std::for_each(selectedControls.begin() + 1, selectedControls.end(), [&min, &max](auto c) {
+      auto pos = c->getTopLeft();
+      if(pos.x < min.x)
+        min.x = pos.x;
+      if(pos.y < min.y)
+        min.y = pos.y;
+      pos = c->getBottomRight();
+      if(pos.x > max.x)
+        max.x = pos.x;
+      if(pos.y > max.y)
+        max.y = pos.y;
+    });
+
+    auto frameSize = fBackground->frameSize();
+    auto color = ImGui::GetColorU32({1,1,0,0.5});
+    iCtx.drawLine({0, min.y}, {frameSize.x, min.y}, color);
+    iCtx.drawLine({min.x, 0}, {min.x, frameSize.y}, color);
+    iCtx.drawLine({0, max.y}, {frameSize.x, max.y}, color);
+    iCtx.drawLine({max.x, 0}, {max.x, frameSize.y}, color);
+  }
+
   if(ImGui::Begin("Debug"))
   {
     auto &io = ImGui::GetIO();
@@ -84,9 +112,10 @@ void PanelView::draw(DrawContext &iCtx)
 
   if(ImGui::Begin("Control"))
   {
-    auto selectedControl = getSelectedControl();
-    if(selectedControl)
+    ImGui::SliderFloat("zoom", &iCtx.getZoom(), 0.25f, 1.5f);
+    if(selectedControls.size() == 1)
     {
+      auto selectedControl = selectedControls[0];
       auto pos = selectedControl->getPosition();
       auto x = static_cast<int>(std::round(pos.x));
       ImGui::InputInt("x", &x, 1, 5);
@@ -101,10 +130,6 @@ void PanelView::draw(DrawContext &iCtx)
         ImGui::SliderInt("Frame", &selectedControl->getFrameNumber(), 0, texture->numFrames() - 1);
       }
     }
-    else
-    {
-      ImGui::Text("Select 1 control to view details.");
-    }
   }
   ImGui::End();
 }
@@ -115,16 +140,6 @@ void PanelView::draw(DrawContext &iCtx)
 int PanelView::addControl(std::unique_ptr<ControlView> iControl)
 {
   return fControls.add(std::move(iControl));
-}
-
-//------------------------------------------------------------------------
-// PanelView::clearSelectedControls
-//------------------------------------------------------------------------
-void PanelView::clearSelectedControls()
-{
-  for(auto w: fSelectedControls)
-    w->setSelected(false);
-  fSelectedControls.clear();
 }
 
 //------------------------------------------------------------------------
@@ -209,6 +224,20 @@ void PanelView::endMoveControls(ImVec2 const &iPosition)
   });
 
   fLastMovePosition = std::nullopt;
+}
+
+//------------------------------------------------------------------------
+// PanelView::getSelectedControls
+//------------------------------------------------------------------------
+std::vector<ControlView *> PanelView::getSelectedControls() const
+{
+  std::vector<ControlView *> c{};
+  std::for_each(fControls.begin(), fControls.end(), [&c](auto const &p) {
+    auto &control = p.second;
+    if(control->isSelected())
+      c.emplace_back(control.get());
+  });
+  return c;
 }
 
 

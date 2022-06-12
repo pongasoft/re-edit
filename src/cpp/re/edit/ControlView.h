@@ -31,6 +31,8 @@ public:
   ~ControlView() override = default;
 
   constexpr ImVec2 getPosition() const { return fPosition; }
+  constexpr ImVec2 getTopLeft() const { return fPosition; }
+  constexpr ImVec2 getBottomRight() const { return fPosition + fTexture->frameSize(); }
   constexpr void setPosition(ImVec2 const &iPosition) { fPosition = iPosition; }
 
   constexpr bool isSelected() const { return fSelected; }
@@ -46,12 +48,8 @@ public:
 
   constexpr Texture const *getTexture() const { return fTexture.get(); }
 
-  constexpr bool contains(ImVec2 const &iPosition)
-  {
-    return iPosition.x > fPosition.x
-           && iPosition.y > fPosition.y
-           && iPosition.x < fPosition.x + fTexture->frameWidth()
-           && iPosition.y < fPosition.y + fTexture->frameHeight();
+  constexpr bool contains(ImVec2 const &iPosition) const {
+    return iPosition > getTopLeft() && iPosition < getBottomRight();
   }
 
   void draw(DrawContext &iCtx) override;

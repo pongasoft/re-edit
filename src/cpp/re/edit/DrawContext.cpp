@@ -75,12 +75,22 @@ void DrawContext::drawTexture(Texture const *iTexture, ImVec2 const &iPosition, 
 //------------------------------------------------------------------------
 // DrawContext::drawRect
 //------------------------------------------------------------------------
-void DrawContext::drawRect(ImVec2 const &iPosition, ImVec2 const &iSize, ImVec4 const &iColor) const
+void DrawContext::drawRect(ImVec2 const &iPosition, ImVec2 const &iSize, ImU32 iColor) const
 {
   auto const cp = ImGui::GetCursorScreenPos();
   ImVec2 pos(cp + iPosition * fZoom);
   auto drawList = ImGui::GetWindowDrawList();
-  drawList->AddRect(pos, {pos.x + (iSize.x * fZoom), pos.y + (iSize.y * fZoom)}, ImGui::GetColorU32(iColor));
+  drawList->AddRect(pos, {pos.x + (iSize.x * fZoom), pos.y + (iSize.y * fZoom)}, iColor);
+}
+
+//------------------------------------------------------------------------
+// DrawContext::drawLine
+//------------------------------------------------------------------------
+void DrawContext::drawLine(const ImVec2& iP1, const ImVec2& iP2, ImU32 iColor, float iThickness) const
+{
+  auto const cp = ImGui::GetCursorScreenPos();
+  auto drawList = ImGui::GetWindowDrawList();
+  drawList->AddLine(cp + iP1 * fZoom, cp + iP2 * fZoom, iColor, iThickness);
 }
 
 //------------------------------------------------------------------------
