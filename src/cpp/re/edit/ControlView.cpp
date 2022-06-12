@@ -16,15 +16,15 @@
  * @author Yan Pujante
  */
 
-#include "Widget.h"
+#include "ControlView.h"
 
 namespace re::edit {
 
 
 //------------------------------------------------------------------------
-// Widget::draw
+// ControlView::draw
 //------------------------------------------------------------------------
-void Widget::draw(DrawContext &iCtx)
+void ControlView::draw(DrawContext &iCtx)
 {
   if(fSelected)
     iCtx.drawTexture(fTexture.get(), fPosition, fFrameNumber, {1,1,0,1});

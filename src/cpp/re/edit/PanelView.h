@@ -19,7 +19,7 @@
 #ifndef RE_EDIT_PANELVIEW_H
 #define RE_EDIT_PANELVIEW_H
 
-#include "Widget.h"
+#include "ControlView.h"
 #include <re/mock/ObjectManager.hpp>
 #include <set>
 #include <optional>
@@ -41,20 +41,20 @@ public:
   void draw(DrawContext &iCtx) override;
 
   inline void setBackground(std::shared_ptr<Texture> iBackground) { fBackground = std::move(iBackground); }
-  int addWidget(std::unique_ptr<Widget> iWidget);
-  Widget *getSelectedControl() const;
+  int addControl(std::unique_ptr<ControlView> iControl);
+  ControlView *getSelectedControl() const;
 
 private:
-  void clearSelectedWidgets();
+  void clearSelectedControls();
   void selectControl(ImVec2 const &iPosition, bool iMultiple);
   void moveControls(ImVec2 const &iPosition);
   void endMoveControls(ImVec2 const &iPosition);
 
 private:
   std::shared_ptr<Texture> fBackground{};
-  ObjectManager<std::unique_ptr<Widget>> fWidgets{};
+  ObjectManager<std::unique_ptr<ControlView>> fControls{};
   std::optional<ImVec2> fLastMovePosition{};
-  std::set<Widget *> fSelectedWidgets{};
+  std::set<ControlView *> fSelectedControls{};
   std::optional<MouseDrag> fMouseDrag{};
 };
 

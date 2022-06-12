@@ -61,9 +61,9 @@ void PanelView::draw(DrawContext &iCtx)
       selectControl(mousePos / iCtx.getZoom(), io.KeyShift);
     }
   }
-  for(auto &widget: fWidgets)
+  for(auto &control: fControls)
   {
-    auto &w = widget.second;
+    auto &w = control.second;
     w->draw(iCtx);
   }
 
@@ -87,9 +87,9 @@ void PanelView::draw(DrawContext &iCtx)
     {
       auto pos = selectedControl->getPosition();
       auto x = static_cast<int>(std::round(pos.x));
-      ImGui::InputInt("x", &x, 1.0, 5.0);
+      ImGui::InputInt("x", &x, 1, 5);
       auto y = static_cast<int>(std::round(pos.y));
-      ImGui::InputInt("y", &y, 1.0, 5.0);
+      ImGui::InputInt("y", &y, 1, 5);
       if(x != static_cast<int>(std::round(pos.x)) || y != static_cast<int>(std::round(pos.y)))
         selectedControl->setPosition({static_cast<float>(x), static_cast<float>(y)});
 
@@ -108,30 +108,30 @@ void PanelView::draw(DrawContext &iCtx)
 }
 
 //------------------------------------------------------------------------
-// PanelView::addWidget
+// PanelView::addControl
 //------------------------------------------------------------------------
-int PanelView::addWidget(std::unique_ptr<Widget> iWidget)
+int PanelView::addControl(std::unique_ptr<ControlView> iControl)
 {
-  return fWidgets.add(std::move(iWidget));
+  return fControls.add(std::move(iControl));
 }
 
 //------------------------------------------------------------------------
-// PanelView::clearSelectedWidgets
+// PanelView::clearSelectedControls
 //------------------------------------------------------------------------
-void PanelView::clearSelectedWidgets()
+void PanelView::clearSelectedControls()
 {
-  for(auto w: fSelectedWidgets)
+  for(auto w: fSelectedControls)
     w->setSelected(false);
-  fSelectedWidgets.clear();
+  fSelectedControls.clear();
 }
 
 //------------------------------------------------------------------------
 // PanelView::getSelectedControl
 //------------------------------------------------------------------------
-Widget *PanelView::getSelectedControl() const
+ControlView *PanelView::getSelectedControl() const
 {
-  if(std::count_if(fWidgets.begin(), fWidgets.end(), [](auto const &p) { return p.second->isSelected(); }) == 1)
-    return std::find_if(fWidgets.begin(), fWidgets.end(), [](auto const &p) { return p.second->isSelected(); })->second.get();
+  if(std::count_if(fControls.begin(), fControls.end(), [](auto const &p) { return p.second->isSelected(); }) == 1)
+    return std::find_if(fControls.begin(), fControls.end(), [](auto const &p) { return p.second->isSelected(); })->second.get();
   else
     return nullptr;
 }
@@ -141,10 +141,10 @@ Widget *PanelView::getSelectedControl() const
 //------------------------------------------------------------------------
 void PanelView::selectControl(ImVec2 const &iPosition, bool iMultiple)
 {
-  auto ci = std::find_if(fWidgets.begin(), fWidgets.end(), [&iPosition](auto const &p) { return p.second->contains(iPosition); });
-  if(ci == fWidgets.end())
+  auto ci = std::find_if(fControls.begin(), fControls.end(), [&iPosition](auto const &p) { return p.second->contains(iPosition); });
+  if(ci == fControls.end())
   {
-    for(auto &p: fWidgets)
+    for(auto &p: fControls)
       p.second->setSelected(false);
   }
   else
@@ -163,7 +163,7 @@ void PanelView::selectControl(ImVec2 const &iPosition, bool iMultiple)
       fLastMovePosition = iPosition;
       if(!control->isSelected())
       {
-        for(auto &p: fWidgets)
+        for(auto &p: fControls)
           p.second->setSelected(false);
         control->setSelected(true);
       }
@@ -181,7 +181,7 @@ void PanelView::moveControls(ImVec2 const &iPosition)
     auto delta = iPosition - fLastMovePosition.value();
     if(delta.x != 0 || delta.y != 0)
     {
-      std::for_each(fWidgets.begin(), fWidgets.end(), [&delta](auto const &p) {
+      std::for_each(fControls.begin(), fControls.end(), [&delta](auto const &p) {
         if(p.second->isSelected())
           p.second->move(delta);
       });
@@ -195,7 +195,7 @@ void PanelView::moveControls(ImVec2 const &iPosition)
 //------------------------------------------------------------------------
 void PanelView::endMoveControls(ImVec2 const &iPosition)
 {
-  std::for_each(fWidgets.begin(), fWidgets.end(), [](auto const &p) {
+  std::for_each(fControls.begin(), fControls.end(), [](auto const &p) {
     auto &control = p.second;
     if(control->isSelected())
     {

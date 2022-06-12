@@ -16,19 +16,19 @@
  * @author Yan Pujante
  */
 
-#ifndef RE_EDIT_WIDGET_H
-#define RE_EDIT_WIDGET_H
+#ifndef RE_EDIT_CONTROLVIEW_H
+#define RE_EDIT_CONTROLVIEW_H
 
 #include "View.h"
 
 namespace re::edit {
 
-class Widget : public View
+class ControlView : public View
 {
 public:
-  Widget() = default;
-  Widget(ImVec2 iPosition, std::shared_ptr<Texture> iTexture) : fPosition{iPosition}, fTexture{std::move(iTexture)} {}
-  ~Widget() override = default;
+  ControlView() = default;
+  ControlView(ImVec2 iPosition, std::shared_ptr<Texture> iTexture) : fPosition{iPosition}, fTexture{std::move(iTexture)} {}
+  ~ControlView() override = default;
 
   constexpr ImVec2 getPosition() const { return fPosition; }
   constexpr void setPosition(ImVec2 const &iPosition) { fPosition = iPosition; }
@@ -63,11 +63,11 @@ protected:
   bool fSelected{false};
 };
 
-class AnalogKnobWidget : public Widget
+class AnalogKnobControl : public ControlView
 {
 
 };
 
 }
 
-#endif //RE_EDIT_WIDGET_H
+#endif //RE_EDIT_CONTROLVIEW_H

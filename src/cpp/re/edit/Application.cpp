@@ -38,18 +38,18 @@ void Application::init()
   fFrontPanel.fPanelView.setBackground(
     fTextureManager->getTexture("/Volumes/Development/github/pongasoft/re-cva-7/GUI2D/Panel_Front.png"));
   {
-    auto knob = std::make_unique<AnalogKnobWidget>();
+    auto knob = std::make_unique<AnalogKnobControl>();
     knob->setTexture(
       fTextureManager->getTexture("/Volumes/Development/github/pongasoft/re-cva-7/GUI2D/Knob_17_matte_63frames.png"));
     knob->setPosition({3414, 440});
-    fFrontPanel.fPanelView.addWidget(std::move(knob));
+    fFrontPanel.fPanelView.addControl(std::move(knob));
   }
   {
-    auto knob = std::make_unique<AnalogKnobWidget>();
+    auto knob = std::make_unique<AnalogKnobControl>();
     knob->setTexture(
       fTextureManager->getTexture("/Volumes/Development/github/pongasoft/re-cva-7/GUI2D/Knob_17_matte_63frames.png"));
     knob->setPosition({200, 440});
-    fFrontPanel.fPanelView.addWidget(std::move(knob));
+    fFrontPanel.fPanelView.addControl(std::move(knob));
   }
 }
 
