@@ -31,8 +31,17 @@ void PanelView::draw(DrawContext &iCtx)
   auto const cp = ImGui::GetCursorScreenPos();
   if(fBackground)
   {
+    ImVec2 clickableArea = ImGui::GetContentRegionAvail();
+    auto backgroundSize = fBackground->frameSize() * iCtx.getZoom();
+    clickableArea = {std::max(clickableArea.x, backgroundSize.x), std::max(clickableArea.y, backgroundSize.y)};
+
     iCtx.TextureItem(fBackground.get());
     backgroundScreenPosition = ImGui::GetItemRectMin(); // accounts for scrollbar!
+
+    // we use an invisible button to capture mouse events
+    ImGui::SetCursorScreenPos(cp); // TextureItem moves the cursor so we restore it
+    ImGui::InvisibleButton("canvas", clickableArea, ImGuiButtonFlags_MouseButtonLeft);
+
     auto mousePos = ImGui::GetMousePos() - backgroundScreenPosition; // accounts for scrollbars
     if(fMouseDrag)
     {
@@ -62,7 +71,7 @@ void PanelView::draw(DrawContext &iCtx)
       selectControl(mousePos / iCtx.getZoom(), io.KeyShift);
     }
   }
-  ImGui::SetCursorScreenPos(cp); // TextureItem moves the cursor so we restore it
+  ImGui::SetCursorScreenPos(cp); // InvisibleButton moves the cursor so we restore it
   for(auto &control: fControls)
   {
     auto &w = control.second;
@@ -110,25 +119,16 @@ void PanelView::draw(DrawContext &iCtx)
   }
   ImGui::End();
 
-  if(ImGui::Begin("Control"))
+  if(ImGui::Begin("Controls"))
   {
     ImGui::SliderFloat("zoom", &iCtx.getZoom(), 0.25f, 1.5f);
-    if(selectedControls.size() == 1)
+    ImGui::Checkbox("Show Control Border", &iCtx.getUserPreferences().fShowControlBorder);
+    for(auto control : selectedControls)
     {
-      auto selectedControl = selectedControls[0];
-      auto pos = selectedControl->getPosition();
-      auto x = static_cast<int>(std::round(pos.x));
-      ImGui::InputInt("x", &x, 1, 5);
-      auto y = static_cast<int>(std::round(pos.y));
-      ImGui::InputInt("y", &y, 1, 5);
-      if(x != static_cast<int>(std::round(pos.x)) || y != static_cast<int>(std::round(pos.y)))
-        selectedControl->setPosition({static_cast<float>(x), static_cast<float>(y)});
-
-      auto texture = selectedControl->getTexture();
-      if(texture->numFrames() > 2)
-      {
-        ImGui::SliderInt("Frame", &selectedControl->getFrameNumber(), 0, texture->numFrames() - 1);
-      }
+      ImGui::Separator();
+      ImGui::PushID(control);
+      control->renderEdit();
+      ImGui::PopID();
     }
   }
   ImGui::End();
@@ -140,17 +140,6 @@ void PanelView::draw(DrawContext &iCtx)
 int PanelView::addControl(std::unique_ptr<ControlView> iControl)
 {
   return fControls.add(std::move(iControl));
-}
-
-//------------------------------------------------------------------------
-// PanelView::getSelectedControl
-//------------------------------------------------------------------------
-ControlView *PanelView::getSelectedControl() const
-{
-  if(std::count_if(fControls.begin(), fControls.end(), [](auto const &p) { return p.second->isSelected(); }) == 1)
-    return std::find_if(fControls.begin(), fControls.end(), [](auto const &p) { return p.second->isSelected(); })->second.get();
-  else
-    return nullptr;
 }
 
 //------------------------------------------------------------------------
@@ -198,9 +187,13 @@ void PanelView::moveControls(ImVec2 const &iPosition)
     auto delta = iPosition - fLastMovePosition.value();
     if(delta.x != 0 || delta.y != 0)
     {
-      std::for_each(fControls.begin(), fControls.end(), [&delta](auto const &p) {
-        if(p.second->isSelected())
-          p.second->move(delta);
+      std::for_each(fControls.begin(), fControls.end(), [&delta, this](auto const &p) {
+        auto &control = p.second;
+        if(control->isSelected())
+        {
+          control->move(delta);
+          checkControlForError(*control);
+        }
       });
     }
     fLastMovePosition = iPosition;
@@ -212,7 +205,7 @@ void PanelView::moveControls(ImVec2 const &iPosition)
 //------------------------------------------------------------------------
 void PanelView::endMoveControls(ImVec2 const &iPosition)
 {
-  std::for_each(fControls.begin(), fControls.end(), [](auto const &p) {
+  std::for_each(fControls.begin(), fControls.end(), [this](auto const &p) {
     auto &control = p.second;
     if(control->isSelected())
     {
@@ -220,6 +213,7 @@ void PanelView::endMoveControls(ImVec2 const &iPosition)
       position.x = std::round(position.x);
       position.y = std::round(position.y);
       control->setPosition(position);
+      checkControlForError(*control);
     }
   });
 
@@ -238,6 +232,27 @@ std::vector<ControlView *> PanelView::getSelectedControls() const
       c.emplace_back(control.get());
   });
   return c;
+}
+
+//------------------------------------------------------------------------
+// PanelView::checkControlForError
+//------------------------------------------------------------------------
+void PanelView::checkControlForError(ControlView &iControl)
+{
+  auto max = fBackground->frameSize();
+  auto p = iControl.getTopLeft();
+  if(p.x < 0 || p.y < 0 || p.x > max.x || p.y > max.y)
+  {
+    iControl.setError(true);
+    return;
+  }
+  p = iControl.getBottomRight();
+  if(p.x < 0 || p.y < 0 || p.x > max.x || p.y > max.y)
+  {
+    iControl.setError(true);
+    return;
+  }
+  iControl.setError(false);
 }
 
 

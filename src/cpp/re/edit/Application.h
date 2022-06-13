@@ -42,7 +42,8 @@ public:
 private:
   struct PanelState
   {
-    explicit PanelState(std::shared_ptr<TextureManager> iTextureManager);
+    PanelState(std::shared_ptr<TextureManager> iTextureManager,
+               std::shared_ptr<UserPreferences> iUserPreferences);
     DrawContext fDrawContext;
     PanelView fPanelView{};
     bool fVisible{true};
@@ -50,6 +51,7 @@ private:
 
 private:
   std::shared_ptr<TextureManager> fTextureManager;
+  std::shared_ptr<UserPreferences> fUserPreferences;
   PanelState fFrontPanel;
   bool show_demo_window{false};
 };

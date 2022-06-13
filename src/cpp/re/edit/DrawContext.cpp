@@ -84,6 +84,21 @@ void DrawContext::drawRect(ImVec2 const &iPosition, ImVec2 const &iSize, ImU32 i
 }
 
 //------------------------------------------------------------------------
+// DrawContext::drawRectFilled
+//------------------------------------------------------------------------
+void DrawContext::drawRectFilled(ImVec2 const &iPosition,
+                                 ImVec2 const &iSize,
+                                 ImU32 iColor,
+                                 float iRounding,
+                                 ImDrawFlags iFlags) const
+{
+  auto const cp = ImGui::GetCursorScreenPos();
+  ImVec2 pos(cp + iPosition * fZoom);
+  auto drawList = ImGui::GetWindowDrawList();
+  drawList->AddRectFilled(pos, {pos.x + (iSize.x * fZoom), pos.y + (iSize.y * fZoom)}, iColor, iRounding, iFlags);
+}
+
+//------------------------------------------------------------------------
 // DrawContext::drawLine
 //------------------------------------------------------------------------
 void DrawContext::drawLine(const ImVec2& iP1, const ImVec2& iP2, ImU32 iColor, float iThickness) const
@@ -134,5 +149,6 @@ void DrawContext::drawImage(ImTextureID user_texture_id,
   if(border_col.w > 0.0f)
     drawList->AddRect(rect.Min, rect.Max, ImGui::GetColorU32(border_col), 0.0f);
 }
+
 
 }

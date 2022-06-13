@@ -17,19 +17,49 @@
  */
 
 #include "ControlView.h"
+#include <cmath>
 
 namespace re::edit {
-
 
 //------------------------------------------------------------------------
 // ControlView::draw
 //------------------------------------------------------------------------
 void ControlView::draw(DrawContext &iCtx)
 {
+  if(fHidden)
+    return;
+
+  ImVec4 borderColor{};
   if(fSelected)
-    iCtx.drawTexture(fTexture.get(), fPosition, fFrameNumber, {1,1,0,1});
+    borderColor = iCtx.getUserPreferences().fSelectedControlColor;
   else
-    iCtx.drawTexture(fTexture.get(), fPosition, fFrameNumber);
+  {
+    if(iCtx.getUserPreferences().fShowControlBorder)
+      borderColor = iCtx.getUserPreferences().fControlBorderColor;
+  }
+
+  iCtx.drawTexture(fTexture.get(), fPosition, fFrameNumber, borderColor);
+  if(fError)
+    iCtx.drawRectFilled(fPosition, fTexture->frameSize(), iCtx.getUserPreferences().fControlErrorColor);
+}
+
+//------------------------------------------------------------------------
+// ControlView::renderEdit
+//------------------------------------------------------------------------
+void ControlView::renderEdit()
+{
+  ImGui::Text("Control [%p]", this);
+  auto x = static_cast<int>(std::round(fPosition.x));
+  ImGui::InputInt("x", &x, 1, 5);
+  auto y = static_cast<int>(std::round(fPosition.y));
+  ImGui::InputInt("y", &y, 1, 5);
+  if(x != static_cast<int>(std::round(fPosition.x)) || y != static_cast<int>(std::round(fPosition.y)))
+    fPosition = {static_cast<float>(x), static_cast<float>(y)};
+
+  if(fTexture->numFrames() > 2)
+  {
+    ImGui::SliderInt("Frame", &fFrameNumber, 0, fTexture->numFrames() - 1);
+  }
 
 }
 

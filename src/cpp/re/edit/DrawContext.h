@@ -21,6 +21,7 @@
 
 #include <imgui.h>
 #include "TextureManager.h"
+#include "UserPreferences.h"
 
 namespace re::edit {
 
@@ -40,26 +41,33 @@ static constexpr ImVec4 operator+(const ImVec4& lhs, const ImVec4& rhs)         
 static constexpr ImVec4 operator-(const ImVec4& lhs, const ImVec4& rhs)            { return {lhs.x - rhs.x, lhs.y - rhs.y, lhs.z - rhs.z, lhs.w - rhs.w}; }
 static constexpr ImVec4 operator*(const ImVec4& lhs, const ImVec4& rhs)            { return {lhs.x * rhs.x, lhs.y * rhs.y, lhs.z * rhs.z, lhs.w * rhs.w}; }
 
-static constexpr bool operator<(ImVec2 const &lhs, ImVec2 const &rhs)
-{
-  if(lhs.x < rhs.x)
-    return true;
-  if(rhs.x < lhs.x)
-    return false;
-  return lhs.y < rhs.y;
-}
-static constexpr bool operator>(ImVec2 const &lhs, ImVec2 const &rhs)               { return rhs < lhs; }
-static constexpr bool operator<=(ImVec2 const &lhs, ImVec2 const &rhs)              { return !(rhs < lhs); }
-static constexpr bool operator>=(ImVec2 const &lhs, ImVec2 const &rhs)              { return !(lhs < rhs); }
+//static constexpr bool operator<(ImVec2 const &lhs, ImVec2 const &rhs)
+//{
+//  if(lhs.x < rhs.x)
+//    return true;
+//  if(rhs.x < lhs.x)
+//    return false;
+//  return lhs.y < rhs.y;
+//}
+//static constexpr bool operator>(ImVec2 const &lhs, ImVec2 const &rhs)               { return rhs < lhs; }
+//static constexpr bool operator<=(ImVec2 const &lhs, ImVec2 const &rhs)              { return !(rhs < lhs); }
+//static constexpr bool operator>=(ImVec2 const &lhs, ImVec2 const &rhs)              { return !(lhs < rhs); }
 
 class DrawContext
 {
 public:
-  explicit DrawContext(std::shared_ptr<TextureManager> iTextureManager) : fTextureManager{std::move(iTextureManager)} {}
+  DrawContext(std::shared_ptr<TextureManager> iTextureManager,
+              std::shared_ptr<UserPreferences> iUserPreferences) :
+    fTextureManager{std::move(iTextureManager)},
+    fUserPreferences{std::move(iUserPreferences)}
+  {}
 
   constexpr float getZoom() const { return fZoom; }
   float &getZoom() { return fZoom; }
   constexpr void setZoom(float iZoom) { fZoom = iZoom; }
+
+  constexpr UserPreferences const &getUserPreferences() const { return *fUserPreferences; }
+  constexpr UserPreferences &getUserPreferences() { return *fUserPreferences; }
 
 public:
   inline std::shared_ptr<Texture> getTexture(std::string const &iPath) const { return fTextureManager->getTexture(iPath); }
@@ -68,6 +76,10 @@ public:
 
   void drawTexture(Texture const *iTexture, ImVec2 const &iPosition = {0,0}, int iFrameNumber = 0, const ImVec4& iBorderCol = ImVec4(0,0,0,0)) const;
   void drawRect(ImVec2 const &iPosition, ImVec2 const &iSize, ImU32 iColor) const;
+  void drawRectFilled(ImVec2 const &iPosition, ImVec2 const &iSize, ImU32 iColor, float iRounding = 0.0f, ImDrawFlags iFlags = 0) const;
+  inline void drawRectFilled(ImVec2 const &iPosition, ImVec2 const &iSize, const ImVec4& iColor, float iRounding = 0.0f, ImDrawFlags iFlags = 0) const {
+    drawRectFilled(iPosition, iSize, ImGui::GetColorU32(iColor), iRounding, iFlags);
+  }
   void drawRect(ImVec2 const &iPosition, ImVec2 const &iSize, const ImVec4& iColor) const { drawRect(iPosition, iSize, ImGui::GetColorU32(iColor)); }
   void drawLine(const ImVec2& iP1, const ImVec2& iP2, ImU32 iColor, float iThickness = 1.0f) const;
   inline void drawLine(const ImVec2& iP1, const ImVec2& iP2, const ImVec4& iColor, float iThickness = 1.0f) const { drawLine(iP1, iP2, ImGui::GetColorU32(iColor), iThickness); }
@@ -78,6 +90,7 @@ private:
 
 private:
   std::shared_ptr<TextureManager> fTextureManager;
+  std::shared_ptr<UserPreferences> fUserPreferences;
   float fZoom{0.25f};
 };
 

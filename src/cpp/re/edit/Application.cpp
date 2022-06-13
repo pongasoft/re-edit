@@ -26,7 +26,8 @@ namespace re::edit {
 //------------------------------------------------------------------------
 Application::Application(std::shared_ptr<TextureManager> const &iTextureManager) :
   fTextureManager{iTextureManager},
-  fFrontPanel(iTextureManager)
+  fUserPreferences{std::make_shared<UserPreferences>()},
+  fFrontPanel(iTextureManager, fUserPreferences)
 {
 }
 
@@ -41,14 +42,14 @@ void Application::init()
     auto knob = std::make_unique<AnalogKnobControl>();
     knob->setTexture(
       fTextureManager->getTexture("/Volumes/Development/github/pongasoft/re-cva-7/GUI2D/Knob_17_matte_63frames.png"));
-    knob->setPosition({3414, 440});
+    knob->setPosition({1504, 368});
     fFrontPanel.fPanelView.addControl(std::move(knob));
   }
   {
     auto knob = std::make_unique<AnalogKnobControl>();
     knob->setTexture(
       fTextureManager->getTexture("/Volumes/Development/github/pongasoft/re-cva-7/GUI2D/Knob_17_matte_63frames.png"));
-    knob->setPosition({200, 440});
+    knob->setPosition({1504, 172});
     fFrontPanel.fPanelView.addControl(std::move(knob));
   }
 }
@@ -175,8 +176,9 @@ void Application::render()
 //------------------------------------------------------------------------
 // Application::PanelState
 //------------------------------------------------------------------------
-Application::PanelState::PanelState(std::shared_ptr<TextureManager> iTextureManager) :
-  fDrawContext(std::move(iTextureManager))
+Application::PanelState::PanelState(std::shared_ptr<TextureManager> iTextureManager,
+                                    std::shared_ptr<UserPreferences> iUserPreferences) :
+  fDrawContext(std::move(iTextureManager), std::move(iUserPreferences))
 {
 }
 
