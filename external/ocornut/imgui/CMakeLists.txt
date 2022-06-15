@@ -14,6 +14,7 @@ set(imgui_BUILD_SOURCES
     "${imgui_CPP_SRC_DIR}/imgui_tables.cpp"
     "${imgui_CPP_SRC_DIR}/imgui_widgets.cpp"
     "${imgui_CPP_SRC_DIR}/backends/imgui_impl_sdl.cpp"
+    "${imgui_CPP_SRC_DIR}/misc/cpp/imgui_stdlib.cpp"
     )
 
 if(APPLE)

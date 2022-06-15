@@ -17,9 +17,33 @@
  */
 
 #include "Application.h"
+#include "Widget.h"
 #include <imgui.h>
 
 namespace re::edit {
+
+void WidgetTest()
+{
+  static auto knob = Widget::analog_knob(Panel::kFront);
+
+  class FakeEditContext : public EditContext
+  {
+  public:
+    std::vector<std::string> getPropertyNames() const override
+    {
+      return {"/custom_properties/c1", "/custom_properties/c2"};
+    }
+  };
+
+  FakeEditContext ctx;
+
+  if(ImGui::Begin("WidgetTest"))
+  {
+    knob->edit(ctx);
+  }
+  ImGui::End();
+
+}
 
 //------------------------------------------------------------------------
 // Application::Application
@@ -92,6 +116,8 @@ void Application::render()
     }
     ImGui::End();
   }
+
+  WidgetTest();
 }
 
 ////------------------------------------------------------------------------

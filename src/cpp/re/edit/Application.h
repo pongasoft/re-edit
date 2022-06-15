@@ -23,6 +23,7 @@
 #include "imgui.h"
 #include "DrawContext.h"
 #include "PanelView.h"
+#include "EditContext.h"
 
 namespace re::edit {
 
