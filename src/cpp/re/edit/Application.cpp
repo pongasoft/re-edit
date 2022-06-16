@@ -39,7 +39,7 @@ void WidgetTest()
 
   if(ImGui::Begin("WidgetTest"))
   {
-    knob->edit(ctx);
+    knob->editView(ctx);
   }
   ImGui::End();
 

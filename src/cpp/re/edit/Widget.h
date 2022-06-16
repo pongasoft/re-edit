@@ -47,7 +47,10 @@ public:
   {
     kBool,
     kString,
-    kPropertyPath
+    kStaticStringList,
+    kPropertyPath,
+    kPropertyPathList
+
   };
 
 public:
@@ -56,10 +59,10 @@ public:
   virtual Kind getKind() const = 0;
   virtual std::string getValueAsLua() const = 0;
 
-  virtual void edit(EditContext &iCtx) {}
+  virtual void editView(EditContext &iCtx) {}
 
   template<typename T>
-  static std::unique_ptr<Attribute> build(std::string iName, std::optional<typename T::value_t> iDefaultValue = std::nullopt);
+  static std::unique_ptr<T> build(std::string const &iName, typename T::value_t const &iDefaultValue);
 
 public:
   std::string fName{};
@@ -69,59 +72,97 @@ public:
 
 namespace attribute {
 
-class Bool : public Attribute
+template<typename V>
+class VAttribute : public Attribute
 {
 public:
-  using value_t = bool;
+  using value_t = V;
 
 public:
-  Kind getKind() const override { return Kind::kBool; }
-  std::string getValueAsLua() const override { return fValue ? "true" : "false"; }
-  void edit(EditContext &iCtx) override;
+  void resetView(EditContext &iCtx);
+  void reset();
 
 public:
+  value_t fDefaultValue{};
   value_t fValue{};
 };
 
-class String : public Attribute
+class Bool : public VAttribute<bool>
 {
 public:
-  using value_t = std::string;
+  Kind getKind() const override { return Kind::kBool; }
+  std::string getValueAsLua() const override { return fValue ? "true" : "false"; }
+  void editView(EditContext &iCtx) override;
+};
 
+class String : public VAttribute<std::string>
+{
 public:
   Kind getKind() const override { return Kind::kString; }
   std::string getValueAsLua() const override;
-  void edit(EditContext &iCtx) override;
-
-public:
-  value_t fValue{};
+  void editView(EditContext &iCtx) override;
 };
 
 class PropertyPath : public String
 {
 public:
   Kind getKind() const override { return Kind::kPropertyPath; }
-  void edit(EditContext &iCtx) override;
+  void editView(EditContext &iCtx) override;
 };
 
+class PropertyPathList : public VAttribute<std::vector<std::string>>
+{
+  Kind getKind() const override { return Kind::kPropertyPathList; }
+  std::string getValueAsLua() const override;
+  void editView(EditContext &iCtx) override;
+};
 
+class StaticStringList : public String
+{
+  Kind getKind() const override { return Kind::kStaticStringList; }
+  void editView(EditContext &iCtx) override;
+
+public:
+  std::vector<std::string> fSelectionList{};
+};
+
+//------------------------------------------------------------------------
+// VAttribute<V>::reset
+//------------------------------------------------------------------------
+template<typename V>
+void VAttribute<V>::reset()
+{
+  fValue = fDefaultValue;
+  fProvided = false;
 }
 
+//------------------------------------------------------------------------
+// VAttribute<V>::resetView
+//------------------------------------------------------------------------
+template<typename V>
+void VAttribute<V>::resetView(EditContext &iCtx)
+{
+  if(ImGui::Button("X"))
+    reset();
+}
+
+
+} // namespace attribute
 
 //------------------------------------------------------------------------
 // Attribute::build
 //------------------------------------------------------------------------
 template<typename T>
-std::unique_ptr<Attribute> Attribute::build(std::string iName, std::optional<typename T::value_t> iDefaultValue)
+std::unique_ptr<T> Attribute::build(std::string const &iName, typename T::value_t const &iDefaultValue)
 {
   auto attribute = std::make_unique<T>();
-  attribute->fName = std::move(iName);
-  if(iDefaultValue)
-    attribute->fValue = *iDefaultValue;
+  attribute->fName = iName;
+  attribute->fDefaultValue = iDefaultValue;
+  attribute->fValue = iDefaultValue;
   return attribute;
 }
 
-}
+} // namespace widget
 
 class Widget
 {
@@ -129,12 +170,18 @@ public:
   explicit Widget(Panel iPanel) : fPanel{iPanel} {}
   Widget(Panel iPanel, ImVec2 const &iPosition, std::shared_ptr<Texture> iTexture);
 
-  void edit(EditContext &iCtx);
+  void editView(EditContext &iCtx);
 
   static std::unique_ptr<Widget> analog_knob(Panel iPanel);
 
 protected:
-  void addAttribute(std::unique_ptr<widget::Attribute> iAttribute) { fAttributes.emplace_back(std::move(iAttribute)); }
+  Widget *addAttribute(std::unique_ptr<widget::Attribute> iAttribute) { fAttributes.emplace_back(std::move(iAttribute)); return this; }
+  Widget *value();
+  Widget *value_switch();
+  Widget *values();
+  Widget *show_remote_box();
+  Widget *show_automation_rect();
+  Widget *tooltip_position();
 
 private:
   Panel fPanel{};
@@ -142,6 +189,7 @@ private:
   std::shared_ptr<Texture> fTexture{};
   std::vector<std::unique_ptr<widget::Attribute>> fAttributes{};
 };
+
 
 }
 

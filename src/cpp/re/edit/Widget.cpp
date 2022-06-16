@@ -37,31 +37,126 @@ std::string escapeString(std::string const &s)
 std::string String::getValueAsLua() const { return escapeString(fValue); }
 
 //------------------------------------------------------------------------
-// String::edit
+// PropertyPathList::getValueAsLua
 //------------------------------------------------------------------------
-void String::edit(EditContext &iCtx)
+std::string PropertyPathList::getValueAsLua() const
+{
+  std::vector<std::string> l{};
+  std::transform(fValue.begin(), fValue.end(), std::back_inserter(l), escapeString);
+  return re::mock::fmt::printf("{ %s }", re::mock::stl::join_to_string(l));
+}
+
+//------------------------------------------------------------------------
+// String::editView
+//------------------------------------------------------------------------
+void String::editView(EditContext &iCtx)
 {
   if(ImGui::InputText(fName.c_str(), &fValue))
     fProvided = true;
 }
 
 //------------------------------------------------------------------------
-// Bool::edit
+// Bool::editView
 //------------------------------------------------------------------------
-void Bool::edit(EditContext &iCtx)
+void Bool::editView(EditContext &iCtx)
 {
   if(ImGui::Checkbox(fName.c_str(), &fValue))
     fProvided = true;
 }
 
 //------------------------------------------------------------------------
-// PropertyPath::edit
+// PropertyPath::editView
 //------------------------------------------------------------------------
-void PropertyPath::edit(EditContext &iCtx)
+void PropertyPath::editView(EditContext &iCtx)
 {
+  resetView(iCtx);
+  ImGui::SameLine();
   if(ImGui::BeginCombo(fName.c_str(), fValue.c_str()))
   {
     for(auto &p: iCtx.getPropertyNames())
+    {
+      auto const isSelected = p == fValue;
+      if(ImGui::Selectable(p.c_str(), isSelected))
+      {
+        fProvided = true;
+        fValue = p;
+      }
+      if(isSelected)
+        ImGui::SetItemDefaultFocus();
+    }
+    ImGui::EndCombo();
+  }
+}
+
+//------------------------------------------------------------------------
+// PropertyPathList::editView
+//------------------------------------------------------------------------
+void PropertyPathList::editView(EditContext &iCtx)
+{
+  int deleteItemIdx = -1;
+  for(int i = 0; i < fValue.size(); i++)
+  {
+    if(ImGui::Button("-"))
+      deleteItemIdx = i;
+    ImGui::SameLine();
+    auto &value = fValue[i];
+    ImGui::PushID(i);
+    if(ImGui::BeginCombo(fName.c_str(), value.c_str()))
+    {
+      for(auto &p: iCtx.getPropertyNames())
+      {
+        auto const isSelected = p == value;
+        if(ImGui::Selectable(p.c_str(), isSelected))
+        {
+          fProvided = true;
+          value = p;
+        }
+        if(isSelected)
+          ImGui::SetItemDefaultFocus();
+      }
+      ImGui::EndCombo();
+    }
+    ImGui::PopID();
+  }
+
+  if(deleteItemIdx >= 0)
+    fValue.erase(fValue.begin() + deleteItemIdx);
+
+  resetView(iCtx);
+  ImGui::SameLine();
+
+  ImGui::PushID(static_cast<int>(fValue.size()));
+
+  std::string newValue{};
+  if(ImGui::BeginCombo(fName.c_str(), newValue.c_str()))
+  {
+    for(auto &p: iCtx.getPropertyNames())
+    {
+      auto const isSelected = p == newValue;
+      if(ImGui::Selectable(p.c_str(), isSelected))
+      {
+        fProvided = true;
+        fValue.emplace_back(p);
+      }
+      if(isSelected)
+        ImGui::SetItemDefaultFocus();
+    }
+    ImGui::EndCombo();
+  }
+
+  ImGui::PopID();
+}
+
+//------------------------------------------------------------------------
+// StaticStringList::editView
+//------------------------------------------------------------------------
+void StaticStringList::editView(EditContext &iCtx)
+{
+  resetView(iCtx);
+  ImGui::SameLine();
+  if(ImGui::BeginCombo(fName.c_str(), fValue.c_str()))
+  {
+    for(auto &p: fSelectionList)
     {
       auto const isSelected = p == fValue;
       if(ImGui::Selectable(p.c_str(), isSelected))
@@ -84,16 +179,16 @@ using namespace widget;
 using namespace widget::attribute;
 
 //------------------------------------------------------------------------
-// Widget::edit
+// Widget::editView
 //------------------------------------------------------------------------
-void Widget::edit(EditContext &iCtx)
+void Widget::editView(EditContext &iCtx)
 {
   attribute_list_t atts{};
 
   for(auto &w: fAttributes)
   {
     ImGui::PushID(w->fName.c_str());
-    w->edit(iCtx);
+    w->editView(iCtx);
     w->device2D(atts);
     ImGui::PopID();
   }
@@ -104,7 +199,57 @@ void Widget::edit(EditContext &iCtx)
   });
   re::mock::stl::join_to_string(l, "\n");
   ImGui::Text("%s", re::mock::stl::join_to_string(l, "\n").c_str());
-  ImGui::Text("%s", "hello?");
+}
+
+//------------------------------------------------------------------------
+// Widget::value
+//------------------------------------------------------------------------
+Widget *Widget::value()
+{
+  return addAttribute(Attribute::build<PropertyPath>("value", ""));
+}
+
+//------------------------------------------------------------------------
+// Widget::value_switch
+//------------------------------------------------------------------------
+Widget *Widget::value_switch()
+{
+  return addAttribute(Attribute::build<PropertyPath>("value_switch", ""));
+}
+
+//------------------------------------------------------------------------
+// Widget::values
+//------------------------------------------------------------------------
+Widget *Widget::values()
+{
+  return addAttribute(Attribute::build<PropertyPathList>("values", {}));
+}
+
+//------------------------------------------------------------------------
+// Widget::show_remote_box
+//------------------------------------------------------------------------
+Widget *Widget::show_remote_box()
+{
+  return addAttribute(Attribute::build<Bool>("show_remote_box", true));
+}
+
+//------------------------------------------------------------------------
+// Widget::show_automation_rect
+//------------------------------------------------------------------------
+Widget *Widget::show_automation_rect()
+{
+  return addAttribute(Attribute::build<Bool>("show_automation_rect", true));
+}
+
+//------------------------------------------------------------------------
+// Widget::tooltip_position
+//------------------------------------------------------------------------
+Widget *Widget::tooltip_position()
+{
+  static std::vector<std::string> tooltipPositions = { "bottom_left", "bottom", "bottom_right", "right", "top_right", "top", "top_left", "left", "no_tooltip"};
+  auto attribute = Attribute::build<StaticStringList>("tooltip_position", "");
+  attribute->fSelectionList = tooltipPositions;
+  return addAttribute(std::move(attribute));
 }
 
 //------------------------------------------------------------------------
@@ -113,11 +258,16 @@ void Widget::edit(EditContext &iCtx)
 std::unique_ptr<Widget> Widget::analog_knob(Panel iPanel)
 {
   auto w = std::make_unique<Widget>(iPanel);
-  w->addAttribute(Attribute::build<PropertyPath>("value"));
-  w->addAttribute(Attribute::build<PropertyPath>("value_switch"));
-  w->addAttribute(Attribute::build<Bool>("show_remote_box", true));
+  w ->value()
+    ->value_switch()
+    ->values()
+    ->show_remote_box()
+    ->show_automation_rect()
+    ->tooltip_position();
+
   return w;
 }
+
 
 }
 
