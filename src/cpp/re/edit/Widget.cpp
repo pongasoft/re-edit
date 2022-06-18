@@ -18,6 +18,7 @@
 
 #include "Widget.h"
 #include <re/mock/fmt.h>
+#include <re/mock/Errors.h>
 #include <imgui.h>
 #include <misc/cpp/imgui_stdlib.h>
 
@@ -39,6 +40,14 @@ std::string String::getValueAsLua() const { return escapeString(fValue); }
 //------------------------------------------------------------------------
 // PropertyPathList::getValueAsLua
 //------------------------------------------------------------------------
+std::string UIText::getValueAsLua() const
+{
+  return re::mock::fmt::printf("jbox.ui_text(\"%s\")", fValue);
+}
+
+//------------------------------------------------------------------------
+// PropertyPathList::getValueAsLua
+//------------------------------------------------------------------------
 std::string PropertyPathList::getValueAsLua() const
 {
   std::vector<std::string> l{};
@@ -47,10 +56,42 @@ std::string PropertyPathList::getValueAsLua() const
 }
 
 //------------------------------------------------------------------------
+// DiscretePropertyValueList::getValueAsLua
+//------------------------------------------------------------------------
+std::string DiscretePropertyValueList::getValueAsLua() const
+{
+  std::vector<std::string> l{};
+  std::transform(fValue.begin(), fValue.end(), std::back_inserter(l), [](auto i) { return std::to_string(i); } );
+  return re::mock::fmt::printf("{ %s }", re::mock::stl::join_to_string(l));
+}
+
+//------------------------------------------------------------------------
+// Values::hdgui2D
+//------------------------------------------------------------------------
+void Values::hdgui2D(Widget const &iWidget, attribute_list_t &oAttributes) const
+{
+  auto valueSwitch = iWidget.findValueSwitchValue();
+  if(valueSwitch && !valueSwitch->empty())
+    Attribute::hdgui2D(iWidget, oAttributes);
+}
+
+//------------------------------------------------------------------------
+// VisibilityValues::hdgui2D
+//------------------------------------------------------------------------
+void VisibilityValues::hdgui2D(Widget const &iWidget, attribute_list_t &oAttributes) const
+{
+  auto visibilityValue = iWidget.findVisibilitySwitchValue();
+  if(visibilityValue && !visibilityValue->empty())
+    Attribute::hdgui2D(iWidget, oAttributes);
+}
+
+//------------------------------------------------------------------------
 // String::editView
 //------------------------------------------------------------------------
-void String::editView(EditContext &iCtx)
+void String::editView(Widget &iWidget, EditContext const &iCtx)
 {
+  resetView(iWidget, iCtx);
+  ImGui::SameLine();
   if(ImGui::InputText(fName.c_str(), &fValue))
     fProvided = true;
 }
@@ -58,8 +99,10 @@ void String::editView(EditContext &iCtx)
 //------------------------------------------------------------------------
 // Bool::editView
 //------------------------------------------------------------------------
-void Bool::editView(EditContext &iCtx)
+void Bool::editView(Widget &iWidget, EditContext const &iCtx)
 {
+  resetView(iWidget, iCtx);
+  ImGui::SameLine();
   if(ImGui::Checkbox(fName.c_str(), &fValue))
     fProvided = true;
 }
@@ -67,13 +110,13 @@ void Bool::editView(EditContext &iCtx)
 //------------------------------------------------------------------------
 // PropertyPath::editView
 //------------------------------------------------------------------------
-void PropertyPath::editView(EditContext &iCtx)
+void PropertyPath::editView(Widget &iWidget, EditContext const &iCtx)
 {
-  resetView(iCtx);
+  resetView(iWidget, iCtx);
   ImGui::SameLine();
   if(ImGui::BeginCombo(fName.c_str(), fValue.c_str()))
   {
-    for(auto &p: iCtx.getPropertyNames())
+    for(auto &p: iCtx.getPropertyNames(getPropertyKind()))
     {
       auto const isSelected = p == fValue;
       if(ImGui::Selectable(p.c_str(), isSelected))
@@ -91,16 +134,16 @@ void PropertyPath::editView(EditContext &iCtx)
 //------------------------------------------------------------------------
 // PropertyPathList::editView
 //------------------------------------------------------------------------
-void PropertyPathList::editView(EditContext &iCtx)
+void PropertyPathList::editView(Widget &iWidget, EditContext const &iCtx)
 {
   int deleteItemIdx = -1;
   for(int i = 0; i < fValue.size(); i++)
   {
+    ImGui::PushID(i);
     if(ImGui::Button("-"))
       deleteItemIdx = i;
     ImGui::SameLine();
     auto &value = fValue[i];
-    ImGui::PushID(i);
     if(ImGui::BeginCombo(fName.c_str(), value.c_str()))
     {
       for(auto &p: iCtx.getPropertyNames())
@@ -122,7 +165,7 @@ void PropertyPathList::editView(EditContext &iCtx)
   if(deleteItemIdx >= 0)
     fValue.erase(fValue.begin() + deleteItemIdx);
 
-  resetView(iCtx);
+  resetView(iWidget, iCtx);
   ImGui::SameLine();
 
   ImGui::PushID(static_cast<int>(fValue.size()));
@@ -148,11 +191,147 @@ void PropertyPathList::editView(EditContext &iCtx)
 }
 
 //------------------------------------------------------------------------
+// ValueSwitch::resetView
+//------------------------------------------------------------------------
+bool ValueSwitch::resetView(Widget &iWidget, EditContext const &iCtx)
+{
+  if(PropertyPath::resetView(iWidget, iCtx))
+  {
+    auto values = iWidget.findAttributeValue<Values>("values");
+    RE_MOCK_INTERNAL_ASSERT(values != nullptr);
+    if(values)
+      values->clear();
+    return true;
+  }
+  return false;
+}
+
+//------------------------------------------------------------------------
+// ValueSwitch::editView
+//------------------------------------------------------------------------
+void ValueSwitch::editView(Widget &iWidget, EditContext const &iCtx)
+{
+  PropertyPath::editView(iWidget, iCtx);
+  auto value = iWidget.findValueValue();
+  RE_MOCK_INTERNAL_ASSERT(value != nullptr);
+  if(!fValue.empty() && !value->empty())
+    fError = "Only one of [value] or [value_switch] must be provided";
+  else
+    fError = std::nullopt;
+}
+
+//------------------------------------------------------------------------
+// Values::editView
+//------------------------------------------------------------------------
+void Values::editView(Widget &iWidget, EditContext const &iCtx)
+{
+  bool emptyError = false;
+  auto valueSwitch = iWidget.findValueSwitchValue();
+  if(valueSwitch)
+  {
+    auto stepCount = iCtx.getStepCount(*valueSwitch);
+    if(stepCount > 1)
+    {
+      fValue.resize(stepCount);
+      for(int i = 0; i < fValue.size(); i++)
+      {
+        auto &value = fValue[i];
+        ImGui::PushID(i);
+        if(ImGui::Button("X"))
+          value = "";
+        ImGui::SameLine();
+        if(ImGui::BeginCombo(fName.c_str(), value.c_str()))
+        {
+          for(auto &p: iCtx.getPropertyNames())
+          {
+            auto const isSelected = p == value;
+            if(ImGui::Selectable(p.c_str(), isSelected))
+            {
+              fProvided = true;
+              value = p;
+            }
+            if(isSelected)
+              ImGui::SetItemDefaultFocus();
+          }
+          ImGui::EndCombo();
+        }
+        ImGui::PopID();
+        if(value.empty())
+          emptyError = true;
+      }
+    }
+  }
+  if(emptyError)
+    fError = "All values must be provided";
+  else
+    fError = std::nullopt;
+}
+
+//------------------------------------------------------------------------
+// VisibilitySwitch::editView
+//------------------------------------------------------------------------
+void VisibilitySwitch::editView(Widget &iWidget, EditContext const &iCtx)
+{
+  PropertyPath::editView(iWidget, iCtx);
+  if(!fValue.empty())
+  {
+    auto ptr = iWidget.findAttribute<VisibilityValues>("visibility_values");
+    RE_MOCK_INTERNAL_ASSERT(ptr != nullptr);
+    if(ptr->fValue.empty())
+    {
+      ptr->fValue.emplace_back(0);
+      ptr->fProvided = true;
+    }
+  }
+}
+
+//------------------------------------------------------------------------
+// VisibilityValues::editView
+//------------------------------------------------------------------------
+void VisibilityValues::editView(Widget &iWidget, EditContext const &iCtx)
+{
+  auto visibilityValue = iWidget.findVisibilitySwitchValue();
+  if(visibilityValue)
+  {
+    auto stepCount = iCtx.getStepCount(*visibilityValue);
+    if(stepCount > 1)
+    {
+      int deleteItemIdx = -1;
+      for(int i = 0; i < fValue.size(); i++)
+      {
+        ImGui::PushID(i);
+        if(ImGui::Button("-"))
+          deleteItemIdx = i;
+        ImGui::SameLine();
+        ImGui::SliderInt(fName.c_str(), &fValue[i], 0, stepCount - 1);
+        ImGui::PopID();
+      }
+
+      if(deleteItemIdx >= 0)
+        fValue.erase(fValue.begin() + deleteItemIdx);
+
+      ImGui::PushID(static_cast<int>(fValue.size()));
+
+      if(ImGui::Button("+"))
+      {
+        fProvided = true;
+        fValue.emplace_back(0);
+      }
+
+      ImGui::SameLine();
+      ImGui::LabelText(fName.c_str(), "Click + to add");
+
+      ImGui::PopID();
+    }
+  }
+}
+
+//------------------------------------------------------------------------
 // StaticStringList::editView
 //------------------------------------------------------------------------
-void StaticStringList::editView(EditContext &iCtx)
+void StaticStringList::editView(Widget &iWidget, EditContext const &iCtx)
 {
-  resetView(iCtx);
+  resetView(iWidget, iCtx);
   ImGui::SameLine();
   if(ImGui::BeginCombo(fName.c_str(), fValue.c_str()))
   {
@@ -188,8 +367,21 @@ void Widget::editView(EditContext &iCtx)
   for(auto &w: fAttributes)
   {
     ImGui::PushID(w->fName.c_str());
-    w->editView(iCtx);
-    w->device2D(atts);
+    w->editView(*this, iCtx);
+    if(w->fError)
+    {
+      ImGui::SameLine();
+      ImGui::TextColored(ImVec4(1,0,0,1), "(?)");
+      if (ImGui::IsItemHovered())
+      {
+        ImGui::BeginTooltip();
+        ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
+        ImGui::TextUnformatted(w->fError->c_str());
+        ImGui::PopTextWrapPos();
+        ImGui::EndTooltip();
+      }
+    }
+    w->hdgui2D(*this, atts);
     ImGui::PopID();
   }
 
@@ -214,7 +406,7 @@ Widget *Widget::value()
 //------------------------------------------------------------------------
 Widget *Widget::value_switch()
 {
-  return addAttribute(Attribute::build<PropertyPath>("value_switch", ""));
+  return addAttribute(Attribute::build<ValueSwitch>("value_switch", ""));
 }
 
 //------------------------------------------------------------------------
@@ -222,7 +414,23 @@ Widget *Widget::value_switch()
 //------------------------------------------------------------------------
 Widget *Widget::values()
 {
-  return addAttribute(Attribute::build<PropertyPathList>("values", {}));
+  return addAttribute(Attribute::build<Values>("values", {}));
+}
+
+//------------------------------------------------------------------------
+// Widget::visibility_switch
+//------------------------------------------------------------------------
+Widget *Widget::visibility_switch()
+{
+  return addAttribute(Attribute::build<VisibilitySwitch>("visibility_switch", ""));
+}
+
+//------------------------------------------------------------------------
+// Widget::visibility_values
+//------------------------------------------------------------------------
+Widget *Widget::visibility_values()
+{
+  return addAttribute(Attribute::build<VisibilityValues>("visibility_values", {}));
 }
 
 //------------------------------------------------------------------------
@@ -246,10 +454,17 @@ Widget *Widget::show_automation_rect()
 //------------------------------------------------------------------------
 Widget *Widget::tooltip_position()
 {
-  static std::vector<std::string> tooltipPositions = { "bottom_left", "bottom", "bottom_right", "right", "top_right", "top", "top_left", "left", "no_tooltip"};
-  auto attribute = Attribute::build<StaticStringList>("tooltip_position", "");
-  attribute->fSelectionList = tooltipPositions;
-  return addAttribute(std::move(attribute));
+  static const std::vector<std::string> tooltipPositions =
+    { "bottom_left", "bottom", "bottom_right", "right", "top_right", "top", "top_left", "left", "no_tooltip"};
+  return addAttribute(Attribute::build<StaticStringList>("tooltip_position", "", tooltipPositions));
+}
+
+//------------------------------------------------------------------------
+// Widget::tooltip_template
+//------------------------------------------------------------------------
+Widget *Widget::tooltip_template()
+{
+  return addAttribute(Attribute::build<UIText>("tooltip_template", ""));
 }
 
 //------------------------------------------------------------------------
@@ -261,13 +476,16 @@ std::unique_ptr<Widget> Widget::analog_knob(Panel iPanel)
   w ->value()
     ->value_switch()
     ->values()
+    ->visibility_switch()
+    ->visibility_values()
+    ->tooltip_position()
+    ->tooltip_template()
     ->show_remote_box()
     ->show_automation_rect()
-    ->tooltip_position();
+    ;
 
   return w;
 }
-
 
 }
 
@@ -275,9 +493,9 @@ std::unique_ptr<Widget> Widget::analog_knob(Panel iPanel)
 namespace re::edit::widget {
 
 //------------------------------------------------------------------------
-// Attribute::device2D
+// Attribute::hdgui2D
 //------------------------------------------------------------------------
-void Attribute::device2D(attribute_list_t &oAttributes) const
+void Attribute::hdgui2D(Widget const &iWidget, attribute_list_t &oAttributes) const
 {
   if(fProvided)
     oAttributes.emplace_back(attribute_t{fName, getValueAsLua()});

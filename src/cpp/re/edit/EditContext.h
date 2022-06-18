@@ -27,7 +27,14 @@ namespace re::edit {
 class EditContext
 {
 public:
-  virtual std::vector<std::string> getPropertyNames() const = 0;
+  enum class PropertyKind
+  {
+    kAny,
+    kDiscrete,
+  };
+public:
+  virtual std::vector<std::string> getPropertyNames(PropertyKind iPropertyKind = PropertyKind::kAny) const = 0;
+  virtual int getStepCount(std::string const &iPropertyPath) const = 0;
 };
 
 }

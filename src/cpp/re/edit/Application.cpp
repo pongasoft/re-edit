@@ -29,9 +29,20 @@ void WidgetTest()
   class FakeEditContext : public EditContext
   {
   public:
-    std::vector<std::string> getPropertyNames() const override
+    std::vector<std::string> getPropertyNames(PropertyKind iPropertyKind) const override
     {
-      return {"/custom_properties/c1", "/custom_properties/c2"};
+      if(iPropertyKind == EditContext::PropertyKind::kAny)
+        return {"/custom_properties/c1", "/custom_properties/c2"};
+      else
+        return {"/custom_properties/c1"};
+    }
+
+    int getStepCount(std::string const &iPropertyPath) const override
+    {
+      if(iPropertyPath == "/custom_properties/c1")
+        return 5;
+      else
+        return 0;
     }
   };
 
