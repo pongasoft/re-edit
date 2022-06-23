@@ -32,7 +32,7 @@ void WidgetTest()
     std::vector<std::string> getPropertyNames(PropertyKind iPropertyKind) const override
     {
       if(iPropertyKind == EditContext::PropertyKind::kAny)
-        return {"/custom_properties/c1", "/custom_properties/c2"};
+        return {"/custom_properties/c1", "/custom_properties/c2", "/custom_properties/this/is/a/very/long/name/will/it/fit"};
       else
         return {"/custom_properties/c1"};
     }
@@ -48,9 +48,15 @@ void WidgetTest()
 
   FakeEditContext ctx;
 
-  if(ImGui::Begin("WidgetTest"))
+  if(ImGui::Begin("WidgetTest", nullptr, ImGuiWindowFlags_HorizontalScrollbar))
   {
+    static float itemWidth = 100;
+
+//    ImGui::SliderFloat("Item Width", &itemWidth, 10, 300);
+
+//    ImGui::PushItemWidth(itemWidth);
     knob->editView(ctx);
+//    ImGui::PopItemWidth();
   }
   ImGui::End();
 

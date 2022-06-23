@@ -62,155 +62,206 @@ public:
   };
 
 public:
+  explicit Attribute(std::string iName) : fName{std::move(iName)} {}
   virtual ~Attribute() = default;
-  virtual void hdgui2D(Widget const &iWidget, attribute_list_t &oAttributes) const;
-  virtual Kind getKind() const = 0;
-  virtual std::string getValueAsLua() const = 0;
+  virtual void hdgui2D(attribute_list_t &oAttributes) const {}
+//  virtual Kind getKind() const = 0;
 
-  virtual void editView(Widget &iWidget, EditContext const &iCtx) {}
+  virtual void reset() {}
+  virtual void editView(EditContext const &iCtx) {}
+  void clearError() { fError = std::nullopt; };
 
   template<typename T, typename... ConstructorArgs>
   static std::unique_ptr<T> build(std::string const &iName, typename T::value_t const &iDefaultValue, ConstructorArgs&& ...iArgs);
 
 public:
   std::string fName{};
-  bool fRequired{};
-  bool fProvided{};
   std::optional<std::string> fError{};
 };
 
 namespace attribute {
 
-template<typename V>
-class VAttribute : public Attribute
+template<typename T>
+class SingleAttribute : public Attribute
 {
 public:
-  using value_t = V;
+  using value_t = T;
 
 public:
-  virtual bool resetView(Widget &iWidget, EditContext const &iCtx);
-  void reset();
+  explicit SingleAttribute(std::string iName) : Attribute{std::move(iName)} {}
+  void hdgui2D(attribute_list_t &oAttributes) const override;
+  void resetView();
+  void resetView(const std::function<void()>& iOnReset) const;
+  virtual std::string getValueAsLua() const = 0;
+  void reset() override;
 
 public:
   value_t fDefaultValue{};
   value_t fValue{};
+  bool fProvided{};
 };
 
-class Bool : public VAttribute<bool>
+class Bool : public SingleAttribute<bool>
 {
 public:
-  Kind getKind() const override { return Kind::kBool; }
+//  Kind getKind() const override { return Kind::kBool; }
+  explicit Bool(std::string iName) : SingleAttribute<bool>{std::move(iName)} {}
   std::string getValueAsLua() const override { return fValue ? "true" : "false"; }
-  void editView(Widget &iWidget, EditContext const &iCtx) override;
+  void editView(EditContext const &iCtx) override;
 };
 
-class String : public VAttribute<std::string>
+class String : public SingleAttribute<std::string>
 {
 public:
-  Kind getKind() const override { return Kind::kString; }
+//  Kind getKind() const override { return Kind::kString; }
+  explicit String(std::string iName) : SingleAttribute<std::string>{std::move(iName)} {}
   std::string getValueAsLua() const override;
-  void editView(Widget &iWidget, EditContext const &iCtx) override;
+  void editView(EditContext const &iCtx) override;
 };
 
 class PropertyPath : public String
 {
 public:
-  Kind getKind() const override { return Kind::kPropertyPath; }
+  explicit PropertyPath(std::string iName) : String{std::move(iName)} {}
+//  Kind getKind() const override { return Kind::kPropertyPath; }
   virtual EditContext::PropertyKind getPropertyKind() const { return EditContext::PropertyKind::kAny; }
-  void editView(Widget &iWidget, EditContext const &iCtx) override;
+  void editView(EditContext const &iCtx) override;
+
+  void editView(std::vector<std::string> const &iProperties,
+                std::function<void()> const &iOnReset,
+                std::function<void(std::string const &)> const &iOnSelect) const;
 };
 
 class UIText : public String
 {
 public:
-  Kind getKind() const override { return Kind::kUIText; }
+//  Kind getKind() const override { return Kind::kUIText; }
+  explicit UIText(std::string iName) : String{std::move(iName)} {}
   std::string getValueAsLua() const override;
 };
 
-class PropertyPathList : public VAttribute<std::vector<std::string>>
+class PropertyPathList : public SingleAttribute<std::vector<std::string>>
 {
 public:
-  Kind getKind() const override { return Kind::kPropertyPathList; }
+//  Kind getKind() const override { return Kind::kPropertyPathList; }
+  explicit PropertyPathList(std::string iName) : SingleAttribute<std::vector<std::string>>{std::move(iName)} {}
   std::string getValueAsLua() const override;
-  void editView(Widget &iWidget, EditContext const &iCtx) override;
+//  void editView(EditContext const &iCtx) override;
+  void editStaticListView(std::vector<std::string> const &iProperties,
+                          std::function<void()> const &iOnReset,
+                          std::function<void(int iIndex, std::string const &)> const &iOnSelect) const;
 };
 
-class ValueSwitch : public PropertyPath
+class DiscretePropertyValueList : public SingleAttribute<std::vector<int>>
 {
 public:
-  EditContext::PropertyKind getPropertyKind() const override { return EditContext::PropertyKind::kDiscrete; }
-  Kind getKind() const override { return Kind::kValueSwitch; }
-
-  void editView(Widget &iWidget, EditContext const &iCtx) override;
-
-  bool resetView(Widget &iWidget, EditContext const &iCtx) override;
-};
-
-class Values : public PropertyPathList
-{
-public:
-  Kind getKind() const override { return Kind::kValues; }
-  void editView(Widget &iWidget, EditContext const &iCtx) override;
-  void hdgui2D(Widget const &iWidget, attribute_list_t &oAttributes) const override;
-};
-
-class DiscretePropertyValueList : public VAttribute<std::vector<int>>
-{
-public:
+  explicit DiscretePropertyValueList(std::string iName) : SingleAttribute<std::vector<int>>{std::move(iName)} {}
   std::string getValueAsLua() const override;
+
+  void editView(int iMin,
+                int iMax,
+                std::function<void()>                       const &iOnAdd,
+                std::function<void(int iIndex, int iValue)> const &iOnUpdate,
+                std::function<void(int iIndex)>             const &iOnDelete) const;
 };
 
-class VisibilitySwitch : public PropertyPath
+class Value : public Attribute
 {
 public:
-  Kind getKind() const override { return Kind::kVisibilitySwitch; }
-  EditContext::PropertyKind getPropertyKind() const override{ return EditContext::PropertyKind::kDiscrete; }
-  void editView(Widget &iWidget, EditContext const &iCtx) override;
+  Value() : Attribute("value") {}
+  void hdgui2D(attribute_list_t &oAttributes) const override;
+  void editView(EditContext const &iCtx) override;
+
+  void reset() override;
+
+public:
+  bool fUseSwitch{};
+  PropertyPath fValue{"value"};
+  PropertyPath fValueSwitch{"value_switch"};
+  PropertyPathList fValues{"values"};
 };
 
-class VisibilityValues : public DiscretePropertyValueList
+class Visibility : public Attribute
 {
 public:
-  Kind getKind() const override { return Kind::kVisibilityValues; }
-  void editView(Widget &iWidget, EditContext const &iCtx) override;
-  void hdgui2D(Widget const &iWidget, attribute_list_t &oAttributes) const override;
+  Visibility() : Attribute("visibility") {}
+  void hdgui2D(attribute_list_t &oAttributes) const override;
+  void editView(EditContext const &iCtx) override;
+
+  void reset() override;
+
+public:
+  PropertyPath fSwitch{"visibility_switch"};
+  DiscretePropertyValueList fValues{"visibility_values"};
 };
+
+
+//class VisibilitySwitch : public PropertyPath
+//{
+//public:
+////  Kind getKind() const override { return Kind::kVisibilitySwitch; }
+//  EditContext::PropertyKind getPropertyKind() const override{ return EditContext::PropertyKind::kDiscrete; }
+//  void editView(EditContext const &iCtx) override;
+//};
+//
+//class VisibilityValues : public DiscretePropertyValueList
+//{
+//public:
+////  Kind getKind() const override { return Kind::kVisibilityValues; }
+//  void editView(EditContext const &iCtx) override;
+//  void hdgui2D(attribute_list_t &oAttributes) const override;
+//};
 
 class StaticStringList : public String
 {
 public:
-  explicit StaticStringList(std::vector<std::string> const &iSelectionList) : fSelectionList(iSelectionList) {}
-  Kind getKind() const override { return Kind::kStaticStringList; }
-  void editView(Widget &iWidget, EditContext const &iCtx) override;
+  explicit StaticStringList(std::string iName, std::vector<std::string> const &iSelectionList) : String{std::move(iName)}, fSelectionList(iSelectionList) {}
+//  Kind getKind() const override { return Kind::kStaticStringList; }
+  void editView(EditContext const &iCtx) override;
 
 public:
   std::vector<std::string> const &fSelectionList;
 };
 
 //------------------------------------------------------------------------
-// VAttribute<V>::reset
+// SingleAttribute<T>::reset
 //------------------------------------------------------------------------
-template<typename V>
-void VAttribute<V>::reset()
+template<typename T>
+void SingleAttribute<T>::reset()
 {
   fValue = fDefaultValue;
   fProvided = false;
 }
 
 //------------------------------------------------------------------------
-// VAttribute<V>::resetView
+// SingleAttribute<T>::resetView
 //------------------------------------------------------------------------
-template<typename V>
-bool VAttribute<V>::resetView(Widget &iWidget, EditContext const &iCtx)
+template<typename T>
+void SingleAttribute<T>::resetView()
 {
   if(ImGui::Button("X"))
-  {
     reset();
-    return true;
-  }
-  return false;
 }
 
+//------------------------------------------------------------------------
+// SingleAttribute<T>::resetView
+//------------------------------------------------------------------------
+template<typename T>
+void SingleAttribute<T>::resetView(const std::function<void()>& iOnReset) const
+{
+  if(ImGui::Button("X"))
+    iOnReset();
+}
+
+//------------------------------------------------------------------------
+// SingleAttribute<T>::hdgui2D
+//------------------------------------------------------------------------
+template<typename T>
+void SingleAttribute<T>::hdgui2D(attribute_list_t &oAttributes) const
+{
+  if(fProvided)
+    oAttributes.emplace_back(attribute_t{fName, getValueAsLua()});
+}
 
 } // namespace attribute
 
@@ -220,7 +271,7 @@ bool VAttribute<V>::resetView(Widget &iWidget, EditContext const &iCtx)
 template<typename T, typename... ConstructorArgs>
 std::unique_ptr<T> Attribute::build(std::string const &iName, typename T::value_t const &iDefaultValue, ConstructorArgs&& ...iArgs)
 {
-  auto attribute = std::make_unique<T>(std::forward<ConstructorArgs>(iArgs)...);
+  auto attribute = std::make_unique<T>(iName, std::forward<ConstructorArgs>(iArgs)...);
   attribute->fName = iName;
   attribute->fDefaultValue = iDefaultValue;
   attribute->fValue = iDefaultValue;
@@ -239,27 +290,24 @@ public:
 
   static std::unique_ptr<Widget> analog_knob(Panel iPanel);
 
-  template<typename T>
-  T *findAttribute(std::string const &iAttributeName) const;
+//  template<typename T>
+//  T *findAttribute(std::string const &iAttributeName) const;
+//
+//  template<typename T>
+//  typename T::value_t *findAttributeValue(std::string const &iAttributeName) const;
 
-  template<typename T>
-  typename T::value_t *findAttributeValue(std::string const &iAttributeName) const;
-
-  std::string *findValueValue() const { return findAttributeValue<widget::attribute::PropertyPath>("value"); }
-  std::string *findValueSwitchValue() const { return findAttributeValue<widget::attribute::ValueSwitch>("value_switch"); }
-  std::string *findVisibilitySwitchValue() const { return findAttributeValue<widget::attribute::VisibilitySwitch>("visibility_switch"); };
+//  std::string *findValueValue() const { return findAttributeValue<widget::attribute::PropertyPath>("value"); }
+//  std::string *findValueSwitchValue() const { return findAttributeValue<widget::attribute::ValueSwitch>("value_switch"); }
+//  std::string *findVisibilitySwitchValue() const { return findAttributeValue<widget::attribute::VisibilitySwitch>("visibility_switch"); };
 
 protected:
   Widget *addAttribute(std::unique_ptr<widget::Attribute> iAttribute) { fAttributes.emplace_back(std::move(iAttribute)); return this; }
   Widget *value();
-  Widget *value_switch();
-  Widget *values();
   Widget *show_remote_box();
   Widget *show_automation_rect();
   Widget *tooltip_position();
   Widget *tooltip_template();
-  Widget *visibility_switch();
-  Widget *visibility_values();
+  Widget *visibility();
 
 private:
   Panel fPanel{};
@@ -268,31 +316,31 @@ private:
   std::vector<std::unique_ptr<widget::Attribute>> fAttributes{};
 };
 
-//------------------------------------------------------------------------
-// Widget::findAttribute
-//------------------------------------------------------------------------
-template<typename T>
-T *Widget::findAttribute(std::string const &iAttributeName) const
-{
-  auto iter = std::find_if(fAttributes.begin(), fAttributes.end(), [&iAttributeName](auto &att) { return att->fName == iAttributeName;} );
-  if(iter == fAttributes.end())
-    return nullptr;
-  else
-    return dynamic_cast<T *>(iter->get());
-}
-
-//------------------------------------------------------------------------
-// Widget::findAttributeValue
-//------------------------------------------------------------------------
-template<typename T>
-typename T::value_t * Widget::findAttributeValue(std::string const &iAttributeName) const
-{
-  auto attribute = findAttribute<T>(iAttributeName);
-  if(attribute)
-    return &attribute->fValue;
-  else
-    return nullptr;
-}
+////------------------------------------------------------------------------
+//// Widget::findAttribute
+////------------------------------------------------------------------------
+//template<typename T>
+//T *Widget::findAttribute(std::string const &iAttributeName) const
+//{
+//  auto iter = std::find_if(fAttributes.begin(), fAttributes.end(), [&iAttributeName](auto &att) { return att->fName == iAttributeName;} );
+//  if(iter == fAttributes.end())
+//    return nullptr;
+//  else
+//    return dynamic_cast<T *>(iter->get());
+//}
+//
+////------------------------------------------------------------------------
+//// Widget::findAttributeValue
+////------------------------------------------------------------------------
+//template<typename T>
+//typename T::value_t * Widget::findAttributeValue(std::string const &iAttributeName) const
+//{
+//  auto attribute = findAttribute<T>(iAttributeName);
+//  if(attribute)
+//    return &attribute->fValue;
+//  else
+//    return nullptr;
+//}
 
 
 
