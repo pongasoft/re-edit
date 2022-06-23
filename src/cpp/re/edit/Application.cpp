@@ -80,18 +80,18 @@ void Application::init()
   fFrontPanel.fPanelView.setBackground(
     fTextureManager->getTexture("/Volumes/Development/github/pongasoft/re-cva-7/GUI2D/Panel_Front.png"));
   {
-    auto knob = std::make_unique<AnalogKnobControl>();
-    knob->setTexture(
+    auto knob = Widget::analog_knob(Panel::kFront);
+    knob->getView().setTexture(
       fTextureManager->getTexture("/Volumes/Development/github/pongasoft/re-cva-7/GUI2D/Knob_17_matte_63frames.png"));
-    knob->setPosition({1504, 368});
-    fFrontPanel.fPanelView.addControl(std::move(knob));
+    knob->getView().setPosition({1504, 368});
+    fFrontPanel.fPanelView.addWidget(std::move(knob));
   }
   {
-    auto knob = std::make_unique<AnalogKnobControl>();
-    knob->setTexture(
+    auto knob = Widget::analog_knob(Panel::kFront);
+    knob->getView().setTexture(
       fTextureManager->getTexture("/Volumes/Development/github/pongasoft/re-cva-7/GUI2D/Knob_17_matte_63frames.png"));
-    knob->setPosition({1504, 172});
-    fFrontPanel.fPanelView.addControl(std::move(knob));
+    knob->getView().setPosition({1504, 172});
+    fFrontPanel.fPanelView.addWidget(std::move(knob));
   }
 }
 
@@ -125,16 +125,39 @@ void Application::render()
     ImGui::End();
   }
 
+  class FakeEditContext : public EditContext
+  {
+  public:
+    std::vector<std::string> getPropertyNames(PropertyKind iPropertyKind) const override
+    {
+      if(iPropertyKind == EditContext::PropertyKind::kAny)
+        return {"/custom_properties/c1", "/custom_properties/c2", "/custom_properties/this/is/a/very/long/name/will/it/fit"};
+      else
+        return {"/custom_properties/c1"};
+    }
+
+    int getStepCount(std::string const &iPropertyPath) const override
+    {
+      if(iPropertyPath == "/custom_properties/c1")
+        return 5;
+      else
+        return 0;
+    }
+  };
+
+  FakeEditContext ctx;
+
   if(fFrontPanel.fVisible)
   {
     if(ImGui::Begin("Front Panel", nullptr, ImGuiWindowFlags_HorizontalScrollbar))
     {
       fFrontPanel.fPanelView.draw(fFrontPanel.fDrawContext);
+      fFrontPanel.fPanelView.editView(ctx);
     }
     ImGui::End();
   }
 
-  WidgetTest();
+//  WidgetTest();
 }
 
 ////------------------------------------------------------------------------

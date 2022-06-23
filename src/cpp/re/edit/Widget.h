@@ -22,6 +22,7 @@
 #include "Constants.h"
 #include "Texture.h"
 #include "EditContext.h"
+#include "WidgetView.h"
 
 #include <string>
 #include <vector>
@@ -284,7 +285,9 @@ class Widget
 {
 public:
   explicit Widget(Panel iPanel) : fPanel{iPanel} {}
-  Widget(Panel iPanel, ImVec2 const &iPosition, std::shared_ptr<Texture> iTexture);
+
+  constexpr WidgetView &getView() { return fView; }
+  constexpr WidgetView const &getView() const { return fView; }
 
   void editView(EditContext &iCtx);
 
@@ -311,8 +314,7 @@ protected:
 
 private:
   Panel fPanel{};
-  ImVec2 fPosition{};
-  std::shared_ptr<Texture> fTexture{};
+  WidgetView fView{};
   std::vector<std::unique_ptr<widget::Attribute>> fAttributes{};
 };
 

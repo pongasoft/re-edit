@@ -49,7 +49,7 @@ void PanelView::draw(DrawContext &iCtx)
       {
         fMouseDrag = std::nullopt;
         dragState = "onRelease";
-        endMoveControls(mousePos / iCtx.getZoom());
+        endMoveWidgets(mousePos / iCtx.getZoom());
       }
       else
       {
@@ -58,7 +58,7 @@ void PanelView::draw(DrawContext &iCtx)
            fMouseDrag->fInitialPosition.y != fMouseDrag->fCurrentPosition.y)
         {
           dragState = "onDrag";
-          moveControls(mousePos / iCtx.getZoom());
+          moveWidgets(mousePos / iCtx.getZoom());
         }
         else
           dragState = "waiting for drag";
@@ -68,30 +68,30 @@ void PanelView::draw(DrawContext &iCtx)
       fMouseDrag = MouseDrag{mousePos, mousePos};
       auto &io = ImGui::GetIO();
       dragState = "onPressed / " + std::to_string(io.KeyShift);
-      selectControl(mousePos / iCtx.getZoom(), io.KeyShift);
+      selectWidget(mousePos / iCtx.getZoom(), io.KeyShift);
     }
   }
   ImGui::SetCursorScreenPos(cp); // InvisibleButton moves the cursor so we restore it
-  for(auto &control: fControls)
+  for(auto &widget: fWidgets)
   {
-    auto &w = control.second;
-    w->draw(iCtx);
+    auto &w = widget.second;
+    w->getView().draw(iCtx);
   }
 
-  auto selectedControls = getSelectedControls();
+  auto selectedWidgets = getSelectedWidgets();
 
-  if(fMouseDrag && !selectedControls.empty())
+  if(fMouseDrag && !selectedWidgets.empty())
   {
-    auto min = selectedControls[0]->getTopLeft();
-    auto max = selectedControls[0]->getBottomRight();
+    auto min = selectedWidgets[0]->getView().getTopLeft();
+    auto max = selectedWidgets[0]->getView().getBottomRight();
 
-    std::for_each(selectedControls.begin() + 1, selectedControls.end(), [&min, &max](auto c) {
-      auto pos = c->getTopLeft();
+    std::for_each(selectedWidgets.begin() + 1, selectedWidgets.end(), [&min, &max](auto c) {
+      auto pos = c->getView().getTopLeft();
       if(pos.x < min.x)
         min.x = pos.x;
       if(pos.y < min.y)
         min.y = pos.y;
-      pos = c->getBottomRight();
+      pos = c->getView().getBottomRight();
       if(pos.x > max.x)
         max.x = pos.x;
       if(pos.y > max.y)
@@ -119,80 +119,73 @@ void PanelView::draw(DrawContext &iCtx)
   }
   ImGui::End();
 
-  if(ImGui::Begin("Controls"))
+  if(ImGui::Begin("Widgets"))
   {
     ImGui::SliderFloat("zoom", &iCtx.getZoom(), 0.25f, 1.5f);
-    ImGui::Checkbox("Show Control Border", &iCtx.getUserPreferences().fShowControlBorder);
-    for(auto control : selectedControls)
-    {
-      ImGui::Separator();
-      ImGui::PushID(control);
-      control->renderEdit();
-      ImGui::PopID();
-    }
+    ImGui::Checkbox("Show Widget Border", &iCtx.getUserPreferences().fShowWidgetBorder);
   }
   ImGui::End();
 }
 
 //------------------------------------------------------------------------
-// PanelView::addControl
+// PanelView::addWidget
 //------------------------------------------------------------------------
-int PanelView::addControl(std::unique_ptr<ControlView> iControl)
+int PanelView::addWidget(std::unique_ptr<Widget> iWidget)
 {
-  return fControls.add(std::move(iControl));
+  return fWidgets.add(std::move(iWidget));
 }
 
 //------------------------------------------------------------------------
-// PanelView::selectControl
+// PanelView::selectWidget
 //------------------------------------------------------------------------
-void PanelView::selectControl(ImVec2 const &iPosition, bool iMultiple)
+void PanelView::selectWidget(ImVec2 const &iPosition, bool iMultiple)
 {
-  auto ci = std::find_if(fControls.begin(), fControls.end(), [&iPosition](auto const &p) { return p.second->contains(iPosition); });
-  if(ci == fControls.end())
+  auto ci = std::find_if(fWidgets.begin(), fWidgets.end(), [&iPosition](auto const &p) { return p.second->getView().contains(iPosition); });
+  if(ci == fWidgets.end())
   {
-    for(auto &p: fControls)
-      p.second->setSelected(false);
+    for(auto &p: fWidgets)
+      p.second->getView().setSelected(false);
   }
   else
   {
-    auto &control = ci->second;
+    auto &widget = ci->second;
     if(iMultiple)
     {
-      if(!control->isSelected())
+      if(!widget->getView().isSelected())
       {
         fLastMovePosition = iPosition;
       }
-      control->toggleSelection();
+      widget->getView().toggleSelection();
     }
     else
     {
       fLastMovePosition = iPosition;
-      if(!control->isSelected())
+      if(!widget->getView().isSelected())
       {
-        for(auto &p: fControls)
-          p.second->setSelected(false);
-        control->setSelected(true);
+        for(auto &p: fWidgets)
+          p.second->getView().setSelected(false);
+        widget->getView().setSelected(true);
       }
     }
   }
 }
 
 //------------------------------------------------------------------------
-// PanelView::moveControls
+// PanelView::moveWidgets
 //------------------------------------------------------------------------
-void PanelView::moveControls(ImVec2 const &iPosition)
+void PanelView::moveWidgets(ImVec2 const &iPosition)
 {
   if(fLastMovePosition)
   {
     auto delta = iPosition - fLastMovePosition.value();
     if(delta.x != 0 || delta.y != 0)
     {
-      std::for_each(fControls.begin(), fControls.end(), [&delta, this](auto const &p) {
-        auto &control = p.second;
-        if(control->isSelected())
+      std::for_each(fWidgets.begin(), fWidgets.end(), [&delta, this](auto const &p) {
+        auto &widget = p.second;
+        if(widget->getView().isSelected())
         {
-          control->move(delta);
-          checkControlForError(*control);
+          widget->getView().move(delta);
+          checkWidgetForError(*widget);
         }
       });
     }
@@ -201,19 +194,20 @@ void PanelView::moveControls(ImVec2 const &iPosition)
 }
 
 //------------------------------------------------------------------------
-// PanelView::endMoveControls
+// PanelView::endMoveWidgets
 //------------------------------------------------------------------------
-void PanelView::endMoveControls(ImVec2 const &iPosition)
+void PanelView::endMoveWidgets(ImVec2 const &iPosition)
 {
-  std::for_each(fControls.begin(), fControls.end(), [this](auto const &p) {
-    auto &control = p.second;
-    if(control->isSelected())
+  std::for_each(fWidgets.begin(), fWidgets.end(), [this](auto const &p) {
+    auto &widget = p.second;
+    auto view = widget->getView();
+    if(view.isSelected())
     {
-      auto position = control->getPosition();
+      auto position = view.getPosition();
       position.x = std::round(position.x);
       position.y = std::round(position.y);
-      control->setPosition(position);
-      checkControlForError(*control);
+      view.setPosition(position);
+      checkWidgetForError(*widget);
     }
   });
 
@@ -221,38 +215,60 @@ void PanelView::endMoveControls(ImVec2 const &iPosition)
 }
 
 //------------------------------------------------------------------------
-// PanelView::getSelectedControls
+// PanelView::getSelectedWidgets
 //------------------------------------------------------------------------
-std::vector<ControlView *> PanelView::getSelectedControls() const
+std::vector<Widget *> PanelView::getSelectedWidgets() const
 {
-  std::vector<ControlView *> c{};
-  std::for_each(fControls.begin(), fControls.end(), [&c](auto const &p) {
-    auto &control = p.second;
-    if(control->isSelected())
-      c.emplace_back(control.get());
+  std::vector<Widget *> c{};
+  std::for_each(fWidgets.begin(), fWidgets.end(), [&c](auto const &p) {
+    auto &widget = p.second;
+    if(widget->getView().isSelected())
+      c.emplace_back(widget.get());
   });
   return c;
 }
 
 //------------------------------------------------------------------------
-// PanelView::checkControlForError
+// PanelView::checkWidgetForError
 //------------------------------------------------------------------------
-void PanelView::checkControlForError(ControlView &iControl)
+void PanelView::checkWidgetForError(Widget &iWidget)
 {
+  auto &view = iWidget.getView();
   auto max = fBackground->frameSize();
-  auto p = iControl.getTopLeft();
+  auto p = view.getTopLeft();
   if(p.x < 0 || p.y < 0 || p.x > max.x || p.y > max.y)
   {
-    iControl.setError(true);
+    view.setError(true);
     return;
   }
-  p = iControl.getBottomRight();
+  p = view.getBottomRight();
   if(p.x < 0 || p.y < 0 || p.x > max.x || p.y > max.y)
   {
-    iControl.setError(true);
+    view.setError(true);
     return;
   }
-  iControl.setError(false);
+  view.setError(false);
+}
+
+//------------------------------------------------------------------------
+// PanelView::editView
+//------------------------------------------------------------------------
+void PanelView::editView(EditContext &iCtx)
+{
+  auto selectedWidgets = getSelectedWidgets(); // TODO duplicate call... optimize!!!
+
+  if(ImGui::Begin("Widgets"))
+  {
+    for(auto widget : selectedWidgets)
+    {
+      ImGui::Separator();
+      ImGui::PushID(widget);
+      widget->editView(iCtx);
+      ImGui::PopID();
+    }
+  }
+  ImGui::End();
+
 }
 
 

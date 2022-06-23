@@ -16,39 +16,38 @@
  * @author Yan Pujante
  */
 
-#include "ControlView.h"
+#include "WidgetView.h"
 #include <cmath>
 
 namespace re::edit {
 
 //------------------------------------------------------------------------
-// ControlView::draw
+// WidgetView::draw
 //------------------------------------------------------------------------
-void ControlView::draw(DrawContext &iCtx)
+void WidgetView::draw(DrawContext &iCtx)
 {
   if(fHidden)
     return;
 
   ImVec4 borderColor{};
   if(fSelected)
-    borderColor = iCtx.getUserPreferences().fSelectedControlColor;
+    borderColor = iCtx.getUserPreferences().fSelectedWidgetColor;
   else
   {
-    if(iCtx.getUserPreferences().fShowControlBorder)
-      borderColor = iCtx.getUserPreferences().fControlBorderColor;
+    if(iCtx.getUserPreferences().fShowWidgetBorder)
+      borderColor = iCtx.getUserPreferences().fWidgetBorderColor;
   }
 
   iCtx.drawTexture(fTexture.get(), fPosition, fFrameNumber, borderColor);
   if(fError)
-    iCtx.drawRectFilled(fPosition, fTexture->frameSize(), iCtx.getUserPreferences().fControlErrorColor);
+    iCtx.drawRectFilled(fPosition, fTexture->frameSize(), iCtx.getUserPreferences().fWidgetErrorColor);
 }
 
 //------------------------------------------------------------------------
-// ControlView::renderEdit
+// WidgetView::renderEdit
 //------------------------------------------------------------------------
-void ControlView::renderEdit()
+void WidgetView::editView(EditContext &iCtx)
 {
-  ImGui::Text("Control [%p]", this);
   auto x = static_cast<int>(std::round(fPosition.x));
   ImGui::InputInt("x", &x, 1, 5);
   auto y = static_cast<int>(std::round(fPosition.y));

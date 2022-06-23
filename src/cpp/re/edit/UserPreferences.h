@@ -16,8 +16,8 @@
  * @author Yan Pujante
  */
 
-#ifndef RE_EDIT_USERPREFERENCES_H
-#define RE_EDIT_USERPREFERENCES_H
+#ifndef RE_EDIT_USER_PREFERENCES_H
+#define RE_EDIT_USER_PREFERENCES_H
 
 #include <imgui.h>
 
@@ -26,14 +26,14 @@ namespace re::edit {
 class UserPreferences
 {
 public:
-  bool fShowControlBorder{};
-  ImVec4 fControlBorderColor{0,1,0,1};
+  bool fShowWidgetBorder{};
+  ImVec4 fWidgetBorderColor{0,1,0,1};
 
-  ImVec4 fControlErrorColor{1,0,0,0.5};
+  ImVec4 fWidgetErrorColor{1,0,0,0.5};
 
-  ImVec4 fSelectedControlColor{1,1,0,1};
+  ImVec4 fSelectedWidgetColor{1,1,0,1};
 };
 
 }
 
-#endif //RE_EDIT_USERPREFERENCES_H
+#endif //RE_EDIT_USER_PREFERENCES_H

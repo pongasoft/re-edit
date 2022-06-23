@@ -429,38 +429,51 @@ using namespace widget::attribute;
 //------------------------------------------------------------------------
 void Widget::editView(EditContext &iCtx)
 {
-  attribute_list_t atts{};
-  auto size = ImGui::GetWindowSize();
-  ImGui::Text("size = %fx%f", size.x, size.y);
-  for(auto &w: fAttributes)
+  fView.editView(iCtx);
+
+  if(ImGui::TreeNode("Attributes"))
   {
-    ImGui::PushID(w->fName.c_str());
-    w->editView(iCtx);
-    if(w->fError)
+    for(auto &w: fAttributes)
     {
-      ImGui::SameLine();
-      ImGui::TextColored(ImVec4(1,0,0,1), "(?)");
-      if(ImGui::IsItemHovered())
+      ImGui::PushID(w->fName.c_str());
+      w->editView(iCtx);
+      if(w->fError)
       {
-        ImGui::BeginTooltip();
-        ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
-        ImGui::TextUnformatted(w->fError->c_str());
-        ImGui::PopTextWrapPos();
-        ImGui::EndTooltip();
+        ImGui::SameLine();
+        ImGui::TextColored(ImVec4(1,0,0,1), "(?)");
+        if(ImGui::IsItemHovered())
+        {
+          ImGui::BeginTooltip();
+          ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
+          ImGui::TextUnformatted(w->fError->c_str());
+          ImGui::PopTextWrapPos();
+          ImGui::EndTooltip();
+        }
       }
+      ImGui::PopID();
     }
-    w->hdgui2D(atts);
-    ImGui::PopID();
+    ImGui::TreePop();
   }
 
-  std::vector<std::string> l{};
-  std::transform(atts.begin(), atts.end(), std::back_inserter(l), [](auto &att) {
-    return re::mock::fmt::printf("%s = %s", att.fName, att.fValue);
-  });
-  re::mock::stl::join_to_string(l, "\n");
-  ImGui::PushTextWrapPos(size.x);
-  ImGui::TextUnformatted(re::mock::stl::join_to_string(l, "\n").c_str());
-  ImGui::PopTextWrapPos();
+  if(ImGui::TreeNode("hdgui2D"))
+  {
+    auto size = ImGui::GetWindowSize();
+    attribute_list_t atts{};
+    for(auto &w: fAttributes)
+    {
+      w->hdgui2D(atts);
+    }
+    std::vector<std::string> l{};
+    std::transform(atts.begin(), atts.end(), std::back_inserter(l), [](auto &att) {
+      return re::mock::fmt::printf("%s = %s", att.fName, att.fValue);
+    });
+    re::mock::stl::join_to_string(l, "\n");
+    ImGui::PushTextWrapPos(size.x);
+    ImGui::TextUnformatted(re::mock::stl::join_to_string(l, "\n").c_str());
+    ImGui::PopTextWrapPos();
+    ImGui::TreePop();
+  }
+
 }
 
 //------------------------------------------------------------------------

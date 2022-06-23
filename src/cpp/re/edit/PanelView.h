@@ -19,7 +19,8 @@
 #ifndef RE_EDIT_PANELVIEW_H
 #define RE_EDIT_PANELVIEW_H
 
-#include "ControlView.h"
+#include "Widget.h"
+#include "View.h"
 #include <re/mock/ObjectManager.hpp>
 #include <vector>
 #include <optional>
@@ -39,20 +40,21 @@ class PanelView : public View
 {
 public:
   void draw(DrawContext &iCtx) override;
+  void editView(EditContext &iCtx);
 
   inline void setBackground(std::shared_ptr<Texture> iBackground) { fBackground = std::move(iBackground); }
-  int addControl(std::unique_ptr<ControlView> iControl);
-  std::vector<ControlView *> getSelectedControls() const;
+  int addWidget(std::unique_ptr<Widget> iWidget);
+  std::vector<Widget *> getSelectedWidgets() const;
 
 private:
-  void selectControl(ImVec2 const &iPosition, bool iMultiple);
-  void moveControls(ImVec2 const &iPosition);
-  void endMoveControls(ImVec2 const &iPosition);
-  void checkControlForError(ControlView &iControl);
+  void selectWidget(ImVec2 const &iPosition, bool iMultiple);
+  void moveWidgets(ImVec2 const &iPosition);
+  void endMoveWidgets(ImVec2 const &iPosition);
+  void checkWidgetForError(Widget &iWidget);
 
 private:
   std::shared_ptr<Texture> fBackground{};
-  ObjectManager<std::unique_ptr<ControlView>> fControls{};
+  ObjectManager<std::unique_ptr<Widget>> fWidgets{};
   std::optional<ImVec2> fLastMovePosition{};
   std::optional<MouseDrag> fMouseDrag{};
 };
