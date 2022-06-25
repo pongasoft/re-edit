@@ -65,16 +65,14 @@ set(re-edit_BUILD_SOURCES
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/DrawContext.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/FilmStrip.h"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/FilmStrip.cpp"
-    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/PanelView.h"
-    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/PanelView.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/Panel.h"
+    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/Panel.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/TextureManager.h"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/TextureManager.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/UserPreferences.h"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/View.h"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/Widget.h"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/Widget.cpp"
-    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/WidgetView.h"
-    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/WidgetView.cpp"
     )
 
 # Defines the macos main

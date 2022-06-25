@@ -16,15 +16,19 @@
  * @author Yan Pujante
  */
 
-#include "PanelView.h"
+#include "Panel.h"
 
 namespace re::edit {
 
 //------------------------------------------------------------------------
-// PanelView::draw
+// Panel::draw
 //------------------------------------------------------------------------
-void PanelView::draw(DrawContext &iCtx)
+void Panel::draw(DrawContext &iCtx)
 {
+  ImGui::SliderFloat("zoom", &iCtx.getZoom(), 0.25f, 1.5f);
+  ImGui::SameLine();
+  ImGui::Checkbox("Show Widget Border", &iCtx.getUserPreferences().fShowWidgetBorder);
+
   std::string dragState{"N/A"};
 
   ImVec2 backgroundScreenPosition;
@@ -75,23 +79,23 @@ void PanelView::draw(DrawContext &iCtx)
   for(auto &widget: fWidgets)
   {
     auto &w = widget.second;
-    w->getView().draw(iCtx);
+    w->draw(iCtx);
   }
 
   auto selectedWidgets = getSelectedWidgets();
 
   if(fMouseDrag && !selectedWidgets.empty())
   {
-    auto min = selectedWidgets[0]->getView().getTopLeft();
-    auto max = selectedWidgets[0]->getView().getBottomRight();
+    auto min = selectedWidgets[0]->getTopLeft();
+    auto max = selectedWidgets[0]->getBottomRight();
 
     std::for_each(selectedWidgets.begin() + 1, selectedWidgets.end(), [&min, &max](auto c) {
-      auto pos = c->getView().getTopLeft();
+      auto pos = c->getTopLeft();
       if(pos.x < min.x)
         min.x = pos.x;
       if(pos.y < min.y)
         min.y = pos.y;
-      pos = c->getView().getBottomRight();
+      pos = c->getBottomRight();
       if(pos.x > max.x)
         max.x = pos.x;
       if(pos.y > max.y)
@@ -118,62 +122,55 @@ void PanelView::draw(DrawContext &iCtx)
       ImGui::Text("dragState=%s", dragState.c_str());
   }
   ImGui::End();
-
-  if(ImGui::Begin("Widgets"))
-  {
-    ImGui::SliderFloat("zoom", &iCtx.getZoom(), 0.25f, 1.5f);
-    ImGui::Checkbox("Show Widget Border", &iCtx.getUserPreferences().fShowWidgetBorder);
-  }
-  ImGui::End();
 }
 
 //------------------------------------------------------------------------
-// PanelView::addWidget
+// Panel::addWidget
 //------------------------------------------------------------------------
-int PanelView::addWidget(std::unique_ptr<Widget> iWidget)
+int Panel::addWidget(std::unique_ptr<Widget> iWidget)
 {
   return fWidgets.add(std::move(iWidget));
 }
 
 //------------------------------------------------------------------------
-// PanelView::selectWidget
+// Panel::selectWidget
 //------------------------------------------------------------------------
-void PanelView::selectWidget(ImVec2 const &iPosition, bool iMultiple)
+void Panel::selectWidget(ImVec2 const &iPosition, bool iMultiple)
 {
-  auto ci = std::find_if(fWidgets.begin(), fWidgets.end(), [&iPosition](auto const &p) { return p.second->getView().contains(iPosition); });
+  auto ci = std::find_if(fWidgets.begin(), fWidgets.end(), [&iPosition](auto const &p) { return p.second->contains(iPosition); });
   if(ci == fWidgets.end())
   {
     for(auto &p: fWidgets)
-      p.second->getView().setSelected(false);
+      p.second->setSelected(false);
   }
   else
   {
     auto &widget = ci->second;
     if(iMultiple)
     {
-      if(!widget->getView().isSelected())
+      if(!widget->isSelected())
       {
         fLastMovePosition = iPosition;
       }
-      widget->getView().toggleSelection();
+      widget->toggleSelection();
     }
     else
     {
       fLastMovePosition = iPosition;
-      if(!widget->getView().isSelected())
+      if(!widget->isSelected())
       {
         for(auto &p: fWidgets)
-          p.second->getView().setSelected(false);
-        widget->getView().setSelected(true);
+          p.second->setSelected(false);
+        widget->setSelected(true);
       }
     }
   }
 }
 
 //------------------------------------------------------------------------
-// PanelView::moveWidgets
+// Panel::moveWidgets
 //------------------------------------------------------------------------
-void PanelView::moveWidgets(ImVec2 const &iPosition)
+void Panel::moveWidgets(ImVec2 const &iPosition)
 {
   if(fLastMovePosition)
   {
@@ -182,9 +179,9 @@ void PanelView::moveWidgets(ImVec2 const &iPosition)
     {
       std::for_each(fWidgets.begin(), fWidgets.end(), [&delta, this](auto const &p) {
         auto &widget = p.second;
-        if(widget->getView().isSelected())
+        if(widget->isSelected())
         {
-          widget->getView().move(delta);
+          widget->move(delta);
           checkWidgetForError(*widget);
         }
       });
@@ -194,19 +191,18 @@ void PanelView::moveWidgets(ImVec2 const &iPosition)
 }
 
 //------------------------------------------------------------------------
-// PanelView::endMoveWidgets
+// Panel::endMoveWidgets
 //------------------------------------------------------------------------
-void PanelView::endMoveWidgets(ImVec2 const &iPosition)
+void Panel::endMoveWidgets(ImVec2 const &iPosition)
 {
   std::for_each(fWidgets.begin(), fWidgets.end(), [this](auto const &p) {
     auto &widget = p.second;
-    auto view = widget->getView();
-    if(view.isSelected())
+    if(widget->isSelected())
     {
-      auto position = view.getPosition();
+      auto position = widget->getPosition();
       position.x = std::round(position.x);
       position.y = std::round(position.y);
-      view.setPosition(position);
+      widget->setPosition(position);
       checkWidgetForError(*widget);
     }
   });
@@ -215,49 +211,48 @@ void PanelView::endMoveWidgets(ImVec2 const &iPosition)
 }
 
 //------------------------------------------------------------------------
-// PanelView::getSelectedWidgets
+// Panel::getSelectedWidgets
 //------------------------------------------------------------------------
-std::vector<Widget *> PanelView::getSelectedWidgets() const
+std::vector<Widget *> Panel::getSelectedWidgets() const
 {
   std::vector<Widget *> c{};
   std::for_each(fWidgets.begin(), fWidgets.end(), [&c](auto const &p) {
     auto &widget = p.second;
-    if(widget->getView().isSelected())
+    if(widget->isSelected())
       c.emplace_back(widget.get());
   });
   return c;
 }
 
 //------------------------------------------------------------------------
-// PanelView::checkWidgetForError
+// Panel::checkWidgetForError
 //------------------------------------------------------------------------
-void PanelView::checkWidgetForError(Widget &iWidget)
+void Panel::checkWidgetForError(Widget &iWidget)
 {
-  auto &view = iWidget.getView();
   auto max = fBackground->frameSize();
-  auto p = view.getTopLeft();
+  auto p = iWidget.getTopLeft();
   if(p.x < 0 || p.y < 0 || p.x > max.x || p.y > max.y)
   {
-    view.setError(true);
+    iWidget.setError(true);
     return;
   }
-  p = view.getBottomRight();
+  p = iWidget.getBottomRight();
   if(p.x < 0 || p.y < 0 || p.x > max.x || p.y > max.y)
   {
-    view.setError(true);
+    iWidget.setError(true);
     return;
   }
-  view.setError(false);
+  iWidget.setError(false);
 }
 
 //------------------------------------------------------------------------
-// PanelView::editView
+// Panel::editView
 //------------------------------------------------------------------------
-void PanelView::editView(EditContext &iCtx)
+void Panel::editView(EditContext &iCtx)
 {
   auto selectedWidgets = getSelectedWidgets(); // TODO duplicate call... optimize!!!
 
-  if(ImGui::Begin("Widgets"))
+  if(ImGui::Begin(getEditViewWindowName().c_str()))
   {
     for(auto widget : selectedWidgets)
     {
@@ -269,6 +264,30 @@ void PanelView::editView(EditContext &iCtx)
   }
   ImGui::End();
 
+}
+
+//------------------------------------------------------------------------
+// Panel::getEditViewWindowName
+//------------------------------------------------------------------------
+std::string Panel::getEditViewWindowName() const
+{
+  return re::mock::fmt::printf("%s Widgets", getName());
+}
+
+//------------------------------------------------------------------------
+// Panel::getName
+//------------------------------------------------------------------------
+char const *Panel::getName() const
+{
+  switch(fType)
+  {
+    case Type::kFront: return "Front";
+    case Type::kFoldedFront: return "Folded Front";
+    case Type::kBack: return "Back";
+    case Type::kFoldedBack: return "Folded Back";
+    default:
+      RE_MOCK_FAIL("Not reached");
+  }
 }
 
 

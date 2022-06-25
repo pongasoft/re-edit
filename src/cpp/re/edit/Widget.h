@@ -22,7 +22,7 @@
 #include "Constants.h"
 #include "Texture.h"
 #include "EditContext.h"
-#include "WidgetView.h"
+#include "DrawContext.h"
 
 #include <string>
 #include <vector>
@@ -284,14 +284,45 @@ std::unique_ptr<T> Attribute::build(std::string const &iName, typename T::value_
 class Widget
 {
 public:
-  explicit Widget(Panel iPanel) : fPanel{iPanel} {}
+  explicit Widget(std::string iHDGui2DName) : fType{std::move(iHDGui2DName)} {}
 
-  constexpr WidgetView &getView() { return fView; }
-  constexpr WidgetView const &getView() const { return fView; }
+  constexpr ImVec2 getPosition() const { return fPosition; }
+  constexpr ImVec2 getTopLeft() const { return fPosition; }
+  constexpr ImVec2 getBottomRight() const { return fPosition + fTexture->frameSize(); }
+  constexpr void setPosition(ImVec2 const &iPosition) { fPosition = iPosition; }
 
+  constexpr bool isSelected() const { return fSelected; }
+  constexpr void setSelected(bool iSelected) { fSelected = iSelected; }
+  constexpr void toggleSelection() { fSelected = !fSelected; }
+
+  constexpr bool isHidden() const { return fHidden; };
+  constexpr void setHidden(bool iHidden) { fHidden = iHidden; };
+
+  constexpr bool isError() const { return fError; };
+  constexpr void setError(bool iError) { fError = iError; };
+
+  constexpr void move(ImVec2 const &iDelta) { fPosition = fPosition + iDelta; }
+
+  inline void setTexture(std::shared_ptr<Texture> iTexture) { fTexture = std::move(iTexture); }
+  constexpr int getFrameNumber() const { return fFrameNumber; }
+  constexpr int &getFrameNumber() { return fFrameNumber; }
+  constexpr void setFrameNumber(int iFrameNumber) { fFrameNumber = iFrameNumber; }
+
+  constexpr Texture const *getTexture() const { return fTexture.get(); }
+
+  inline bool contains(ImVec2 const &iPosition) const {
+    return iPosition.x > fPosition.x
+           && iPosition.y > fPosition.y
+           && iPosition.x < fPosition.x + fTexture->frameWidth()
+           && iPosition.y < fPosition.y + fTexture->frameHeight();
+  }
+
+  void draw(DrawContext &iCtx);
   void editView(EditContext &iCtx);
 
-  static std::unique_ptr<Widget> analog_knob(Panel iPanel);
+  std::string hdgui2D() const;
+
+  static std::unique_ptr<Widget> analog_knob();
 
 //  template<typename T>
 //  T *findAttribute(std::string const &iAttributeName) const;
@@ -313,8 +344,13 @@ protected:
   Widget *visibility();
 
 private:
-  Panel fPanel{};
-  WidgetView fView{};
+  std::string fType{};
+  ImVec2 fPosition{};
+  std::shared_ptr<Texture> fTexture{};
+  int fFrameNumber{};
+  bool fSelected{};
+  bool fError{};
+  bool fHidden{};
   std::vector<std::unique_ptr<widget::Attribute>> fAttributes{};
 };
 

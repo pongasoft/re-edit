@@ -24,7 +24,7 @@ namespace re::edit {
 
 void WidgetTest()
 {
-  static auto knob = Widget::analog_knob(Panel::kFront);
+  static auto knob = Widget::analog_knob();
 
   class FakeEditContext : public EditContext
   {
@@ -68,7 +68,7 @@ void WidgetTest()
 Application::Application(std::shared_ptr<TextureManager> const &iTextureManager) :
   fTextureManager{iTextureManager},
   fUserPreferences{std::make_shared<UserPreferences>()},
-  fFrontPanel(iTextureManager, fUserPreferences)
+  fFrontPanel(Panel::Type::kFront, iTextureManager, fUserPreferences)
 {
 }
 
@@ -77,30 +77,26 @@ Application::Application(std::shared_ptr<TextureManager> const &iTextureManager)
 //------------------------------------------------------------------------
 void Application::init()
 {
-  fFrontPanel.fPanelView.setBackground(
-    fTextureManager->getTexture("/Volumes/Development/github/pongasoft/re-cva-7/GUI2D/Panel_Front.png"));
-  {
-    auto knob = Widget::analog_knob(Panel::kFront);
-    knob->getView().setTexture(
-      fTextureManager->getTexture("/Volumes/Development/github/pongasoft/re-cva-7/GUI2D/Knob_17_matte_63frames.png"));
-    knob->getView().setPosition({1504, 368});
-    fFrontPanel.fPanelView.addWidget(std::move(knob));
-  }
-  {
-    auto knob = Widget::analog_knob(Panel::kFront);
-    knob->getView().setTexture(
-      fTextureManager->getTexture("/Volumes/Development/github/pongasoft/re-cva-7/GUI2D/Knob_17_matte_63frames.png"));
-    knob->getView().setPosition({1504, 172});
-    fFrontPanel.fPanelView.addWidget(std::move(knob));
-  }
-}
+  fTextureManager->init("/Volumes/Development/github/pongasoft/re-cva-7/GUI2D");
+  fTextureManager->scanDirectory();
 
-//------------------------------------------------------------------------
-// Application::loadFilmStrip
-//------------------------------------------------------------------------
-bool Application::loadFilmStrip(char const *iPath, int iNumFrames)
-{
-  return fTextureManager->loadFilmStrip(iPath, iNumFrames);
+//  loadFilmStrip("/Volumes/Development/github/pongasoft/re-cva-7/GUI2D/Panel_Front.png", 1);
+//  loadFilmStrip("/Volumes/Development/github/pongasoft/re-cva-7/GUI2D/Knob_17_matte_63frames.png", 63);
+
+  fFrontPanel.fPanel.setBackground(
+    fTextureManager->getTexture("Panel_Front"));
+  {
+    auto knob = Widget::analog_knob();
+    knob->setTexture(fTextureManager->getTexture("Knob_17_matte_63frames"));
+    knob->setPosition({1504, 368});
+    fFrontPanel.fPanel.addWidget(std::move(knob));
+  }
+  {
+    auto knob = Widget::analog_knob();
+    knob->setTexture(fTextureManager->getTexture("Knob_17_matte_63frames"));
+    knob->setPosition({1504, 172});
+    fFrontPanel.fPanel.addWidget(std::move(knob));
+  }
 }
 
 //------------------------------------------------------------------------
@@ -151,8 +147,8 @@ void Application::render()
   {
     if(ImGui::Begin("Front Panel", nullptr, ImGuiWindowFlags_HorizontalScrollbar))
     {
-      fFrontPanel.fPanelView.draw(fFrontPanel.fDrawContext);
-      fFrontPanel.fPanelView.editView(ctx);
+      fFrontPanel.fPanel.draw(fFrontPanel.fDrawContext);
+      fFrontPanel.fPanel.editView(ctx);
     }
     ImGui::End();
   }
@@ -242,8 +238,10 @@ void Application::render()
 //------------------------------------------------------------------------
 // Application::PanelState
 //------------------------------------------------------------------------
-Application::PanelState::PanelState(std::shared_ptr<TextureManager> iTextureManager,
+Application::PanelState::PanelState(Panel::Type iPanelType,
+                                    std::shared_ptr<TextureManager> iTextureManager,
                                     std::shared_ptr<UserPreferences> iUserPreferences) :
+  fPanel(iPanelType),
   fDrawContext(std::move(iTextureManager), std::move(iUserPreferences))
 {
 }

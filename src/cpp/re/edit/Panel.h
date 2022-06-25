@@ -16,11 +16,10 @@
  * @author Yan Pujante
  */
 
-#ifndef RE_EDIT_PANELVIEW_H
-#define RE_EDIT_PANELVIEW_H
+#ifndef RE_EDIT_PANEL_H
+#define RE_EDIT_PANEL_H
 
 #include "Widget.h"
-#include "View.h"
 #include <re/mock/ObjectManager.hpp>
 #include <vector>
 #include <optional>
@@ -35,16 +34,24 @@ struct MouseDrag
   ImVec2 fCurrentPosition{};
 };
 
-
-class PanelView : public View
+class Panel
 {
 public:
-  void draw(DrawContext &iCtx) override;
+  enum class Type { kFront, kBack, kFoldedFront, kFoldedBack  };
+public:
+  explicit Panel(Type iType) : fType{iType} {}
+
+  char const *getName() const;
+
+  void draw(DrawContext &iCtx);
   void editView(EditContext &iCtx);
 
   inline void setBackground(std::shared_ptr<Texture> iBackground) { fBackground = std::move(iBackground); }
   int addWidget(std::unique_ptr<Widget> iWidget);
   std::vector<Widget *> getSelectedWidgets() const;
+
+private:
+  std::string getEditViewWindowName() const;
 
 private:
   void selectWidget(ImVec2 const &iPosition, bool iMultiple);
@@ -53,6 +60,7 @@ private:
   void checkWidgetForError(Widget &iWidget);
 
 private:
+  Type fType;
   std::shared_ptr<Texture> fBackground{};
   ObjectManager<std::unique_ptr<Widget>> fWidgets{};
   std::optional<ImVec2> fLastMovePosition{};
@@ -61,4 +69,4 @@ private:
 
 }
 
-#endif //RE_EDIT_PANELVIEW_H
+#endif //RE_EDIT_PANEL_H

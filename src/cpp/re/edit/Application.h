@@ -22,7 +22,7 @@
 #include "TextureManager.h"
 #include "imgui.h"
 #include "DrawContext.h"
-#include "PanelView.h"
+#include "Panel.h"
 #include "EditContext.h"
 
 namespace re::edit {
@@ -34,8 +34,6 @@ public:
 
   void init();
 
-  bool loadFilmStrip(char const *iPath, int iNumFrames = 1);
-
   void render();
 
   float clear_color[4] = {0.45f, 0.55f, 0.60f, 1.00f};
@@ -43,10 +41,11 @@ public:
 private:
   struct PanelState
   {
-    PanelState(std::shared_ptr<TextureManager> iTextureManager,
+    PanelState(Panel::Type iPanelType,
+               std::shared_ptr<TextureManager> iTextureManager,
                std::shared_ptr<UserPreferences> iUserPreferences);
+    Panel fPanel;
     DrawContext fDrawContext;
-    PanelView fPanelView{};
     bool fVisible{true};
   };
 

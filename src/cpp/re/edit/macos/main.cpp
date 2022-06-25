@@ -83,9 +83,6 @@ int main(int, char **)
   // Our state
   re::edit::Application application{std::make_shared<re::edit::MTLTextureManager>(device)};
 
-  application.loadFilmStrip("/Volumes/Development/github/pongasoft/re-cva-7/GUI2D/Panel_Front.png", 1);
-  application.loadFilmStrip("/Volumes/Development/github/pongasoft/re-cva-7/GUI2D/Knob_17_matte_63frames.png", 63);
-
   application.init();
 
   // Main loop

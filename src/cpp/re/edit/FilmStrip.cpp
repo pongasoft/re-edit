@@ -17,17 +17,21 @@
  */
 
 #include "FilmStrip.h"
+#include <dirent.h>
+#include <sys/stat.h>
+#include <re/mock/Errors.h>
+#include <re/mock/fmt.h>
+#include <regex>
 
 namespace re::edit {
 
 //------------------------------------------------------------------------
 // FilmStrip::FilmStrip
 //------------------------------------------------------------------------
-FilmStrip::FilmStrip(std::string iPath, int iNumFrames, char const *iErrorMessage) :
-  fPath{std::move(iPath)},
+FilmStrip::FilmStrip(std::shared_ptr<File> iFile, char const *iErrorMessage) :
+  fFile{std::move(iFile)},
   fWidth{},
   fHeight{},
-  fNumFrames{iNumFrames},
   fData{},
   fErrorMessage{iErrorMessage}
 {
@@ -36,19 +40,18 @@ FilmStrip::FilmStrip(std::string iPath, int iNumFrames, char const *iErrorMessag
 //------------------------------------------------------------------------
 // FilmStrip::FilmStrip
 //------------------------------------------------------------------------
-FilmStrip::FilmStrip(std::string iPath, int iWidth, int iHeight, int iNumFrames, data_t *iData) :
-  fPath{std::move(iPath)},
+FilmStrip::FilmStrip(std::shared_ptr<File> iFile, int iWidth, int iHeight, std::shared_ptr<Data> iData) :
+  fFile{std::move(iFile)},
   fWidth{iWidth},
   fHeight{iHeight},
-  fNumFrames{iNumFrames},
-  fData{iData},
+  fData{std::move(iData)},
   fErrorMessage{}
 {}
 
 //------------------------------------------------------------------------
-// FilmStrip::~FilmStrip
+// FilmStrip::Data::~Data
 //------------------------------------------------------------------------
-FilmStrip::~FilmStrip()
+FilmStrip::Data::~Data()
 {
   stbi_image_free(fData);
   fData = nullptr;
@@ -57,69 +60,126 @@ FilmStrip::~FilmStrip()
 //------------------------------------------------------------------------
 // FilmStrip::load
 //------------------------------------------------------------------------
-std::unique_ptr<FilmStrip> FilmStrip::load(char const *iPath, int iNumFrames)
+std::unique_ptr<FilmStrip> FilmStrip::load(std::shared_ptr<File> const &iFile)
 {
-  DCHECK_F(iNumFrames > 0);
+  DCHECK_F(iFile->fNumFrames > 0);
+
+  auto path = re::mock::fmt::path(iFile->fDirectory, iFile->fKey + ".png");
 
   int width, height, channels;
-  auto data = stbi_load(iPath, &width, &height, &channels, 4);
+  auto data = stbi_load(path.c_str(), &width, &height, &channels, 4);
   if(data)
   {
-    return std::unique_ptr<FilmStrip>(new FilmStrip(iPath, width, height, iNumFrames, data));
+    return std::unique_ptr<FilmStrip>(new FilmStrip(iFile, width, height, std::make_unique<Data>(data)));
   }
   else
   {
-    return std::unique_ptr<FilmStrip>(new FilmStrip(iPath, iNumFrames, stbi_failure_reason()));
+    return std::unique_ptr<FilmStrip>(new FilmStrip(iFile, stbi_failure_reason()));
   }
 }
 
 //------------------------------------------------------------------------
-// FilmStrip::addFilmStrip
+// FilmStripMgr::findFilmStrip
 //------------------------------------------------------------------------
-void FilmStripMgr::addFilmStrip(char const *iPath, int iNumFrames)
+std::shared_ptr<FilmStrip> FilmStripMgr::findFilmStrip(std::string const &iKey) const
 {
-  DCHECK_F(iNumFrames > 0);
-  DCHECK_F(fFilmStrips.find(iPath) == fFilmStrips.end());
-
-  auto fs = FilmStrip::load(iPath, iNumFrames);
-  fFilmStrips[iPath] = std::move(fs);
-}
-
-//------------------------------------------------------------------------
-// FilmStrip::maybeAddFilmStrip
-//------------------------------------------------------------------------
-bool FilmStripMgr::maybeAddFilmStrip(char const *iPath, int iNumFrames)
-{
-  auto iterFS = fFilmStrips.find(iPath);
-  if(iterFS == fFilmStrips.end())
-  {
-    addFilmStrip(iPath, iNumFrames);
-    return true;
-  }
-  DCHECK_F(iterFS->second->numFrames() == iNumFrames);
-  return false;
-}
-
-//------------------------------------------------------------------------
-// FilmStrip::findFilmStrip
-//------------------------------------------------------------------------
-std::shared_ptr<FilmStrip> FilmStripMgr::findFilmStrip(std::string const &iPath) const
-{
-  auto iterFS = fFilmStrips.find(iPath);
+  auto iterFS = fFilmStrips.find(iKey);
   if(iterFS != fFilmStrips.end())
     return iterFS->second;
   else
-    return nullptr;
+  {
+    auto iterFile = fFiles.find(iKey);
+    if(iterFile != fFiles.end())
+    {
+      std::shared_ptr<FilmStrip> filmStrip = FilmStrip::load(iterFile->second);
+      fFilmStrips[iKey] = filmStrip;
+      return filmStrip;
+    }
+  }
+  return nullptr;
 }
 
 //------------------------------------------------------------------------
-// FilmStrip::getFilmStrip
+// FilmStripMgr::getFilmStrip
 //------------------------------------------------------------------------
-std::shared_ptr<FilmStrip> FilmStripMgr::getFilmStrip(std::string const &iPath) const
+std::shared_ptr<FilmStrip> FilmStripMgr::getFilmStrip(std::string const &iKey) const
 {
-  auto fs = findFilmStrip(iPath);
+  auto fs = findFilmStrip(iKey);
   DCHECK_F(fs != nullptr);
   return fs;
 }
+
+//------------------------------------------------------------------------
+// FilmStripMgr::scanDirectory
+//------------------------------------------------------------------------
+size_t FilmStripMgr::scanDirectory()
+{
+  auto files = scanDirectory(fDirectory);
+  for(auto const &file: files)
+  {
+    auto previousFile = fFiles.find(file.fKey);
+    if(previousFile != fFiles.end())
+    {
+      // the file has been modified on disk
+      if(file.fLastModifiedTime > previousFile->second->fLastModifiedTime)
+      {
+        // this will trigger a "reload"
+        fFilmStrips.erase(file.fKey);
+        fFiles[file.fKey] = std::make_shared<FilmStrip::File>(file);
+      }
+    }
+    else
+    {
+      fFiles[file.fKey] = std::make_shared<FilmStrip::File>(file);
+    }
+  }
+  return fFiles.size();
+}
+
+//------------------------------------------------------------------------
+// FilmStripMgr::scanDirectory
+//------------------------------------------------------------------------
+std::vector<FilmStrip::File> FilmStripMgr::scanDirectory(std::string const &iDirectory)
+{
+  RE_MOCK_ASSERT(!iDirectory.empty());
+
+  static const std::regex FILENAME_REGEX{"(([0-9]+)_?frames)?.png$", std::regex_constants::icase};
+
+  std::vector<FilmStrip::File> res{};
+
+  DIR *dir;
+  struct dirent *ent;
+  if((dir = opendir(iDirectory.c_str())) != nullptr)
+  {
+    while((ent = readdir(dir)) != nullptr)
+    {
+      std::cmatch m;
+      if(std::regex_search(ent->d_name, m, FILENAME_REGEX))
+      {
+        auto entry = re::mock::fmt::printf("%s/%s", iDirectory, ent->d_name);
+        struct stat buf{};
+        if(stat(entry.c_str(), &buf) == 0)
+        {
+          auto inferredNumFrames = m[2].matched ? std::stoi(m[2].str()) : 1;
+          auto key = std::string(ent->d_name);
+          key = key.substr(0, key.size() - 4); // remove .png
+          res.emplace_back(FilmStrip::File{iDirectory, key, buf.st_mtime, inferredNumFrames});
+        }
+        else
+        {
+          RE_MOCK_LOG_ERROR("Error (%d) with file [%s] : ", errno, entry);
+        }
+      }
+    }
+    closedir(dir);
+  }
+  else
+  {
+    RE_MOCK_LOG_ERROR("Could not scan directory [%s]", iDirectory);
+  }
+
+  return res;
+}
+
 
 }

@@ -19,6 +19,7 @@
 #include "MTLTextureManager.h"
 #include "logging/logging.h"
 #include <algorithm>
+#include <memory>
 
 namespace re::edit {
 
@@ -62,9 +63,9 @@ std::unique_ptr<Texture> MTLTextureManager::createTexture(std::shared_ptr<FilmSt
                                                           false);
   auto mtlTexture = fDevice->newTexture(desc);
 
-  DLOG_F(INFO, "createTexture(%s) : %lu", iFilmStrip->path().c_str(), mtlTexture->retainCount());
+  DLOG_F(INFO, "createTexture(%s) : %lu", iFilmStrip->key().c_str(), mtlTexture->retainCount());
 
-  auto res = std::unique_ptr<MTLTexture>(new MTLTexture(iFilmStrip, mtlTexture));
+  auto res = std::make_unique<MTLTexture>(iFilmStrip, mtlTexture);
 
   // copy the texture from memory (filmstrip) to GPU
   auto region = MTL::Region::Make2D(0, 0, width, height);
@@ -80,7 +81,7 @@ MTLTexture::MTLTexture(std::shared_ptr<FilmStrip> iFilmStrip, ImTextureID iData)
 {
   auto mtlTexture = reinterpret_cast<MTL::Texture *>(fData);
   mtlTexture->retain();
-  DLOG_F(INFO, "createTexture(%s) : %lu (after)", fFilmStrip->path().c_str(), mtlTexture->retainCount());
+  DLOG_F(INFO, "createTexture(%s) : %lu (after)", fFilmStrip->key().c_str(), mtlTexture->retainCount());
 }
 
 //------------------------------------------------------------------------
@@ -89,9 +90,9 @@ MTLTexture::MTLTexture(std::shared_ptr<FilmStrip> iFilmStrip, ImTextureID iData)
 MTLTexture::~MTLTexture()
 {
   auto mtlTexture = reinterpret_cast<MTL::Texture *>(fData);
-  DLOG_F(INFO, "removeTexture(%s) : %lu", fFilmStrip->path().c_str(), mtlTexture->retainCount());
+  DLOG_F(INFO, "removeTexture(%s) : %lu", fFilmStrip->key().c_str(), mtlTexture->retainCount());
   mtlTexture->release();
-  DLOG_F(INFO, "removeTexture(%s) : %lu (after)", fFilmStrip->path().c_str(), mtlTexture->retainCount());
+  DLOG_F(INFO, "removeTexture(%s) : %lu (after)", fFilmStrip->key().c_str(), mtlTexture->retainCount());
 }
 
 

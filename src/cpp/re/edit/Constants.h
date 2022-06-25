@@ -23,12 +23,6 @@
 
 namespace re::edit {
 
-enum class Panel {
-  kFront, kBack, kFoldedFront, kFoldedBack
-};
-
-using property_path_t = std::string;
-
 
 }
 

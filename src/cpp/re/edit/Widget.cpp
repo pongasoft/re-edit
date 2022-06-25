@@ -425,11 +425,43 @@ using namespace widget;
 using namespace widget::attribute;
 
 //------------------------------------------------------------------------
+// Widget::draw
+//------------------------------------------------------------------------
+void Widget::draw(DrawContext &iCtx)
+{
+  if(fHidden)
+    return;
+
+  ImVec4 borderColor{};
+  if(fSelected)
+    borderColor = iCtx.getUserPreferences().fSelectedWidgetColor;
+  else
+  {
+    if(iCtx.getUserPreferences().fShowWidgetBorder)
+      borderColor = iCtx.getUserPreferences().fWidgetBorderColor;
+  }
+
+  iCtx.drawTexture(fTexture.get(), fPosition, fFrameNumber, borderColor);
+  if(fError)
+    iCtx.drawRectFilled(fPosition, fTexture->frameSize(), iCtx.getUserPreferences().fWidgetErrorColor);
+}
+
+//------------------------------------------------------------------------
 // Widget::editView
 //------------------------------------------------------------------------
 void Widget::editView(EditContext &iCtx)
 {
-  fView.editView(iCtx);
+  auto x = static_cast<int>(std::round(fPosition.x));
+  ImGui::InputInt("x", &x, 1, 5);
+  auto y = static_cast<int>(std::round(fPosition.y));
+  ImGui::InputInt("y", &y, 1, 5);
+  if(x != static_cast<int>(std::round(fPosition.x)) || y != static_cast<int>(std::round(fPosition.y)))
+    fPosition = {static_cast<float>(x), static_cast<float>(y)};
+
+  if(fTexture->numFrames() > 2)
+  {
+    ImGui::SliderInt("Frame", &fFrameNumber, 0, fTexture->numFrames() - 1);
+  }
 
   if(ImGui::TreeNode("Attributes"))
   {
@@ -458,22 +490,29 @@ void Widget::editView(EditContext &iCtx)
   if(ImGui::TreeNode("hdgui2D"))
   {
     auto size = ImGui::GetWindowSize();
-    attribute_list_t atts{};
-    for(auto &w: fAttributes)
-    {
-      w->hdgui2D(atts);
-    }
-    std::vector<std::string> l{};
-    std::transform(atts.begin(), atts.end(), std::back_inserter(l), [](auto &att) {
-      return re::mock::fmt::printf("%s = %s", att.fName, att.fValue);
-    });
-    re::mock::stl::join_to_string(l, "\n");
     ImGui::PushTextWrapPos(size.x);
-    ImGui::TextUnformatted(re::mock::stl::join_to_string(l, "\n").c_str());
+    ImGui::TextUnformatted(hdgui2D().c_str());
     ImGui::PopTextWrapPos();
     ImGui::TreePop();
   }
 
+}
+
+//------------------------------------------------------------------------
+// Widget::hdgui2D
+//------------------------------------------------------------------------
+std::string Widget::hdgui2D() const
+{
+  attribute_list_t atts{};
+
+  for(auto &w: fAttributes)
+    w->hdgui2D(atts);
+
+  std::vector<std::string> l{};
+  std::transform(atts.begin(), atts.end(), std::back_inserter(l), [](auto &att) {
+    return re::mock::fmt::printf("  %s = %s", att.fName, att.fValue);
+  });
+  return re::mock::fmt::printf("jbox.%s {\n%s\n}", fType, re::mock::stl::join_to_string(l, "\n"));
 }
 
 //------------------------------------------------------------------------
@@ -529,9 +568,9 @@ Widget *Widget::tooltip_template()
 //------------------------------------------------------------------------
 // Widget::analog_knob
 //------------------------------------------------------------------------
-std::unique_ptr<Widget> Widget::analog_knob(Panel iPanel)
+std::unique_ptr<Widget> Widget::analog_knob()
 {
-  auto w = std::make_unique<Widget>(iPanel);
+  auto w = std::make_unique<Widget>("analog_knob");
   w ->value()
     ->visibility()
     ->tooltip_position()
@@ -539,9 +578,9 @@ std::unique_ptr<Widget> Widget::analog_knob(Panel iPanel)
     ->show_remote_box()
     ->show_automation_rect()
     ;
-
   return w;
 }
+
 
 }
 

@@ -32,15 +32,19 @@ public:
   TextureManager() = default;
   virtual ~TextureManager() = default;
 
+  void init(std::string iDirectory);
+
   std::shared_ptr<Texture> getTexture(std::string const &iPath) const;
 
-  bool loadFilmStrip(char const *iPath, int iNumFrames = 1) { return fFilmStripMgr.maybeAddFilmStrip(iPath, iNumFrames); }
+//  bool loadFilmStrip(char const *iPath, int iNumFrames = 1) { return fFilmStripMgr.maybeAddFilmStrip(iPath, iNumFrames); }
+
+  void scanDirectory() { fFilmStripMgr->scanDirectory(); }
 
 protected:
   virtual std::unique_ptr<Texture> createTexture(std::shared_ptr<FilmStrip> const &iFilmStrip) const = 0;
 
 private:
-  FilmStripMgr fFilmStripMgr{};
+  std::unique_ptr<FilmStripMgr> fFilmStripMgr{};
 
   mutable std::map<std::string, std::shared_ptr<Texture>> fTextures{};
 };

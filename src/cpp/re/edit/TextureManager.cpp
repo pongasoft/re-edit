@@ -16,17 +16,28 @@
  * @author Yan Pujante
  */
 
+#include <re/mock/Errors.h>
 #include "TextureManager.h"
 
 namespace re::edit {
+
+//------------------------------------------------------------------------
+// TextureManager::init
+//------------------------------------------------------------------------
+void TextureManager::init(std::string iDirectory)
+{
+  fFilmStripMgr = std::make_unique<FilmStripMgr>(std::move(iDirectory));
+}
 
 //------------------------------------------------------------------------
 // TextureManager::getTexture
 //------------------------------------------------------------------------
 std::shared_ptr<Texture> TextureManager::getTexture(std::string const &iPath) const
 {
+  RE_MOCK_ASSERT(fFilmStripMgr != nullptr);
+
   // get the filmstrip associated to the path
-  auto filmStrip = fFilmStripMgr.getFilmStrip(iPath);
+  auto filmStrip = fFilmStripMgr->getFilmStrip(iPath);
 
   // do we already have a GPU texture associated to this path?
   auto iter = fTextures.find(iPath);
@@ -42,8 +53,8 @@ std::shared_ptr<Texture> TextureManager::getTexture(std::string const &iPath) co
   }
 
   // create a new texture
-  fTextures[filmStrip->path()] = filmStrip->isValid() ? createTexture(filmStrip) : std::make_unique<Texture>(Texture{filmStrip, nullptr});
-  return fTextures.at(filmStrip->path());
+  fTextures[filmStrip->key()] = filmStrip->isValid() ? createTexture(filmStrip) : std::make_unique<Texture>(Texture{filmStrip, nullptr});
+  return fTextures.at(filmStrip->key());
 }
 
 }

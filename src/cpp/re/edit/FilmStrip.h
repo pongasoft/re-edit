@@ -23,6 +23,7 @@
 #include <stb_image.h>
 #include <map>
 #include <memory>
+#include <vector>
 #include "logging/logging.h"
 
 namespace re::edit {
@@ -30,42 +31,53 @@ namespace re::edit {
 class FilmStrip
 {
 public:
+  struct File
+  {
+    std::string fDirectory{};
+    std::string fKey{};
+    long fLastModifiedTime{};
+    int fNumFrames{1};
+  };
+
+public:
   using data_t = stbi_uc;
 
-  FilmStrip(FilmStrip const &) = delete;
-  FilmStrip(FilmStrip &&) = delete;
-  ~FilmStrip();
+  struct Data
+  {
+    explicit Data(data_t *iData) : fData{iData} {}
+    ~Data();
 
-  constexpr std::string const &path() const { return fPath; };
+    constexpr data_t const *data() const { return fData; }
+
+  private:
+    data_t *fData{};
+  };
+
+  constexpr std::string const &key() const { return fFile->fKey; };
   constexpr std::string const &errorMessage() const { return fErrorMessage; };
 
-  constexpr bool isValid() const { return fData != nullptr; }
+  inline bool isValid() const { return fData != nullptr; }
 
   constexpr int width() const { return fWidth; }
   constexpr int height() const { return fHeight; }
-  constexpr int numFrames() const { return fNumFrames; }
+  constexpr int numFrames() const { return fFile->fNumFrames; }
 
   constexpr int frameWidth() const { return fWidth; }
-  constexpr int frameHeight() const { return fHeight / fNumFrames; }
+  constexpr int frameHeight() const { return fHeight / numFrames(); }
 
-  constexpr data_t const *data() const { return fData; }
-  constexpr data_t const *data(int iFrameNumber) const {
-    DCHECK_F(iFrameNumber < numFrames());
-    return fData + iFrameNumber * frameWidth() * 4 * frameHeight();
-  }
+  constexpr data_t const *data() const { return fData->data(); }
 
-  static std::unique_ptr<FilmStrip> load(char const *iPath, int iNumFrames);
+  static std::unique_ptr<FilmStrip> load(std::shared_ptr<File> const &iFile);
 
 private:
-  FilmStrip(std::string iPath, int iNumFrames, char const *iErrorMessage);
-  FilmStrip(std::string iPath, int iWidth, int iHeight, int iNumFrames, data_t *iData);
+  FilmStrip(std::shared_ptr<File> iFile, char const *iErrorMessage);
+  FilmStrip(std::shared_ptr<File> iFile, int iWidth, int iHeight, std::shared_ptr<Data> iData);
 
 private:
-  std::string fPath;
+  std::shared_ptr<File> fFile;
   int fWidth{};
   int fHeight{};
-  int fNumFrames{};
-  data_t *fData{};
+  std::shared_ptr<Data> fData{};
 
   std::string fErrorMessage;
 };
@@ -73,13 +85,18 @@ private:
 class FilmStripMgr
 {
 public:
-  void addFilmStrip(char const *iPath, int iNumFrames);
-  bool maybeAddFilmStrip(char const *iPath, int iNumFrames);
-  std::shared_ptr<FilmStrip> findFilmStrip(std::string const &iPath) const;
-  std::shared_ptr<FilmStrip> getFilmStrip(std::string const &iPath) const;
+  FilmStripMgr(std::string iDirectory) : fDirectory{std::move(iDirectory)} {}
+  std::shared_ptr<FilmStrip> findFilmStrip(std::string const &iKey) const;
+  std::shared_ptr<FilmStrip> getFilmStrip(std::string const &iKey) const;
+
+  size_t scanDirectory();
+
+  static std::vector<FilmStrip::File> scanDirectory(std::string const &iDirectory);
 
 private:
-  std::map<std::string, std::shared_ptr<FilmStrip>> fFilmStrips{};
+  std::string fDirectory;
+  mutable std::map<std::string, std::shared_ptr<FilmStrip>> fFilmStrips{};
+  std::map<std::string, std::shared_ptr<FilmStrip::File>> fFiles;
 };
 
 }
