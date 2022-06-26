@@ -25,10 +25,6 @@ namespace re::edit {
 //------------------------------------------------------------------------
 void Panel::draw(DrawContext &iCtx)
 {
-  ImGui::SliderFloat("zoom", &iCtx.getZoom(), 0.25f, 1.5f);
-  ImGui::SameLine();
-  ImGui::Checkbox("Show Widget Border", &iCtx.getUserPreferences().fShowWidgetBorder);
-
   std::string dragState{"N/A"};
 
   ImVec2 backgroundScreenPosition;
@@ -36,7 +32,7 @@ void Panel::draw(DrawContext &iCtx)
   if(fBackground)
   {
     ImVec2 clickableArea = ImGui::GetContentRegionAvail();
-    auto backgroundSize = fBackground->frameSize() * iCtx.getZoom();
+    auto backgroundSize = fBackground->frameSize() * iCtx.fZoom;
     clickableArea = {std::max(clickableArea.x, backgroundSize.x), std::max(clickableArea.y, backgroundSize.y)};
 
     iCtx.TextureItem(fBackground.get());
@@ -53,7 +49,7 @@ void Panel::draw(DrawContext &iCtx)
       {
         fMouseDrag = std::nullopt;
         dragState = "onRelease";
-        endMoveWidgets(mousePos / iCtx.getZoom());
+        endMoveWidgets(mousePos / iCtx.fZoom);
       }
       else
       {
@@ -62,7 +58,7 @@ void Panel::draw(DrawContext &iCtx)
            fMouseDrag->fInitialPosition.y != fMouseDrag->fCurrentPosition.y)
         {
           dragState = "onDrag";
-          moveWidgets(mousePos / iCtx.getZoom());
+          moveWidgets(mousePos / iCtx.fZoom);
         }
         else
           dragState = "waiting for drag";
@@ -72,7 +68,7 @@ void Panel::draw(DrawContext &iCtx)
       fMouseDrag = MouseDrag{mousePos, mousePos};
       auto &io = ImGui::GetIO();
       dragState = "onPressed / " + std::to_string(io.KeyShift);
-      selectWidget(mousePos / iCtx.getZoom(), io.KeyShift);
+      selectWidget(mousePos / iCtx.fZoom, io.KeyShift);
     }
   }
   ImGui::SetCursorScreenPos(cp); // InvisibleButton moves the cursor so we restore it

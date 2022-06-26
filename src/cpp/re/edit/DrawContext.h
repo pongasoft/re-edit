@@ -62,10 +62,6 @@ public:
     fUserPreferences{std::move(iUserPreferences)}
   {}
 
-  constexpr float getZoom() const { return fZoom; }
-  float &getZoom() { return fZoom; }
-  constexpr void setZoom(float iZoom) { fZoom = iZoom; }
-
   constexpr UserPreferences const &getUserPreferences() const { return *fUserPreferences; }
   constexpr UserPreferences &getUserPreferences() { return *fUserPreferences; }
 
@@ -84,6 +80,10 @@ public:
   void drawLine(const ImVec2& iP1, const ImVec2& iP2, ImU32 iColor, float iThickness = 1.0f) const;
   inline void drawLine(const ImVec2& iP1, const ImVec2& iP2, const ImVec4& iColor, float iThickness = 1.0f) const { drawLine(iP1, iP2, ImGui::GetColorU32(iColor), iThickness); }
 
+public:
+  float fZoom{0.25f};
+  bool fShowWidgetBorder{};
+
 private:
   static void Image(ImTextureID user_texture_id, const ImVec2& size, const ImVec2& uv0, const ImVec2& uv1, const ImVec4& border_col = ImVec4(0,0,0,0));
   static void drawImage(ImTextureID user_texture_id, ImVec2 const &iPosition, const ImVec2& size, const ImVec2& uv0, const ImVec2& uv1, const ImVec4& border_col = ImVec4(0,0,0,0));
@@ -91,7 +91,6 @@ private:
 private:
   std::shared_ptr<TextureManager> fTextureManager;
   std::shared_ptr<UserPreferences> fUserPreferences;
-  float fZoom{0.25f};
 };
 
 }

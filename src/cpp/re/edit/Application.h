@@ -46,13 +46,13 @@ private:
                std::shared_ptr<UserPreferences> iUserPreferences);
     Panel fPanel;
     DrawContext fDrawContext;
-    bool fVisible{true};
   };
 
 private:
   std::shared_ptr<TextureManager> fTextureManager;
   std::shared_ptr<UserPreferences> fUserPreferences;
   PanelState fFrontPanel;
+  PanelState fBackPanel;
   bool show_demo_window{false};
 };
 

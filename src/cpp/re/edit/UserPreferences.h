@@ -26,7 +26,6 @@ namespace re::edit {
 class UserPreferences
 {
 public:
-  bool fShowWidgetBorder{};
   ImVec4 fWidgetBorderColor{0,1,0,1};
 
   ImVec4 fWidgetErrorColor{1,0,0,0.5};

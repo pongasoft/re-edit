@@ -68,7 +68,8 @@ void WidgetTest()
 Application::Application(std::shared_ptr<TextureManager> const &iTextureManager) :
   fTextureManager{iTextureManager},
   fUserPreferences{std::make_shared<UserPreferences>()},
-  fFrontPanel(Panel::Type::kFront, iTextureManager, fUserPreferences)
+  fFrontPanel(Panel::Type::kFront, iTextureManager, fUserPreferences),
+  fBackPanel(Panel::Type::kBack, iTextureManager, fUserPreferences)
 {
 }
 
@@ -104,22 +105,7 @@ void Application::init()
 //------------------------------------------------------------------------
 void Application::render()
 {
-  // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
-  if(show_demo_window)
-    ImGui::ShowDemoWindow(&show_demo_window);
-
-  // 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
-  {
-    ImGui::Begin("re-edit");
-
-    ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
-    ImGui::Checkbox("Show/Hide Front Panel", &fFrontPanel.fVisible);
-
-    ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate,
-                ImGui::GetIO().Framerate);
-
-    ImGui::End();
-  }
+  ImGui::Begin("re-edit");
 
   class FakeEditContext : public EditContext
   {
@@ -127,7 +113,8 @@ void Application::render()
     std::vector<std::string> getPropertyNames(PropertyKind iPropertyKind) const override
     {
       if(iPropertyKind == EditContext::PropertyKind::kAny)
-        return {"/custom_properties/c1", "/custom_properties/c2", "/custom_properties/this/is/a/very/long/name/will/it/fit"};
+        return {"/custom_properties/c1", "/custom_properties/c2",
+                "/custom_properties/this/is/a/very/long/name/will/it/fit"};
       else
         return {"/custom_properties/c1"};
     }
@@ -143,15 +130,47 @@ void Application::render()
 
   FakeEditContext ctx;
 
-  if(fFrontPanel.fVisible)
+  if(ImGui::BeginTabBar("Panels", ImGuiTabBarFlags_None))
   {
-    if(ImGui::Begin("Front Panel", nullptr, ImGuiWindowFlags_HorizontalScrollbar))
+    if(ImGui::BeginTabItem("Front Panel"))
     {
-      fFrontPanel.fPanel.draw(fFrontPanel.fDrawContext);
-      fFrontPanel.fPanel.editView(ctx);
+      ImGui::SliderFloat("zoom", &fFrontPanel.fDrawContext.fZoom, 0.25f, 1.5f);
+      ImGui::Checkbox("Show Widget Border", &fFrontPanel.fDrawContext.fShowWidgetBorder);
+      if(ImGui::Begin("Front Panel", nullptr, ImGuiWindowFlags_HorizontalScrollbar))
+      {
+        fFrontPanel.fPanel.draw(fFrontPanel.fDrawContext);
+        fFrontPanel.fPanel.editView(ctx);
+      }
+      ImGui::End();
+      ImGui::EndTabItem();
     }
-    ImGui::End();
+
+    if(ImGui::BeginTabItem("Back Panel"))
+    {
+      ImGui::SliderFloat("zoom", &fBackPanel.fDrawContext.fZoom, 0.25f, 1.5f);
+      ImGui::Checkbox("Show Widget Border", &fBackPanel.fDrawContext.fShowWidgetBorder);
+      if(ImGui::Begin("Back Panel", nullptr, ImGuiWindowFlags_HorizontalScrollbar))
+      {
+        fBackPanel.fPanel.draw(fBackPanel.fDrawContext);
+        fBackPanel.fPanel.editView(ctx);
+      }
+      ImGui::End();
+      ImGui::EndTabItem();
+    }
+
+    ImGui::EndTabBar();
   }
+
+  ImGui::Separator();
+
+  ImGui::Checkbox("Demo Window", &show_demo_window);
+  if(show_demo_window)
+    ImGui::ShowDemoWindow(&show_demo_window);
+
+  ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate,
+              ImGui::GetIO().Framerate);
+
+  ImGui::End();
 
 //  WidgetTest();
 }

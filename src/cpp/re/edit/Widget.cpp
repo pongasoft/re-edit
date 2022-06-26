@@ -437,7 +437,7 @@ void Widget::draw(DrawContext &iCtx)
     borderColor = iCtx.getUserPreferences().fSelectedWidgetColor;
   else
   {
-    if(iCtx.getUserPreferences().fShowWidgetBorder)
+    if(iCtx.fShowWidgetBorder)
       borderColor = iCtx.getUserPreferences().fWidgetBorderColor;
   }
 
