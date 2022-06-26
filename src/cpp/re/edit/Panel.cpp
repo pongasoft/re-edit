@@ -29,13 +29,13 @@ void Panel::draw(DrawContext &iCtx)
 
   ImVec2 backgroundScreenPosition;
   auto const cp = ImGui::GetCursorScreenPos();
-  if(fBackground)
+  if(fGraphics.fTexture)
   {
     ImVec2 clickableArea = ImGui::GetContentRegionAvail();
-    auto backgroundSize = fBackground->frameSize() * iCtx.fZoom;
+    auto backgroundSize = fGraphics.fTexture->frameSize() * iCtx.fZoom;
     clickableArea = {std::max(clickableArea.x, backgroundSize.x), std::max(clickableArea.y, backgroundSize.y)};
 
-    iCtx.TextureItem(fBackground.get());
+    iCtx.TextureItem(fGraphics.fTexture.get());
     backgroundScreenPosition = ImGui::GetItemRectMin(); // accounts for scrollbar!
 
     // we use an invisible button to capture mouse events
@@ -98,7 +98,7 @@ void Panel::draw(DrawContext &iCtx)
         max.y = pos.y;
     });
 
-    auto frameSize = fBackground->frameSize();
+    auto frameSize = fGraphics.getSize();
     auto color = ImGui::GetColorU32({1,1,0,0.5});
     iCtx.drawLine({0, min.y}, {frameSize.x, min.y}, color);
     iCtx.drawLine({min.x, 0}, {min.x, frameSize.y}, color);
@@ -225,7 +225,7 @@ std::vector<Widget *> Panel::getSelectedWidgets() const
 //------------------------------------------------------------------------
 void Panel::checkWidgetForError(Widget &iWidget)
 {
-  auto max = fBackground->frameSize();
+  auto max = fGraphics.getSize();
   auto p = iWidget.getTopLeft();
   if(p.x < 0 || p.y < 0 || p.x > max.x || p.y > max.y)
   {

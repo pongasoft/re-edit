@@ -64,10 +64,8 @@ std::unique_ptr<FilmStrip> FilmStrip::load(std::shared_ptr<File> const &iFile)
 {
   DCHECK_F(iFile->fNumFrames > 0);
 
-  auto path = re::mock::fmt::path(iFile->fDirectory, iFile->fKey + ".png");
-
   int width, height, channels;
-  auto data = stbi_load(path.c_str(), &width, &height, &channels, 4);
+  auto data = stbi_load(iFile->fPath.c_str(), &width, &height, &channels, 4);
   if(data)
   {
     return std::unique_ptr<FilmStrip>(new FilmStrip(iFile, width, height, std::make_unique<Data>(data)));
@@ -115,8 +113,10 @@ std::shared_ptr<FilmStrip> FilmStripMgr::getFilmStrip(std::string const &iKey) c
 size_t FilmStripMgr::scanDirectory()
 {
   auto files = scanDirectory(fDirectory);
+  fKeys.clear();
   for(auto const &file: files)
   {
+    fKeys.emplace_back(file.fKey);
     auto previousFile = fFiles.find(file.fKey);
     if(previousFile != fFiles.end())
     {
@@ -156,14 +156,14 @@ std::vector<FilmStrip::File> FilmStripMgr::scanDirectory(std::string const &iDir
       std::cmatch m;
       if(std::regex_search(ent->d_name, m, FILENAME_REGEX))
       {
-        auto entry = re::mock::fmt::printf("%s/%s", iDirectory, ent->d_name);
+        auto entry = re::mock::fmt::path(iDirectory, ent->d_name);
         struct stat buf{};
         if(stat(entry.c_str(), &buf) == 0)
         {
           auto inferredNumFrames = m[2].matched ? std::stoi(m[2].str()) : 1;
           auto key = std::string(ent->d_name);
           key = key.substr(0, key.size() - 4); // remove .png
-          res.emplace_back(FilmStrip::File{iDirectory, key, buf.st_mtime, inferredNumFrames});
+          res.emplace_back(FilmStrip::File{entry, key, buf.st_mtime, inferredNumFrames});
         }
         else
         {

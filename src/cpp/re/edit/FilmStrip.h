@@ -33,7 +33,7 @@ class FilmStrip
 public:
   struct File
   {
-    std::string fDirectory{};
+    std::string fPath{};
     std::string fKey{};
     long fLastModifiedTime{};
     int fNumFrames{1};
@@ -85,18 +85,20 @@ private:
 class FilmStripMgr
 {
 public:
-  FilmStripMgr(std::string iDirectory) : fDirectory{std::move(iDirectory)} {}
+  explicit FilmStripMgr(std::string iDirectory) : fDirectory{std::move(iDirectory)} {}
   std::shared_ptr<FilmStrip> findFilmStrip(std::string const &iKey) const;
   std::shared_ptr<FilmStrip> getFilmStrip(std::string const &iKey) const;
 
   size_t scanDirectory();
+  std::vector<std::string> const &getKeys() const { return fKeys; };
 
   static std::vector<FilmStrip::File> scanDirectory(std::string const &iDirectory);
 
 private:
   std::string fDirectory;
   mutable std::map<std::string, std::shared_ptr<FilmStrip>> fFilmStrips{};
-  std::map<std::string, std::shared_ptr<FilmStrip::File>> fFiles;
+  std::map<std::string, std::shared_ptr<FilmStrip::File>> fFiles{};
+  std::vector<std::string> fKeys{};
 };
 
 }

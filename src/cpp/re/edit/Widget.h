@@ -224,6 +224,42 @@ public:
   std::vector<std::string> const &fSelectionList;
 };
 
+class Graphics : public Attribute
+{
+public:
+  Graphics() : Attribute("graphics") {}
+
+  inline bool contains(ImVec2 const &iPosition) const {
+    return iPosition.x > fPosition.x
+           && iPosition.y > fPosition.y
+           && iPosition.x < fPosition.x + fTexture->frameWidth()
+           && iPosition.y < fPosition.y + fTexture->frameHeight();
+  }
+
+  constexpr ImVec2 getSize() const { if(fTexture) return fTexture->frameSize(); else return fSize ? *fSize : ImVec2{30,30}; }
+  constexpr ImVec2 getPosition() const { return fPosition; }
+  constexpr ImVec2 getTopLeft() const { return fPosition; }
+  constexpr ImVec2 getBottomRight() const { return fPosition + getSize(); }
+
+  constexpr void setPosition(ImVec2 const &iPosition) { fPosition = iPosition; }
+
+  constexpr void move(ImVec2 const &iDelta) { fPosition = fPosition + iDelta; }
+
+  constexpr Texture const *getTexture() const { return fTexture.get(); }
+  inline void setTexture(std::shared_ptr<Texture> iTexture) { fTexture = std::move(iTexture); }
+
+  void editView(std::vector<std::string> const &iTextureKeys,
+                std::function<void(std::string const &)> const &iOnTextureUpdate) const;
+
+  void draw(DrawContext &iCtx, int iFrameNumber, const ImVec4& iBorderCol) const;
+
+public:
+  ImVec2 fPosition{};
+  std::shared_ptr<Texture> fTexture{};
+  bool fSizeAllowed{};
+  std::optional<ImVec2> fSize{};
+};
+
 //------------------------------------------------------------------------
 // SingleAttribute<T>::reset
 //------------------------------------------------------------------------
@@ -286,10 +322,10 @@ class Widget
 public:
   explicit Widget(std::string iHDGui2DName) : fType{std::move(iHDGui2DName)} {}
 
-  constexpr ImVec2 getPosition() const { return fPosition; }
-  constexpr ImVec2 getTopLeft() const { return fPosition; }
-  constexpr ImVec2 getBottomRight() const { return fPosition + fTexture->frameSize(); }
-  constexpr void setPosition(ImVec2 const &iPosition) { fPosition = iPosition; }
+  constexpr ImVec2 getPosition() const { return fGraphics.getPosition(); }
+  constexpr ImVec2 getTopLeft() const { return fGraphics.getTopLeft(); }
+  constexpr ImVec2 getBottomRight() const { return fGraphics.getBottomRight(); }
+  constexpr void setPosition(ImVec2 const &iPosition) { fGraphics.setPosition(iPosition); }
 
   constexpr bool isSelected() const { return fSelected; }
   constexpr void setSelected(bool iSelected) { fSelected = iSelected; }
@@ -301,21 +337,16 @@ public:
   constexpr bool isError() const { return fError; };
   constexpr void setError(bool iError) { fError = iError; };
 
-  constexpr void move(ImVec2 const &iDelta) { fPosition = fPosition + iDelta; }
+  constexpr void move(ImVec2 const &iDelta) { fGraphics.move(iDelta); }
 
-  inline void setTexture(std::shared_ptr<Texture> iTexture) { fTexture = std::move(iTexture); }
+  inline void setTexture(std::shared_ptr<Texture> iTexture) { fGraphics.setTexture(std::move(iTexture)); }
   constexpr int getFrameNumber() const { return fFrameNumber; }
   constexpr int &getFrameNumber() { return fFrameNumber; }
   constexpr void setFrameNumber(int iFrameNumber) { fFrameNumber = iFrameNumber; }
 
-  constexpr Texture const *getTexture() const { return fTexture.get(); }
+  constexpr Texture const *getTexture() const { return fGraphics.getTexture(); }
 
-  inline bool contains(ImVec2 const &iPosition) const {
-    return iPosition.x > fPosition.x
-           && iPosition.y > fPosition.y
-           && iPosition.x < fPosition.x + fTexture->frameWidth()
-           && iPosition.y < fPosition.y + fTexture->frameHeight();
-  }
+  inline bool contains(ImVec2 const &iPosition) const { return fGraphics.contains(iPosition); }
 
   void draw(DrawContext &iCtx);
   void editView(EditContext &iCtx);
@@ -345,8 +376,7 @@ protected:
 
 private:
   std::string fType{};
-  ImVec2 fPosition{};
-  std::shared_ptr<Texture> fTexture{};
+  widget::attribute::Graphics fGraphics{};
   int fFrameNumber{};
   bool fSelected{};
   bool fError{};

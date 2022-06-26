@@ -417,6 +417,39 @@ void StaticStringList::editView(EditContext const &iCtx)
 }
 
 
+//------------------------------------------------------------------------
+// Graphics::draw
+//------------------------------------------------------------------------
+void Graphics::draw(DrawContext &iCtx, int iFrameNumber, ImVec4 const &iBorderCol) const
+{
+  if(fTexture)
+    iCtx.drawTexture(fTexture.get(), fPosition, iFrameNumber, iBorderCol);
+  else
+    iCtx.drawRectFilled(fPosition, getSize(), ImVec4{});
+}
+
+//------------------------------------------------------------------------
+// Graphics::editView
+//------------------------------------------------------------------------
+void Graphics::editView(std::vector<std::string> const &iTextureKeys,
+                        std::function<void(std::string const &)> const &iOnTextureUpdate) const
+{
+  auto key = fTexture ? fTexture->key() : "";
+  if(ImGui::BeginCombo(fName.c_str(), key.c_str()))
+  {
+    for(auto &p: iTextureKeys)
+    {
+      auto const isSelected = p == key;
+      if(ImGui::Selectable(p.c_str(), isSelected))
+      iOnTextureUpdate(p);
+      if(isSelected)
+        ImGui::SetItemDefaultFocus();
+    }
+    ImGui::EndCombo();
+  }
+
+}
+
 }
 
 namespace re::edit {
@@ -441,9 +474,10 @@ void Widget::draw(DrawContext &iCtx)
       borderColor = iCtx.getUserPreferences().fWidgetBorderColor;
   }
 
-  iCtx.drawTexture(fTexture.get(), fPosition, fFrameNumber, borderColor);
+  fGraphics.draw(iCtx, fFrameNumber, borderColor);
+
   if(fError)
-    iCtx.drawRectFilled(fPosition, fTexture->frameSize(), iCtx.getUserPreferences().fWidgetErrorColor);
+    iCtx.drawRectFilled(fGraphics.fPosition, fGraphics.getSize(), iCtx.getUserPreferences().fWidgetErrorColor);
 }
 
 //------------------------------------------------------------------------
@@ -451,16 +485,31 @@ void Widget::draw(DrawContext &iCtx)
 //------------------------------------------------------------------------
 void Widget::editView(EditContext &iCtx)
 {
-  auto x = static_cast<int>(std::round(fPosition.x));
-  ImGui::InputInt("x", &x, 1, 5);
-  auto y = static_cast<int>(std::round(fPosition.y));
-  ImGui::InputInt("y", &y, 1, 5);
-  if(x != static_cast<int>(std::round(fPosition.x)) || y != static_cast<int>(std::round(fPosition.y)))
-    fPosition = {static_cast<float>(x), static_cast<float>(y)};
+  fGraphics.editView(iCtx.getTextureKeys(),
+                     [this, &iCtx](std::string const &iTextureKey) {
+    fGraphics.fTexture = iCtx.getTexture(iTextureKey);
+    fFrameNumber = 0;
+  });
 
-  if(fTexture->numFrames() > 2)
+  auto x = static_cast<int>(std::round(fGraphics.fPosition.x));
+  ImGui::InputInt("x", &x, 1, 5);
+  auto y = static_cast<int>(std::round(fGraphics.fPosition.y));
+  ImGui::InputInt("y", &y, 1, 5);
+  if(x != static_cast<int>(std::round(fGraphics.fPosition.x)) || y != static_cast<int>(std::round(fGraphics.fPosition.y)))
+    fGraphics.fPosition = {static_cast<float>(x), static_cast<float>(y)};
+
+  if(fGraphics.fTexture)
   {
-    ImGui::SliderInt("Frame", &fFrameNumber, 0, fTexture->numFrames() - 1);
+    auto numFrames = fGraphics.fTexture->numFrames();
+    if(numFrames > 2)
+      ImGui::SliderInt("Frame", &fFrameNumber, 0, numFrames - 1);
+
+    if(numFrames == 2)
+    {
+      bool v = fFrameNumber == 1;
+      if(ImGui::Checkbox("Frame", &v))
+        fFrameNumber = v ? 1 : 0;
+    }
   }
 
   if(ImGui::TreeNode("Attributes"))
@@ -504,6 +553,8 @@ void Widget::editView(EditContext &iCtx)
 std::string Widget::hdgui2D() const
 {
   attribute_list_t atts{};
+
+  fGraphics.hdgui2D(atts);
 
   for(auto &w: fAttributes)
     w->hdgui2D(atts);

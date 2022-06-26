@@ -21,6 +21,7 @@
 
 #include <vector>
 #include <string>
+#include "Texture.h"
 
 namespace re::edit {
 
@@ -33,8 +34,17 @@ public:
     kDiscrete,
   };
 public:
-  virtual std::vector<std::string> getPropertyNames(PropertyKind iPropertyKind = PropertyKind::kAny) const = 0;
+  std::vector<std::string> getPropertyNames(PropertyKind iPropertyKind = PropertyKind::kAny) const
+  {
+    return doGetPropertyNames(iPropertyKind);
+  }
   virtual int getStepCount(std::string const &iPropertyPath) const = 0;
+
+  virtual std::vector<std::string> const &getTextureKeys() const = 0;
+  virtual std::shared_ptr<Texture> getTexture(std::string const &iKey) const = 0;
+
+protected:
+  virtual std::vector<std::string> doGetPropertyNames(PropertyKind iPropertyKind) const = 0;
 };
 
 }

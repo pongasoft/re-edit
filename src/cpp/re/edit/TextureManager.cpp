@@ -32,15 +32,15 @@ void TextureManager::init(std::string iDirectory)
 //------------------------------------------------------------------------
 // TextureManager::getTexture
 //------------------------------------------------------------------------
-std::shared_ptr<Texture> TextureManager::getTexture(std::string const &iPath) const
+std::shared_ptr<Texture> TextureManager::getTexture(std::string const &iKey) const
 {
   RE_MOCK_ASSERT(fFilmStripMgr != nullptr);
 
-  // get the filmstrip associated to the path
-  auto filmStrip = fFilmStripMgr->getFilmStrip(iPath);
+  // get the filmstrip associated to the key
+  auto filmStrip = fFilmStripMgr->getFilmStrip(iKey);
 
   // do we already have a GPU texture associated to this path?
-  auto iter = fTextures.find(iPath);
+  auto iter = fTextures.find(iKey);
   if(iter != fTextures.end())
   {
     auto texture = iter->second;

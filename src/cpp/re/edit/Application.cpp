@@ -22,46 +22,6 @@
 
 namespace re::edit {
 
-void WidgetTest()
-{
-  static auto knob = Widget::analog_knob();
-
-  class FakeEditContext : public EditContext
-  {
-  public:
-    std::vector<std::string> getPropertyNames(PropertyKind iPropertyKind) const override
-    {
-      if(iPropertyKind == EditContext::PropertyKind::kAny)
-        return {"/custom_properties/c1", "/custom_properties/c2", "/custom_properties/this/is/a/very/long/name/will/it/fit"};
-      else
-        return {"/custom_properties/c1"};
-    }
-
-    int getStepCount(std::string const &iPropertyPath) const override
-    {
-      if(iPropertyPath == "/custom_properties/c1")
-        return 5;
-      else
-        return 0;
-    }
-  };
-
-  FakeEditContext ctx;
-
-  if(ImGui::Begin("WidgetTest", nullptr, ImGuiWindowFlags_HorizontalScrollbar))
-  {
-    static float itemWidth = 100;
-
-//    ImGui::SliderFloat("Item Width", &itemWidth, 10, 300);
-
-//    ImGui::PushItemWidth(itemWidth);
-    knob->editView(ctx);
-//    ImGui::PopItemWidth();
-  }
-  ImGui::End();
-
-}
-
 //------------------------------------------------------------------------
 // Application::Application
 //------------------------------------------------------------------------
@@ -107,29 +67,6 @@ void Application::render()
 {
   ImGui::Begin("re-edit");
 
-  class FakeEditContext : public EditContext
-  {
-  public:
-    std::vector<std::string> getPropertyNames(PropertyKind iPropertyKind) const override
-    {
-      if(iPropertyKind == EditContext::PropertyKind::kAny)
-        return {"/custom_properties/c1", "/custom_properties/c2",
-                "/custom_properties/this/is/a/very/long/name/will/it/fit"};
-      else
-        return {"/custom_properties/c1"};
-    }
-
-    int getStepCount(std::string const &iPropertyPath) const override
-    {
-      if(iPropertyPath == "/custom_properties/c1")
-        return 5;
-      else
-        return 0;
-    }
-  };
-
-  FakeEditContext ctx;
-
   if(ImGui::BeginTabBar("Panels", ImGuiTabBarFlags_None))
   {
     if(ImGui::BeginTabItem("Front Panel"))
@@ -139,7 +76,7 @@ void Application::render()
       if(ImGui::Begin("Front Panel", nullptr, ImGuiWindowFlags_HorizontalScrollbar))
       {
         fFrontPanel.fPanel.draw(fFrontPanel.fDrawContext);
-        fFrontPanel.fPanel.editView(ctx);
+        fFrontPanel.fPanel.editView(*this);
       }
       ImGui::End();
       ImGui::EndTabItem();
@@ -152,7 +89,7 @@ void Application::render()
       if(ImGui::Begin("Back Panel", nullptr, ImGuiWindowFlags_HorizontalScrollbar))
       {
         fBackPanel.fPanel.draw(fBackPanel.fDrawContext);
-        fBackPanel.fPanel.editView(ctx);
+        fBackPanel.fPanel.editView(*this);
       }
       ImGui::End();
       ImGui::EndTabItem();
@@ -171,8 +108,45 @@ void Application::render()
               ImGui::GetIO().Framerate);
 
   ImGui::End();
+}
 
-//  WidgetTest();
+//------------------------------------------------------------------------
+// Application::getStepCount
+//------------------------------------------------------------------------
+int Application::getStepCount(std::string const &iPropertyPath) const
+{
+  if(iPropertyPath == "/custom_properties/c1")
+    return 5;
+  else
+    return 0;
+}
+
+//------------------------------------------------------------------------
+// Application::getTextureKeys
+//------------------------------------------------------------------------
+std::vector<std::string> const &Application::getTextureKeys() const
+{
+  return fTextureManager->getTextureKeys();
+}
+
+//------------------------------------------------------------------------
+// Application::getTexture
+//------------------------------------------------------------------------
+std::shared_ptr<Texture> Application::getTexture(std::string const &iKey) const
+{
+  return fTextureManager->getTexture(iKey);
+}
+
+//------------------------------------------------------------------------
+// Application::doGetPropertyNames
+//------------------------------------------------------------------------
+std::vector<std::string> Application::doGetPropertyNames(EditContext::PropertyKind iPropertyKind) const
+{
+  if(iPropertyKind == EditContext::PropertyKind::kAny)
+    return {"/custom_properties/c1", "/custom_properties/c2",
+            "/custom_properties/this/is/a/very/long/name/will/it/fit"};
+  else
+    return {"/custom_properties/c1"};
 }
 
 ////------------------------------------------------------------------------

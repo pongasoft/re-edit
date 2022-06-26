@@ -34,11 +34,12 @@ public:
 
   void init(std::string iDirectory);
 
-  std::shared_ptr<Texture> getTexture(std::string const &iPath) const;
+  std::shared_ptr<Texture> getTexture(std::string const &iKey) const;
 
 //  bool loadFilmStrip(char const *iPath, int iNumFrames = 1) { return fFilmStripMgr.maybeAddFilmStrip(iPath, iNumFrames); }
 
   void scanDirectory() { fFilmStripMgr->scanDirectory(); }
+  std::vector<std::string> const &getTextureKeys() const { return fFilmStripMgr->getKeys(); };
 
 protected:
   virtual std::unique_ptr<Texture> createTexture(std::shared_ptr<FilmStrip> const &iFilmStrip) const = 0;

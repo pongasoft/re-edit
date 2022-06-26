@@ -46,7 +46,7 @@ public:
   void draw(DrawContext &iCtx);
   void editView(EditContext &iCtx);
 
-  inline void setBackground(std::shared_ptr<Texture> iBackground) { fBackground = std::move(iBackground); }
+  inline void setBackground(std::shared_ptr<Texture> iBackground) { fGraphics.fTexture = std::move(iBackground); }
   int addWidget(std::unique_ptr<Widget> iWidget);
   std::vector<Widget *> getSelectedWidgets() const;
 
@@ -61,7 +61,7 @@ private:
 
 private:
   Type fType;
-  std::shared_ptr<Texture> fBackground{};
+  widget::attribute::Graphics fGraphics{};
   ObjectManager<std::unique_ptr<Widget>> fWidgets{};
   std::optional<ImVec2> fLastMovePosition{};
   std::optional<MouseDrag> fMouseDrag{};

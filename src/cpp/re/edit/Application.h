@@ -27,7 +27,7 @@
 
 namespace re::edit {
 
-class Application
+class Application : public EditContext
 {
 public:
   explicit Application(std::shared_ptr<TextureManager> const &iTextureManager);
@@ -36,6 +36,16 @@ public:
 
   void render();
 
+  int getStepCount(std::string const &iPropertyPath) const override;
+
+  std::vector<std::string> const &getTextureKeys() const override;
+
+  std::shared_ptr<Texture> getTexture(std::string const &iKey) const override;
+
+protected:
+  std::vector<std::string> doGetPropertyNames(PropertyKind iPropertyKind) const override;
+
+public:
   float clear_color[4] = {0.45f, 0.55f, 0.60f, 1.00f};
 
 private:
