@@ -230,13 +230,14 @@ public:
   Graphics() : Attribute("graphics") {}
 
   inline bool contains(ImVec2 const &iPosition) const {
+    auto size = getSize();
     return iPosition.x > fPosition.x
            && iPosition.y > fPosition.y
-           && iPosition.x < fPosition.x + fTexture->frameWidth()
-           && iPosition.y < fPosition.y + fTexture->frameHeight();
+           && iPosition.x < fPosition.x + size.x
+           && iPosition.y < fPosition.y + size.y;
   }
 
-  constexpr ImVec2 getSize() const { if(fTexture) return fTexture->frameSize(); else return fSize ? *fSize : ImVec2{30,30}; }
+  constexpr ImVec2 getSize() const { return hasTexture() ? getTexture()->frameSize() : fSize; }
   constexpr ImVec2 getPosition() const { return fPosition; }
   constexpr ImVec2 getTopLeft() const { return fPosition; }
   constexpr ImVec2 getBottomRight() const { return fPosition + getSize(); }
@@ -245,11 +246,19 @@ public:
 
   constexpr void move(ImVec2 const &iDelta) { fPosition = fPosition + iDelta; }
 
+  constexpr bool hasTexture() const { return getTexture() != nullptr; }
   constexpr Texture const *getTexture() const { return fTexture.get(); }
-  inline void setTexture(std::shared_ptr<Texture> iTexture) { fTexture = std::move(iTexture); }
+  void setTexture(std::shared_ptr<Texture> iTexture) { fTexture = std::move(iTexture); }
+  void setSize(ImVec2 const &iSize) { fSize = iSize; }
+
+  void reset() override;
+
+  void editView(EditContext const &iCtx) override;
 
   void editView(std::vector<std::string> const &iTextureKeys,
-                std::function<void(std::string const &)> const &iOnTextureUpdate) const;
+                const std::function<void()>& iOnReset,
+                std::function<void(std::string const &)> const &iOnTextureUpdate,
+                std::function<void(ImVec2 const &)> const &iOnSizeUpdate) const;
 
   void draw(DrawContext &iCtx, int iFrameNumber, const ImVec4& iBorderCol) const;
 
@@ -257,7 +266,7 @@ public:
   ImVec2 fPosition{};
   std::shared_ptr<Texture> fTexture{};
   bool fSizeAllowed{};
-  std::optional<ImVec2> fSize{};
+  ImVec2 fSize{100, 100};
 };
 
 //------------------------------------------------------------------------

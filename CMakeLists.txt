@@ -67,6 +67,7 @@ set(re-edit_BUILD_SOURCES
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/FilmStrip.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/Panel.h"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/Panel.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/ReGui.h"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/TextureManager.h"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/TextureManager.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/UserPreferences.h"

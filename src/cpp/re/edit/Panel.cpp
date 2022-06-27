@@ -17,6 +17,7 @@
  */
 
 #include "Panel.h"
+#include "ReGui.h"
 
 namespace re::edit {
 
@@ -29,13 +30,14 @@ void Panel::draw(DrawContext &iCtx)
 
   ImVec2 backgroundScreenPosition;
   auto const cp = ImGui::GetCursorScreenPos();
-  if(fGraphics.fTexture)
+  if(fGraphics.hasTexture())
   {
+    auto texture = fGraphics.getTexture();
     ImVec2 clickableArea = ImGui::GetContentRegionAvail();
-    auto backgroundSize = fGraphics.fTexture->frameSize() * iCtx.fZoom;
+    auto backgroundSize = texture->frameSize() * iCtx.fZoom;
     clickableArea = {std::max(clickableArea.x, backgroundSize.x), std::max(clickableArea.y, backgroundSize.y)};
 
-    iCtx.TextureItem(fGraphics.fTexture.get());
+    iCtx.TextureItem(texture);
     backgroundScreenPosition = ImGui::GetItemRectMin(); // accounts for scrollbar!
 
     // we use an invisible button to capture mouse events
@@ -116,6 +118,8 @@ void Panel::draw(DrawContext &iCtx)
       ImGui::Text("dragState=%s | fDragStart=%fx%f", dragState.c_str(), fMouseDrag->fCurrentPosition.x, fMouseDrag->fCurrentPosition.y);
     else
       ImGui::Text("dragState=%s", dragState.c_str());
+
+
   }
   ImGui::End();
 }
@@ -250,12 +254,63 @@ void Panel::editView(EditContext &iCtx)
 
   if(ImGui::Begin(getEditViewWindowName().c_str()))
   {
-    for(auto widget : selectedWidgets)
+    auto size = selectedWidgets.size();
+    switch(size)
     {
-      ImGui::Separator();
-      ImGui::PushID(widget);
-      widget->editView(iCtx);
-      ImGui::PopID();
+      case 0:
+        fGraphics.editView(iCtx);
+        break;
+
+      case 1:
+        selectedWidgets[0]->editView(iCtx);
+        break;
+
+      default:
+      {
+        auto min = selectedWidgets[0]->getTopLeft();
+
+        std::for_each(selectedWidgets.begin() + 1, selectedWidgets.end(), [&min](auto c) {
+          auto pos = c->getTopLeft();
+          if(pos.x < min.x)
+            min.x = pos.x;
+          if(pos.y < min.y)
+            min.y = pos.y;
+        });
+
+        auto editedMin = min;
+        ReGui::InputInt("x", &editedMin.x, 1, 5);
+        ImGui::SameLine();
+        ImGui::PushID("x");
+        if(ImGui::Button("="))
+        {
+          for(auto &w: selectedWidgets)
+          {
+            auto position = w->getPosition();
+            w->setPosition({editedMin.x, position.y});
+          }
+        }
+        ImGui::PopID();
+        ReGui::InputInt("y", &editedMin.y, 1, 5);
+        ImGui::SameLine();
+        ImGui::PushID("y");
+        if(ImGui::Button("="))
+        {
+          for(auto &w: selectedWidgets)
+          {
+            auto position = w->getPosition();
+            w->setPosition({position.x, editedMin.y});
+          }
+        }
+        ImGui::PopID();
+        auto delta = editedMin - min;
+        if(delta.x != 0 || delta.y != 0)
+        {
+          for(auto &w: selectedWidgets)
+            w->move(delta);
+        }
+
+        break;
+      }
     }
   }
   ImGui::End();

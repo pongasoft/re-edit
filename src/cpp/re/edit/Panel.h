@@ -46,7 +46,7 @@ public:
   void draw(DrawContext &iCtx);
   void editView(EditContext &iCtx);
 
-  inline void setBackground(std::shared_ptr<Texture> iBackground) { fGraphics.fTexture = std::move(iBackground); }
+  inline void setBackground(std::shared_ptr<Texture> iBackground) { fGraphics.setTexture(std::move(iBackground)); }
   int addWidget(std::unique_ptr<Widget> iWidget);
   std::vector<Widget *> getSelectedWidgets() const;
 
