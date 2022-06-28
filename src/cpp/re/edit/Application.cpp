@@ -69,31 +69,23 @@ void Application::render()
 
   if(ImGui::BeginTabBar("Panels", ImGuiTabBarFlags_None))
   {
-    if(ImGui::BeginTabItem("Front Panel"))
-    {
-      ImGui::SliderFloat("zoom", &fFrontPanel.fDrawContext.fZoom, 0.25f, 1.5f);
-      ImGui::Checkbox("Show Widget Border", &fFrontPanel.fDrawContext.fShowWidgetBorder);
-      if(ImGui::Begin("Front Panel", nullptr, ImGuiWindowFlags_HorizontalScrollbar))
+    auto tab = [](PanelState &iPanelState, EditContext &iCtx) {
+      if(ImGui::BeginTabItem(iPanelState.fPanel.getName()))
       {
-        fFrontPanel.fPanel.draw(fFrontPanel.fDrawContext);
-        fFrontPanel.fPanel.editView(*this);
+        ImGui::SliderFloat("zoom", &iPanelState.fDrawContext.fZoom, 0.25f, 1.5f);
+        ImGui::Checkbox("Show Widget Border", &iPanelState.fDrawContext.fShowWidgetBorder);
+        if(ImGui::Begin("Panel", nullptr, ImGuiWindowFlags_HorizontalScrollbar))
+        {
+          iPanelState.fPanel.draw(iPanelState.fDrawContext);
+          iPanelState.fPanel.editView(iCtx);
+        }
+        ImGui::End();
+        ImGui::EndTabItem();
       }
-      ImGui::End();
-      ImGui::EndTabItem();
-    }
+    };
 
-    if(ImGui::BeginTabItem("Back Panel"))
-    {
-      ImGui::SliderFloat("zoom", &fBackPanel.fDrawContext.fZoom, 0.25f, 1.5f);
-      ImGui::Checkbox("Show Widget Border", &fBackPanel.fDrawContext.fShowWidgetBorder);
-      if(ImGui::Begin("Back Panel", nullptr, ImGuiWindowFlags_HorizontalScrollbar))
-      {
-        fBackPanel.fPanel.draw(fBackPanel.fDrawContext);
-        fBackPanel.fPanel.editView(*this);
-      }
-      ImGui::End();
-      ImGui::EndTabItem();
-    }
+    tab(fFrontPanel, *this);
+    tab(fBackPanel, *this);
 
     ImGui::EndTabBar();
   }

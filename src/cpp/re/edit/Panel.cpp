@@ -24,6 +24,32 @@ namespace re::edit {
 //------------------------------------------------------------------------
 // Panel::draw
 //------------------------------------------------------------------------
+Panel::Panel(Panel::Type iType) :
+  fType{iType},
+  fNodeName{re::mock::fmt::printf("Panel_%s_bg", toString(iType))}
+{
+  // empty
+}
+
+//------------------------------------------------------------------------
+// Panel::toString
+//------------------------------------------------------------------------
+char const *Panel::toString(Panel::Type iType)
+{
+  switch(iType)
+  {
+    case Type::kFront: return "front";
+    case Type::kFoldedFront: return "folded_front";
+    case Type::kBack: return "back";
+    case Type::kFoldedBack: return "folded_Back";
+    default:
+      RE_MOCK_FAIL("Not reached");
+  }
+}
+
+//------------------------------------------------------------------------
+// Panel::draw
+//------------------------------------------------------------------------
 void Panel::draw(DrawContext &iCtx)
 {
   std::string dragState{"N/A"};
@@ -252,14 +278,26 @@ void Panel::editView(EditContext &iCtx)
 {
   auto selectedWidgets = getSelectedWidgets(); // TODO duplicate call... optimize!!!
 
-  if(ImGui::Begin(getEditViewWindowName().c_str()))
+  if(ImGui::Begin("Widgets"))
   {
     auto size = selectedWidgets.size();
     switch(size)
     {
       case 0:
+      {
+        ImGui::PushID("Panel");
         fGraphics.editView(iCtx);
+        if(ImGui::TreeNode("hdgui2D"))
+        {
+          auto windowSize = ImGui::GetWindowSize();
+          ImGui::PushTextWrapPos(windowSize.x);
+          ImGui::TextUnformatted(hdgui2D().c_str());
+          ImGui::PopTextWrapPos();
+          ImGui::TreePop();
+        }
+        ImGui::PopID();
         break;
+      }
 
       case 1:
         selectedWidgets[0]->editView(iCtx);
@@ -340,6 +378,32 @@ char const *Panel::getName() const
       RE_MOCK_FAIL("Not reached");
   }
 }
+
+//------------------------------------------------------------------------
+// Panel::hdgui2D
+//------------------------------------------------------------------------
+std::string Panel::hdgui2D() const
+{
+  auto panelName = toString(fType);
+
+  std::stringstream s{};
+  s << "--------------------------------------------------------------------------\n";
+  s << re::mock::fmt::printf("-- %s\n", panelName);
+  s << "--------------------------------------------------------------------------\n";
+  auto arrayName = re::mock::fmt::printf("%s_widgets", panelName);
+  s << re::mock::fmt::printf("%s = {}\n", arrayName);
+  for(auto &i: fWidgets)
+  {
+    auto &w = i.second;
+    s << re::mock::fmt::printf("-- %s\n", w->getName());
+    s << re::mock::fmt::printf("%s[#%s + 1] = %s\n", arrayName, arrayName, w->hdgui2D());
+  }
+
+  s << re::mock::fmt::printf("%s = jbox.panel{ graphics = { node = \"%s\" }, widgets = %s }\n", panelName, fNodeName, arrayName);
+
+  return s.str();
+}
+
 
 
 }

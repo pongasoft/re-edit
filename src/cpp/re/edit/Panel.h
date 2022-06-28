@@ -38,10 +38,13 @@ class Panel
 {
 public:
   enum class Type { kFront, kBack, kFoldedFront, kFoldedBack  };
+  static char const *toString(Type iType);
+
 public:
-  explicit Panel(Type iType) : fType{iType} {}
+  explicit Panel(Type iType);
 
   char const *getName() const;
+  constexpr std::string const &getNodeName() const { return fNodeName; };
 
   void draw(DrawContext &iCtx);
   void editView(EditContext &iCtx);
@@ -49,6 +52,8 @@ public:
   inline void setBackground(std::shared_ptr<Texture> iBackground) { fGraphics.setTexture(std::move(iBackground)); }
   int addWidget(std::unique_ptr<Widget> iWidget);
   std::vector<Widget *> getSelectedWidgets() const;
+
+  std::string hdgui2D() const;
 
 private:
   std::string getEditViewWindowName() const;
@@ -61,6 +66,7 @@ private:
 
 private:
   Type fType;
+  std::string fNodeName;
   widget::attribute::Graphics fGraphics{};
   ObjectManager<std::unique_ptr<Widget>> fWidgets{};
   std::optional<ImVec2> fLastMovePosition{};
