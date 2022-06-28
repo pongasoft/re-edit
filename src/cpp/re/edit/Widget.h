@@ -71,6 +71,8 @@ public:
   std::string hdgui2D() const;
 
   static std::unique_ptr<Widget> analog_knob();
+  static std::unique_ptr<Widget> static_decoration();
+  static std::unique_ptr<Widget> widget(std::string const &iType);
 
 //  template<typename T>
 //  T *findAttribute(std::string const &iAttributeName) const;
@@ -90,6 +92,7 @@ protected:
   Widget *tooltip_position();
   Widget *tooltip_template();
   Widget *visibility();
+  Widget *blend_mode();
 
 private:
   void computeDefaultWidgetName();

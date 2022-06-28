@@ -21,6 +21,7 @@
 #include <re/mock/fmt.h>
 #include <imgui.h>
 #include <misc/cpp/imgui_stdlib.h>
+#include <re/mock/Errors.h>
 
 namespace re::edit {
 
@@ -209,6 +210,16 @@ Widget *Widget::tooltip_template()
 }
 
 //------------------------------------------------------------------------
+// Widget::blend_mode
+//------------------------------------------------------------------------
+Widget *Widget::blend_mode()
+{
+  static const std::vector<std::string> blend_modes =
+    { "normal", "luminance"};
+  return addAttribute(Attribute::build<StaticStringList>("blend_mode", "normal", blend_modes));
+}
+
+//------------------------------------------------------------------------
 // Widget::computeDefaultWidgetName
 //------------------------------------------------------------------------
 void Widget::computeDefaultWidgetName()
@@ -231,6 +242,37 @@ std::unique_ptr<Widget> Widget::analog_knob()
     ;
   return w;
 }
+
+//------------------------------------------------------------------------
+// Widget::static_decoration
+//------------------------------------------------------------------------
+std::unique_ptr<Widget> Widget::static_decoration()
+{
+  auto w = std::make_unique<Widget>("static_decoration");
+  w ->blend_mode()
+    ->visibility()
+    ;
+  return w;
+}
+
+//------------------------------------------------------------------------
+// Widget::widget
+//------------------------------------------------------------------------
+std::unique_ptr<Widget> Widget::widget(std::string const &iType)
+{
+  std::unique_ptr<Widget> w{};
+
+  if(iType == "analog_knob")
+    w = Widget::analog_knob();
+
+  if(iType == "static_decoration")
+    w = Widget::static_decoration();
+
+  RE_MOCK_INTERNAL_ASSERT(w != nullptr);
+
+  return w;
+}
+
 
 }
 

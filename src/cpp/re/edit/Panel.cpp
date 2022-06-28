@@ -16,6 +16,8 @@
  * @author Yan Pujante
  */
 
+#include <re/mock/fmt.h>
+#include <re/mock/Errors.h>
 #include "Panel.h"
 #include "ReGui.h"
 
@@ -46,6 +48,17 @@ char const *Panel::toString(Panel::Type iType)
       RE_MOCK_FAIL("Not reached");
   }
 }
+
+//------------------------------------------------------------------------
+// Panel::getWidget
+//------------------------------------------------------------------------
+Widget *Panel::getWidget(int id) const
+{
+  auto const &w = fWidgets.at(id);
+  RE_MOCK_INTERNAL_ASSERT(w != nullptr);
+  return w.get();
+}
+
 
 //------------------------------------------------------------------------
 // Panel::draw
@@ -100,9 +113,10 @@ void Panel::draw(DrawContext &iCtx)
     }
   }
   ImGui::SetCursorScreenPos(cp); // InvisibleButton moves the cursor so we restore it
-  for(auto &widget: fWidgets)
+
+  for(auto id: fWidgetOrder)
   {
-    auto &w = widget.second;
+    auto &w = fWidgets[id];
     w->draw(iCtx);
   }
 
@@ -155,7 +169,10 @@ void Panel::draw(DrawContext &iCtx)
 //------------------------------------------------------------------------
 int Panel::addWidget(std::unique_ptr<Widget> iWidget)
 {
-  return fWidgets.add(std::move(iWidget));
+  auto const id = fWidgetCounter++;
+  fWidgets[id] = std::move(iWidget);
+  fWidgetOrder.emplace_back(id);
+  return id;
 }
 
 //------------------------------------------------------------------------
@@ -356,6 +373,14 @@ void Panel::editView(EditContext &iCtx)
 }
 
 //------------------------------------------------------------------------
+// Panel::swap
+//------------------------------------------------------------------------
+void Panel::swap(int iIndex1, int iIndex2)
+{
+  std::swap(fWidgetOrder[iIndex1], fWidgetOrder[iIndex2]);
+}
+
+//------------------------------------------------------------------------
 // Panel::getEditViewWindowName
 //------------------------------------------------------------------------
 std::string Panel::getEditViewWindowName() const
@@ -392,9 +417,9 @@ std::string Panel::hdgui2D() const
   s << "--------------------------------------------------------------------------\n";
   auto arrayName = re::mock::fmt::printf("%s_widgets", panelName);
   s << re::mock::fmt::printf("%s = {}\n", arrayName);
-  for(auto &i: fWidgets)
+  for(auto id: fWidgetOrder)
   {
-    auto &w = i.second;
+    auto const &w = fWidgets.at(id);
     s << re::mock::fmt::printf("-- %s\n", w->getName());
     s << re::mock::fmt::printf("%s[#%s + 1] = %s\n", arrayName, arrayName, w->hdgui2D());
   }

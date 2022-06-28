@@ -74,6 +74,38 @@ void Application::render()
       {
         ImGui::SliderFloat("zoom", &iPanelState.fDrawContext.fZoom, 0.25f, 1.5f);
         ImGui::Checkbox("Show Widget Border", &iPanelState.fDrawContext.fShowWidgetBorder);
+        if(ImGui::TreeNode("Widgets"))
+        {
+          auto ids = iPanelState.fPanel.getWidgetOrder();
+          for(int n = 0; n < ids.size(); n++)
+          {
+            auto item = iPanelState.fPanel.getWidget(ids[n])->getName();
+            ImGui::Selectable(item.c_str());
+
+            if(ImGui::IsItemActive() && !ImGui::IsItemHovered())
+            {
+              int n_next = n + (ImGui::GetMouseDragDelta(0).y < 0.f ? -1 : 1);
+              if (n_next >= 0 && n_next < ids.size())
+              {
+                iPanelState.fPanel.swap(n, n_next);
+                ImGui::ResetMouseDragDelta();
+              }
+            }
+          }
+          ImGui::TreePop();
+        }
+        if (ImGui::Button("Add Widget"))
+          ImGui::OpenPopup("add_widget");
+        if(ImGui::BeginPopup("add_widget"))
+        {
+          for(auto widgetType : kWidgetTypes)
+          {
+            if(ImGui::Selectable(widgetType))
+              iPanelState.fPanel.addWidget(Widget::widget(widgetType));
+          }
+          ImGui::EndPopup();
+        }
+
         if(ImGui::Begin("Panel", nullptr, ImGuiWindowFlags_HorizontalScrollbar))
         {
           iPanelState.fPanel.draw(iPanelState.fDrawContext);

@@ -20,11 +20,8 @@
 #define RE_EDIT_PANEL_H
 
 #include "Widget.h"
-#include <re/mock/ObjectManager.hpp>
 #include <vector>
 #include <optional>
-
-using namespace re::mock;
 
 namespace re::edit {
 
@@ -52,6 +49,10 @@ public:
   inline void setBackground(std::shared_ptr<Texture> iBackground) { fGraphics.setTexture(std::move(iBackground)); }
   int addWidget(std::unique_ptr<Widget> iWidget);
   std::vector<Widget *> getSelectedWidgets() const;
+  std::vector<int> getWidgetOrder() const { return fWidgetOrder; }
+  Widget *getWidget(int id) const;
+
+  void swap(int iIndex1, int iIndex2);
 
   std::string hdgui2D() const;
 
@@ -68,9 +69,11 @@ private:
   Type fType;
   std::string fNodeName;
   widget::attribute::Graphics fGraphics{};
-  ObjectManager<std::unique_ptr<Widget>> fWidgets{};
+  std::map<int, std::unique_ptr<Widget>> fWidgets{};
+  std::vector<int> fWidgetOrder{};
   std::optional<ImVec2> fLastMovePosition{};
   std::optional<MouseDrag> fMouseDrag{};
+  int fWidgetCounter{1}; // used for unique id
 };
 
 }

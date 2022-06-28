@@ -23,6 +23,7 @@
 
 namespace re::edit {
 
+constexpr char const *kWidgetTypes[] = { "analog_knob", "static_decoration" };
 
 }
 
