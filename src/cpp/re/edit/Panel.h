@@ -52,6 +52,8 @@ public:
   std::vector<int> getWidgetOrder() const { return fWidgetOrder; }
   Widget *getWidget(int id) const;
 
+  void selectWidget(int id, bool iMultiple);
+
   void swap(int iIndex1, int iIndex2);
 
   std::string hdgui2D() const;

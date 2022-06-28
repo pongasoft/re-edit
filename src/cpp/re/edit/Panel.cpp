@@ -86,7 +86,7 @@ void Panel::draw(DrawContext &iCtx)
     auto mousePos = ImGui::GetMousePos() - backgroundScreenPosition; // accounts for scrollbars
     if(fMouseDrag)
     {
-      if(ImGui::IsMouseReleased(ImGuiMouseButton_::ImGuiMouseButton_Left))
+      if(ImGui::IsMouseReleased(ImGuiMouseButton_Left))
       {
         fMouseDrag = std::nullopt;
         dragState = "onRelease";
@@ -104,7 +104,7 @@ void Panel::draw(DrawContext &iCtx)
         else
           dragState = "waiting for drag";
       }
-    } else if(ImGui::IsItemClicked(ImGuiMouseButton_::ImGuiMouseButton_Left))
+    } else if(ImGui::IsItemClicked(ImGuiMouseButton_Left))
     {
       fMouseDrag = MouseDrag{mousePos, mousePos};
       auto &io = ImGui::GetIO();
@@ -208,6 +208,26 @@ void Panel::selectWidget(ImVec2 const &iPosition, bool iMultiple)
       }
     }
   }
+}
+
+//------------------------------------------------------------------------
+// Panel::selectWidget
+//------------------------------------------------------------------------
+void Panel::selectWidget(int id, bool iMultiple)
+{
+  auto widget = getWidget(id);
+
+  if(!iMultiple)
+  {
+    for(auto &p: fWidgets)
+    {
+      auto w = p.second.get();
+      if(w != widget)
+        p.second->setSelected(false);
+    }
+  }
+
+  widget->toggleSelection();
 }
 
 //------------------------------------------------------------------------
@@ -428,7 +448,6 @@ std::string Panel::hdgui2D() const
 
   return s.str();
 }
-
 
 
 }

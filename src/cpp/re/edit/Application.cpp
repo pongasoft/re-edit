@@ -79,8 +79,16 @@ void Application::render()
           auto ids = iPanelState.fPanel.getWidgetOrder();
           for(int n = 0; n < ids.size(); n++)
           {
-            auto item = iPanelState.fPanel.getWidget(ids[n])->getName();
-            ImGui::Selectable(item.c_str());
+            auto id = ids[n];
+            auto const widget = iPanelState.fPanel.getWidget(id);
+            auto item = widget->getName();
+            ImGui::Selectable(item.c_str(), widget->isSelected());
+
+            if(ImGui::IsItemClicked(ImGuiMouseButton_Left))
+            {
+              auto &io = ImGui::GetIO();
+              iPanelState.fPanel.selectWidget(id, io.KeyShift);
+            }
 
             if(ImGui::IsItemActive() && !ImGui::IsItemHovered())
             {
