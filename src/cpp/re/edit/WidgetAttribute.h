@@ -58,6 +58,12 @@ public:
   template<typename T, typename... ConstructorArgs>
   static std::unique_ptr<T> build(std::string const &iName, typename T::value_t const &iDefaultValue, ConstructorArgs&& ...iArgs);
 
+  virtual std::unique_ptr<Attribute> clone() const = 0;
+
+protected:
+  template<typename T>
+  static std::unique_ptr<Attribute> clone(T const &iAttribute);
+
 public:
   std::string fName{};
   std::optional<std::string> fError{};
@@ -92,6 +98,8 @@ public:
   explicit Bool(std::string iName) : SingleAttribute<bool>{std::move(iName)} {}
   std::string getValueAsLua() const override { return fValue ? "true" : "false"; }
   void editView(EditContext const &iCtx) override;
+
+  std::unique_ptr<Attribute> clone() const override { return Attribute::clone<Bool>(*this); }
 };
 
 class String : public SingleAttribute<std::string>
@@ -111,6 +119,8 @@ public:
   virtual EditContext::PropertyKind getPropertyKind() const { return EditContext::PropertyKind::kAny; }
   void editView(EditContext const &iCtx) override;
 
+  std::unique_ptr<Attribute> clone() const override { return Attribute::clone<PropertyPath>(*this); }
+
   void editView(std::vector<std::string> const &iProperties,
                 std::function<void()> const &iOnReset,
                 std::function<void(std::string const &)> const &iOnSelect) const;
@@ -122,6 +132,8 @@ public:
 //  Kind getKind() const override { return Kind::kUIText; }
   explicit UIText(std::string iName) : String{std::move(iName)} {}
   std::string getValueAsLua() const override;
+
+  std::unique_ptr<Attribute> clone() const override { return Attribute::clone<UIText>(*this); }
 };
 
 class PropertyPathList : public SingleAttribute<std::vector<std::string>>
@@ -134,6 +146,8 @@ public:
   void editStaticListView(std::vector<std::string> const &iProperties,
                           std::function<void()> const &iOnReset,
                           std::function<void(int iIndex, std::string const &)> const &iOnSelect) const;
+
+  std::unique_ptr<Attribute> clone() const override { return Attribute::clone<PropertyPathList>(*this); }
 };
 
 class DiscretePropertyValueList : public SingleAttribute<std::vector<int>>
@@ -147,6 +161,8 @@ public:
                 std::function<void()>                       const &iOnAdd,
                 std::function<void(int iIndex, int iValue)> const &iOnUpdate,
                 std::function<void(int iIndex)>             const &iOnDelete) const;
+
+  std::unique_ptr<Attribute> clone() const override { return Attribute::clone<DiscretePropertyValueList>(*this); }
 };
 
 class Value : public Attribute
@@ -157,6 +173,8 @@ public:
   void editView(EditContext const &iCtx) override;
 
   void reset() override;
+
+  std::unique_ptr<Attribute> clone() const override { return Attribute::clone<Value>(*this); }
 
 public:
   bool fUseSwitch{};
@@ -174,6 +192,8 @@ public:
 
   void reset() override;
 
+  std::unique_ptr<Attribute> clone() const override { return Attribute::clone<Visibility>(*this); }
+
 public:
   PropertyPath fSwitch{"visibility_switch"};
   DiscretePropertyValueList fValues{"visibility_values"};
@@ -185,6 +205,8 @@ public:
   explicit StaticStringList(std::string iName, std::vector<std::string> const &iSelectionList) : String{std::move(iName)}, fSelectionList(iSelectionList) {}
 //  Kind getKind() const override { return Kind::kStaticStringList; }
   void editView(EditContext const &iCtx) override;
+
+  std::unique_ptr<Attribute> clone() const override { return Attribute::clone<StaticStringList>(*this); }
 
 public:
   std::vector<std::string> const &fSelectionList;
@@ -229,6 +251,8 @@ public:
                 std::function<void(ImVec2 const &)> const &iOnSizeUpdate) const;
 
   void draw(DrawContext &iCtx, int iFrameNumber, const ImVec4& iBorderCol) const;
+
+  std::unique_ptr<Attribute> clone() const override { return Attribute::clone<Graphics>(*this); }
 
 public:
   ImVec2 fPosition{};
@@ -289,6 +313,15 @@ std::unique_ptr<T> Attribute::build(std::string const &iName, typename T::value_
   attribute->fDefaultValue = iDefaultValue;
   attribute->fValue = iDefaultValue;
   return attribute;
+}
+
+//------------------------------------------------------------------------
+// Attribute::clone
+//------------------------------------------------------------------------
+template<typename T>
+std::unique_ptr<Attribute> Attribute::clone(T const &iAttribute)
+{
+  return std::make_unique<T>(iAttribute);
 }
 
 } // namespace widget

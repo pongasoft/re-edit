@@ -32,12 +32,15 @@
 
 namespace re::edit {
 
+class Panel;
+
 class Widget
 {
 public:
-  explicit Widget(std::string iHDGui2DName);
+  explicit Widget(std::string iType);
 
   constexpr std::string const &getName() const { return fName; }
+  constexpr int getId() const { return fId; }
 
   constexpr ImVec2 getPosition() const { return fGraphics.getPosition(); }
   constexpr ImVec2 getTopLeft() const { return fGraphics.getTopLeft(); }
@@ -70,6 +73,8 @@ public:
 
   std::string hdgui2D() const;
 
+  std::unique_ptr<Widget> clone() const;
+
   static std::unique_ptr<Widget> analog_knob();
   static std::unique_ptr<Widget> static_decoration();
   static std::unique_ptr<Widget> widget(std::string const &iType);
@@ -84,6 +89,8 @@ public:
 //  std::string *findValueSwitchValue() const { return findAttributeValue<widget::attribute::ValueSwitch>("value_switch"); }
 //  std::string *findVisibilitySwitchValue() const { return findAttributeValue<widget::attribute::VisibilitySwitch>("visibility_switch"); };
 
+  friend class Panel;
+
 protected:
   Widget *addAttribute(std::unique_ptr<widget::Attribute> iAttribute) { fAttributes.emplace_back(std::move(iAttribute)); return this; }
   Widget *value();
@@ -96,8 +103,11 @@ protected:
 
 private:
   void computeDefaultWidgetName();
+  Widget(Widget const &iOther, std::string iName);
+  void init(int id) { fId = id; }
 
 private:
+  int fId{};
   std::string fType{};
   std::string fName{};
   widget::attribute::Graphics fGraphics{};

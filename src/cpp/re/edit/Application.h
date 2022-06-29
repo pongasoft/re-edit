@@ -49,11 +49,16 @@ public:
   float clear_color[4] = {0.45f, 0.55f, 0.60f, 1.00f};
 
 private:
-  struct PanelState
+  class PanelState
   {
+  public:
     PanelState(Panel::Type iPanelType,
                std::shared_ptr<TextureManager> iTextureManager,
                std::shared_ptr<UserPreferences> iUserPreferences);
+
+    void render(EditContext &iCtx);
+
+  public:
     Panel fPanel;
     DrawContext fDrawContext;
   };

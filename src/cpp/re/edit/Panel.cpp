@@ -170,10 +170,28 @@ void Panel::draw(DrawContext &iCtx)
 int Panel::addWidget(std::unique_ptr<Widget> iWidget)
 {
   auto const id = fWidgetCounter++;
+  iWidget->init(id);
   fWidgets[id] = std::move(iWidget);
   fWidgetOrder.emplace_back(id);
   return id;
 }
+
+//------------------------------------------------------------------------
+// Panel::deleteWidget
+//------------------------------------------------------------------------
+std::pair<std::unique_ptr<Widget>, int> Panel::deleteWidget(int id)
+{
+  std::unique_ptr<Widget> widget{};
+  // we need to extract the widget from the map before removing it so that we can return it!
+  std::swap(fWidgets.at(id), widget);
+  fWidgets.erase(id);
+  auto iter = std::find(fWidgetOrder.begin(), fWidgetOrder.end(), id);
+  RE_MOCK_INTERNAL_ASSERT(iter != fWidgetOrder.end());
+  auto order = iter - fWidgetOrder.begin();
+  fWidgetOrder.erase(iter);
+  return {std::move(widget), order};
+}
+
 
 //------------------------------------------------------------------------
 // Panel::selectWidget
@@ -183,8 +201,7 @@ void Panel::selectWidget(ImVec2 const &iPosition, bool iMultiple)
   auto ci = std::find_if(fWidgets.begin(), fWidgets.end(), [&iPosition](auto const &p) { return p.second->contains(iPosition); });
   if(ci == fWidgets.end())
   {
-    for(auto &p: fWidgets)
-      p.second->setSelected(false);
+    clearSelection();
   }
   else
   {
@@ -223,11 +240,20 @@ void Panel::selectWidget(int id, bool iMultiple)
     {
       auto w = p.second.get();
       if(w != widget)
-        p.second->setSelected(false);
+        w->setSelected(false);
     }
   }
 
   widget->toggleSelection();
+}
+
+//------------------------------------------------------------------------
+// Panel::clearSelection
+//------------------------------------------------------------------------
+void Panel::clearSelection()
+{
+  for(auto &p: fWidgets)
+    p.second->setSelected(false);
 }
 
 //------------------------------------------------------------------------

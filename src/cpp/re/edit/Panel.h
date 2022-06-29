@@ -53,6 +53,11 @@ public:
   Widget *getWidget(int id) const;
 
   void selectWidget(int id, bool iMultiple);
+  void clearSelection();
+
+  /**
+   * @return the deleted widget and its order */
+  std::pair<std::unique_ptr<Widget>, int> deleteWidget(int id);
 
   void swap(int iIndex1, int iIndex2);
 

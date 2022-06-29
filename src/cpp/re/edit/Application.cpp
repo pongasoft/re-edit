@@ -19,6 +19,7 @@
 #include "Application.h"
 #include "Widget.h"
 #include <imgui.h>
+#include <re/mock/Errors.h>
 
 namespace re::edit {
 
@@ -69,64 +70,8 @@ void Application::render()
 
   if(ImGui::BeginTabBar("Panels", ImGuiTabBarFlags_None))
   {
-    auto tab = [](PanelState &iPanelState, EditContext &iCtx) {
-      if(ImGui::BeginTabItem(iPanelState.fPanel.getName()))
-      {
-        ImGui::SliderFloat("zoom", &iPanelState.fDrawContext.fZoom, 0.25f, 1.5f);
-        ImGui::Checkbox("Show Widget Border", &iPanelState.fDrawContext.fShowWidgetBorder);
-        if(ImGui::TreeNode("Widgets"))
-        {
-          auto ids = iPanelState.fPanel.getWidgetOrder();
-          for(int n = 0; n < ids.size(); n++)
-          {
-            auto id = ids[n];
-            auto const widget = iPanelState.fPanel.getWidget(id);
-            auto item = widget->getName();
-            ImGui::Selectable(item.c_str(), widget->isSelected());
-
-            if(ImGui::IsItemClicked(ImGuiMouseButton_Left))
-            {
-              auto &io = ImGui::GetIO();
-              iPanelState.fPanel.selectWidget(id, io.KeyShift);
-            }
-
-            if(ImGui::IsItemActive() && !ImGui::IsItemHovered())
-            {
-              int n_next = n + (ImGui::GetMouseDragDelta(0).y < 0.f ? -1 : 1);
-              if (n_next >= 0 && n_next < ids.size())
-              {
-                iPanelState.fPanel.swap(n, n_next);
-                ImGui::ResetMouseDragDelta();
-              }
-            }
-          }
-          ImGui::TreePop();
-        }
-        if (ImGui::Button("Add Widget"))
-          ImGui::OpenPopup("add_widget");
-        if(ImGui::BeginPopup("add_widget"))
-        {
-          for(auto widgetType : kWidgetTypes)
-          {
-            if(ImGui::Selectable(widgetType))
-              iPanelState.fPanel.addWidget(Widget::widget(widgetType));
-          }
-          ImGui::EndPopup();
-        }
-
-        if(ImGui::Begin("Panel", nullptr, ImGuiWindowFlags_HorizontalScrollbar))
-        {
-          iPanelState.fPanel.draw(iPanelState.fDrawContext);
-          iPanelState.fPanel.editView(iCtx);
-        }
-        ImGui::End();
-        ImGui::EndTabItem();
-      }
-    };
-
-    tab(fFrontPanel, *this);
-    tab(fBackPanel, *this);
-
+    fFrontPanel.render(*this);
+    fBackPanel.render(*this);
     ImGui::EndTabBar();
   }
 
@@ -269,6 +214,91 @@ Application::PanelState::PanelState(Panel::Type iPanelType,
   fPanel(iPanelType),
   fDrawContext(std::move(iTextureManager), std::move(iUserPreferences))
 {
+}
+
+//------------------------------------------------------------------------
+// Application::render
+//------------------------------------------------------------------------
+void Application::PanelState::render(EditContext &iCtx)
+{
+  if(ImGui::BeginTabItem(fPanel.getName()))
+  {
+    ImGui::SliderFloat("zoom", &fDrawContext.fZoom, 0.25f, 1.5f);
+
+    ImGui::Checkbox("Show Widget Border", &fDrawContext.fShowWidgetBorder);
+
+    if(ImGui::Button("Add"))
+      ImGui::OpenPopup("add_widget");
+    if(ImGui::BeginPopup("add_widget"))
+    {
+      for(auto widgetType : kWidgetTypes)
+      {
+        if(ImGui::Selectable(widgetType))
+          fPanel.addWidget(Widget::widget(widgetType));
+      }
+      ImGui::EndPopup();
+    }
+    auto selectedWidgets = fPanel.getSelectedWidgets();
+    ImGui::BeginDisabled(selectedWidgets.empty());
+    ImGui::SameLine();
+    if(ImGui::Button("Dup"))
+    {
+      for(auto w: selectedWidgets)
+        fPanel.addWidget(w->clone());
+    }
+
+    ImGui::SameLine();
+    if(ImGui::Button("Clr"))
+      fPanel.clearSelection();
+
+    ImGui::SameLine();
+    if(ImGui::Button("Del"))
+    {
+      for(auto w: selectedWidgets)
+      {
+        fPanel.deleteWidget(w->getId());
+      }
+    }
+
+    ImGui::EndDisabled();
+
+    if(ImGui::TreeNode("Widgets"))
+    {
+      auto ids = fPanel.getWidgetOrder();
+      for(int n = 0; n < ids.size(); n++)
+      {
+        auto id = ids[n];
+        auto const widget = fPanel.getWidget(id);
+        auto item = widget->getName();
+        ImGui::Selectable(item.c_str(), widget->isSelected());
+
+        if(ImGui::IsItemClicked(ImGuiMouseButton_Left))
+        {
+          auto &io = ImGui::GetIO();
+          fPanel.selectWidget(id, io.KeyShift);
+        }
+
+        if(ImGui::IsItemActive() && !ImGui::IsItemHovered())
+        {
+          int n_next = n + (ImGui::GetMouseDragDelta(0).y < 0.f ? -1 : 1);
+          if (n_next >= 0 && n_next < ids.size())
+          {
+            fPanel.swap(n, n_next);
+            ImGui::ResetMouseDragDelta();
+          }
+        }
+      }
+      ImGui::TreePop();
+    }
+
+    if(ImGui::Begin("Panel", nullptr, ImGuiWindowFlags_HorizontalScrollbar))
+    {
+      fPanel.draw(fDrawContext);
+      fPanel.editView(iCtx);
+    }
+    ImGui::End();
+    ImGui::EndTabItem();
+  }
 }
 
 }

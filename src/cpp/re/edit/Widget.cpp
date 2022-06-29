@@ -33,9 +33,23 @@ long Widget::fWidgetIota = 1;
 //------------------------------------------------------------------------
 // Widget::Widget
 //------------------------------------------------------------------------
-Widget::Widget(std::string iHDGui2DName) : fType{std::move(iHDGui2DName)}
+Widget::Widget(std::string iType) : fType{std::move(iType)}
 {
   computeDefaultWidgetName();
+}
+
+//------------------------------------------------------------------------
+// Widget::Widget
+//------------------------------------------------------------------------
+Widget::Widget(Widget const &iOther, std::string iName) :
+  fType(iOther.fType),
+  fName(std::move(iName)),
+  fGraphics(iOther.fGraphics)
+{
+  for(auto &attribute: iOther.fAttributes)
+    fAttributes.emplace_back(attribute->clone());
+  fGraphics.setPosition(iOther.getPosition() + ImVec2(iOther.fGraphics.getSize().x + 5,0));
+  fSelected = true;
 }
 
 //------------------------------------------------------------------------
@@ -272,6 +286,15 @@ std::unique_ptr<Widget> Widget::widget(std::string const &iType)
 
   return w;
 }
+
+//------------------------------------------------------------------------
+// Widget::widget
+//------------------------------------------------------------------------
+std::unique_ptr<Widget> Widget::clone() const
+{
+  return std::unique_ptr<Widget>(new Widget(*this, re::mock::fmt::printf("%s Copy", fName)));
+}
+
 
 
 }
