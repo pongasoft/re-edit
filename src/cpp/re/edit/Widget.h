@@ -93,7 +93,7 @@ public:
 
 protected:
   Widget *addAttribute(std::unique_ptr<widget::Attribute> iAttribute) { fAttributes.emplace_back(std::move(iAttribute)); return this; }
-  Widget *value();
+  Widget *value(Property::Filter iValueFilter, Property::Filter iValueSwitchFilter);
   Widget *show_remote_box();
   Widget *show_automation_rect();
   Widget *tooltip_position();

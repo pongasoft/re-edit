@@ -24,6 +24,7 @@
 #include "DrawContext.h"
 #include "Panel.h"
 #include "EditContext.h"
+#include "PropertyManager.h"
 
 namespace re::edit {
 
@@ -36,14 +37,12 @@ public:
 
   void render();
 
-  int getStepCount(std::string const &iPropertyPath) const override;
+  std::vector<Property const *> findProperties(Property::Filter const &iFilter) const override;
+  Property const *findProperty(std::string const &iPropertyPath) const override;
 
   std::vector<std::string> const &getTextureKeys() const override;
 
   std::shared_ptr<Texture> getTexture(std::string const &iKey) const override;
-
-protected:
-  std::vector<std::string> doGetPropertyNames(PropertyKind iPropertyKind) const override;
 
 public:
   float clear_color[4] = {0.45f, 0.55f, 0.60f, 1.00f};
@@ -66,6 +65,7 @@ private:
 private:
   std::shared_ptr<TextureManager> fTextureManager;
   std::shared_ptr<UserPreferences> fUserPreferences;
+  PropertyManager fPropertyManager{};
   PanelState fFrontPanel;
   PanelState fBackPanel;
   bool show_demo_window{false};

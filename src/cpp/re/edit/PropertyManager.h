@@ -16,27 +16,37 @@
  * @author Yan Pujante
  */
 
-#ifndef RE_EDIT_EDIT_CONTEXT_H
-#define RE_EDIT_EDIT_CONTEXT_H
+#ifndef RE_EDIT_PROPERTY_MANAGER_H
+#define RE_EDIT_PROPERTY_MANAGER_H
 
-#include <vector>
 #include <string>
-#include "Texture.h"
+#include <map>
+#include <vector>
+#include <optional>
+#include <set>
+#include <re/mock/Rack.h>
+
 #include "Property.h"
 
 namespace re::edit {
 
-class EditContext
+class PropertyManager
 {
 public:
-  virtual std::vector<Property const *> findProperties(Property::Filter const &iFilter) const = 0;
-  virtual Property const *findProperty(std::string const &iPropertyPath) const = 0;
+//  void init(std::string const &iMotherboardDefLuaFilename);
+  void init(std::string const &iDirectory);
 
-  virtual std::vector<std::string> const &getTextureKeys() const = 0;
-  virtual std::shared_ptr<Texture> getTexture(std::string const &iKey) const = 0;
+  std::vector<Property const *> findProperties(Property::Filter const &iFilter) const;
+  Property const *findProperty(std::string const &iPropertyPath) const;
 
-  inline std::vector<Property const *> findProperties() const { return findProperties(Property::Filter{}); }
+protected:
+
+private:
+  re::mock::Rack fRack{};
+  std::shared_ptr<re::mock::rack::Extension> fDevice{};
+  std::map<std::string, Property> fProperties{};
 };
 
 }
-#endif //RE_EDIT_EDIT_CONTEXT_H
+
+#endif //RE_EDIT_PROPERTY_MANAGER_H

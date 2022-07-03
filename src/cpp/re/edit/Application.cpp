@@ -19,7 +19,6 @@
 #include "Application.h"
 #include "Widget.h"
 #include <imgui.h>
-#include <re/mock/Errors.h>
 
 namespace re::edit {
 
@@ -39,6 +38,8 @@ Application::Application(std::shared_ptr<TextureManager> const &iTextureManager)
 //------------------------------------------------------------------------
 void Application::init()
 {
+  fPropertyManager.init("/Volumes/Development/github/pongasoft/re-cva-7");
+
   fTextureManager->init("/Volumes/Development/github/pongasoft/re-cva-7/GUI2D");
   fTextureManager->scanDirectory();
 
@@ -88,17 +89,6 @@ void Application::render()
 }
 
 //------------------------------------------------------------------------
-// Application::getStepCount
-//------------------------------------------------------------------------
-int Application::getStepCount(std::string const &iPropertyPath) const
-{
-  if(iPropertyPath == "/custom_properties/c1")
-    return 5;
-  else
-    return 0;
-}
-
-//------------------------------------------------------------------------
 // Application::getTextureKeys
 //------------------------------------------------------------------------
 std::vector<std::string> const &Application::getTextureKeys() const
@@ -115,15 +105,19 @@ std::shared_ptr<Texture> Application::getTexture(std::string const &iKey) const
 }
 
 //------------------------------------------------------------------------
-// Application::doGetPropertyNames
+// Application::getProperties
 //------------------------------------------------------------------------
-std::vector<std::string> Application::doGetPropertyNames(EditContext::PropertyKind iPropertyKind) const
+std::vector<Property const *> Application::findProperties(Property::Filter const &iFilter) const
 {
-  if(iPropertyKind == EditContext::PropertyKind::kAny)
-    return {"/custom_properties/c1", "/custom_properties/c2",
-            "/custom_properties/this/is/a/very/long/name/will/it/fit"};
-  else
-    return {"/custom_properties/c1"};
+  return fPropertyManager.findProperties(iFilter);
+}
+
+//------------------------------------------------------------------------
+// Application::getProperty
+//------------------------------------------------------------------------
+Property const *Application::findProperty(std::string const &iPropertyPath) const
+{
+  return fPropertyManager.findProperty(iPropertyPath);
 }
 
 ////------------------------------------------------------------------------

@@ -176,9 +176,9 @@ std::string Widget::hdgui2D() const
 //------------------------------------------------------------------------
 // Widget::value
 //------------------------------------------------------------------------
-Widget *Widget::value()
+Widget *Widget::value(Property::Filter iValueFilter, Property::Filter iValueSwitchFilter)
 {
-  return addAttribute(std::make_unique<Value>());
+  return addAttribute(std::make_unique<Value>(std::move(iValueFilter), std::move(iValueSwitchFilter)));
 }
 
 //------------------------------------------------------------------------
@@ -241,13 +241,21 @@ void Widget::computeDefaultWidgetName()
   fName = re::mock::fmt::printf("%s_%ld", fType, fWidgetIota++);
 }
 
+static constexpr auto kDocGuiOwnerFilter = [](const Property &p) {
+  return p.owner() == mock::PropertyOwner::kDocOwner || p.owner() == mock::PropertyOwner::kGUIOwner;
+};
+
 //------------------------------------------------------------------------
 // Widget::analog_knob
 //------------------------------------------------------------------------
 std::unique_ptr<Widget> Widget::analog_knob()
 {
+  static const auto kValueFilter = [](const Property &p) {
+    return (p.type() == kJBox_Boolean || p.type() == kJBox_Number) && kDocGuiOwnerFilter(p);
+  };
+  static const auto kValueSwitchFilter = [](const Property &p) { return p.isDiscrete() && kDocGuiOwnerFilter(p); };
   auto w = std::make_unique<Widget>("analog_knob");
-  w ->value()
+  w ->value(kValueFilter, kValueSwitchFilter)
     ->visibility()
     ->tooltip_position()
     ->tooltip_template()

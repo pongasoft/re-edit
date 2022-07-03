@@ -115,15 +115,14 @@ class PropertyPath : public String
 {
 public:
   explicit PropertyPath(std::string iName) : String{std::move(iName)} {}
-//  Kind getKind() const override { return Kind::kPropertyPath; }
-  virtual EditContext::PropertyKind getPropertyKind() const { return EditContext::PropertyKind::kAny; }
+  virtual Property::Filter getPropertyFilter() const { return Property::Filter{}; }
   void editView(EditContext const &iCtx) override;
 
   std::unique_ptr<Attribute> clone() const override { return Attribute::clone<PropertyPath>(*this); }
 
-  void editView(std::vector<std::string> const &iProperties,
+  void editView(std::vector<const Property *> const &iProperties,
                 std::function<void()> const &iOnReset,
-                std::function<void(std::string const &)> const &iOnSelect) const;
+                std::function<void(const Property *)> const &iOnSelect) const;
 };
 
 class UIText : public String
@@ -143,9 +142,9 @@ public:
   explicit PropertyPathList(std::string iName) : SingleAttribute<std::vector<std::string>>{std::move(iName)} {}
   std::string getValueAsLua() const override;
 //  void editView(EditContext const &iCtx) override;
-  void editStaticListView(std::vector<std::string> const &iProperties,
+  void editStaticListView(std::vector<const Property *> const &iProperties,
                           std::function<void()> const &iOnReset,
-                          std::function<void(int iIndex, std::string const &)> const &iOnSelect) const;
+                          std::function<void(int iIndex, const Property *)> const &iOnSelect) const;
 
   std::unique_ptr<Attribute> clone() const override { return Attribute::clone<PropertyPathList>(*this); }
 };
@@ -168,7 +167,11 @@ public:
 class Value : public Attribute
 {
 public:
-  Value() : Attribute("value") {}
+  Value(Property::Filter iValueFilter, Property::Filter iValueSwitchFilter) :
+    Attribute("value"),
+    fValueFilter(std::move(iValueFilter)),
+    fValueSwitchFilter(std::move(iValueSwitchFilter))
+    {}
   void hdgui2D(attribute_list_t &oAttributes) const override;
   void editView(EditContext const &iCtx) override;
 
@@ -179,7 +182,9 @@ public:
 public:
   bool fUseSwitch{};
   PropertyPath fValue{"value"};
+  Property::Filter fValueFilter{};
   PropertyPath fValueSwitch{"value_switch"};
+  Property::Filter fValueSwitchFilter{};
   PropertyPathList fValues{"values"};
 };
 
