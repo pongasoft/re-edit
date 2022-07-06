@@ -20,8 +20,7 @@
 #define RE_EDIT_DRAWCONTEXT_H
 
 #include <imgui.h>
-#include "TextureManager.h"
-#include "UserPreferences.h"
+#include "EditContext.h"
 
 namespace re::edit {
 
@@ -53,21 +52,20 @@ static constexpr ImVec4 operator*(const ImVec4& lhs, const ImVec4& rhs)         
 //static constexpr bool operator<=(ImVec2 const &lhs, ImVec2 const &rhs)              { return !(rhs < lhs); }
 //static constexpr bool operator>=(ImVec2 const &lhs, ImVec2 const &rhs)              { return !(lhs < rhs); }
 
-class DrawContext
+class DrawContext : public EditContext
 {
 public:
   DrawContext(std::shared_ptr<TextureManager> iTextureManager,
-              std::shared_ptr<UserPreferences> iUserPreferences) :
-    fTextureManager{std::move(iTextureManager)},
-    fUserPreferences{std::move(iUserPreferences)}
+              std::shared_ptr<UserPreferences> iUserPreferences,
+              std::shared_ptr<PropertyManager> iPropertyManager) :
+    EditContext(std::move(iTextureManager), std::move(iUserPreferences), std::move(iPropertyManager))
   {}
 
+public: // User preferences
   constexpr UserPreferences const &getUserPreferences() const { return *fUserPreferences; }
   constexpr UserPreferences &getUserPreferences() { return *fUserPreferences; }
 
-public:
-  inline std::shared_ptr<Texture> getTexture(std::string const &iPath) const { return fTextureManager->getTexture(iPath); }
-
+public: // Texture
   void TextureItem(Texture const *iTexture, ImVec2 const &iPosition = {0,0}, int iFrameNumber = 0, const ImVec4& iBorderCol = ImVec4(0,0,0,0)) const;
 
   void drawTexture(Texture const *iTexture, ImVec2 const &iPosition = {0,0}, int iFrameNumber = 0, const ImVec4& iBorderCol = ImVec4(0,0,0,0)) const;
@@ -87,10 +85,6 @@ public:
 private:
   static void Image(ImTextureID user_texture_id, const ImVec2& size, const ImVec2& uv0, const ImVec2& uv1, const ImVec4& border_col = ImVec4(0,0,0,0));
   static void drawImage(ImTextureID user_texture_id, ImVec2 const &iPosition, const ImVec2& size, const ImVec2& uv0, const ImVec2& uv1, const ImVec4& border_col = ImVec4(0,0,0,0));
-
-private:
-  std::shared_ptr<TextureManager> fTextureManager;
-  std::shared_ptr<UserPreferences> fUserPreferences;
 };
 
 }

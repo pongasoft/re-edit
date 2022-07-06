@@ -51,9 +51,6 @@ public:
   constexpr void setSelected(bool iSelected) { fSelected = iSelected; }
   constexpr void toggleSelection() { fSelected = !fSelected; }
 
-  constexpr bool isHidden() const { return fHidden; };
-  constexpr void setHidden(bool iHidden) { fHidden = iHidden; };
-
   constexpr bool isError() const { return fError; };
   constexpr void setError(bool iError) { fError = iError; };
 
@@ -92,6 +89,9 @@ public:
   friend class Panel;
 
 protected:
+  bool isHidden(DrawContext &iCtx) const;
+
+protected:
   Widget *addAttribute(std::unique_ptr<widget::Attribute> iAttribute) { fAttributes.emplace_back(std::move(iAttribute)); return this; }
   Widget *value(Property::Filter iValueFilter, Property::Filter iValueSwitchFilter);
   Widget *show_remote_box();
@@ -114,8 +114,9 @@ private:
   int fFrameNumber{};
   bool fSelected{};
   bool fError{};
-  bool fHidden{};
   std::vector<std::unique_ptr<widget::Attribute>> fAttributes{};
+
+  widget::attribute::Visibility *fVisibility{};  // denormalized access to attribute
 
 private:
   static long fWidgetIota;

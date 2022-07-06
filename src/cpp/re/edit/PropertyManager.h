@@ -38,13 +38,33 @@ public:
 
   std::vector<Property const *> findProperties(Property::Filter const &iFilter) const;
   Property const *findProperty(std::string const &iPropertyPath) const;
+  std::string getPropertyInfo(std::string const &iPropertyPath) const;
+
+  int getIntValue(std::string const &iPropertyPath) const;
+  void setIntValue(std::string const &iPropertyPath, int iValue);
+
+  void addToWatchlist(std::string const &iPropertyPath);
+  void removeFromWatchlist(std::string const &iPropertyPath);
+  void clearWatchList() { fPropertyWatchlist.clear(); }
+
+  std::set<std::string> const &getWatchList() const { return fPropertyWatchlist; }
+
+  std::set<std::string> getNotWatchList() const;
+
+  void editView(Property const *iProperty);
+  void editView(std::string const &iPropertyPath) { editView(findProperty(iPropertyPath)); }
+
+  friend class Application;
 
 protected:
+  void beforeRenderFrame();
+  void afterRenderFrame();
 
 private:
   re::mock::Rack fRack{};
   std::shared_ptr<re::mock::rack::Extension> fDevice{};
   std::map<std::string, Property> fProperties{};
+  std::set<std::string> fPropertyWatchlist{};
 };
 
 }

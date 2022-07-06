@@ -17,6 +17,9 @@
  */
 
 #include "PropertyManager.h"
+#include "ReGui.h"
+#include <imgui.h>
+#include <misc/cpp/imgui_stdlib.h>
 
 using namespace re::mock;
 
@@ -40,7 +43,8 @@ void PropertyManager::init(std::string const &iDirectory)
     .device_resources_dir(fmt::path(iDirectory, "Resources"))
     .mdef_file(fmt::path(iDirectory, "motherboard_def.lua"))
     .rtc_file(fmt::path(iDirectory, "realtime_controller.lua"))
-    .rt([](Realtime &rt) { rt = Realtime::byDefault<NoOpDevice>(); });
+    .rt([](Realtime &rt) { rt = Realtime{}; }); // no object creation at all
+//    .rt([](Realtime &rt) { rt = Realtime::byDefault<NoOpDevice>(); });
 
   fDevice = std::make_shared<rack::Extension>(fRack.newExtension(config.getConfig()));
 
@@ -48,6 +52,13 @@ void PropertyManager::init(std::string const &iDirectory)
 
   for(auto const &info: infos)
     fProperties[info.fPropertyPath] = Property{info};
+
+  // we run the first batch which initialize the device
+  fRack.nextBatch();
+
+  // we disable notifications because we are not running the device
+  fDevice->disableRTCNotify();
+  fDevice->disableRTCBindings();
 }
 
 //------------------------------------------------------------------------
@@ -79,5 +90,212 @@ Property const *PropertyManager::findProperty(std::string const &iPropertyPath) 
   else
     return nullptr;
 }
+
+//------------------------------------------------------------------------
+// PropertyManager::getIntValue
+//------------------------------------------------------------------------
+int PropertyManager::getIntValue(std::string const &iPropertyPath) const
+{
+  return fDevice->getNum<int>(iPropertyPath);
+}
+
+//------------------------------------------------------------------------
+// PropertyManager::setIntValue
+//------------------------------------------------------------------------
+void PropertyManager::setIntValue(std::string const &iPropertyPath, int iValue)
+{
+  fDevice->setNum<int>(iPropertyPath, iValue);
+}
+
+//------------------------------------------------------------------------
+// PropertyManager::beforeRenderFrame
+//------------------------------------------------------------------------
+void PropertyManager::beforeRenderFrame()
+{
+  // nothing to do
+}
+
+//------------------------------------------------------------------------
+// PropertyManager::afterRenderFrame
+//------------------------------------------------------------------------
+void PropertyManager::afterRenderFrame()
+{
+  // nothing to do
+}
+
+//------------------------------------------------------------------------
+// PropertyManager::addToWatchlist
+//------------------------------------------------------------------------
+void PropertyManager::addToWatchlist(std::string const &iPropertyPath)
+{
+  fPropertyWatchlist.emplace(iPropertyPath);
+}
+
+//------------------------------------------------------------------------
+// PropertyManager::removeFromWatchlist
+//------------------------------------------------------------------------
+void PropertyManager::removeFromWatchlist(std::string const &iPropertyPath)
+{
+  fPropertyWatchlist.erase(iPropertyPath);
+}
+
+//------------------------------------------------------------------------
+// PropertyManager::getNotWatchList
+//------------------------------------------------------------------------
+std::set<std::string> PropertyManager::getNotWatchList() const
+{
+  std::set<std::string> res{};
+  for(auto const&[name, _]: fProperties)
+  {
+    if(fPropertyWatchlist.find(name) == fPropertyWatchlist.end())
+      res.emplace(name);
+  }
+  return res;
+}
+
+//------------------------------------------------------------------------
+// ::toOwnerString
+//------------------------------------------------------------------------
+static char const *toOwnerString(PropertyOwner iOwner)
+{
+  switch(iOwner)
+  {
+    case PropertyOwner::kHostOwner:
+      return "Host";
+    case PropertyOwner::kRTOwner:
+      return "RT";
+    case PropertyOwner::kRTCOwner:
+      return "RTC";
+    case PropertyOwner::kDocOwner:
+      return "Document";
+    case PropertyOwner::kGUIOwner:
+      return "GUI";
+  }
+}
+
+//------------------------------------------------------------------------
+// ::toTypeString
+//------------------------------------------------------------------------
+static char const *toTypeString(TJBox_ValueType iValueType)
+{
+  switch(iValueType)
+  {
+    case kJBox_Nil:
+      return "Nil";
+    case kJBox_Number:
+      return "Number";
+    case kJBox_String:
+      return "String";
+    case kJBox_Boolean:
+      return "Boolean";
+    case kJBox_Sample:
+      return "Sample";
+    case kJBox_BLOB:
+      return "Blob";
+    case kJBox_DSPBuffer:
+      return "DSP Buffer";
+    case kJBox_NativeObject:
+      return "Native Object";
+    case kJBox_Incompatible:
+      return "Incompatible";
+  }
+}
+
+//------------------------------------------------------------------------
+// ::toPersistenceString
+//------------------------------------------------------------------------
+static char const *toPersistenceString(lua::EPersistence iPersistence)
+{
+  switch(iPersistence)
+  {
+    case lua::EPersistence::kPatch:
+      return "Patch";
+    case lua::EPersistence::kSong:
+      return "Song";
+    case lua::EPersistence::kNone:
+      return "None";
+  }
+}
+
+
+//------------------------------------------------------------------------
+// PropertyManager::editView
+//------------------------------------------------------------------------
+std::string PropertyManager::getPropertyInfo(std::string const &iPropertyPath) const
+{
+  auto p = findProperty(iPropertyPath);
+  RE_MOCK_INTERNAL_ASSERT(p != nullptr);
+  if(p->isDiscrete())
+    return re::mock::fmt::printf("path = %s\ntype = %s\nsteps = %d\nowner = %s\ntag = %d\npersistence = %s\nvalue = %s",
+                                 iPropertyPath,
+                                 toTypeString(p->type()),
+                                 p->stepCount(),
+                                 toOwnerString(p->owner()),
+                                 p->tag(),
+                                 toPersistenceString(p->persistence()),
+                                 fDevice->toString(p->path()));
+  else
+    return re::mock::fmt::printf("path = %s\ntype = %s\nowner = %s\ntag = %d\npersistence = %s\nvalue = %s",
+                                 iPropertyPath,
+                                 toTypeString(p->type()),
+                                 toOwnerString(p->owner()),
+                                 p->tag(),
+                                 toPersistenceString(p->persistence()),
+                                 fDevice->toString(p->path()));
+}
+
+//------------------------------------------------------------------------
+// PropertyManager::editView
+//------------------------------------------------------------------------
+void PropertyManager::editView(Property const *iProperty)
+{
+  if(iProperty == nullptr)
+    return;
+
+  switch(iProperty->type())
+  {
+    case kJBox_Number:
+    {
+      if(iProperty->isDiscrete())
+      {
+        int value = getIntValue(iProperty->path());
+        if(ImGui::SliderInt("value", &value, 0, iProperty->stepCount() - 1))
+          setIntValue(iProperty->path(), value);
+      }
+      else
+      {
+        auto floatValue = static_cast<float>(fDevice->getNum(iProperty->path()));
+        if(ImGui::DragFloat("value", &floatValue))
+          fDevice->setNum(iProperty->path(), floatValue);
+      }
+      break;
+    }
+    case kJBox_String:
+    {
+      auto value = iProperty->owner() != mock::PropertyOwner::kRTOwner ? fDevice->getString(iProperty->path()) : fDevice->getRTString(iProperty->path());
+      if(ImGui::InputText("value", &value))
+      {
+        if(iProperty->owner() != mock::PropertyOwner::kRTOwner)
+          fDevice->setString(iProperty->path(), iProperty->path());
+        else
+          fDevice->setRTString(iProperty->path(), iProperty->path());
+      }
+      break;
+    }
+
+    case kJBox_Boolean:
+    {
+      auto value = fDevice->getBool(iProperty->path());
+      if(ReGui::ToggleButton("false", "true", &value))
+        fDevice->setBool(iProperty->path(), value);
+      break;
+    }
+
+    default:
+      ImGui::Text("%s", fDevice->toString(iProperty->path()).c_str());
+      break;
+  }
+}
+
 
 }

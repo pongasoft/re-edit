@@ -341,7 +341,7 @@ void Panel::editView(EditContext &iCtx)
 {
   auto selectedWidgets = getSelectedWidgets(); // TODO duplicate call... optimize!!!
 
-  if(ImGui::Begin("Widgets"))
+  if(ImGui::Begin("Panel Widgets"))
   {
     auto size = selectedWidgets.size();
     switch(size)

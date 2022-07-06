@@ -39,6 +39,7 @@ struct Property
   constexpr int stepCount() const { return fInfo.fStepCount; };
   constexpr re::mock::PropertyOwner owner() const { return fInfo.fOwner; };
   constexpr TJBox_Tag tag() const { return fInfo.fTag; };
+  constexpr re::mock::lua::EPersistence persistence() const { return fInfo.fPersistence; };
 
   constexpr bool isDiscrete() const { return fInfo.fStepCount > 0; }
 

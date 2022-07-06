@@ -23,6 +23,7 @@
 #include "Texture.h"
 #include "EditContext.h"
 #include "DrawContext.h"
+#include "ReGui.h"
 
 #include <string>
 #include <vector>
@@ -52,7 +53,7 @@ public:
 //  virtual Kind getKind() const = 0;
 
   virtual void reset() {}
-  virtual void editView(EditContext const &iCtx) {}
+  virtual void editView(EditContext &iCtx) {}
   void clearError() { fError = std::nullopt; };
 
   template<typename T, typename... ConstructorArgs>
@@ -97,7 +98,7 @@ public:
 //  Kind getKind() const override { return Kind::kBool; }
   explicit Bool(std::string iName) : SingleAttribute<bool>{std::move(iName)} {}
   std::string getValueAsLua() const override { return fValue ? "true" : "false"; }
-  void editView(EditContext const &iCtx) override;
+  void editView(EditContext &iCtx) override;
 
   std::unique_ptr<Attribute> clone() const override { return Attribute::clone<Bool>(*this); }
 };
@@ -108,21 +109,39 @@ public:
 //  Kind getKind() const override { return Kind::kString; }
   explicit String(std::string iName) : SingleAttribute<std::string>{std::move(iName)} {}
   std::string getValueAsLua() const override;
-  void editView(EditContext const &iCtx) override;
+  void editView(EditContext &iCtx) override;
 };
 
 class PropertyPath : public String
 {
 public:
   explicit PropertyPath(std::string iName) : String{std::move(iName)} {}
-  virtual Property::Filter getPropertyFilter() const { return Property::Filter{}; }
-  void editView(EditContext const &iCtx) override;
+  void editView(EditContext &iCtx) override;
 
   std::unique_ptr<Attribute> clone() const override { return Attribute::clone<PropertyPath>(*this); }
 
-  void editView(std::vector<const Property *> const &iProperties,
+  void editView(EditContext &iCtx,
+                Property::Filter const &iFilter,
                 std::function<void()> const &iOnReset,
-                std::function<void(const Property *)> const &iOnSelect) const;
+                std::function<void(const Property *)> const &iOnSelect,
+                std::function<void(EditContext &iCtx)> const &iEditPropertyView,
+                std::function<void(EditContext &iCtx)> const &iTooltipPropertyView);
+
+  void editPropertyView(EditContext &iCtx) { editPropertyView(iCtx, fValue) ;}
+  void tooltipPropertyView(EditContext &iCtx) { tooltipPropertyView(iCtx, fValue); }
+
+  void menuView(EditContext &iCtx,
+                std::function<void()> const &iOnReset,
+                std::function<void(EditContext &iCtx)> const &iEditPropertyView = {});
+
+  static void menuView(EditContext &iCtx,
+                       std::string const &iPropertyPath,
+                       std::function<void()> const &iOnReset,
+                       std::function<void(EditContext &iCtx)> const &iEditPropertyView = {});
+
+  static void editPropertyView(EditContext &iCtx, std::string const &iPropertyPath);
+
+  static void tooltipPropertyView(EditContext &iCtx, std::string const &iPropertyPath);
 };
 
 class UIText : public String
@@ -141,9 +160,9 @@ public:
 //  Kind getKind() const override { return Kind::kPropertyPathList; }
   explicit PropertyPathList(std::string iName) : SingleAttribute<std::vector<std::string>>{std::move(iName)} {}
   std::string getValueAsLua() const override;
-//  void editView(EditContext const &iCtx) override;
-  void editStaticListView(std::vector<const Property *> const &iProperties,
-                          std::function<void()> const &iOnReset,
+//  void editView(EditContext &iCtx) override;
+  void editStaticListView(EditContext &iCtx,
+                          Property::Filter const &iFilter,
                           std::function<void(int iIndex, const Property *)> const &iOnSelect) const;
 
   std::unique_ptr<Attribute> clone() const override { return Attribute::clone<PropertyPathList>(*this); }
@@ -154,6 +173,8 @@ class DiscretePropertyValueList : public SingleAttribute<std::vector<int>>
 public:
   explicit DiscretePropertyValueList(std::string iName) : SingleAttribute<std::vector<int>>{std::move(iName)} {}
   std::string getValueAsLua() const override;
+
+  bool contains(int iValue) const;
 
   void editView(int iMin,
                 int iMax,
@@ -173,11 +194,18 @@ public:
     fValueSwitchFilter(std::move(iValueSwitchFilter))
     {}
   void hdgui2D(attribute_list_t &oAttributes) const override;
-  void editView(EditContext const &iCtx) override;
+  void editView(EditContext &iCtx) override;
+
+  void editValueView(EditContext &iCtx);
+  void tooltipView(EditContext &iCtx);
+  std::string getPropertyInfo(EditContext &iCtx);
 
   void reset() override;
 
   std::unique_ptr<Attribute> clone() const override { return Attribute::clone<Value>(*this); }
+
+protected:
+  std::string const &findActualPropertyPath(EditContext &iCtx) const;
 
 public:
   bool fUseSwitch{};
@@ -193,9 +221,11 @@ class Visibility : public Attribute
 public:
   Visibility() : Attribute("visibility") {}
   void hdgui2D(attribute_list_t &oAttributes) const override;
-  void editView(EditContext const &iCtx) override;
+  void editView(EditContext &iCtx) override;
 
   void reset() override;
+
+  bool isHidden(DrawContext const &iCtx) const;
 
   std::unique_ptr<Attribute> clone() const override { return Attribute::clone<Visibility>(*this); }
 
@@ -209,7 +239,7 @@ class StaticStringList : public String
 public:
   explicit StaticStringList(std::string iName, std::vector<std::string> const &iSelectionList) : String{std::move(iName)}, fSelectionList(iSelectionList) {}
 //  Kind getKind() const override { return Kind::kStaticStringList; }
-  void editView(EditContext const &iCtx) override;
+  void editView(EditContext &iCtx) override;
 
   std::unique_ptr<Attribute> clone() const override { return Attribute::clone<StaticStringList>(*this); }
 
@@ -248,7 +278,7 @@ public:
 
   void reset() override;
 
-  void editView(EditContext const &iCtx) override;
+  void editView(EditContext &iCtx) override;
 
   void editView(std::vector<std::string> const &iTextureKeys,
                 const std::function<void()>& iOnReset,

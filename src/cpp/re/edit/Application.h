@@ -28,7 +28,7 @@
 
 namespace re::edit {
 
-class Application : public EditContext
+class Application
 {
 public:
   explicit Application(std::shared_ptr<TextureManager> const &iTextureManager);
@@ -36,13 +36,6 @@ public:
   void init();
 
   void render();
-
-  std::vector<Property const *> findProperties(Property::Filter const &iFilter) const override;
-  Property const *findProperty(std::string const &iPropertyPath) const override;
-
-  std::vector<std::string> const &getTextureKeys() const override;
-
-  std::shared_ptr<Texture> getTexture(std::string const &iKey) const override;
 
 public:
   float clear_color[4] = {0.45f, 0.55f, 0.60f, 1.00f};
@@ -53,19 +46,45 @@ private:
   public:
     PanelState(Panel::Type iPanelType,
                std::shared_ptr<TextureManager> iTextureManager,
-               std::shared_ptr<UserPreferences> iUserPreferences);
+               std::shared_ptr<UserPreferences> iUserPreferences,
+               std::shared_ptr<PropertyManager> iPropertyManager);
 
-    void render(EditContext &iCtx);
+    void render();
+
+  protected:
+    void renderWidgets();
+    void renderPanel();
+    void renderPanelWidgets();
+    void renderProperties();
 
   public:
     Panel fPanel;
-    DrawContext fDrawContext;
+
+  private:
+    class InternalDrawContext : public DrawContext
+    {
+    public:
+      InternalDrawContext(std::shared_ptr<TextureManager> iTextureManager,
+                          std::shared_ptr<UserPreferences> iUserPreferences,
+                          std::shared_ptr<PropertyManager> iPropertyManager) :
+        DrawContext(std::move(iTextureManager), std::move(iUserPreferences), std::move(iPropertyManager))
+      {}
+
+      friend class PanelState;
+    };
+
+  private:
+    InternalDrawContext fDrawContext;
+    bool fShowPanel{true};
+    bool fShowPanelWidgets{true};
+    bool fShowWidgets{};
+    bool fShowProperties{};
   };
 
 private:
   std::shared_ptr<TextureManager> fTextureManager;
   std::shared_ptr<UserPreferences> fUserPreferences;
-  PropertyManager fPropertyManager{};
+  std::shared_ptr<PropertyManager> fPropertyManager{};
   PanelState fFrontPanel;
   PanelState fBackPanel;
   bool show_demo_window{false};

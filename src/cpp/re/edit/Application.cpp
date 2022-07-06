@@ -18,6 +18,7 @@
 
 #include "Application.h"
 #include "Widget.h"
+#include "ReGui.h"
 #include <imgui.h>
 
 namespace re::edit {
@@ -28,8 +29,9 @@ namespace re::edit {
 Application::Application(std::shared_ptr<TextureManager> const &iTextureManager) :
   fTextureManager{iTextureManager},
   fUserPreferences{std::make_shared<UserPreferences>()},
-  fFrontPanel(Panel::Type::kFront, iTextureManager, fUserPreferences),
-  fBackPanel(Panel::Type::kBack, iTextureManager, fUserPreferences)
+  fPropertyManager{std::make_shared<PropertyManager>()},
+  fFrontPanel(Panel::Type::kFront, iTextureManager, fUserPreferences, fPropertyManager),
+  fBackPanel(Panel::Type::kBack, iTextureManager, fUserPreferences, fPropertyManager)
 {
 }
 
@@ -38,7 +40,7 @@ Application::Application(std::shared_ptr<TextureManager> const &iTextureManager)
 //------------------------------------------------------------------------
 void Application::init()
 {
-  fPropertyManager.init("/Volumes/Development/github/pongasoft/re-cva-7");
+  fPropertyManager->init("/Volumes/Development/github/pongasoft/re-cva-7");
 
   fTextureManager->init("/Volumes/Development/github/pongasoft/re-cva-7/GUI2D");
   fTextureManager->scanDirectory();
@@ -67,12 +69,14 @@ void Application::init()
 //------------------------------------------------------------------------
 void Application::render()
 {
+  fPropertyManager->beforeRenderFrame();
+
   ImGui::Begin("re-edit");
 
   if(ImGui::BeginTabBar("Panels", ImGuiTabBarFlags_None))
   {
-    fFrontPanel.render(*this);
-    fBackPanel.render(*this);
+    fFrontPanel.render();
+    fBackPanel.render();
     ImGui::EndTabBar();
   }
 
@@ -86,38 +90,8 @@ void Application::render()
               ImGui::GetIO().Framerate);
 
   ImGui::End();
-}
 
-//------------------------------------------------------------------------
-// Application::getTextureKeys
-//------------------------------------------------------------------------
-std::vector<std::string> const &Application::getTextureKeys() const
-{
-  return fTextureManager->getTextureKeys();
-}
-
-//------------------------------------------------------------------------
-// Application::getTexture
-//------------------------------------------------------------------------
-std::shared_ptr<Texture> Application::getTexture(std::string const &iKey) const
-{
-  return fTextureManager->getTexture(iKey);
-}
-
-//------------------------------------------------------------------------
-// Application::getProperties
-//------------------------------------------------------------------------
-std::vector<Property const *> Application::findProperties(Property::Filter const &iFilter) const
-{
-  return fPropertyManager.findProperties(iFilter);
-}
-
-//------------------------------------------------------------------------
-// Application::getProperty
-//------------------------------------------------------------------------
-Property const *Application::findProperty(std::string const &iPropertyPath) const
-{
-  return fPropertyManager.findProperty(iPropertyPath);
+  fPropertyManager->afterRenderFrame();
 }
 
 ////------------------------------------------------------------------------
@@ -204,16 +178,17 @@ Property const *Application::findProperty(std::string const &iPropertyPath) cons
 //------------------------------------------------------------------------
 Application::PanelState::PanelState(Panel::Type iPanelType,
                                     std::shared_ptr<TextureManager> iTextureManager,
-                                    std::shared_ptr<UserPreferences> iUserPreferences) :
+                                    std::shared_ptr<UserPreferences> iUserPreferences,
+                                    std::shared_ptr<PropertyManager> iPropertyManager) :
   fPanel(iPanelType),
-  fDrawContext(std::move(iTextureManager), std::move(iUserPreferences))
+  fDrawContext(std::move(iTextureManager), std::move(iUserPreferences), std::move(iPropertyManager))
 {
 }
 
 //------------------------------------------------------------------------
 // Application::render
 //------------------------------------------------------------------------
-void Application::PanelState::render(EditContext &iCtx)
+void Application::PanelState::render()
 {
   if(ImGui::BeginTabItem(fPanel.getName()))
   {
@@ -221,78 +196,190 @@ void Application::PanelState::render(EditContext &iCtx)
 
     ImGui::Checkbox("Show Widget Border", &fDrawContext.fShowWidgetBorder);
 
-    if(ImGui::Button("Add"))
-      ImGui::OpenPopup("add_widget");
-    if(ImGui::BeginPopup("add_widget"))
-    {
-      for(auto widgetType : kWidgetTypes)
-      {
-        if(ImGui::Selectable(widgetType))
-          fPanel.addWidget(Widget::widget(widgetType));
-      }
-      ImGui::EndPopup();
-    }
-    auto selectedWidgets = fPanel.getSelectedWidgets();
-    ImGui::BeginDisabled(selectedWidgets.empty());
+    ReGui::ToggleButton("Show Panel", "Hide Panel", &fShowPanel);
     ImGui::SameLine();
-    if(ImGui::Button("Dup"))
+    ReGui::ToggleButton("Show Panel Widgets", "Hide Panel Widgets", &fShowPanelWidgets);
+    ImGui::SameLine();
+    ReGui::ToggleButton("Show Widgets", "Hide Widgets", &fShowWidgets);
+    ImGui::SameLine();
+    ReGui::ToggleButton("Show Properties", "Hide Properties", &fShowProperties);
+
+    if(fShowPanel)
+      renderPanel();
+
+    if(fShowPanelWidgets)
+      renderPanelWidgets();
+
+    if(fShowWidgets)
+      renderWidgets();
+
+    if(fShowProperties)
+      renderProperties();
+
+    ImGui::EndTabItem();
+  }
+}
+
+//------------------------------------------------------------------------
+// Application::renderWidgets
+//------------------------------------------------------------------------
+void Application::PanelState::renderWidgets()
+{
+  if(ImGui::Begin("Widgets", &fShowWidgets))
+  {
+    // Add widget Button + Popup
     {
-      for(auto w: selectedWidgets)
-        fPanel.addWidget(w->clone());
+      if(ImGui::Button("Add"))
+        ImGui::OpenPopup("add_widget");
+
+      if(ImGui::BeginPopup("add_widget"))
+      {
+        for(auto widgetType: kWidgetTypes)
+        {
+          if(ImGui::Selectable(widgetType))
+            fPanel.addWidget(Widget::widget(widgetType));
+        }
+        ImGui::EndPopup();
+      }
+    }
+
+    auto selectedWidgets = fPanel.getSelectedWidgets();
+
+    // Add Duplicate / Clear / Delete buttons
+    ImGui::BeginDisabled(selectedWidgets.empty());
+    {
+      ImGui::SameLine();
+      if(ImGui::Button("Dup"))
+      {
+        for(auto w: selectedWidgets)
+          fPanel.addWidget(w->clone());
+      }
+
+      ImGui::SameLine();
+      if(ImGui::Button("Clr"))
+        fPanel.clearSelection();
+
+      ImGui::SameLine();
+      if(ImGui::Button("Del"))
+      {
+        for(auto w: selectedWidgets)
+        {
+          fPanel.deleteWidget(w->getId());
+        }
+      }
+    }
+    ImGui::EndDisabled();
+
+    ImGui::Separator();
+
+    // Show list of widgets
+    auto ids = fPanel.getWidgetOrder();
+    for(int n = 0; n < ids.size(); n++)
+    {
+      auto id = ids[n];
+      auto const widget = fPanel.getWidget(id);
+      auto item = widget->getName();
+      ImGui::Selectable(item.c_str(), widget->isSelected());
+
+      if(ImGui::IsItemClicked(ImGuiMouseButton_Left))
+      {
+        auto &io = ImGui::GetIO();
+        fPanel.selectWidget(id, io.KeyShift);
+      }
+
+      if(ImGui::IsItemActive() && !ImGui::IsItemHovered())
+      {
+        int n_next = n + (ImGui::GetMouseDragDelta(0).y < 0.f ? -1 : 1);
+        if (n_next >= 0 && n_next < ids.size())
+        {
+          fPanel.swap(n, n_next);
+          ImGui::ResetMouseDragDelta();
+        }
+      }
+    }
+  }
+  ImGui::End();
+}
+
+//------------------------------------------------------------------------
+// Application::renderPanel
+//------------------------------------------------------------------------
+void Application::PanelState::renderPanel()
+{
+  if(ImGui::Begin("Panel", &fShowPanel, ImGuiWindowFlags_HorizontalScrollbar))
+    fPanel.draw(fDrawContext);
+  ImGui::End();
+}
+
+//------------------------------------------------------------------------
+// Application::renderPanel
+//------------------------------------------------------------------------
+void Application::PanelState::renderPanelWidgets()
+{
+  if(ImGui::Begin("Panel Widgets", &fShowPanelWidgets, ImGuiWindowFlags_HorizontalScrollbar))
+  {
+    fPanel.editView(fDrawContext);
+  }
+  ImGui::End();
+}
+
+//------------------------------------------------------------------------
+// Application::renderProperties
+//------------------------------------------------------------------------
+void Application::PanelState::renderProperties()
+{
+  if(ImGui::Begin("Properties", &fShowProperties, ImGuiWindowFlags_HorizontalScrollbar))
+  {
+    {
+      if(ImGui::Button("Add"))
+        ImGui::OpenPopup("add_property");
+
+      if(ImGui::BeginPopup("add_property"))
+      {
+        auto properties = fDrawContext.fPropertyManager->getNotWatchList();
+
+        for(auto const &path: properties)
+        {
+          if(ImGui::Selectable(path.c_str()))
+            fDrawContext.fPropertyManager->addToWatchlist(path);
+        }
+        ImGui::EndPopup();
+      }
     }
 
     ImGui::SameLine();
     if(ImGui::Button("Clr"))
-      fPanel.clearSelection();
+      fDrawContext.fPropertyManager->clearWatchList();
 
-    ImGui::SameLine();
-    if(ImGui::Button("Del"))
+    ImGui::Separator();
+
+    auto properties = fDrawContext.fPropertyManager->getWatchList();
+
+    if(!properties.empty())
     {
-      for(auto w: selectedWidgets)
+      for(auto const &path: properties)
       {
-        fPanel.deleteWidget(w->getId());
+        ImGui::PushID(path.c_str());
+        if(ImGui::Button("X"))
+          fDrawContext.fPropertyManager->removeFromWatchlist(path);
+        ImGui::SameLine();
+        ImGui::TextWrapped("%s", path.c_str());
+        if(ImGui::IsItemHovered())
+        {
+          ImGui::BeginTooltip();
+          ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
+          ImGui::TextUnformatted(fDrawContext.getPropertyInfo(path).c_str());
+          ImGui::PopTextWrapPos();
+          ImGui::EndTooltip();
+        }
+        ImGui::Indent();
+        fDrawContext.fPropertyManager->editView(path);
+        ImGui::Unindent();
+        ImGui::PopID();
       }
     }
-
-    ImGui::EndDisabled();
-
-    if(ImGui::TreeNode("Widgets"))
-    {
-      auto ids = fPanel.getWidgetOrder();
-      for(int n = 0; n < ids.size(); n++)
-      {
-        auto id = ids[n];
-        auto const widget = fPanel.getWidget(id);
-        auto item = widget->getName();
-        ImGui::Selectable(item.c_str(), widget->isSelected());
-
-        if(ImGui::IsItemClicked(ImGuiMouseButton_Left))
-        {
-          auto &io = ImGui::GetIO();
-          fPanel.selectWidget(id, io.KeyShift);
-        }
-
-        if(ImGui::IsItemActive() && !ImGui::IsItemHovered())
-        {
-          int n_next = n + (ImGui::GetMouseDragDelta(0).y < 0.f ? -1 : 1);
-          if (n_next >= 0 && n_next < ids.size())
-          {
-            fPanel.swap(n, n_next);
-            ImGui::ResetMouseDragDelta();
-          }
-        }
-      }
-      ImGui::TreePop();
-    }
-
-    if(ImGui::Begin("Panel", nullptr, ImGuiWindowFlags_HorizontalScrollbar))
-    {
-      fPanel.draw(fDrawContext);
-      fPanel.editView(iCtx);
-    }
-    ImGui::End();
-    ImGui::EndTabItem();
   }
+  ImGui::End();
 }
 
 }

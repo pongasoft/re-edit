@@ -21,21 +21,41 @@
 
 #include <vector>
 #include <string>
-#include "Texture.h"
-#include "Property.h"
+#include <memory>
+#include "TextureManager.h"
+#include "UserPreferences.h"
+#include "PropertyManager.h"
 
 namespace re::edit {
 
 class EditContext
 {
 public:
-  virtual std::vector<Property const *> findProperties(Property::Filter const &iFilter) const = 0;
-  virtual Property const *findProperty(std::string const &iPropertyPath) const = 0;
+  EditContext(std::shared_ptr<TextureManager> iTextureManager,
+              std::shared_ptr<UserPreferences> iUserPreferences,
+              std::shared_ptr<PropertyManager> iPropertyManager) :
+              fTextureManager{std::move(iTextureManager)},
+              fUserPreferences{std::move(iUserPreferences)},
+              fPropertyManager(std::move(iPropertyManager))
+  {}
 
-  virtual std::vector<std::string> const &getTextureKeys() const = 0;
-  virtual std::shared_ptr<Texture> getTexture(std::string const &iKey) const = 0;
-
+  inline std::vector<Property const *> findProperties(Property::Filter const &iFilter) const { return fPropertyManager->findProperties(iFilter); };
   inline std::vector<Property const *> findProperties() const { return findProperties(Property::Filter{}); }
+  inline Property const *findProperty(std::string const &iPropertyPath) const { return fPropertyManager->findProperty(iPropertyPath); };
+  inline std::string getPropertyInfo(std::string const &iPropertyPath) const { return fPropertyManager->getPropertyInfo(iPropertyPath); }
+  int getPropertyValueAsInt(std::string const &iPropertyPath) const { return fPropertyManager->getIntValue(iPropertyPath); }
+  void propertyEditView(std::string const &iPropertyPath) { fPropertyManager->editView(iPropertyPath); }
+
+  void addPropertyToWatchlist(std::string const &iPropertyPath) { fPropertyManager->addToWatchlist(iPropertyPath); }
+  void removePropertyFromWatchlist(std::string const &iPropertyPath) { fPropertyManager->removeFromWatchlist(iPropertyPath); }
+
+  inline std::vector<std::string> const &getTextureKeys() const { return fTextureManager->getTextureKeys(); };
+  inline std::shared_ptr<Texture> getTexture(std::string const &iKey) const { return fTextureManager->getTexture(iKey); };
+
+protected:
+  std::shared_ptr<TextureManager> fTextureManager;
+  std::shared_ptr<UserPreferences> fUserPreferences;
+  std::shared_ptr<PropertyManager> fPropertyManager;
 };
 
 }

@@ -39,6 +39,20 @@ inline bool InputInt(const char* label, float* v, int step = 1, int step_fast = 
   return false;
 }
 
+//------------------------------------------------------------------------
+// ReGui::ToggleButton
+// Behaves like a checkbox but with a shape of a toggle
+//------------------------------------------------------------------------
+inline bool ToggleButton(char const *iFalseLabel, char const *iTrueLabel, bool* v, const ImVec2& size = ImVec2(0, 0))
+{
+  if(ImGui::Button(*v ? iTrueLabel : iFalseLabel, size))
+  {
+    *v = !*v;
+    return true;
+  }
+  return false;
+}
+
 }
 
 #endif //RE_EDIT_RE_GUI_H

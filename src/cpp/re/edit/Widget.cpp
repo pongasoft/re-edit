@@ -47,7 +47,18 @@ Widget::Widget(Widget const &iOther, std::string iName) :
   fGraphics(iOther.fGraphics)
 {
   for(auto &attribute: iOther.fAttributes)
-    fAttributes.emplace_back(attribute->clone());
+  {
+    auto newAttribute = attribute->clone();
+    auto visibility = dynamic_cast<widget::attribute::Visibility *>(newAttribute.get());
+    if(visibility)
+    {
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "LocalValueEscapesScope"
+      fVisibility = visibility;
+#pragma clang diagnostic pop
+    }
+    fAttributes.emplace_back(std::move(newAttribute));
+  }
   fGraphics.setPosition(iOther.getPosition() + ImVec2(iOther.fGraphics.getSize().x + 5,0));
   fSelected = true;
 }
@@ -57,7 +68,7 @@ Widget::Widget(Widget const &iOther, std::string iName) :
 //------------------------------------------------------------------------
 void Widget::draw(DrawContext &iCtx)
 {
-  if(fHidden)
+  if(isHidden(iCtx))
     return;
 
   ImVec4 borderColor{};
@@ -186,7 +197,12 @@ Widget *Widget::value(Property::Filter iValueFilter, Property::Filter iValueSwit
 //------------------------------------------------------------------------
 Widget *Widget::visibility()
 {
-  return addAttribute(std::make_unique<Visibility>());
+  auto visibility = std::make_unique<Visibility>();
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "LocalValueEscapesScope"
+  fVisibility = visibility.get();
+#pragma clang diagnostic pop
+  return addAttribute(std::move(visibility));
 }
 
 //------------------------------------------------------------------------
@@ -303,7 +319,13 @@ std::unique_ptr<Widget> Widget::clone() const
   return std::unique_ptr<Widget>(new Widget(*this, re::mock::fmt::printf("%s Copy", fName)));
 }
 
-
+//------------------------------------------------------------------------
+// Widget::isHidden
+//------------------------------------------------------------------------
+bool Widget::isHidden(DrawContext &iCtx) const
+{
+  return fVisibility ? fVisibility->isHidden(iCtx) : false;
+}
 
 }
 
