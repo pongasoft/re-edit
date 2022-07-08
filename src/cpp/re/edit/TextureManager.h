@@ -35,6 +35,7 @@ public:
   void init(std::string iDirectory);
 
   std::shared_ptr<Texture> getTexture(std::string const &iKey) const;
+  std::shared_ptr<Texture> findTexture(std::string const &iKey) const;
 
 //  bool loadFilmStrip(char const *iPath, int iNumFrames = 1) { return fFilmStripMgr.maybeAddFilmStrip(iPath, iNumFrames); }
 

@@ -25,6 +25,7 @@
 #include "Panel.h"
 #include "EditContext.h"
 #include "PropertyManager.h"
+#include "lua/HDGui2D.h"
 
 namespace re::edit {
 
@@ -39,6 +40,10 @@ public:
 
 public:
   float clear_color[4] = {0.45f, 0.55f, 0.60f, 1.00f};
+
+protected:
+  void initPanels(std::string const &iDevice2DFile, std::string const &iHDGui2DFile);
+  void initPanel(std::shared_ptr<lua::jbox_panel> const &iPanel, Panel &oPanel);
 
 private:
   class PanelState

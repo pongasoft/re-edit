@@ -17,7 +17,7 @@
  */
 
 #include "MTLTextureManager.h"
-#include "logging/logging.h"
+#include "Errors.h"
 #include <algorithm>
 #include <memory>
 
@@ -52,7 +52,7 @@ MTLTextureManager::MTLTextureManager(MTL::Device *iDevice) :
 //------------------------------------------------------------------------
 std::unique_ptr<Texture> MTLTextureManager::createTexture(std::shared_ptr<FilmStrip> const &iFilmStrip) const
 {
-  DCHECK_F(iFilmStrip->isValid());
+  RE_EDIT_ASSERT(iFilmStrip->isValid());
 
   auto const width = iFilmStrip->width();
   auto const height = iFilmStrip->height();
@@ -63,7 +63,7 @@ std::unique_ptr<Texture> MTLTextureManager::createTexture(std::shared_ptr<FilmSt
                                                           false);
   auto mtlTexture = fDevice->newTexture(desc);
 
-  DLOG_F(INFO, "createTexture(%s) : %lu", iFilmStrip->key().c_str(), mtlTexture->retainCount());
+  RE_EDIT_LOG_INFO("createTexture(%s) : %lu", iFilmStrip->key(), mtlTexture->retainCount());
 
   auto res = std::make_unique<MTLTexture>(iFilmStrip, mtlTexture);
 
@@ -81,7 +81,7 @@ MTLTexture::MTLTexture(std::shared_ptr<FilmStrip> iFilmStrip, ImTextureID iData)
 {
   auto mtlTexture = reinterpret_cast<MTL::Texture *>(fData);
   mtlTexture->retain();
-  DLOG_F(INFO, "createTexture(%s) : %lu (after)", fFilmStrip->key().c_str(), mtlTexture->retainCount());
+  RE_EDIT_LOG_INFO("createTexture(%s) : %lu (after)", fFilmStrip->key(), mtlTexture->retainCount());
 }
 
 //------------------------------------------------------------------------
@@ -90,9 +90,9 @@ MTLTexture::MTLTexture(std::shared_ptr<FilmStrip> iFilmStrip, ImTextureID iData)
 MTLTexture::~MTLTexture()
 {
   auto mtlTexture = reinterpret_cast<MTL::Texture *>(fData);
-  DLOG_F(INFO, "removeTexture(%s) : %lu", fFilmStrip->key().c_str(), mtlTexture->retainCount());
+  RE_EDIT_LOG_INFO("removeTexture(%s) : %lu", fFilmStrip->key(), mtlTexture->retainCount());
   mtlTexture->release();
-  DLOG_F(INFO, "removeTexture(%s) : %lu (after)", fFilmStrip->key().c_str(), mtlTexture->retainCount());
+  RE_EDIT_LOG_INFO("removeTexture(%s) : %lu (after)", fFilmStrip->key(), mtlTexture->retainCount());
 }
 
 

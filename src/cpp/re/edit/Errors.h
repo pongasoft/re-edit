@@ -16,9 +16,17 @@
  * @author Yan Pujante
  */
 
-#ifndef RE_EDIT_LOGGING_H
-#define RE_EDIT_LOGGING_H
+#ifndef RE_EDIT_ERRORS_H
+#define RE_EDIT_ERRORS_H
 
-#include "loguru.hpp"
+#include <re/mock/Errors.h>
 
-#endif //RE_EDIT_LOGGING_H
+#define RE_EDIT_ASSERT RE_MOCK_ASSERT
+#define RE_EDIT_FAIL RE_MOCK_FAIL
+#define RE_EDIT_TBD RE_MOCK_TBD
+#define RE_EDIT_INTERNAL_ASSERT RE_MOCK_INTERNAL_ASSERT
+#define RE_EDIT_LOG_INFO RE_MOCK_LOG_INFO
+#define RE_EDIT_LOG_WARNING RE_MOCK_LOG_WARNING
+#define RE_EDIT_LOG_ERROR RE_MOCK_LOG_ERROR
+
+#endif //RE_EDIT_ERRORS_H

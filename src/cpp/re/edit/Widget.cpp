@@ -21,7 +21,7 @@
 #include <re/mock/fmt.h>
 #include <imgui.h>
 #include <misc/cpp/imgui_stdlib.h>
-#include <re/mock/Errors.h>
+#include "Errors.h"
 
 namespace re::edit {
 
@@ -306,7 +306,7 @@ std::unique_ptr<Widget> Widget::widget(std::string const &iType)
   if(iType == "static_decoration")
     w = Widget::static_decoration();
 
-  RE_MOCK_INTERNAL_ASSERT(w != nullptr);
+  RE_EDIT_INTERNAL_ASSERT(w != nullptr);
 
   return w;
 }

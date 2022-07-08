@@ -20,6 +20,7 @@
 #include "ReGui.h"
 #include <imgui.h>
 #include <misc/cpp/imgui_stdlib.h>
+#include "Errors.h"
 
 using namespace re::mock;
 
@@ -224,7 +225,7 @@ static char const *toPersistenceString(lua::EPersistence iPersistence)
 std::string PropertyManager::getPropertyInfo(std::string const &iPropertyPath) const
 {
   auto p = findProperty(iPropertyPath);
-  RE_MOCK_INTERNAL_ASSERT(p != nullptr);
+  RE_EDIT_INTERNAL_ASSERT(p != nullptr);
   if(p->isDiscrete())
     return re::mock::fmt::printf("path = %s\ntype = %s\nsteps = %d\nowner = %s\ntag = %d\npersistence = %s\nvalue = %s",
                                  iPropertyPath,

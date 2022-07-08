@@ -24,7 +24,6 @@
 #include <map>
 #include <memory>
 #include <vector>
-#include "logging/logging.h"
 
 namespace re::edit {
 

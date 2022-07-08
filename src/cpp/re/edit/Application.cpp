@@ -19,6 +19,7 @@
 #include "Application.h"
 #include "Widget.h"
 #include "ReGui.h"
+#include "Errors.h"
 #include <imgui.h>
 
 namespace re::edit {
@@ -45,11 +46,12 @@ void Application::init()
   fTextureManager->init("/Volumes/Development/github/pongasoft/re-cva-7/GUI2D");
   fTextureManager->scanDirectory();
 
+  initPanels("", "/Volumes/Development/github/org.pongasoft/re-edit/test/resources/re/edit/lua/all-hdgui_2D.lua");
+
 //  loadFilmStrip("/Volumes/Development/github/pongasoft/re-cva-7/GUI2D/Panel_Front.png", 1);
 //  loadFilmStrip("/Volumes/Development/github/pongasoft/re-cva-7/GUI2D/Knob_17_matte_63frames.png", 63);
 
-  fFrontPanel.fPanel.setBackground(
-    fTextureManager->getTexture("Panel_Front"));
+  fFrontPanel.fPanel.setBackground(fTextureManager->getTexture("Panel_Front"));
   {
     auto knob = Widget::analog_knob();
     knob->setTexture(fTextureManager->getTexture("Knob_17_matte_63frames"));
@@ -63,6 +65,42 @@ void Application::init()
     fFrontPanel.fPanel.addWidget(std::move(knob));
   }
 }
+
+//------------------------------------------------------------------------
+// Application::initPanels
+//------------------------------------------------------------------------
+void Application::initPanels(std::string const &iDevice2DFile, std::string const &iHDGui2DFile)
+{
+  auto hdg = lua::HDGui2D::fromFile(iHDGui2DFile);
+  initPanel(hdg->front(), fFrontPanel.fPanel);
+}
+
+//------------------------------------------------------------------------
+// Application::initPanel
+//------------------------------------------------------------------------
+void Application::initPanel(std::shared_ptr<lua::jbox_panel> const &iPanel, Panel &oPanel)
+{
+  // TODO HIGH YP: fGraphicsNode is a pointer into device2D!!! can't access like this!
+  auto background = fTextureManager->findTexture(iPanel->fGraphicsNode);
+  if(background)
+    oPanel.setBackground(std::move(background));
+  else
+    RE_EDIT_LOG_WARNING("Could not locate background texture [%s] for panel [%s]", iPanel->fGraphicsNode, oPanel.getName());
+
+  // TODO handle cable origin
+
+  for(auto const &w: iPanel->fWidgets)
+  {
+    auto widget = w->fWidget;
+
+    auto graphics = fTextureManager->findTexture(w->fGraphics.fNode);
+    if(graphics)
+      widget->setTexture(std::move(graphics));
+
+    oPanel.addWidget(std::move(widget));
+  }
+}
+
 
 //------------------------------------------------------------------------
 // Application::render

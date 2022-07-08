@@ -19,7 +19,7 @@
 #include "FilmStrip.h"
 #include <dirent.h>
 #include <sys/stat.h>
-#include <re/mock/Errors.h>
+#include "Errors.h"
 #include <re/mock/fmt.h>
 #include <regex>
 
@@ -62,7 +62,7 @@ FilmStrip::Data::~Data()
 //------------------------------------------------------------------------
 std::unique_ptr<FilmStrip> FilmStrip::load(std::shared_ptr<File> const &iFile)
 {
-  DCHECK_F(iFile->fNumFrames > 0);
+  RE_EDIT_ASSERT(iFile->fNumFrames > 0);
 
   int width, height, channels;
   auto data = stbi_load(iFile->fPath.c_str(), &width, &height, &channels, 4);
@@ -103,7 +103,7 @@ std::shared_ptr<FilmStrip> FilmStripMgr::findFilmStrip(std::string const &iKey) 
 std::shared_ptr<FilmStrip> FilmStripMgr::getFilmStrip(std::string const &iKey) const
 {
   auto fs = findFilmStrip(iKey);
-  DCHECK_F(fs != nullptr);
+  RE_EDIT_ASSERT(fs != nullptr);
   return fs;
 }
 
@@ -141,7 +141,7 @@ size_t FilmStripMgr::scanDirectory()
 //------------------------------------------------------------------------
 std::vector<FilmStrip::File> FilmStripMgr::scanDirectory(std::string const &iDirectory)
 {
-  RE_MOCK_ASSERT(!iDirectory.empty());
+  RE_EDIT_ASSERT(!iDirectory.empty());
 
   static const std::regex FILENAME_REGEX{"(([0-9]+)_?frames)?.png$", std::regex_constants::icase};
 
@@ -167,7 +167,7 @@ std::vector<FilmStrip::File> FilmStripMgr::scanDirectory(std::string const &iDir
         }
         else
         {
-          RE_MOCK_LOG_ERROR("Error (%d) with file [%s] : ", errno, entry);
+          RE_EDIT_LOG_ERROR("Error (%d) with file [%s] : ", errno, entry);
         }
       }
     }
@@ -175,7 +175,7 @@ std::vector<FilmStrip::File> FilmStripMgr::scanDirectory(std::string const &iDir
   }
   else
   {
-    RE_MOCK_LOG_ERROR("Could not scan directory [%s]", iDirectory);
+    RE_EDIT_LOG_ERROR("Could not scan directory [%s]", iDirectory);
   }
 
   return res;

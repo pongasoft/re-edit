@@ -18,6 +18,7 @@
 
 #include "WidgetAttribute.h"
 #include "ReGui.h"
+#include "Errors.h"
 #include <re/mock/fmt.h>
 #include <imgui.h>
 #include <misc/cpp/imgui_stdlib.h>
@@ -245,7 +246,7 @@ std::string const &Value::findActualPropertyPath(EditContext &iCtx) const
     else
     {
       auto index = iCtx.getPropertyValueAsInt(fValueSwitch.fValue);
-      RE_MOCK_INTERNAL_ASSERT(fValues.fValue.size() > index);
+      RE_EDIT_INTERNAL_ASSERT(fValues.fValue.size() > index);
       return fValues.fValue.at(index);
     }
   }

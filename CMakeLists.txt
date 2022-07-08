@@ -55,14 +55,14 @@ set(re-edit_CPP_SRC_DIR "${CMAKE_CURRENT_LIST_DIR}/src/cpp")
 
 # Defines all the common sources
 set(re-edit_BUILD_SOURCES
-    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/logging/logging.h"
-    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/logging/loguru.hpp"
-    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/logging/loguru.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/lua/HDGui2D.h"
+    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/lua/HDGui2D.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/Application.h"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/Application.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/Constants.h"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/DrawContext.h"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/DrawContext.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/Errors.h"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/FilmStrip.h"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/FilmStrip.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/Panel.h"
@@ -87,6 +87,32 @@ if(APPLE)
 #  set(re-edit_MAIN_SRC "${re-edit_CPP_SRC_DIR}/re/edit/macos/main.mm")
 endif()
 
+# Build the static library
+add_library("${target}_lib" "${re-edit_BUILD_SOURCES}")
+target_link_libraries("${target}_lib" PUBLIC imgui stb re-mock)
+
 # Build the executable
-add_executable(${target} "${re-edit_BUILD_SOURCES}" "${re-edit_MAIN_SRC}")
-target_link_libraries(${target} PRIVATE imgui stb re-mock)
+add_executable(${target} "${re-edit_MAIN_SRC}")
+target_link_libraries(${target} PRIVATE "${target}_lib")
+
+#######################################################
+# Testing
+#######################################################
+# Download and unpack googletest at configure time
+include(fetch-GoogleTest.cmake)
+include(GoogleTest)
+
+set(target_test "${target}_test")
+
+set(re-edit_CPP_TST_DIR "${CMAKE_CURRENT_LIST_DIR}/test/cpp")
+
+set(TEST_CASE_SOURCES
+    "${re-edit_CPP_TST_DIR}/re/edit/lua/TestHDGui2D.cpp"
+    )
+
+add_executable("${target_test}" "${TEST_CASE_SOURCES}")
+target_compile_definitions("${target_test}" PUBLIC RE_EDIT_PROJECT_DIR="${CMAKE_CURRENT_LIST_DIR}")
+target_link_libraries("${target_test}" gtest_main gmock "${target}_lib")
+target_include_directories("${target_test}" PUBLIC "${re-edit_CPP_SRC_DIR}")
+
+gtest_discover_tests("${target_test}")

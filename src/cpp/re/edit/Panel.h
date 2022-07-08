@@ -47,7 +47,7 @@ public:
   void editView(EditContext &iCtx);
 
   inline void setBackground(std::shared_ptr<Texture> iBackground) { fGraphics.setTexture(std::move(iBackground)); }
-  int addWidget(std::unique_ptr<Widget> iWidget);
+  int addWidget(std::shared_ptr<Widget> iWidget);
   std::vector<Widget *> getSelectedWidgets() const;
   std::vector<int> getWidgetOrder() const { return fWidgetOrder; }
   Widget *getWidget(int id) const;
@@ -57,7 +57,7 @@ public:
 
   /**
    * @return the deleted widget and its order */
-  std::pair<std::unique_ptr<Widget>, int> deleteWidget(int id);
+  std::pair<std::shared_ptr<Widget>, int> deleteWidget(int id);
 
   void swap(int iIndex1, int iIndex2);
 
@@ -76,7 +76,7 @@ private:
   Type fType;
   std::string fNodeName;
   widget::attribute::Graphics fGraphics{};
-  std::map<int, std::unique_ptr<Widget>> fWidgets{};
+  std::map<int, std::shared_ptr<Widget>> fWidgets{};
   std::vector<int> fWidgetOrder{};
   std::optional<ImVec2> fLastMovePosition{};
   std::optional<MouseDrag> fMouseDrag{};

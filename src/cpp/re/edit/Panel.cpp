@@ -17,7 +17,7 @@
  */
 
 #include <re/mock/fmt.h>
-#include <re/mock/Errors.h>
+#include "Errors.h"
 #include "Panel.h"
 #include "ReGui.h"
 
@@ -45,7 +45,7 @@ char const *Panel::toString(Panel::Type iType)
     case Type::kBack: return "back";
     case Type::kFoldedBack: return "folded_Back";
     default:
-      RE_MOCK_FAIL("Not reached");
+      RE_EDIT_FAIL("Not reached");
   }
 }
 
@@ -55,7 +55,7 @@ char const *Panel::toString(Panel::Type iType)
 Widget *Panel::getWidget(int id) const
 {
   auto const &w = fWidgets.at(id);
-  RE_MOCK_INTERNAL_ASSERT(w != nullptr);
+  RE_EDIT_INTERNAL_ASSERT(w != nullptr);
   return w.get();
 }
 
@@ -167,7 +167,7 @@ void Panel::draw(DrawContext &iCtx)
 //------------------------------------------------------------------------
 // Panel::addWidget
 //------------------------------------------------------------------------
-int Panel::addWidget(std::unique_ptr<Widget> iWidget)
+int Panel::addWidget(std::shared_ptr<Widget> iWidget)
 {
   auto const id = fWidgetCounter++;
   iWidget->init(id);
@@ -179,14 +179,14 @@ int Panel::addWidget(std::unique_ptr<Widget> iWidget)
 //------------------------------------------------------------------------
 // Panel::deleteWidget
 //------------------------------------------------------------------------
-std::pair<std::unique_ptr<Widget>, int> Panel::deleteWidget(int id)
+std::pair<std::shared_ptr<Widget>, int> Panel::deleteWidget(int id)
 {
-  std::unique_ptr<Widget> widget{};
+  std::shared_ptr<Widget> widget{};
   // we need to extract the widget from the map before removing it so that we can return it!
   std::swap(fWidgets.at(id), widget);
   fWidgets.erase(id);
   auto iter = std::find(fWidgetOrder.begin(), fWidgetOrder.end(), id);
-  RE_MOCK_INTERNAL_ASSERT(iter != fWidgetOrder.end());
+  RE_EDIT_INTERNAL_ASSERT(iter != fWidgetOrder.end());
   auto order = iter - fWidgetOrder.begin();
   fWidgetOrder.erase(iter);
   return {std::move(widget), order};
@@ -446,7 +446,7 @@ char const *Panel::getName() const
     case Type::kBack: return "Back";
     case Type::kFoldedBack: return "Folded Back";
     default:
-      RE_MOCK_FAIL("Not reached");
+      RE_EDIT_FAIL("Not reached");
   }
 }
 

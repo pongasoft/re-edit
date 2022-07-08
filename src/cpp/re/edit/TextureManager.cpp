@@ -16,7 +16,7 @@
  * @author Yan Pujante
  */
 
-#include <re/mock/Errors.h>
+#include "Errors.h"
 #include "TextureManager.h"
 
 namespace re::edit {
@@ -34,10 +34,23 @@ void TextureManager::init(std::string iDirectory)
 //------------------------------------------------------------------------
 std::shared_ptr<Texture> TextureManager::getTexture(std::string const &iKey) const
 {
-  RE_MOCK_ASSERT(fFilmStripMgr != nullptr);
+  auto texture = findTexture(iKey);
+  RE_EDIT_ASSERT(texture != nullptr, "No texture with key [%s]", iKey);
+  return texture;
+}
+
+//------------------------------------------------------------------------
+// TextureManager::getTexture
+//------------------------------------------------------------------------
+std::shared_ptr<Texture> TextureManager::findTexture(std::string const &iKey) const
+{
+  RE_EDIT_INTERNAL_ASSERT(fFilmStripMgr != nullptr);
 
   // get the filmstrip associated to the key
-  auto filmStrip = fFilmStripMgr->getFilmStrip(iKey);
+  auto filmStrip = fFilmStripMgr->findFilmStrip(iKey);
+
+  if(!filmStrip)
+    return nullptr;
 
   // do we already have a GPU texture associated to this path?
   auto iter = fTextures.find(iKey);
