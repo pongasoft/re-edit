@@ -55,6 +55,8 @@ set(re-edit_CPP_SRC_DIR "${CMAKE_CURRENT_LIST_DIR}/src/cpp")
 
 # Defines all the common sources
 set(re-edit_BUILD_SOURCES
+    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/lua/Device2D.h"
+    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/lua/Device2D.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/lua/HDGui2D.h"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/lua/HDGui2D.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/Application.h"
@@ -65,6 +67,8 @@ set(re-edit_BUILD_SOURCES
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/Errors.h"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/FilmStrip.h"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/FilmStrip.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/Graphics.h"
+    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/Graphics.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/Panel.h"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/Panel.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/Property.h"
@@ -107,6 +111,7 @@ set(target_test "${target}_test")
 set(re-edit_CPP_TST_DIR "${CMAKE_CURRENT_LIST_DIR}/test/cpp")
 
 set(TEST_CASE_SOURCES
+    "${re-edit_CPP_TST_DIR}/re/edit/lua/TestDevice2D.cpp"
     "${re-edit_CPP_TST_DIR}/re/edit/lua/TestHDGui2D.cpp"
     )
 

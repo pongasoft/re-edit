@@ -24,6 +24,7 @@
 #include "EditContext.h"
 #include "DrawContext.h"
 #include "WidgetAttribute.h"
+#include "Graphics.h"
 
 #include <string>
 #include <vector>
@@ -40,6 +41,7 @@ public:
   explicit Widget(std::string iType);
 
   constexpr std::string const &getName() const { return fName; }
+  void setName(std::string iName) { fName = std::move(iName); }
   constexpr int getId() const { return fId; }
 
   constexpr ImVec2 getPosition() const { return fGraphics.getPosition(); }
@@ -57,6 +59,8 @@ public:
   constexpr void move(ImVec2 const &iDelta) { fGraphics.move(iDelta); }
 
   inline void setTexture(std::shared_ptr<Texture> iTexture) { fGraphics.setTexture(std::move(iTexture)); }
+  inline void setSize(ImVec2 const &iSize) { fGraphics.setSize(iSize); }
+
   constexpr int getFrameNumber() const { return fFrameNumber; }
   constexpr int &getFrameNumber() { return fFrameNumber; }
   constexpr void setFrameNumber(int iFrameNumber) { fFrameNumber = iFrameNumber; }

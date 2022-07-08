@@ -59,12 +59,14 @@ public:
 
   constexpr int width() const { return fWidth; }
   constexpr int height() const { return fHeight; }
-  constexpr int numFrames() const { return fFile->fNumFrames; }
+  constexpr int numFrames() const { return fNumFrames > 0 ? fNumFrames : fFile->fNumFrames; }
 
   constexpr int frameWidth() const { return fWidth; }
   constexpr int frameHeight() const { return fHeight / numFrames(); }
 
   constexpr data_t const *data() const { return fData->data(); }
+
+  void overrideNumFrames(int iNumFrames);
 
   static std::unique_ptr<FilmStrip> load(std::shared_ptr<File> const &iFile);
 
@@ -74,6 +76,7 @@ private:
 
 private:
   std::shared_ptr<File> fFile;
+  int fNumFrames{0};
   int fWidth{};
   int fHeight{};
   std::shared_ptr<Data> fData{};

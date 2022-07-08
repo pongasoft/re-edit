@@ -26,6 +26,7 @@
 #include "EditContext.h"
 #include "PropertyManager.h"
 #include "lua/HDGui2D.h"
+#include "lua/Device2D.h"
 
 namespace re::edit {
 
@@ -43,7 +44,9 @@ public:
 
 protected:
   void initPanels(std::string const &iDevice2DFile, std::string const &iHDGui2DFile);
-  void initPanel(std::shared_ptr<lua::jbox_panel> const &iPanel, Panel &oPanel);
+  void initPanel(std::shared_ptr<lua::panel_nodes> const &iPanelNodes,
+                 std::shared_ptr<lua::jbox_panel> const &iPanel,
+                 Panel &oPanel);
 
 private:
   class PanelState

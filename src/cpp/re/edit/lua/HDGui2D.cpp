@@ -203,7 +203,6 @@ std::unique_ptr<HDGui2D> HDGui2D::fromFile(std::string const &iLuaFilename)
   auto res = std::make_unique<HDGui2D>();
   res->loadFile(iLuaFilename);
   return res;
-
 }
 
 //------------------------------------------------------------------------
