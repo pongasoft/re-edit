@@ -34,7 +34,8 @@ class PropertyManager
 {
 public:
 //  void init(std::string const &iMotherboardDefLuaFilename);
-  void init(std::string const &iDirectory);
+  // return the size of the device in RU
+  int init(std::string const &iDirectory);
 
   std::vector<Property const *> findProperties(Property::Filter const &iFilter) const;
   Property const *findProperty(std::string const &iPropertyPath) const;

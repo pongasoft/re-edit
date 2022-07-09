@@ -38,11 +38,12 @@ class Panel;
 class Widget
 {
 public:
-  explicit Widget(std::string iType);
+  explicit Widget(WidgetType iType);
 
   constexpr std::string const &getName() const { return fName; }
   void setName(std::string iName) { fName = std::move(iName); }
   constexpr int getId() const { return fId; }
+  constexpr WidgetType getType() const { return fType; }
 
   constexpr ImVec2 getPosition() const { return fGraphics.getPosition(); }
   constexpr ImVec2 getTopLeft() const { return fGraphics.getTopLeft(); }
@@ -73,11 +74,13 @@ public:
   void editView(EditContext &iCtx);
 
   std::string hdgui2D() const;
+  std::string device2D() const { return fGraphics.device2D(); }
 
   std::unique_ptr<Widget> clone() const;
 
   static std::unique_ptr<Widget> analog_knob();
   static std::unique_ptr<Widget> static_decoration();
+  static std::unique_ptr<Widget> panel_decal();
   static std::unique_ptr<Widget> widget(std::string const &iType);
 
 //  template<typename T>
@@ -94,6 +97,7 @@ public:
 
 protected:
   bool isHidden(DrawContext &iCtx) const;
+  bool isPanelDecal() const { return fType == WidgetType::kPanelDecal; }
 
 protected:
   Widget *addAttribute(std::unique_ptr<widget::Attribute> iAttribute) { fAttributes.emplace_back(std::move(iAttribute)); return this; }
@@ -112,7 +116,7 @@ private:
 
 private:
   int fId{};
-  std::string fType{};
+  WidgetType fType{};
   std::string fName{};
   widget::attribute::Graphics fGraphics{};
   int fFrameNumber{};

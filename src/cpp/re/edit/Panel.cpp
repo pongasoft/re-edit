@@ -20,6 +20,7 @@
 #include "Errors.h"
 #include "Panel.h"
 #include "ReGui.h"
+#include "Constants.h"
 
 namespace re::edit {
 
@@ -30,7 +31,7 @@ Panel::Panel(Panel::Type iType) :
   fType{iType},
   fNodeName{re::mock::fmt::printf("Panel_%s_bg", toString(iType))}
 {
-  // empty
+  setDeviceHeightRU(1);
 }
 
 //------------------------------------------------------------------------
@@ -52,11 +53,11 @@ char const *Panel::toString(Panel::Type iType)
 //------------------------------------------------------------------------
 // Panel::getWidget
 //------------------------------------------------------------------------
-Widget *Panel::getWidget(int id) const
+std::shared_ptr<Widget> Panel::getWidget(int id) const
 {
   auto const &w = fWidgets.at(id);
   RE_EDIT_INTERNAL_ASSERT(w != nullptr);
-  return w.get();
+  return w;
 }
 
 
@@ -114,7 +115,14 @@ void Panel::draw(DrawContext &iCtx)
   }
   ImGui::SetCursorScreenPos(cp); // InvisibleButton moves the cursor so we restore it
 
-  for(auto id: fWidgetOrder)
+  // always draw decals first
+  for(auto id: fDecalsOrder)
+  {
+    auto &w = fWidgets[id];
+    w->draw(iCtx);
+  }
+
+  for(auto id: fWidgetsOrder)
   {
     auto &w = fWidgets[id];
     w->draw(iCtx);
@@ -169,10 +177,19 @@ void Panel::draw(DrawContext &iCtx)
 //------------------------------------------------------------------------
 int Panel::addWidget(std::shared_ptr<Widget> iWidget)
 {
+  RE_EDIT_INTERNAL_ASSERT(iWidget != nullptr);
+
   auto const id = fWidgetCounter++;
+
   iWidget->init(id);
+
+  if(iWidget->isPanelDecal())
+    fDecalsOrder.emplace_back(id);
+  else
+    fWidgetsOrder.emplace_back(id);
+
   fWidgets[id] = std::move(iWidget);
-  fWidgetOrder.emplace_back(id);
+
   return id;
 }
 
@@ -185,11 +202,22 @@ std::pair<std::shared_ptr<Widget>, int> Panel::deleteWidget(int id)
   // we need to extract the widget from the map before removing it so that we can return it!
   std::swap(fWidgets.at(id), widget);
   fWidgets.erase(id);
-  auto iter = std::find(fWidgetOrder.begin(), fWidgetOrder.end(), id);
-  RE_EDIT_INTERNAL_ASSERT(iter != fWidgetOrder.end());
-  auto order = iter - fWidgetOrder.begin();
-  fWidgetOrder.erase(iter);
-  return {std::move(widget), order};
+  if(widget->isPanelDecal())
+  {
+    auto iter = std::find(fDecalsOrder.begin(), fDecalsOrder.end(), id);
+    RE_EDIT_INTERNAL_ASSERT(iter != fDecalsOrder.end());
+    auto order = iter - fDecalsOrder.begin();
+    fDecalsOrder.erase(iter);
+    return {std::move(widget), order};
+  }
+  else
+  {
+    auto iter = std::find(fWidgetsOrder.begin(), fWidgetsOrder.end(), id);
+    RE_EDIT_INTERNAL_ASSERT(iter != fWidgetsOrder.end());
+    auto order = iter - fWidgetsOrder.begin();
+    fWidgetsOrder.erase(iter);
+    return {std::move(widget), order};
+  }
 }
 
 
@@ -238,13 +266,22 @@ void Panel::selectWidget(int id, bool iMultiple)
   {
     for(auto &p: fWidgets)
     {
-      auto w = p.second.get();
+      auto w = p.second;
       if(w != widget)
         w->setSelected(false);
     }
   }
 
   widget->toggleSelection();
+}
+
+//------------------------------------------------------------------------
+// Panel::unselectWidget
+//------------------------------------------------------------------------
+void Panel::unselectWidget(int id)
+{
+  auto widget = getWidget(id);
+  widget->setSelected(false);
 }
 
 //------------------------------------------------------------------------
@@ -302,13 +339,13 @@ void Panel::endMoveWidgets(ImVec2 const &iPosition)
 //------------------------------------------------------------------------
 // Panel::getSelectedWidgets
 //------------------------------------------------------------------------
-std::vector<Widget *> Panel::getSelectedWidgets() const
+std::vector<std::shared_ptr<Widget>> Panel::getSelectedWidgets() const
 {
-  std::vector<Widget *> c{};
+  std::vector<std::shared_ptr<Widget>> c{};
   std::for_each(fWidgets.begin(), fWidgets.end(), [&c](auto const &p) {
     auto &widget = p.second;
     if(widget->isSelected())
-      c.emplace_back(widget.get());
+      c.emplace_back(widget);
   });
   return c;
 }
@@ -358,16 +395,67 @@ void Panel::editView(EditContext &iCtx)
           ImGui::PopTextWrapPos();
           ImGui::TreePop();
         }
+        if(ImGui::TreeNode("device2D"))
+        {
+          auto windowSize = ImGui::GetWindowSize();
+          ImGui::PushTextWrapPos(windowSize.x);
+          ImGui::TextUnformatted(device2D().c_str());
+          ImGui::PopTextWrapPos();
+          ImGui::TreePop();
+        }
         ImGui::PopID();
         break;
       }
 
       case 1:
-        selectedWidgets[0]->editView(iCtx);
+      {
+        auto w = selectedWidgets[0];
+
+        if(ImGui::Button("."))
+          ImGui::OpenPopup("Menu");
+
+        if(ImGui::BeginPopup("Menu"))
+        {
+          if(ImGui::Selectable("Clear"))
+            unselectWidget(w->getId());
+          if(ImGui::Selectable("Duplicate"))
+            addWidget(w->clone());
+          if(ImGui::Selectable("Delete"))
+            deleteWidget(w->getId());
+          ImGui::EndPopup();
+        }
+
+        ImGui::SameLine();
+        ImGui::Text("%s", re::edit::toString(w->getType()));
+        w->editView(iCtx);
         break;
+      }
 
       default:
       {
+        if(ImGui::Button("."))
+          ImGui::OpenPopup("Menu");
+
+        if(ImGui::BeginPopup("Menu"))
+        {
+          if(ImGui::Selectable("Clear"))
+            clearSelection();
+          if(ImGui::Selectable("Duplicate"))
+          {
+            for(auto const &w: selectedWidgets)
+              addWidget(w->clone());
+          }
+          if(ImGui::Selectable("Delete"))
+          {
+            for(auto const &w: selectedWidgets)
+              deleteWidget(w->getId());
+          }
+          ImGui::EndPopup();
+        }
+
+        ImGui::SameLine();
+        ImGui::Text("%ld selected", selectedWidgets.size());
+
         auto min = selectedWidgets[0]->getTopLeft();
 
         std::for_each(selectedWidgets.begin() + 1, selectedWidgets.end(), [&min](auto c) {
@@ -419,19 +507,41 @@ void Panel::editView(EditContext &iCtx)
 }
 
 //------------------------------------------------------------------------
-// Panel::swap
+// Panel::editOrderView
 //------------------------------------------------------------------------
-void Panel::swap(int iIndex1, int iIndex2)
+void Panel::editOrderView(EditContext &iCtx)
 {
-  std::swap(fWidgetOrder[iIndex1], fWidgetOrder[iIndex2]);
+  if(ImGui::TreeNodeEx("Widgets", ImGuiTreeNodeFlags_DefaultOpen))
+  {
+    editOrderView(getWidgetsOrder(), [this](int i1, int i2) { swapWidgets(i1, i2); });
+    ImGui::TreePop();
+  }
+
+  auto ids = getDecalsOrder();
+  if(!ids.empty())
+  {
+    if(ImGui::TreeNode("Decals"))
+    {
+      editOrderView(ids, [this](int i1, int i2) { swapDecals(i1, i2); });
+      ImGui::TreePop();
+    }
+  }
 }
 
 //------------------------------------------------------------------------
-// Panel::getEditViewWindowName
+// Panel::swapWidgets
 //------------------------------------------------------------------------
-std::string Panel::getEditViewWindowName() const
+void Panel::swapWidgets(int iIndex1, int iIndex2)
 {
-  return re::mock::fmt::printf("%s Widgets", getName());
+  std::swap(fWidgetsOrder[iIndex1], fWidgetsOrder[iIndex2]);
+}
+
+//------------------------------------------------------------------------
+// Panel::swapDecals
+//------------------------------------------------------------------------
+void Panel::swapDecals(int iIndex1, int iIndex2)
+{
+  std::swap(fDecalsOrder[iIndex1], fDecalsOrder[iIndex2]);
 }
 
 //------------------------------------------------------------------------
@@ -463,7 +573,7 @@ std::string Panel::hdgui2D() const
   s << "--------------------------------------------------------------------------\n";
   auto arrayName = re::mock::fmt::printf("%s_widgets", panelName);
   s << re::mock::fmt::printf("%s = {}\n", arrayName);
-  for(auto id: fWidgetOrder)
+  for(auto id: fWidgetsOrder)
   {
     auto const &w = fWidgets.at(id);
     s << re::mock::fmt::printf("-- %s\n", w->getName());
@@ -474,6 +584,79 @@ std::string Panel::hdgui2D() const
 
   return s.str();
 }
+
+//------------------------------------------------------------------------
+// Panel::device2D
+//------------------------------------------------------------------------
+std::string Panel::device2D() const
+{
+  auto panelName = toString(fType);
+
+  std::stringstream s{};
+  s << "--------------------------------------------------------------------------\n";
+  s << re::mock::fmt::printf("-- %s\n", panelName);
+  s << "--------------------------------------------------------------------------\n";
+  s << re::mock::fmt::printf("%s = {}\n", panelName);
+  int index = 1;
+  for(auto id: fDecalsOrder)
+  {
+    auto const &w = fWidgets.at(id);
+    s << re::mock::fmt::printf("%s[%d] = %s -- %s\n", panelName, index, w->device2D(), w->fName);
+    index++;
+  }
+  s << re::mock::fmt::printf("%s[\"%s\"] = %s\n", panelName, fNodeName, fGraphics.device2D());
+  for(auto id: fWidgetsOrder)
+  {
+    auto const &w = fWidgets.at(id);
+    s << re::mock::fmt::printf("%s[\"%s\"] = %s\n", panelName, w->fName, w->device2D());
+  }
+
+  return s.str();
+}
+
+//------------------------------------------------------------------------
+// Panel::editOrderView
+//------------------------------------------------------------------------
+template<typename F>
+void Panel::editOrderView(std::vector<int> const &iOrder, F iOnSwap)
+{
+  for(int n = 0; n < iOrder.size(); n++)
+  {
+    auto id = iOrder[n];
+    auto const widget = getWidget(id);
+    auto item = widget->getName();
+    ImGui::Selectable(item.c_str(), widget->isSelected());
+
+    if(ImGui::IsItemClicked(ImGuiMouseButton_Left))
+    {
+      auto &io = ImGui::GetIO();
+      selectWidget(id, io.KeyShift);
+    }
+
+    if(ImGui::IsItemActive() && !ImGui::IsItemHovered())
+    {
+      int n_next = n + (ImGui::GetMouseDragDelta(0).y < 0.f ? -1 : 1);
+      if(n_next >= 0 && n_next < iOrder.size())
+      {
+        iOnSwap(n, n_next);
+        ImGui::ResetMouseDragDelta();
+      }
+    }
+  }
+}
+
+//------------------------------------------------------------------------
+// Panel::setSize
+//------------------------------------------------------------------------
+void Panel::setDeviceHeightRU(int iDeviceHeightRU)
+{
+  fDeviceHeightRU = iDeviceHeightRU;
+  auto h = (fType == Type::kFront || fType == Type::kBack) ? toPixelHeight(fDeviceHeightRU) : kFoldedDevicePixelHeight;
+  fGraphics.fFilter = [h](FilmStrip const &f) {
+    return f.width() == kDevicePixelWidth && f.height() == h;
+  };
+}
+
 
 
 }

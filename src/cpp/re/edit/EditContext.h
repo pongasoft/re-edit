@@ -31,13 +31,7 @@ namespace re::edit {
 class EditContext
 {
 public:
-  EditContext(std::shared_ptr<TextureManager> iTextureManager,
-              std::shared_ptr<UserPreferences> iUserPreferences,
-              std::shared_ptr<PropertyManager> iPropertyManager) :
-              fTextureManager{std::move(iTextureManager)},
-              fUserPreferences{std::move(iUserPreferences)},
-              fPropertyManager(std::move(iPropertyManager))
-  {}
+  EditContext() = default;
 
   inline std::vector<Property const *> findProperties(Property::Filter const &iFilter) const { return fPropertyManager->findProperties(iFilter); };
   inline std::vector<Property const *> findProperties() const { return findProperties(Property::Filter{}); }
@@ -50,12 +44,15 @@ public:
   void removePropertyFromWatchlist(std::string const &iPropertyPath) { fPropertyManager->removeFromWatchlist(iPropertyPath); }
 
   inline std::vector<std::string> const &getTextureKeys() const { return fTextureManager->getTextureKeys(); };
+  inline std::vector<std::string> findTextureKeys(FilmStrip::Filter const &iFilter) const { return fTextureManager->findTextureKeys(iFilter); }
   inline std::shared_ptr<Texture> getTexture(std::string const &iKey) const { return fTextureManager->getTexture(iKey); };
 
+  friend class PanelState;
+
 protected:
-  std::shared_ptr<TextureManager> fTextureManager;
-  std::shared_ptr<UserPreferences> fUserPreferences;
-  std::shared_ptr<PropertyManager> fPropertyManager;
+  std::shared_ptr<TextureManager> fTextureManager{};
+  std::shared_ptr<UserPreferences> fUserPreferences{};
+  std::shared_ptr<PropertyManager> fPropertyManager{};
 };
 
 }

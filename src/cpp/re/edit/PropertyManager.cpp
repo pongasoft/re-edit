@@ -29,7 +29,7 @@ namespace re::edit {
 //------------------------------------------------------------------------
 // PropertyManager::init
 //------------------------------------------------------------------------
-void PropertyManager::init(std::string const &iDirectory)
+int PropertyManager::init(std::string const &iDirectory)
 {
   // TODO: this will NOT work if the original device has a different constructor
   //       since it is instantiated via realtime_controller.lua
@@ -49,9 +49,9 @@ void PropertyManager::init(std::string const &iDirectory)
 
   fDevice = std::make_shared<rack::Extension>(fRack.newExtension(config.getConfig()));
 
-  auto infos = fDevice->getPropertyInfos();
+  auto propertyInfos = fDevice->getPropertyInfos();
 
-  for(auto const &info: infos)
+  for(auto const &info: propertyInfos)
     fProperties[info.fPropertyPath] = Property{info};
 
   // we run the first batch which initialize the device
@@ -60,6 +60,8 @@ void PropertyManager::init(std::string const &iDirectory)
   // we disable notifications because we are not running the device
   fDevice->disableRTCNotify();
   fDevice->disableRTCBindings();
+
+  return fDevice->getDeviceInfo().fDeviceHeightRU;
 }
 
 //------------------------------------------------------------------------

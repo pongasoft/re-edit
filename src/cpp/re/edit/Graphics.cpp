@@ -38,7 +38,8 @@ void Graphics::draw(DrawContext &iCtx, int iFrameNumber, ImVec4 const &iBorderCo
 //------------------------------------------------------------------------
 // Graphics::editView
 //------------------------------------------------------------------------
-void Graphics::editView(std::vector<std::string> const &iTextureKeys,
+void Graphics::editView(EditContext &iCtx,
+                        FilmStrip::Filter const &iFilter,
                         std::function<void()> const &iOnReset,
                         std::function<void(std::string const &)> const &iOnTextureUpdate,
                         std::function<void(ImVec2 const &)> const &iOnSizeUpdate) const
@@ -56,7 +57,8 @@ void Graphics::editView(std::vector<std::string> const &iTextureKeys,
   auto key = texture ? texture->key() : "";
   if(ImGui::BeginCombo(fName.c_str(), key.c_str()))
   {
-    for(auto &p: iTextureKeys)
+    auto textureKeys = iFilter ? iCtx.findTextureKeys(iFilter) : iCtx.getTextureKeys();
+    for(auto &p: textureKeys)
     {
       auto const isSelected = p == key;
       if(ImGui::Selectable(p.c_str(), isSelected))
@@ -87,7 +89,8 @@ void Graphics::editView(std::vector<std::string> const &iTextureKeys,
 //------------------------------------------------------------------------
 void Graphics::editView(EditContext &iCtx)
 {
-  return editView(iCtx.getTextureKeys(),
+  return editView(iCtx,
+                  fFilter,
                   {},
                   [this, &iCtx](auto &k) {
                     fTexture = iCtx.getTexture(k);
@@ -111,6 +114,36 @@ void Graphics::reset()
 void Graphics::hdgui2D(std::string const &iNodeName, attribute_list_t &oAttributes) const
 {
   oAttributes.emplace_back(attribute_t{fName, re::mock::fmt::printf("{ node = { \"%s\" } }", iNodeName)});
+}
+
+//------------------------------------------------------------------------
+// Graphics::device2D
+//------------------------------------------------------------------------
+std::string Graphics::device2D() const
+{
+  auto texture = getTexture();
+  std::string path;
+  if(texture)
+  {
+    if(texture->numFrames() > 1)
+      path = re::mock::fmt::printf("path = \"%s\", frames = %d", texture->key(), texture->numFrames());
+    else
+      path = re::mock::fmt::printf("path = \"%s\"", texture->key());
+  }
+  else
+  {
+    auto size = getSize();
+    path = re::mock::fmt::printf("size = { %d, %d }", static_cast<int>(size.x),  static_cast<int>(size.y));
+  }
+  auto pos = getPosition();
+  if(pos.x == 0 && pos.y == 0)
+    return re::mock::fmt::printf("{ { %s } }",
+                                 path);
+  else
+    return re::mock::fmt::printf("{ offset = { %d, %d }, { %s } }",
+                                 static_cast<int>(pos.x),
+                                 static_cast<int>(pos.y),
+                                 path);
 }
 
 }

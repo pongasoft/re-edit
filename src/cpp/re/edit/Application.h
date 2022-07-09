@@ -27,6 +27,7 @@
 #include "PropertyManager.h"
 #include "lua/HDGui2D.h"
 #include "lua/Device2D.h"
+#include "PanelState.h"
 
 namespace re::edit {
 
@@ -49,50 +50,10 @@ protected:
                  Panel &oPanel);
 
 private:
-  class PanelState
-  {
-  public:
-    PanelState(Panel::Type iPanelType,
-               std::shared_ptr<TextureManager> iTextureManager,
-               std::shared_ptr<UserPreferences> iUserPreferences,
-               std::shared_ptr<PropertyManager> iPropertyManager);
-
-    void render();
-
-  protected:
-    void renderWidgets();
-    void renderPanel();
-    void renderPanelWidgets();
-    void renderProperties();
-
-  public:
-    Panel fPanel;
-
-  private:
-    class InternalDrawContext : public DrawContext
-    {
-    public:
-      InternalDrawContext(std::shared_ptr<TextureManager> iTextureManager,
-                          std::shared_ptr<UserPreferences> iUserPreferences,
-                          std::shared_ptr<PropertyManager> iPropertyManager) :
-        DrawContext(std::move(iTextureManager), std::move(iUserPreferences), std::move(iPropertyManager))
-      {}
-
-      friend class PanelState;
-    };
-
-  private:
-    InternalDrawContext fDrawContext;
-    bool fShowPanel{true};
-    bool fShowPanelWidgets{true};
-    bool fShowWidgets{};
-    bool fShowProperties{};
-  };
-
-private:
   std::shared_ptr<TextureManager> fTextureManager;
   std::shared_ptr<UserPreferences> fUserPreferences;
   std::shared_ptr<PropertyManager> fPropertyManager{};
+  int fDeviceHeightRU{1};
   PanelState fFrontPanel;
   PanelState fBackPanel;
   bool show_demo_window{false};

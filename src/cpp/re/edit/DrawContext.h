@@ -55,11 +55,7 @@ static constexpr ImVec4 operator*(const ImVec4& lhs, const ImVec4& rhs)         
 class DrawContext : public EditContext
 {
 public:
-  DrawContext(std::shared_ptr<TextureManager> iTextureManager,
-              std::shared_ptr<UserPreferences> iUserPreferences,
-              std::shared_ptr<PropertyManager> iPropertyManager) :
-    EditContext(std::move(iTextureManager), std::move(iUserPreferences), std::move(iPropertyManager))
-  {}
+  DrawContext() = default;
 
 public: // User preferences
   constexpr UserPreferences const &getUserPreferences() const { return *fUserPreferences; }

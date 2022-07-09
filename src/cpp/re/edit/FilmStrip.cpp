@@ -112,6 +112,22 @@ std::shared_ptr<FilmStrip> FilmStripMgr::findFilmStrip(std::string const &iKey) 
 }
 
 //------------------------------------------------------------------------
+// FilmStripMgr::findKeys
+//------------------------------------------------------------------------
+std::vector<std::string> FilmStripMgr::findKeys(FilmStrip::Filter const &iFilter) const
+{
+  std::vector<std::string> res{};
+  res.reserve(fKeys.size());
+  for(auto &key: fKeys)
+  {
+    auto fs = findFilmStrip(key);
+    if(fs && fs->isValid() && iFilter(*fs))
+      res.emplace_back(key);
+  }
+  return res;
+}
+
+//------------------------------------------------------------------------
 // FilmStripMgr::getFilmStrip
 //------------------------------------------------------------------------
 std::shared_ptr<FilmStrip> FilmStripMgr::getFilmStrip(std::string const &iKey) const

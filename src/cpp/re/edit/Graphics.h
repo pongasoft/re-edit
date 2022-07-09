@@ -29,6 +29,7 @@ public:
   Graphics() : Attribute("graphics") {}
 
   void hdgui2D(std::string const &iNodeName, attribute_list_t &oAttributes) const;
+  std::string device2D() const;
 
   inline bool contains(ImVec2 const &iPosition) const {
     auto size = getSize();
@@ -56,7 +57,8 @@ public:
 
   void editView(EditContext &iCtx) override;
 
-  void editView(std::vector<std::string> const &iTextureKeys,
+  void editView(EditContext &iCtx,
+                FilmStrip::Filter const &iFilter,
                 const std::function<void()>& iOnReset,
                 std::function<void(std::string const &)> const &iOnTextureUpdate,
                 std::function<void(ImVec2 const &)> const &iOnSizeUpdate) const;
@@ -69,6 +71,7 @@ public:
   ImVec2 fPosition{};
   std::shared_ptr<Texture> fTexture{};
   ImVec2 fSize{100, 100};
+  FilmStrip::Filter fFilter{};
 };
 
 }

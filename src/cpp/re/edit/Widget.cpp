@@ -33,7 +33,7 @@ long Widget::fWidgetIota = 1;
 //------------------------------------------------------------------------
 // Widget::Widget
 //------------------------------------------------------------------------
-Widget::Widget(std::string iType) : fType{std::move(iType)}
+Widget::Widget(WidgetType iType) : fType{iType}
 {
   computeDefaultWidgetName();
 }
@@ -115,7 +115,8 @@ void Widget::editView(EditContext &iCtx)
   if(ImGui::TreeNode("Attributes"))
   {
     ImGui::PushID(fGraphics.fName.c_str());
-    fGraphics.editView(iCtx.getTextureKeys(),
+    fGraphics.editView(iCtx,
+                       fGraphics.fFilter,
                        [this]() {
                          fGraphics.reset();
                        },
@@ -128,7 +129,7 @@ void Widget::editView(EditContext &iCtx)
                          fGraphics.fTexture = nullptr;
                          fFrameNumber = 0;
                        }
-                       );
+    );
     ImGui::PopID();
 
     for(auto &w: fAttributes)
@@ -153,11 +154,23 @@ void Widget::editView(EditContext &iCtx)
     ImGui::TreePop();
   }
 
-  if(ImGui::TreeNode("hdgui2D"))
+  if(!isPanelDecal())
+  {
+    if(ImGui::TreeNode("hdgui2D"))
+    {
+      auto size = ImGui::GetWindowSize();
+      ImGui::PushTextWrapPos(size.x);
+      ImGui::TextUnformatted(hdgui2D().c_str());
+      ImGui::PopTextWrapPos();
+      ImGui::TreePop();
+    }
+  }
+
+  if(ImGui::TreeNode("device2D"))
   {
     auto size = ImGui::GetWindowSize();
     ImGui::PushTextWrapPos(size.x);
-    ImGui::TextUnformatted(hdgui2D().c_str());
+    ImGui::TextUnformatted(device2D().c_str());
     ImGui::PopTextWrapPos();
     ImGui::TreePop();
   }
@@ -170,6 +183,9 @@ void Widget::editView(EditContext &iCtx)
 //------------------------------------------------------------------------
 std::string Widget::hdgui2D() const
 {
+  if(isPanelDecal())
+    return "";
+
   attribute_list_t atts{};
 
   fGraphics.hdgui2D(fName, atts);
@@ -181,7 +197,7 @@ std::string Widget::hdgui2D() const
   std::transform(atts.begin(), atts.end(), std::back_inserter(l), [](auto &att) {
     return re::mock::fmt::printf("  %s = %s", att.fName, att.fValue);
   });
-  return re::mock::fmt::printf("jbox.%s {\n%s\n}", fType, re::mock::stl::join_to_string(l, ",\n"));
+  return re::mock::fmt::printf("jbox.%s {\n%s\n}", toString(fType), re::mock::stl::join_to_string(l, ",\n"));
 }
 
 //------------------------------------------------------------------------
@@ -254,7 +270,7 @@ Widget *Widget::blend_mode()
 //------------------------------------------------------------------------
 void Widget::computeDefaultWidgetName()
 {
-  fName = re::mock::fmt::printf("%s_%ld", fType, fWidgetIota++);
+  fName = re::mock::fmt::printf("%s_%ld", toString(fType), fWidgetIota++);
 }
 
 static constexpr auto kDocGuiOwnerFilter = [](const Property &p) {
@@ -270,7 +286,7 @@ std::unique_ptr<Widget> Widget::analog_knob()
     return (p.type() == kJBox_Boolean || p.type() == kJBox_Number) && kDocGuiOwnerFilter(p);
   };
   static const auto kValueSwitchFilter = [](const Property &p) { return p.isDiscrete() && kDocGuiOwnerFilter(p); };
-  auto w = std::make_unique<Widget>("analog_knob");
+  auto w = std::make_unique<Widget>(WidgetType::kAnalogKnob);
   w ->value(kValueFilter, kValueSwitchFilter)
     ->visibility()
     ->tooltip_position()
@@ -286,10 +302,20 @@ std::unique_ptr<Widget> Widget::analog_knob()
 //------------------------------------------------------------------------
 std::unique_ptr<Widget> Widget::static_decoration()
 {
-  auto w = std::make_unique<Widget>("static_decoration");
+  auto w = std::make_unique<Widget>(WidgetType::kStaticDecoration);
   w ->blend_mode()
     ->visibility()
     ;
+  return w;
+}
+
+//------------------------------------------------------------------------
+// Widget::panel_decal
+//------------------------------------------------------------------------
+std::unique_ptr<Widget> Widget::panel_decal()
+{
+  auto w = std::make_unique<Widget>(WidgetType::kPanelDecal);
+  w->fGraphics.fFilter = [](FilmStrip const &iFilmStrip) { return iFilmStrip.numFrames() == 1; };
   return w;
 }
 
@@ -305,6 +331,9 @@ std::unique_ptr<Widget> Widget::widget(std::string const &iType)
 
   if(iType == "static_decoration")
     w = Widget::static_decoration();
+
+  if(iType == "panel_decal")
+    w = Widget::panel_decal();
 
   RE_EDIT_INTERNAL_ASSERT(w != nullptr);
 

@@ -30,6 +30,9 @@ namespace re::edit {
 class FilmStrip
 {
 public:
+  using Filter = std::function<bool(FilmStrip const &iFilmStrip)>;
+
+public:
   struct File
   {
     std::string fPath{};
@@ -93,6 +96,7 @@ public:
 
   size_t scanDirectory();
   std::vector<std::string> const &getKeys() const { return fKeys; };
+  std::vector<std::string> findKeys(FilmStrip::Filter const &iFilter) const;
 
   static std::vector<FilmStrip::File> scanDirectory(std::string const &iDirectory);
 

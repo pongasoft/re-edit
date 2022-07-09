@@ -20,10 +20,32 @@
 #define RE_EDIT_CONSTANTS_H
 
 #include <string>
+#include <imgui.h>
 
 namespace re::edit {
 
-constexpr char const *kWidgetTypes[] = { "analog_knob", "static_decoration" };
+constexpr char const *kWidgetTypes[] = { "analog_knob", "static_decoration", "panel_decal" };
+
+enum class WidgetType : int
+{
+  kAnalogKnob = 0,
+  kStaticDecoration,
+  kPanelDecal
+};
+
+constexpr char const *toString(WidgetType iType)
+{
+  return kWidgetTypes[static_cast<int>(iType)];
+}
+
+constexpr int k1UPixelSize = 345;
+constexpr int kDevicePixelWidth = 3770;
+constexpr int kFoldedDevicePixelHeight = 150;
+
+constexpr int toPixelHeight(int iDeviceHeightRU)
+{
+  return k1UPixelSize * static_cast<int>(iDeviceHeightRU);
+}
 
 }
 

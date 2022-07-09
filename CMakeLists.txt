@@ -71,6 +71,8 @@ set(re-edit_BUILD_SOURCES
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/Graphics.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/Panel.h"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/Panel.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/PanelState.h"
+    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/PanelState.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/Property.h"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/PropertyManager.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/ReGui.h"
