@@ -61,6 +61,7 @@ public:
   static std::unique_ptr<HDGui2D> fromFile(std::string const &iLuaFilename);
 
   std::shared_ptr<jbox_panel> front() { return getPanel("front"); }
+  std::shared_ptr<jbox_panel> back() { return getPanel("back"); }
 
   static HDGui2D *loadFromRegistry(lua_State *L);
 

@@ -77,6 +77,7 @@ void Application::initPanels(std::string const &iDevice2DFile, std::string const
   auto d2d = lua::Device2D::fromFile(iDevice2DFile);
   auto hdg = lua::HDGui2D::fromFile(iHDGui2DFile);
   initPanel(d2d->front(), hdg->front(), fFrontPanel.fPanel);
+  initPanel(d2d->back(), hdg->back(), fBackPanel.fPanel);
 }
 
 //------------------------------------------------------------------------
@@ -86,6 +87,11 @@ void Application::initPanel(std::shared_ptr<lua::panel_nodes> const &iPanelNodes
                             std::shared_ptr<lua::jbox_panel> const &iPanel,
                             Panel &oPanel)
 {
+  oPanel.setDeviceHeightRU(fDeviceHeightRU);
+
+  if(iPanelNodes == nullptr || iPanel == nullptr)
+    return;
+
   // handle background
   {
     auto node = iPanelNodes->findNodeByName(iPanel->fGraphicsNode);
@@ -130,8 +136,6 @@ void Application::initPanel(std::shared_ptr<lua::panel_nodes> const &iPanelNodes
 
     oPanel.addWidget(std::move(widget));
   }
-
-  oPanel.setDeviceHeightRU(fDeviceHeightRU);
 }
 
 //------------------------------------------------------------------------

@@ -386,7 +386,22 @@ void Panel::editView(EditContext &iCtx)
       case 0:
       {
         ImGui::PushID("Panel");
+
+        if(ImGui::Button("."))
+          ImGui::OpenPopup("Menu");
+
+        if(ImGui::BeginPopup("Menu"))
+        {
+          if(ImGui::Selectable("Add Decal"))
+            addWidget(Widget::panel_decal());
+          ImGui::EndPopup();
+        }
+
+        ImGui::SameLine();
+        ImGui::Text("%s panel", toString(fType));
+
         fGraphics.editView(iCtx);
+
         if(ImGui::TreeNode("hdgui2D"))
         {
           auto windowSize = ImGui::GetWindowSize();
@@ -427,6 +442,7 @@ void Panel::editView(EditContext &iCtx)
 
         ImGui::SameLine();
         ImGui::Text("%s", re::edit::toString(w->getType()));
+
         w->editView(iCtx);
         break;
       }
