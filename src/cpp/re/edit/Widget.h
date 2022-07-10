@@ -83,8 +83,11 @@ public:
   static std::unique_ptr<Widget> panel_decal();
   static std::unique_ptr<Widget> widget(std::string const &iType);
 
-//  template<typename T>
-//  T *findAttribute(std::string const &iAttributeName) const;
+  template<typename T>
+  T *findAttributeByNameAndType(std::string const &iAttributeName) const;
+
+  widget::Attribute *findAttributeByName(std::string const &iAttributeName) const;
+
 //
 //  template<typename T>
 //  typename T::value_t *findAttributeValue(std::string const &iAttributeName) const;
@@ -129,6 +132,16 @@ private:
 private:
   static long fWidgetIota;
 };
+
+//------------------------------------------------------------------------
+// Widget::findAttributeByNameAndType
+//------------------------------------------------------------------------
+template<typename T>
+T *Widget::findAttributeByNameAndType(std::string const &iAttributeName) const
+{
+  return dynamic_cast<T *>(findAttributeByName(iAttributeName));
+}
+
 
 }
 

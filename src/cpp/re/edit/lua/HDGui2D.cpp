@@ -28,6 +28,11 @@ extern "C" {
 
 using namespace re::edit::lua;
 
+static int lua_ignored(lua_State *L)
+{
+  return HDGui2D::loadFromRegistry(L)->luaIgnored();
+}
+
 static int lua_analog_knob(lua_State *L)
 {
   return HDGui2D::loadFromRegistry(L)->luaAnalogKnob();
@@ -42,8 +47,10 @@ static int lua_panel(lua_State *L)
 
 namespace re::edit::lua {
 
+using namespace widget::attribute;
+
 template<typename F>
-void HDGui2D::withField(int index, char const *iFieldName, int iFieldType, F &&f)
+void HDGui2D::withField(int index, char const *iFieldName, int iFieldType, F f)
 {
   if(lua_getfield(L, index, iFieldName) == iFieldType)
     f();
@@ -68,6 +75,32 @@ HDGui2D::HDGui2D()
   static const struct luaL_Reg jboxLib[] = {
     {"panel", lua_panel},
     {"analog_knob", lua_analog_knob},
+    {"audio_input_socket", lua_ignored},
+    {"audio_output_socket", lua_ignored},
+    {"custom_display", lua_ignored},
+    {"cv_input_socket", lua_ignored},
+    {"cv_output_socket", lua_ignored},
+    {"cv_trim_knob", lua_ignored},
+    {"device_name", lua_ignored},
+    {"image", lua_ignored},
+    {"momentary_button", lua_ignored},
+    {"patch_browse_group", lua_ignored},
+    {"patch_name", lua_ignored},
+    {"pitch_wheel", lua_ignored},
+    {"placeholder", lua_ignored},
+    {"popup_button", lua_ignored},
+    {"radio_button", lua_ignored},
+    {"sample_browse_group", lua_ignored},
+    {"sample_drop_zone", lua_ignored},
+    {"sequence_fader", lua_ignored},
+    {"sequence_meter", lua_ignored},
+    {"static_decoration", lua_ignored},
+    {"step_button", lua_ignored},
+    {"toggle_button", lua_ignored},
+    {"ui_text", lua_ignored},
+    {"up_down_button", lua_ignored},
+    {"value_display", lua_ignored},
+    {"zero_snap_knob", lua_ignored},
     {nullptr,                    nullptr}
   };
 
@@ -137,6 +170,14 @@ std::shared_ptr<jbox_widget> makeWidget(std::unique_ptr<Widget> iWidget)
 }
 
 //------------------------------------------------------------------------
+// HDGui2D::luaIgnored
+//------------------------------------------------------------------------
+int HDGui2D::luaIgnored()
+{
+  return addObjectOnTopOfStack(impl::jbox_ignored{});
+}
+
+//------------------------------------------------------------------------
 // HDGui2D::luaAnalogKnob
 //------------------------------------------------------------------------
 int HDGui2D::luaAnalogKnob()
@@ -145,6 +186,8 @@ int HDGui2D::luaAnalogKnob()
   if(checkTableArg())
   {
     populateGraphics(p);
+    populate<Value>(p, "value");
+    populate<Visibility>(p, "visibility");
   }
   return addObjectOnTopOfStack(std::move(p));
 }
@@ -152,12 +195,99 @@ int HDGui2D::luaAnalogKnob()
 //------------------------------------------------------------------------
 // HDGui2D::populateGraphics
 //------------------------------------------------------------------------
-void HDGui2D::populateGraphics(std::shared_ptr<jbox_widget> oWidget)
+void HDGui2D::populateGraphics(std::shared_ptr<jbox_widget> &oWidget)
 {
-  withField(1, "graphics", LUA_TTABLE, [this, w = std::move(oWidget)]() {
+  withField(1, "graphics", LUA_TTABLE, [this, &oWidget]() {
     auto node = L.getTableValueAsString("node");
-    w->fGraphics.fNode = L.getTableValueAsString("node");
+    oWidget->fGraphics.fNode = L.getTableValueAsString("node");
   });
+}
+
+namespace impl {
+//------------------------------------------------------------------------
+// impl::setValue
+//------------------------------------------------------------------------
+template<typename T>
+void setValue(T &oAttribute, std::optional<std::string> const &iValue)
+{
+  if(iValue)
+  {
+    oAttribute.fValue = *iValue;
+    oAttribute.fProvided = true;
+  }
+}
+
+}
+
+//------------------------------------------------------------------------
+// HDGui2D::populate | Value
+//------------------------------------------------------------------------
+void HDGui2D::populate(Value *oValue)
+{
+  if(oValue)
+  {
+    populate(&oValue->fValue);
+    populate(&oValue->fValueSwitch);
+    populate(&oValue->fValues);
+    oValue->fUseSwitch = oValue->fValueSwitch.fProvided;
+  }
+}
+
+//------------------------------------------------------------------------
+// HDGui2D::populate | PropertyPath
+//------------------------------------------------------------------------
+void HDGui2D::populate(PropertyPath *oPath)
+{
+  if(oPath)
+    impl::setValue(*oPath, L.getTableValueAsOptionalString(oPath->fName.c_str()));
+}
+
+//------------------------------------------------------------------------
+// HDGui2D::populate | PropertyPathList
+//------------------------------------------------------------------------
+void HDGui2D::populate(PropertyPathList *oList)
+{
+  if(oList)
+  {
+    oList->fValue.clear();
+    withField(-1, oList->fName.c_str(), LUA_TTABLE, [this, oList]() {
+      iterateLuaArray([this, values = &oList->fValue](auto i) {
+        if(lua_type(L, -1) == LUA_TSTRING)
+          values->emplace_back(lua_tostring(L, -1));
+      }, true, false);
+      oList->fProvided = true;
+    });
+  }
+}
+
+//------------------------------------------------------------------------
+// HDGui2D::populate | Visibility
+//------------------------------------------------------------------------
+void HDGui2D::populate(Visibility *oVisibility)
+{
+  if(oVisibility)
+  {
+    populate(&oVisibility->fSwitch);
+    populate(&oVisibility->fValues);
+  }
+}
+
+//------------------------------------------------------------------------
+// HDGui2D::populate | DiscretePropertyValueList
+//------------------------------------------------------------------------
+void HDGui2D::populate(DiscretePropertyValueList *oList)
+{
+  if(oList)
+  {
+    oList->fValue.clear();
+    withField(-1, oList->fName.c_str(), LUA_TTABLE, [this, oList]() {
+      iterateLuaArray([this, values = &oList->fValue](auto i) {
+        if(lua_type(L, -1) == LUA_TNUMBER)
+          values->emplace_back(lua_tonumber(L, -1));
+      }, true, false);
+      oList->fProvided = true;
+    });
+  }
 }
 
 //------------------------------------------------------------------------
@@ -219,6 +349,23 @@ std::shared_ptr<jbox_panel> HDGui2D::getPanel(char const *iPanelName)
 
   return nullptr;
 }
+
+//------------------------------------------------------------------------
+// HDGui2D::populate
+//------------------------------------------------------------------------
+template<typename T>
+bool HDGui2D::populate(std::shared_ptr<jbox_widget> &oWidget, std::string const &iAttributeName)
+{
+  auto const attribute = oWidget->fWidget->findAttributeByNameAndType<T>(iAttributeName);
+  if(attribute)
+  {
+    populate(attribute);
+    return true;
+  }
+  else
+    return false;
+}
+
 
 
 }

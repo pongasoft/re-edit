@@ -356,5 +356,17 @@ bool Widget::isHidden(DrawContext &iCtx) const
   return fVisibility ? fVisibility->isHidden(iCtx) : false;
 }
 
+//------------------------------------------------------------------------
+// Widget::findAttributeByName
+//------------------------------------------------------------------------
+widget::Attribute *Widget::findAttributeByName(std::string const &iAttributeName) const
+{
+  auto iter = std::find_if(fAttributes.begin(), fAttributes.end(), [&iAttributeName](auto &a) { return a->fName == iAttributeName; });
+  if(iter != fAttributes.end())
+    return iter->get();
+  else
+    return nullptr;
+}
+
 }
 

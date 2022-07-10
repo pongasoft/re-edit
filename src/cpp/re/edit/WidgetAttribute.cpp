@@ -23,6 +23,18 @@
 #include <imgui.h>
 #include <misc/cpp/imgui_stdlib.h>
 
+namespace re::edit::widget {
+
+//------------------------------------------------------------------------
+// Attribute::toString
+//------------------------------------------------------------------------
+std::string Attribute::toString() const
+{
+  return re::mock::fmt::printf(R"(name="%s")", fName);
+}
+
+}
+
 namespace re::edit::widget::attribute {
 
 //------------------------------------------------------------------------
@@ -51,6 +63,8 @@ std::string UIText::getValueAsLua() const
 //------------------------------------------------------------------------
 std::string PropertyPathList::getValueAsLua() const
 {
+  if(fValue.empty())
+    return "{}";
   std::vector<std::string> l{};
   std::transform(fValue.begin(), fValue.end(), std::back_inserter(l), escapeString);
   return re::mock::fmt::printf("{ %s }", re::mock::stl::join_to_string(l));
@@ -61,6 +75,8 @@ std::string PropertyPathList::getValueAsLua() const
 //------------------------------------------------------------------------
 std::string DiscretePropertyValueList::getValueAsLua() const
 {
+  if(fValue.empty())
+    return "{}";
   std::vector<std::string> l{};
   std::transform(fValue.begin(), fValue.end(), std::back_inserter(l), [](auto i) { return std::to_string(i); } );
   return re::mock::fmt::printf("{ %s }", re::mock::stl::join_to_string(l));
@@ -257,6 +273,19 @@ std::string const &Value::findActualPropertyPath(EditContext &iCtx) const
 }
 
 //------------------------------------------------------------------------
+// Value::toString
+//------------------------------------------------------------------------
+std::string Value::toString() const
+{
+  return re::mock::fmt::printf(R"(%s={fUseSwitch=%s,%s,%s,%s})",
+                               fName,
+                               fUseSwitch ? "true" : "false",
+                               fValue.toString(),
+                               fValueSwitch.toString(),
+                               fValues.toString());
+}
+
+//------------------------------------------------------------------------
 // Visibility::hdgui2D
 //------------------------------------------------------------------------
 void Visibility::hdgui2D(attribute_list_t &oAttributes) const
@@ -338,6 +367,17 @@ bool Visibility::isHidden(DrawContext const &iCtx) const
     return false;
   else
     return !fValues.contains(iCtx.getPropertyValueAsInt(switchPropertyPath));
+}
+
+//------------------------------------------------------------------------
+// Visibility::toString
+//------------------------------------------------------------------------
+std::string Visibility::toString() const
+{
+  return re::mock::fmt::printf(R"(%s={%s,%s})",
+                               fName,
+                               fSwitch.toString(),
+                               fValues.toString());
 }
 
 //------------------------------------------------------------------------

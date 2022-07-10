@@ -42,14 +42,20 @@ Application::Application(std::shared_ptr<TextureManager> const &iTextureManager)
 //------------------------------------------------------------------------
 void Application::init()
 {
-  fDeviceHeightRU = fPropertyManager->init("/Volumes/Development/github/pongasoft/re-cva-7");
+  constexpr auto root = "/Volumes/Development/github/pongasoft/re-cva-7";
+//  constexpr auto root = "/Volumes/Development/local/com.presteign.Macro-plugin";
 
-  fTextureManager->init("/Volumes/Development/github/pongasoft/re-cva-7/GUI2D");
+  fDeviceHeightRU = fPropertyManager->init(root);
+
+  fTextureManager->init(re::mock::fmt::path(root, "GUI2D"));
   fTextureManager->scanDirectory();
   fTextureManager->findTextureKeys([](auto const &) { return true; }); // forces preloading the textures to get their sizes
 
-  initPanels("/Volumes/Development/github/org.pongasoft/re-edit/test/resources/re/edit/lua/re-cva-7-device_2D.lua",
-             "/Volumes/Development/github/org.pongasoft/re-edit/test/resources/re/edit/lua/re-cva-7-hdgui_2D.lua");
+  initPanels(re::mock::fmt::path(root, "GUI2D", "device_2D.lua"),
+             re::mock::fmt::path(root, "GUI2D", "hdgui_2D.lua"));
+
+//  initPanels("/Volumes/Development/github/org.pongasoft/re-edit/test/resources/re/edit/lua/re-cva-7-device_2D.lua",
+//             "/Volumes/Development/github/org.pongasoft/re-edit/test/resources/re/edit/lua/re-cva-7-hdgui_2D.lua");
 
 //  loadFilmStrip("/Volumes/Development/github/pongasoft/re-cva-7/GUI2D/Panel_Front.png", 1);
 //  loadFilmStrip("/Volumes/Development/github/pongasoft/re-cva-7/GUI2D/Knob_17_matte_63frames.png", 63);

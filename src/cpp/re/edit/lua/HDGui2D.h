@@ -46,7 +46,9 @@ struct jbox_panel {
 
 namespace impl {
 
-using jbox_object = std::variant<std::shared_ptr<jbox_widget>, std::shared_ptr<jbox_panel>>;
+struct jbox_ignored{};
+
+using jbox_object = std::variant<jbox_ignored, std::shared_ptr<jbox_widget>, std::shared_ptr<jbox_panel>>;
 
 }
 
@@ -57,6 +59,7 @@ public:
 
   int luaPanel();
   int luaAnalogKnob();
+  int luaIgnored();
 
   static std::unique_ptr<HDGui2D> fromFile(std::string const &iLuaFilename);
 
@@ -72,13 +75,25 @@ protected:
 
   bool checkTableArg();
 
-  void populateGraphics(std::shared_ptr<jbox_widget> oWidget);
+  void populateGraphics(std::shared_ptr<jbox_widget> &oWidget);
+
+  void populate(widget::attribute::Value *oValue);
+  void populate(widget::attribute::PropertyPathList *oList);
+  void populate(widget::attribute::PropertyPath *oPath);
+  void populate(widget::attribute::Visibility *oVisibility);
+  void populate(widget::attribute::DiscretePropertyValueList *oList);
+
+  /**
+   * Returns `true` if the widget has an attribute of the given type/name combination NOT if the population happens
+   * (for example attribute not defined in the hdgui_2D.lua) */
+  template<typename T>
+  bool populate(std::shared_ptr<jbox_widget> &oWidget, std::string const &iAttributeName);
 
   /**
    * Pushes onto the stack the value `t[k]`, where `t` is the value at the given index and executes f only if
    * this value is of type `iFieldType`. This function then properly pops the stack. */
   template<typename F>
-  void withField(int index, char const *k, int iFieldType, F &&f);
+  void withField(int index, char const *k, int iFieldType, F f);
 
 private:
   re::mock::ObjectManager<impl::jbox_object> fObjects{};

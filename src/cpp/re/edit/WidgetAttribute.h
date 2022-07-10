@@ -54,6 +54,7 @@ public:
 
   virtual void reset() {}
   virtual void editView(EditContext &iCtx) {}
+  virtual std::string toString() const;
   void clearError() { fError = std::nullopt; };
 
   template<typename T, typename... ConstructorArgs>
@@ -85,6 +86,8 @@ public:
   void resetView(const std::function<void()>& iOnReset) const;
   virtual std::string getValueAsLua() const = 0;
   void reset() override;
+
+  std::string toString() const override;
 
 public:
   value_t fDefaultValue{};
@@ -198,7 +201,9 @@ public:
 
   void editValueView(EditContext &iCtx);
   void tooltipView(EditContext &iCtx);
-  std::string getPropertyInfo(EditContext &iCtx);
+//  std::string getPropertyInfo(EditContext &iCtx);
+
+  std::string toString() const override;
 
   void reset() override;
 
@@ -224,6 +229,8 @@ public:
   void editView(EditContext &iCtx) override;
 
   void reset() override;
+
+  std::string toString() const override;
 
   bool isHidden(DrawContext const &iCtx) const;
 
@@ -285,6 +292,15 @@ void SingleAttribute<T>::hdgui2D(attribute_list_t &oAttributes) const
 {
   if(fProvided)
     oAttributes.emplace_back(attribute_t{fName, getValueAsLua()});
+}
+
+//------------------------------------------------------------------------
+// SingleAttribute<T>::toString
+//------------------------------------------------------------------------
+template<typename T>
+std::string SingleAttribute<T>::toString() const
+{
+  return re::mock::fmt::printf("%s={%s,%s}", fName, getValueAsLua(), fProvided ? "true" : "false");
 }
 
 } // namespace attribute
