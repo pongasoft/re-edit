@@ -27,9 +27,26 @@ namespace re::edit {
 class Texture
 {
 public:
-  Texture(std::shared_ptr<FilmStrip> iFilmStrip, ImTextureID iData) :
-    fFilmStrip{std::move(iFilmStrip)},
-    fData{iData}
+  class Data
+  {
+  public:
+    Data(ImTextureID iImTextureID, float iHeight) : fImTextureID{iImTextureID}, fHeight{iHeight} {}
+    virtual ~Data() = default;
+    Data(const Data &) = delete;
+    Data &operator=(const Data &) = delete;
+    constexpr ImTextureID data() const { return fImTextureID; }
+
+    friend class Texture;
+    friend class TextureManager;
+
+  protected:
+    ImTextureID fImTextureID;
+    float fHeight;
+  };
+
+public:
+  explicit Texture(std::shared_ptr<FilmStrip> iFilmStrip) :
+    fFilmStrip{std::move(iFilmStrip)}
   {
   }
 
@@ -47,13 +64,25 @@ public:
   constexpr float frameHeight() const { return fFilmStrip->frameHeight(); }
   constexpr ImVec2 frameSize() const { return {frameWidth(), frameHeight()}; }
 
-  constexpr ImTextureID data() const { return fData; }
-
   std::shared_ptr<FilmStrip> getFilmStrip() const { return fFilmStrip; }
+
+  inline void Item(ImVec2 const &iPosition, float iZoom, int iFrameNumber, const ImVec4& iBorderCol = ImVec4(0,0,0,0)) const
+  {
+    doDraw(true, iPosition, iZoom, iFrameNumber, iBorderCol);
+  }
+  inline void draw(ImVec2 const &iPosition, float iZoom, int iFrameNumber, const ImVec4& iBorderCol = ImVec4(0,0,0,0)) const
+  {
+    doDraw(false, iPosition, iZoom, iFrameNumber, iBorderCol);
+  }
+
+  void addData(std::unique_ptr<Data> iData) { fData.emplace_back(std::move(iData)); }
+
+protected:
+  void doDraw(bool iAddItem, ImVec2 const &iPosition, float iZoom, int iFrameNumber, const ImVec4& iBorderCol) const;
 
 protected:
   std::shared_ptr<FilmStrip> fFilmStrip{};
-  ImTextureID fData{};
+  std::vector<std::unique_ptr<Data>> fData{};
 };
 
 }

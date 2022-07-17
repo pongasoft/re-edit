@@ -17,6 +17,7 @@
  */
 
 #include "DrawContext.h"
+#include "ReGui.h"
 #include "imgui_internal.h"
 
 namespace re::edit {
@@ -26,24 +27,7 @@ namespace re::edit {
 //------------------------------------------------------------------------
 void DrawContext::TextureItem(Texture const *iTexture, ImVec2 const &iPosition, int iFrameNumber, const ImVec4& iBorderCol) const
 {
-  if(iTexture->isValid())
-  {
-    auto const cp = ImGui::GetCursorScreenPos();
-    ImGui::SetCursorScreenPos(cp + iPosition * fZoom);
-
-    auto frameWidth = iTexture->frameWidth();
-    auto frameHeight = iTexture->frameHeight();
-    auto frameY = frameHeight * static_cast<float>(iFrameNumber);
-    auto width = iTexture->width();
-    auto height = iTexture->height();
-
-    Image(iTexture->data(),
-          { frameWidth * fZoom, frameHeight * fZoom},
-          ImVec2(0, (frameY) / height),
-          ImVec2((0 + frameWidth) / width, (frameY + frameHeight) / height),
-          iBorderCol
-    );
-  }
+  iTexture->Item(iPosition, fZoom, iFrameNumber, iBorderCol);
 }
 
 //------------------------------------------------------------------------
@@ -51,25 +35,7 @@ void DrawContext::TextureItem(Texture const *iTexture, ImVec2 const &iPosition, 
 //------------------------------------------------------------------------
 void DrawContext::drawTexture(Texture const *iTexture, ImVec2 const &iPosition, int iFrameNumber, const ImVec4& iBorderCol) const
 {
-  if(iTexture->isValid())
-  {
-    auto frameWidth = iTexture->frameWidth();
-    auto frameHeight = iTexture->frameHeight();
-    auto frameY = frameHeight * static_cast<float>(iFrameNumber);
-    auto width = iTexture->width();
-    auto height = iTexture->height();
-
-    auto position = iPosition * fZoom;
-    auto size = ImVec2{frameWidth * fZoom, frameHeight * fZoom};
-
-    drawImage(iTexture->data(),
-              position,
-              size,
-              ImVec2(0, (frameY) / height),
-              ImVec2((0 + frameWidth) / width, (frameY + frameHeight) / height),
-              iBorderCol
-    );
-  }
+  iTexture->draw(iPosition, fZoom, iFrameNumber, iBorderCol);
 }
 
 //------------------------------------------------------------------------
@@ -107,48 +73,5 @@ void DrawContext::drawLine(const ImVec2& iP1, const ImVec2& iP2, ImU32 iColor, f
   auto drawList = ImGui::GetWindowDrawList();
   drawList->AddLine(cp + iP1 * fZoom, cp + iP2 * fZoom, iColor, iThickness);
 }
-
-//------------------------------------------------------------------------
-// DrawContext::Image
-//------------------------------------------------------------------------
-void DrawContext::Image(ImTextureID user_texture_id,
-                        ImVec2 const &size,
-                        ImVec2 const &uv0,
-                        ImVec2 const &uv1,
-                        ImVec4 const &border_col)
-{
-  ImGuiWindow *window = ImGui::GetCurrentWindow();
-  if(window->SkipItems)
-    return;
-
-  ImRect bb(window->DC.CursorPos, window->DC.CursorPos + size);
-  ImGui::ItemSize(bb);
-  if(!ImGui::ItemAdd(bb, 0))
-    return;
-
-  window->DrawList->AddImage(user_texture_id, bb.Min, bb.Max, uv0, uv1, ImGui::GetColorU32(ImVec4{1, 1, 1, 1}));
-
-  if(border_col.w > 0.0f)
-    window->DrawList->AddRect(bb.Min, bb.Max, ImGui::GetColorU32(border_col), 0.0f);
-}
-
-//------------------------------------------------------------------------
-// DrawContext::drawImage
-//------------------------------------------------------------------------
-void DrawContext::drawImage(ImTextureID user_texture_id,
-                            ImVec2 const &iPosition,
-                            ImVec2 const &size,
-                            ImVec2 const &uv0,
-                            ImVec2 const &uv1,
-                            ImVec4 const &border_col)
-{
-  auto const cp = ImGui::GetCursorScreenPos();
-  ImDrawList* drawList = ImGui::GetWindowDrawList();
-  ImRect rect{cp + iPosition, cp + iPosition + size};
-  drawList->AddImage(user_texture_id, rect.Min, rect.Max, uv0, uv1, ImGui::GetColorU32(ImVec4{1, 1, 1, 1}));
-  if(border_col.w > 0.0f)
-    drawList->AddRect(rect.Min, rect.Max, ImGui::GetColorU32(border_col), 0.0f);
-}
-
 
 }

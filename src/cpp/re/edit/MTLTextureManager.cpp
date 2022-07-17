@@ -55,45 +55,59 @@ std::unique_ptr<Texture> MTLTextureManager::createTexture(std::shared_ptr<FilmSt
   RE_EDIT_ASSERT(iFilmStrip->isValid());
 
   auto const width = iFilmStrip->width();
-  auto const height = iFilmStrip->height();
+  auto height = iFilmStrip->height();
 
-  auto desc = MTL::TextureDescriptor::texture2DDescriptor(MTL::PixelFormatRGBA8Unorm,
-                                                          width,
-                                                          height,
-                                                          false);
-  auto mtlTexture = fDevice->newTexture(desc);
+  auto texture = std::make_unique<MTLTexture>(iFilmStrip);
 
-  RE_EDIT_LOG_INFO("createTexture(%s) : %lu", iFilmStrip->key(), mtlTexture->retainCount());
+  auto pixels = iFilmStrip->data();
 
-  auto res = std::make_unique<MTLTexture>(iFilmStrip, mtlTexture);
+  do
+  {
+    auto h = std::min(height, kMaxTextureHeight);
 
-  // copy the texture from memory (filmstrip) to GPU
-  auto region = MTL::Region::Make2D(0, 0, width, height);
-  mtlTexture->replaceRegion(region, 0, iFilmStrip->data(), 4 * width);
+    auto desc = MTL::TextureDescriptor::texture2DDescriptor(MTL::PixelFormatRGBA8Unorm,
+                                                            width,
+                                                            h,
+                                                            false);
 
-  return res;
+    auto mtlData = std::make_unique<MTLTexture::MTLData>(fDevice->newTexture(desc), h);
+
+    // copy the texture from memory (filmstrip) to GPU
+    auto region = MTL::Region::Make2D(0, 0, width, h);
+    mtlData->getMTLTexture()->replaceRegion(region, 0, pixels, 4 * width);
+
+    texture->addData(std::move(mtlData));
+
+    height -= h;
+    pixels += 4 * width * h;
+  }
+  while(height != 0);
+
+  return texture;
 }
 
 //------------------------------------------------------------------------
 // MTLTexture::MTLTexture
 //------------------------------------------------------------------------
-MTLTexture::MTLTexture(std::shared_ptr<FilmStrip> iFilmStrip, ImTextureID iData) : Texture{std::move(iFilmStrip), iData}
+MTLTexture::MTLTexture(std::shared_ptr<FilmStrip> iFilmStrip) :
+  Texture{std::move(iFilmStrip)}
 {
-  auto mtlTexture = reinterpret_cast<MTL::Texture *>(fData);
-  mtlTexture->retain();
-  RE_EDIT_LOG_INFO("createTexture(%s) : %lu (after)", fFilmStrip->key(), mtlTexture->retainCount());
 }
 
 //------------------------------------------------------------------------
-// MTLTexture::~MTLTexture
+// MTLTexture::MTLData::MTLData
 //------------------------------------------------------------------------
-MTLTexture::~MTLTexture()
+MTLTexture::MTLData::MTLData(ImTextureID iImTextureID, float iHeight) : Data(iImTextureID, iHeight)
 {
-  auto mtlTexture = reinterpret_cast<MTL::Texture *>(fData);
-  RE_EDIT_LOG_INFO("removeTexture(%s) : %lu", fFilmStrip->key(), mtlTexture->retainCount());
-  mtlTexture->release();
-  RE_EDIT_LOG_INFO("removeTexture(%s) : %lu (after)", fFilmStrip->key(), mtlTexture->retainCount());
+  getMTLTexture()->retain();
 }
 
+//------------------------------------------------------------------------
+// MTLTexture::MTLData::MTLData
+//------------------------------------------------------------------------
+MTLTexture::MTLData::~MTLData()
+{
+  getMTLTexture()->release();
+}
 
 }

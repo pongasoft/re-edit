@@ -25,11 +25,25 @@
 
 namespace re::edit {
 
+constexpr auto kMaxTextureHeight = 16384;
+
 class MTLTexture : public Texture
 {
 public:
-  MTLTexture(std::shared_ptr<FilmStrip> iFilmStrip, ImTextureID iData);
-  ~MTLTexture() override;
+  class MTLData : public Texture::Data
+  {
+  public:
+    MTLData(ImTextureID iImTextureID, float iHeight);
+    ~MTLData() override;
+    MTL::Texture *getMTLTexture() const { return reinterpret_cast<MTL::Texture *>(fImTextureID); }
+  };
+
+public:
+  MTLTexture(std::shared_ptr<FilmStrip> iFilmStrip);
+  ~MTLTexture() override = default;
+
+private:
+
 };
 
 class MTLTextureManager : public TextureManager
