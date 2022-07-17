@@ -21,6 +21,7 @@
 #include "ReGui.h"
 #include "Errors.h"
 #include "lua/Device2D.h"
+#include "LoggingManager.h"
 #include <imgui.h>
 
 namespace re::edit {
@@ -149,6 +150,8 @@ void Application::initPanel(std::shared_ptr<lua::panel_nodes> const &iPanelNodes
 //------------------------------------------------------------------------
 void Application::render()
 {
+  auto loggingManager = LoggingManager::instance();
+
   fPropertyManager->beforeRenderFrame();
 
   ImGui::Begin("re-edit");
@@ -166,8 +169,21 @@ void Application::render()
   if(show_demo_window)
     ImGui::ShowDemoWindow(&show_demo_window);
 
+  ImGui::Checkbox(re::mock::fmt::printf("Log [%d]##Log", loggingManager->getLogCount()).c_str(), &loggingManager->getShowLog());
+  ImGui::SameLine();
+  ImGui::Checkbox("Debug", &loggingManager->getShowDebug());
+
+//  if(ImGui::Button("Fake log"))
+//  {
+//    loggingManager->logInfo("Info 1");
+//    loggingManager->logWarning("Warning 2");
+//    loggingManager->logError("This is a long error message... %d", 89);
+//  }
+
   ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate,
               ImGui::GetIO().Framerate);
+
+  loggingManager->render();
 
   ImGui::End();
 

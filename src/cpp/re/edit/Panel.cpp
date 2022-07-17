@@ -21,6 +21,7 @@
 #include "Panel.h"
 #include "ReGui.h"
 #include "Constants.h"
+#include "LoggingManager.h"
 
 namespace re::edit {
 
@@ -156,20 +157,19 @@ void Panel::draw(DrawContext &iCtx)
     iCtx.drawLine({max.x, 0}, {max.x, frameSize.y}, color);
   }
 
-  if(ImGui::Begin("Debug"))
+  auto logging = LoggingManager::instance();
+
+  if(logging->isShowDebug())
   {
     auto &io = ImGui::GetIO();
-    ImGui::Text("Shift=%s", io.KeyShift ? "true" : "false");
+    logging->debug("Shift", "%s", io.KeyShift ? "true" : "false");
     auto mousePos = ImGui::GetMousePos() - backgroundScreenPosition; // accounts for scrollbars
-    ImGui::Text("MouseDown=%s | %fx%f (%fx%f)", ImGui::IsMouseDown(ImGuiMouseButton_::ImGuiMouseButton_Left) ? "true" : "false", mousePos.x, mousePos.y, backgroundScreenPosition.x, backgroundScreenPosition.y);
+    logging->debug("MouseDown", "%s | %fx%f (%fx%f)", ImGui::IsMouseDown(ImGuiMouseButton_::ImGuiMouseButton_Left) ? "true" : "false", mousePos.x, mousePos.y, backgroundScreenPosition.x, backgroundScreenPosition.y);
     if(fMouseDrag)
-      ImGui::Text("dragState=%s | fDragStart=%fx%f", dragState.c_str(), fMouseDrag->fCurrentPosition.x, fMouseDrag->fCurrentPosition.y);
+      logging->debug("dragState", "%s | fDragStart=%fx%f", dragState.c_str(), fMouseDrag->fCurrentPosition.x, fMouseDrag->fCurrentPosition.y);
     else
-      ImGui::Text("dragState=%s", dragState.c_str());
-
-
+      logging->debug("dragState", "%s", dragState.c_str());
   }
-  ImGui::End();
 }
 
 //------------------------------------------------------------------------

@@ -63,7 +63,7 @@ std::unique_ptr<Texture> MTLTextureManager::createTexture(std::shared_ptr<FilmSt
 
   do
   {
-    auto h = std::min(height, kMaxTextureHeight);
+    auto h = std::min(height, MTLTexture::kMaxTextureHeight);
 
     auto desc = MTL::TextureDescriptor::texture2DDescriptor(MTL::PixelFormatRGBA8Unorm,
                                                             width,

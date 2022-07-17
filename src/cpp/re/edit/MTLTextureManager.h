@@ -25,8 +25,6 @@
 
 namespace re::edit {
 
-constexpr auto kMaxTextureHeight = 16384;
-
 class MTLTexture : public Texture
 {
 public:
@@ -39,11 +37,10 @@ public:
   };
 
 public:
-  MTLTexture(std::shared_ptr<FilmStrip> iFilmStrip);
+  explicit MTLTexture(std::shared_ptr<FilmStrip> iFilmStrip);
   ~MTLTexture() override = default;
 
-private:
-
+  inline static int kMaxTextureHeight = 16384;
 };
 
 class MTLTextureManager : public TextureManager
