@@ -72,6 +72,7 @@ std::unique_ptr<FilmStrip> FilmStrip::load(std::shared_ptr<File> const &iFile)
   }
   else
   {
+    RE_EDIT_LOG_ERROR("Error loading file [%s] | %s", iFile->fPath, stbi_failure_reason());
     return std::unique_ptr<FilmStrip>(new FilmStrip(iFile, stbi_failure_reason()));
   }
 }

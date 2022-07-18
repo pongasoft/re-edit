@@ -61,6 +61,8 @@ public:
   bool &getShowDebug() { return fShowDebug; };
   bool &getShowLog() { return fShowLog; };
 
+  void showLog() { fShowLog = true; }
+
   static LoggingManager *instance();
 
 private:
@@ -92,7 +94,7 @@ private:
 template<typename... Args>
 void LoggingManager::debug(std::string const &iKey, std::string const &format, Args... args)
 {
-  debug(iKey, re::mock::fmt::printf(format, args...));
+  debug(iKey, re::mock::fmt::printf(format, std::forward<Args>(args)...));
 }
 
 //------------------------------------------------------------------------
@@ -101,7 +103,7 @@ void LoggingManager::debug(std::string const &iKey, std::string const &format, A
 template<typename... Args>
 void LoggingManager::logInfo(std::string const &format, Args... args)
 {
-  logInfo(re::mock::fmt::printf(format, args...));
+  logInfo(re::mock::fmt::printf(format, std::forward<Args>(args)...));
 }
 
 //------------------------------------------------------------------------
@@ -110,7 +112,7 @@ void LoggingManager::logInfo(std::string const &format, Args... args)
 template<typename... Args>
 void LoggingManager::logWarning(std::string const &format, Args... args)
 {
-  logWarning(re::mock::fmt::printf(format, args...));
+  logWarning(re::mock::fmt::printf(format, std::forward<Args>(args)...));
 }
 
 //------------------------------------------------------------------------
@@ -119,7 +121,7 @@ void LoggingManager::logWarning(std::string const &format, Args... args)
 template<typename... Args>
 void LoggingManager::logError(std::string const &format, Args... args)
 {
-  logError(re::mock::fmt::printf(format, args...));
+  logError(re::mock::fmt::printf(format, std::forward<Args>(args)...));
 }
 
 

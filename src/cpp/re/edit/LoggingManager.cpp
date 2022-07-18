@@ -88,7 +88,9 @@ void LoggingManager::renderLog()
     {
       auto level = entry.fLevel == LogLevel::kInfo ? "INFO" : (entry.fLevel == LogLevel::kWarning ? "WARN" : "ERR ");
       auto &color = entry.fLevel == LogLevel::kInfo ? kInfoColor : (entry.fLevel == LogLevel::kWarning ? kWarningColor : kErrorColor);
-      ImGui::TextColored(color, "%s | %s", level, entry.fMessage.c_str());
+      ImGui::PushStyleColor(ImGuiCol_Text, color);
+      ImGui::TextWrapped("%s | %s", level, entry.fMessage.c_str());
+      ImGui::PopStyleColor();
     }
     ImGui::BeginDisabled(fLog.empty());
     if(ImGui::Button("Clear"))
