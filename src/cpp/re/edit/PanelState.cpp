@@ -40,7 +40,11 @@ void PanelState::render()
 {
   if(ImGui::BeginTabItem(fPanel.getName()))
   {
-    ImGui::SliderFloat("zoom", &fDrawContext.fZoom, 0.25f, 1.5f);
+    int zoom = static_cast<int>(fDrawContext.fZoom * 5);
+    if(ImGui::SliderInt("zoom", &zoom, 1, 10))
+      fDrawContext.fZoom = static_cast<float>(zoom) / 5.0f;
+    ImGui::SameLine();
+    ImGui::Text("%d%%", static_cast<int>(fDrawContext.fZoom * 100));
 
     ImGui::Checkbox("Show Widget Border", &fDrawContext.fShowWidgetBorder);
 
