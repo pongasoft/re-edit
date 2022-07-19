@@ -43,6 +43,11 @@ static int lua_analog_knob(lua_State *L)
   return HDGui2D::loadFromRegistry(L)->luaAnalogKnob();
 }
 
+static int lua_static_decoration(lua_State *L)
+{
+  return HDGui2D::loadFromRegistry(L)->luaStaticDecoration();
+}
+
 static int lua_panel(lua_State *L)
 {
   return HDGui2D::loadFromRegistry(L)->luaPanel();
@@ -99,7 +104,7 @@ HDGui2D::HDGui2D()
     {"sample_drop_zone", lua_ignored},
     {"sequence_fader", lua_ignored},
     {"sequence_meter", lua_ignored},
-    {"static_decoration", lua_ignored},
+    {"static_decoration", lua_static_decoration},
     {"step_button", lua_ignored},
     {"toggle_button", lua_ignored},
     {"ui_text", lua_ui_text},
@@ -208,6 +213,21 @@ int HDGui2D::luaAnalogKnob()
     populate<UIText>(p, "tooltip_template");
     populate<Bool>(p, "show_remote_box");
     populate<Bool>(p, "show_automation_rect");
+  }
+  return addObjectOnTopOfStack(std::move(p));
+}
+
+//------------------------------------------------------------------------
+// HDGui2D::luaStaticDecoration
+//------------------------------------------------------------------------
+int HDGui2D::luaStaticDecoration()
+{
+  auto p = makeWidget(Widget::static_decoration());
+  if(checkTableArg())
+  {
+    populateGraphics(p);
+    populate<Visibility>(p, "visibility");
+    populate<StaticStringList>(p, "blend_mode");
   }
   return addObjectOnTopOfStack(std::move(p));
 }

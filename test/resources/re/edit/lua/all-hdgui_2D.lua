@@ -40,6 +40,21 @@ front_widgets[#front_widgets + 1] = jbox.analog_knob {
   visibility_values = { 1, 0, 3 }
 }
 
+front_widgets[#front_widgets + 1] = jbox.static_decoration {
+  graphics = {
+    node = "sd1_node",
+  },
+}
+
+front_widgets[#front_widgets + 1] = jbox.static_decoration {
+  graphics = {
+    node = "sd2_node",
+  },
+  blend_mode = "luminance",
+  visibility_switch = "/sd2_switch",
+  visibility_values = { 4, 9, 1 }
+}
+
 front = jbox.panel{
   graphics = {
     node = "Panel_front_bg",

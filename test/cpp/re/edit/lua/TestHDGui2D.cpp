@@ -218,18 +218,28 @@ inline constexpr auto HasTooltipTemplate = [](char const *iExpected = nullptr) {
     return AttributeToString<UIText>("tooltip_template", R"(tooltip_template={jbox.ui_text(""),false})");
 };
 
+//! HasBlendMode | blend_mode
+inline constexpr auto HasBlendMode = [](char const *iExpected = nullptr) {
+  if(iExpected)
+    return AttributeToString<StaticStringList>("blend_mode", R"(blend_mode={"%s",true})", iExpected);
+  else
+    return AttributeToString<StaticStringList>("blend_mode", R"(blend_mode={"normal",false})");
+};
+
 TEST(HDGui2D, All)
 {
   auto hdg = HDGui2D::fromFile(getResourceFile("all-hdgui_2D.lua"));
 
   auto front = hdg->front();
-  ASSERT_EQ(3, front->fWidgets.size());
+  ASSERT_EQ(5, front->fWidgets.size());
   ASSERT_EQ("Panel_front_bg", front->fGraphicsNode);
   ASSERT_EQ(std::nullopt, front->fCableOrigin);
 
+  int id = 0;
+
   // ak1
   {
-    auto w = front->fWidgets[0];
+    auto w = front->fWidgets[id++];
     ASSERT_EQ("ak1_node", w->fGraphics.fNode);
     ASSERT_THAT(w, HasValue("/ak1"));
     ASSERT_THAT(w, HasNoVisibility());
@@ -241,7 +251,7 @@ TEST(HDGui2D, All)
 
   // ak2
   {
-    auto w = front->fWidgets[1];
+    auto w = front->fWidgets[id++];
     ASSERT_EQ("ak2_node", w->fGraphics.fNode);
     ASSERT_THAT(w, HasValueSwitch("/ak2_switch", {"/ak2_v1", "/ak2_v2"}));
     ASSERT_THAT(w, HasNoVisibility());
@@ -253,10 +263,26 @@ TEST(HDGui2D, All)
 
   // ak3
   {
-    auto w = front->fWidgets[2];
+    auto w = front->fWidgets[id++];
     ASSERT_EQ("ak3_node", w->fGraphics.fNode);
     ASSERT_THAT(w, HasValue("/ak3"));
     ASSERT_THAT(w, HasVisibility("/ak3_switch", {1,0,3}));
+  }
+
+  // sd1
+  {
+    auto w = front->fWidgets[id++];
+    ASSERT_EQ("sd1_node", w->fGraphics.fNode);
+    ASSERT_THAT(w, HasBlendMode());
+    ASSERT_THAT(w, HasNoVisibility());
+  }
+
+  // sd2
+  {
+    auto w = front->fWidgets[id++];
+    ASSERT_EQ("sd2_node", w->fGraphics.fNode);
+    ASSERT_THAT(w, HasBlendMode("luminance"));
+    ASSERT_THAT(w, HasVisibility("/sd2_switch", {4, 9, 1}));
   }
 
 

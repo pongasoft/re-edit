@@ -64,6 +64,7 @@ public:
 
   int luaPanel();
   int luaAnalogKnob();
+  int luaStaticDecoration();
   int luaIgnored();
   int luaUIText();
 
