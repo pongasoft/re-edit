@@ -24,7 +24,11 @@ front_widgets[#front_widgets + 1] = jbox.analog_knob {
     node = "ak2_node",
   },
   value_switch = "/ak2_switch",
-  values = { "/ak2_v1", "/ak2_v2" }
+  values = { "/ak2_v1", "/ak2_v2" },
+  tooltip_position = "top",
+  tooltip_template = jbox.ui_text("ak2_tooltip_template"),
+  show_remote_box = false,
+  show_automation_rect = false,
 }
 
 front_widgets[#front_widgets + 1] = jbox.analog_knob {

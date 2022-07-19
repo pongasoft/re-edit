@@ -17,8 +17,21 @@
  */
 
 #include <gtest/gtest.h>
+#include <gtest/gtest-matchers.h>
 #include <re/edit/lua/HDGui2D.h>
 #include <re/mock/fmt.h>
+#include <gmock/gmock-matchers.h>
+#include <ostream>
+
+namespace re::edit::lua {
+
+// Must be declared in same namespace to work
+void PrintTo(std::shared_ptr<jbox_widget> const &iWidget, std::ostream *os)
+{
+  *os << iWidget->fWidget->getName();
+}
+
+}
 
 namespace re::edit::lua::Test {
 
@@ -29,20 +42,181 @@ std::string getResourceFile(std::string const &iFilename)
   return re::mock::fmt::path(RE_EDIT_PROJECT_DIR, "test", "resources", "re", "edit", "lua", iFilename);
 }
 
-#define ASSERT_ATT_EQ(expected, widget, type, name) \
-  ASSERT_EQ((expected), (widget)->fWidget->findAttributeByNameAndType<type>(name)->toString())
+//------------------------------------------------------------------------
+// escapeString
+//------------------------------------------------------------------------
+std::string escapeString(std::string const &s)
+{
+  return re::mock::fmt::printf("\"%s\"", s);
+}
 
-#define ASSERT_ATT_VALUE(value, widget) \
-  ASSERT_ATT_EQ("value={fUseSwitch=false,value={\"" value "\",true},value_switch={\"\",false},values={{},false}}", widget, Value, "value")
+//------------------------------------------------------------------------
+// toString
+//------------------------------------------------------------------------
+std::string toString(std::vector<char const *> const &iValue)
+{
+  if(iValue.empty())
+    return "{}";
+  std::vector<std::string> l{};
+  std::transform(iValue.begin(), iValue.end(), std::back_inserter(l), escapeString);
+  return re::mock::fmt::printf("{ %s }", re::mock::stl::join_to_string(l));
+}
 
-#define ASSERT_ATT_VALUE_SWITCH(value_switch, values, widget) \
-  ASSERT_ATT_EQ("value={fUseSwitch=true,value={\"\",false},value_switch={\"" value_switch "\",true},values={" values ",true}}", widget, Value, "value")
+//------------------------------------------------------------------------
+// toString
+//------------------------------------------------------------------------
+std::string toString(std::vector<int> const &iValue)
+{
+  if(iValue.empty())
+    return "{}";
+  std::vector<std::string> l{};
+  std::transform(iValue.begin(), iValue.end(), std::back_inserter(l), [](auto i) { return std::to_string(i); } );
+  return re::mock::fmt::printf("{ %s }", re::mock::stl::join_to_string(l));
+}
 
-#define ASSERT_ATT_NO_VISIBILITY(widget) \
-  ASSERT_ATT_EQ(R"(visibility={visibility_switch={"",false},visibility_values={{},false}})", widget, Visibility, "visibility")
+//------------------------------------------------------------------------
+// toString
+//------------------------------------------------------------------------
+std::string toString(bool iValue)
+{
+  return iValue ? "true" : "false";
+}
 
-#define ASSERT_ATT_VISIBILITY(visibility_switch, visibility_values, widget) \
-  ASSERT_ATT_EQ("visibility={visibility_switch={\"" visibility_switch "\",true},visibility_values={" visibility_values ",true}}", widget, Visibility, "visibility")
+//------------------------------------------------------------------------
+// HasAttributeMatcher | Check if attribute exists
+//------------------------------------------------------------------------
+template<typename T>
+class HasAttributeMatcher
+{
+public:
+  using is_gtest_matcher = void;
+
+  explicit HasAttributeMatcher(char const *iAttributeName) : fAttributeName{iAttributeName} {}
+
+  bool MatchAndExplain(std::shared_ptr<jbox_widget> const &iWidget, std::ostream* os) const {
+    fAttribute = iWidget->fWidget->template findAttributeByNameAndType<T>(fAttributeName);
+    if(!fAttribute && os)
+      DescribeNegationTo(os);
+    return fAttribute != nullptr;
+  }
+
+  // Describes the property of a value matching this matcher.
+  void DescribeTo(std::ostream* os) const { *os << "has an attribute " << fAttributeName << " with type " << typeid(T).name(); }
+
+  // Describes the property of a value NOT matching this matcher.
+  void DescribeNegationTo(std::ostream* os) const { *os << "does NOT have an attribute " << fAttributeName << " with type " << typeid(T).name(); }
+
+  T const *attribute() const { return fAttribute; }
+
+private:
+  char const *fAttributeName;
+  mutable T *fAttribute{};
+};
+
+//------------------------------------------------------------------------
+// HasAttribute
+//------------------------------------------------------------------------
+template<typename T>
+testing::Matcher<std::shared_ptr<jbox_widget> const &> HasAttribute(char const *iName) { return HasAttributeMatcher<T>(iName); }
+
+//------------------------------------------------------------------------
+// AttributeToStringMatcher | checks that the value of the attribute (expressed as toString()) matches
+//------------------------------------------------------------------------
+template<typename T>
+class AttributeToStringMatcher
+{
+public:
+  using is_gtest_matcher = void;
+
+  AttributeToStringMatcher(char const *iAttributeName, std::string iExpectedValue) :
+    fHasAttributeMatcher{iAttributeName},
+    fExpectedValue{std::move(iExpectedValue)}
+  {}
+
+  bool MatchAndExplain(std::shared_ptr<jbox_widget> const &iWidget, std::ostream* os) const {
+    if(!fHasAttributeMatcher.MatchAndExplain(iWidget, os))
+      return false;
+    auto att = fHasAttributeMatcher.attribute();
+    if(att->toString() == fExpectedValue)
+      return true;
+    DescribeNegationTo(os);
+    return false;
+  }
+
+  // Describes the property of a value matching this matcher.
+  void DescribeTo(std::ostream* os) const { *os << fExpectedValue; }
+
+  // Describes the property of a value NOT matching this matcher.
+  void DescribeNegationTo(std::ostream* os) const {
+    if(os)
+      *os << fHasAttributeMatcher.attribute()->toString();
+  }
+
+private:
+  HasAttributeMatcher<T> fHasAttributeMatcher;
+  std::string fExpectedValue;
+};
+
+//------------------------------------------------------------------------
+// AttributeToString | checks that the value of the attribute (expressed as toString()) matches
+//------------------------------------------------------------------------
+template<typename T, typename ... Args>
+testing::Matcher<std::shared_ptr<jbox_widget> const &> AttributeToString(char const *iAttributeName, const std::string &format, Args ... args)
+{
+  return AttributeToStringMatcher<T>(iAttributeName, re::mock::fmt::printf(format, std::forward<Args>(args)...));
+}
+
+//! HasValue | value only
+inline constexpr auto HasValue = [](char const *iExpectedPath) {
+  return AttributeToString<Value>("value", R"(value={fUseSwitch=false,value={"%s",true},value_switch={"",false},values={{},false}})", iExpectedPath);
+};
+
+//! HasValueSwitch | value with switch
+inline constexpr auto HasValueSwitch = [](char const *iExpectedValueSwitch, const std::vector<char const *>& iExpectedValues) {
+  return AttributeToString<Value>("value", R"(value={fUseSwitch=true,value={"",false},value_switch={"%s",true},values={%s,true}})", iExpectedValueSwitch, toString(iExpectedValues));
+};
+
+//! HasNoVisibility | no visibility
+inline constexpr auto HasNoVisibility = []() {
+  return AttributeToString<Visibility>("visibility", R"(visibility={visibility_switch={"",false},visibility_values={{},false}})");
+};
+
+//! HasVisibility | visibility
+inline constexpr auto HasVisibility = [](char const *iExpectedVisibilitySwitch, const std::vector<int>& iExpectedValues) {
+  return AttributeToString<Visibility>("visibility", R"(visibility={visibility_switch={"%s",true},visibility_values={%s,true}})", iExpectedVisibilitySwitch, toString(iExpectedValues));
+};
+
+//! HasTooltipPosition | visibility
+inline constexpr auto HasTooltipPosition = [](char const *iExpectedTooltipPosition = nullptr) {
+  if(iExpectedTooltipPosition)
+    return AttributeToString<StaticStringList>("tooltip_position", R"(tooltip_position={"%s",true})", iExpectedTooltipPosition);
+  else
+    return AttributeToString<StaticStringList>("tooltip_position", R"(tooltip_position={"",false})");
+};
+
+//! HasShowRemoteBox | show_remote_box
+inline constexpr auto HasShowRemoteBox = [](std::optional<bool> iExpected = std::nullopt) {
+  if(iExpected)
+    return AttributeToString<Bool>("show_remote_box", R"(show_remote_box={%s,true})", toString(*iExpected));
+  else
+    return AttributeToString<Bool>("show_remote_box", R"(show_remote_box={true,false})");
+};
+
+//! HasShowAutomationRect | show_automation_rect
+inline constexpr auto HasShowAutomationRect = [](std::optional<bool> iExpected = std::nullopt) {
+  if(iExpected)
+    return AttributeToString<Bool>("show_automation_rect", R"(show_automation_rect={%s,true})", toString(*iExpected));
+  else
+    return AttributeToString<Bool>("show_automation_rect", R"(show_automation_rect={true,false})");
+};
+
+//! HasTooltipTemplate | tooltip_template
+inline constexpr auto HasTooltipTemplate = [](char const *iExpected = nullptr) {
+  if(iExpected)
+    return AttributeToString<UIText>("tooltip_template", R"(tooltip_template={jbox.ui_text("%s"),true})", iExpected);
+  else
+    return AttributeToString<UIText>("tooltip_template", R"(tooltip_template={jbox.ui_text(""),false})");
+};
 
 TEST(HDGui2D, All)
 {
@@ -57,24 +231,32 @@ TEST(HDGui2D, All)
   {
     auto w = front->fWidgets[0];
     ASSERT_EQ("ak1_node", w->fGraphics.fNode);
-    ASSERT_ATT_VALUE("/ak1", w);
-    ASSERT_ATT_NO_VISIBILITY(w);
+    ASSERT_THAT(w, HasValue("/ak1"));
+    ASSERT_THAT(w, HasNoVisibility());
+    ASSERT_THAT(w, HasTooltipPosition());
+    ASSERT_THAT(w, HasShowRemoteBox());
+    ASSERT_THAT(w, HasShowAutomationRect());
+    ASSERT_THAT(w, HasTooltipTemplate());
   }
 
   // ak2
   {
     auto w = front->fWidgets[1];
     ASSERT_EQ("ak2_node", w->fGraphics.fNode);
-    ASSERT_ATT_VALUE_SWITCH("/ak2_switch", "{ \"/ak2_v1\", \"/ak2_v2\" }", w);
-    ASSERT_ATT_NO_VISIBILITY(w);
+    ASSERT_THAT(w, HasValueSwitch("/ak2_switch", {"/ak2_v1", "/ak2_v2"}));
+    ASSERT_THAT(w, HasNoVisibility());
+    ASSERT_THAT(w, HasTooltipPosition("top"));
+    ASSERT_THAT(w, HasShowRemoteBox(false));
+    ASSERT_THAT(w, HasShowAutomationRect(false));
+    ASSERT_THAT(w, HasTooltipTemplate("ak2_tooltip_template"));
   }
 
   // ak3
   {
     auto w = front->fWidgets[2];
     ASSERT_EQ("ak3_node", w->fGraphics.fNode);
-    ASSERT_ATT_VALUE("/ak3", w);
-    ASSERT_ATT_VISIBILITY("/ak3_switch", "{ 1, 0, 3 }", w);
+    ASSERT_THAT(w, HasValue("/ak3"));
+    ASSERT_THAT(w, HasVisibility("/ak3_switch", {1,0,3}));
   }
 
 

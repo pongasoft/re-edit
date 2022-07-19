@@ -33,6 +33,11 @@ static int lua_ignored(lua_State *L)
   return HDGui2D::loadFromRegistry(L)->luaIgnored();
 }
 
+static int lua_ui_text(lua_State *L)
+{
+  return HDGui2D::loadFromRegistry(L)->luaUIText();
+}
+
 static int lua_analog_knob(lua_State *L)
 {
   return HDGui2D::loadFromRegistry(L)->luaAnalogKnob();
@@ -97,7 +102,7 @@ HDGui2D::HDGui2D()
     {"static_decoration", lua_ignored},
     {"step_button", lua_ignored},
     {"toggle_button", lua_ignored},
-    {"ui_text", lua_ignored},
+    {"ui_text", lua_ui_text},
     {"up_down_button", lua_ignored},
     {"value_display", lua_ignored},
     {"zero_snap_knob", lua_ignored},
@@ -178,6 +183,17 @@ int HDGui2D::luaIgnored()
 }
 
 //------------------------------------------------------------------------
+// HDGui2D::luaUIText
+//------------------------------------------------------------------------
+int HDGui2D::luaUIText()
+{
+  RE_EDIT_ASSERT(lua_gettop(L) == 1, "jbox.ui_text() is expecting 1 argument");
+  int t = lua_type(L, 1);
+  luaL_argexpected(L, t == LUA_TSTRING, 1, "jbox.ui_text() is expecting a string argument");
+  return addObjectOnTopOfStack(impl::jbox_ui_text{lua_tostring(L, 1)});
+}
+
+//------------------------------------------------------------------------
 // HDGui2D::luaAnalogKnob
 //------------------------------------------------------------------------
 int HDGui2D::luaAnalogKnob()
@@ -188,6 +204,10 @@ int HDGui2D::luaAnalogKnob()
     populateGraphics(p);
     populate<Value>(p, "value");
     populate<Visibility>(p, "visibility");
+    populate<StaticStringList>(p, "tooltip_position");
+    populate<UIText>(p, "tooltip_template");
+    populate<Bool>(p, "show_remote_box");
+    populate<Bool>(p, "show_automation_rect");
   }
   return addObjectOnTopOfStack(std::move(p));
 }
@@ -207,8 +227,8 @@ namespace impl {
 //------------------------------------------------------------------------
 // impl::setValue
 //------------------------------------------------------------------------
-template<typename T>
-void setValue(T &oAttribute, std::optional<std::string> const &iValue)
+template<typename T, typename V>
+void setValue(T &oAttribute, std::optional<V> const &iValue)
 {
   if(iValue)
   {
@@ -231,6 +251,74 @@ void HDGui2D::populate(Value *oValue)
     populate(&oValue->fValues);
     oValue->fUseSwitch = oValue->fValueSwitch.fProvided;
   }
+}
+
+//------------------------------------------------------------------------
+// HDGui2D::populate | Bool
+//------------------------------------------------------------------------
+void HDGui2D::populate(Bool *oValue)
+{
+  if(oValue)
+    impl::setValue(*oValue, L.getTableValueAsOptionalBoolean(oValue->fName.c_str()));
+}
+
+//------------------------------------------------------------------------
+// HDGui2D::populate | String
+//------------------------------------------------------------------------
+void HDGui2D::populate(String *oValue)
+{
+  if(oValue)
+    impl::setValue(*oValue, L.getTableValueAsOptionalString(oValue->fName.c_str()));
+}
+
+//------------------------------------------------------------------------
+// toUIText
+//------------------------------------------------------------------------
+std::optional<impl::jbox_ui_text> toUIText(std::optional<impl::jbox_object> iObject)
+{
+  if(!iObject)
+    return std::nullopt;
+
+  if(std::holds_alternative<impl::jbox_ui_text>(iObject.value()))
+    return std::get<impl::jbox_ui_text>(iObject.value());
+  else
+    return std::nullopt;
+}
+
+//------------------------------------------------------------------------
+// LuaState::getTableValueAsOptionalBoolean
+//------------------------------------------------------------------------
+std::optional<impl::jbox_ui_text> HDGui2D::getTableValueAsOptionalUIText(char const *iKey, int idx)
+{
+  std::optional<impl::jbox_ui_text> res{};
+  luaL_checktype(L, idx, LUA_TTABLE);
+  if(lua_getfield(L, idx, iKey) != LUA_TNIL)
+    res = toUIText(getObjectOnTopOfStack());
+  else
+    lua_pop(L, 1);
+  return res;
+}
+
+
+//------------------------------------------------------------------------
+// HDGui2D::populate | UIText
+//------------------------------------------------------------------------
+void HDGui2D::populate(UIText *oValue)
+{
+  if(oValue)
+  {
+    auto uiText = getTableValueAsOptionalUIText(oValue->fName.c_str());
+    if(uiText)
+      impl::setValue(*oValue, std::optional<std::string>(uiText->fText));
+  }
+}
+
+//------------------------------------------------------------------------
+// HDGui2D::populate | StaticStringList
+//------------------------------------------------------------------------
+void HDGui2D::populate(StaticStringList *oValue)
+{
+  populate(static_cast<String *>(oValue));
 }
 
 //------------------------------------------------------------------------

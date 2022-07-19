@@ -48,7 +48,12 @@ namespace impl {
 
 struct jbox_ignored{};
 
-using jbox_object = std::variant<jbox_ignored, std::shared_ptr<jbox_widget>, std::shared_ptr<jbox_panel>>;
+struct jbox_ui_text
+{
+  std::string fText{};
+};
+
+using jbox_object = std::variant<jbox_ignored, std::shared_ptr<jbox_widget>, std::shared_ptr<jbox_panel>, jbox_ui_text>;
 
 }
 
@@ -60,6 +65,7 @@ public:
   int luaPanel();
   int luaAnalogKnob();
   int luaIgnored();
+  int luaUIText();
 
   static std::unique_ptr<HDGui2D> fromFile(std::string const &iLuaFilename);
 
@@ -71,6 +77,7 @@ public:
 protected:
   int addObjectOnTopOfStack(impl::jbox_object iObject);
   std::optional<impl::jbox_object> getObjectOnTopOfStack();
+  std::optional<impl::jbox_ui_text> getTableValueAsOptionalUIText(char const *iKey, int idx = -1);
   std::shared_ptr<jbox_panel> getPanel(char const *iPanelName);
 
   bool checkTableArg();
@@ -78,6 +85,10 @@ protected:
   void populateGraphics(std::shared_ptr<jbox_widget> &oWidget);
 
   void populate(widget::attribute::Value *oValue);
+  void populate(widget::attribute::Bool *oValue);
+  void populate(widget::attribute::String *oValue);
+  void populate(widget::attribute::UIText *oValue);
+  void populate(widget::attribute::StaticStringList *oValue);
   void populate(widget::attribute::PropertyPathList *oList);
   void populate(widget::attribute::PropertyPath *oPath);
   void populate(widget::attribute::Visibility *oVisibility);
