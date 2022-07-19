@@ -75,7 +75,7 @@ protected:
   void editOrderView(std::vector<int> const &iOrder, F iOnSwap);
 
 private:
-  void selectWidget(ImVec2 const &iPosition, bool iMultiple);
+  void selectWidget(DrawContext &iCtx, ImVec2 const &iPosition, bool iMultiple);
   void moveWidgets(ImVec2 const &iPosition);
   void endMoveWidgets(ImVec2 const &iPosition);
   void checkWidgetForError(Widget &iWidget);

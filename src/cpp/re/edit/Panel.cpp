@@ -111,7 +111,7 @@ void Panel::draw(DrawContext &iCtx)
       fMouseDrag = MouseDrag{mousePos, mousePos};
       auto &io = ImGui::GetIO();
       dragState = "onPressed / " + std::to_string(io.KeyShift);
-      selectWidget(mousePos / iCtx.fZoom, io.KeyShift);
+      selectWidget(iCtx, mousePos / iCtx.fZoom, io.KeyShift);
     }
   }
   ImGui::SetCursorScreenPos(cp); // InvisibleButton moves the cursor so we restore it
@@ -224,16 +224,19 @@ std::pair<std::shared_ptr<Widget>, int> Panel::deleteWidget(int id)
 //------------------------------------------------------------------------
 // Panel::selectWidget
 //------------------------------------------------------------------------
-void Panel::selectWidget(ImVec2 const &iPosition, bool iMultiple)
+void Panel::selectWidget(DrawContext &iCtx, ImVec2 const &iPosition, bool iMultiple)
 {
-  auto ci = std::find_if(fWidgets.begin(), fWidgets.end(), [&iPosition](auto const &p) { return p.second->contains(iPosition); });
-  if(ci == fWidgets.end())
+  auto ci = std::find_if(fWidgetsOrder.rbegin(), fWidgetsOrder.rend(), [this, &iPosition, &iCtx](auto const id) {
+    auto const &w = fWidgets[id];
+    return w->contains(iPosition) && !w->isHidden(iCtx);
+  });
+  if(ci == fWidgetsOrder.rend())
   {
     clearSelection();
   }
   else
   {
-    auto &widget = ci->second;
+    auto &widget = fWidgets[*ci];
     if(iMultiple)
     {
       if(!widget->isSelected())
