@@ -59,7 +59,9 @@ public:
   Device2D() = default;
 
   std::shared_ptr<panel_nodes> front() const { return getPanelNodes("front"); }
+  std::shared_ptr<panel_nodes> foldedFront() const { return getPanelNodes("folded_front"); }
   std::shared_ptr<panel_nodes> back() const { return getPanelNodes("back"); }
+  std::shared_ptr<panel_nodes> foldedBack() const { return getPanelNodes("folded_back"); }
 
   static std::unique_ptr<Device2D> fromFile(std::string const &iLuaFilename);
 

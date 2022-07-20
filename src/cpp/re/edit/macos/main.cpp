@@ -14,7 +14,7 @@
 #import <Metal/Metal.hpp>
 #import <Metal/MTLPixelFormat.hpp>
 
-int main(int, char **)
+int main(int argc, char **argv)
 {
   // Setup Dear ImGui context
   IMGUI_CHECKVERSION();
@@ -83,7 +83,12 @@ int main(int, char **)
   // Our state
   re::edit::Application application{std::make_shared<re::edit::MTLTextureManager>(device)};
 
-  application.init();
+  std::vector<std::string> args{};
+  for(int i = 1; i < argc; i++)
+    args.emplace_back(argv[i]);
+
+  if(!application.init(std::move(args)))
+    return 1;
 
   // Main loop
   bool done = false;

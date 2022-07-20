@@ -34,17 +34,27 @@ Application::Application(std::shared_ptr<TextureManager> const &iTextureManager)
   fUserPreferences{std::make_shared<UserPreferences>()},
   fPropertyManager{std::make_shared<PropertyManager>()},
   fFrontPanel(Panel::Type::kFront, iTextureManager, fUserPreferences, fPropertyManager),
-  fBackPanel(Panel::Type::kBack, iTextureManager, fUserPreferences, fPropertyManager)
+  fFoldedFrontPanel(Panel::Type::kFoldedFront, iTextureManager, fUserPreferences, fPropertyManager),
+  fBackPanel(Panel::Type::kBack, iTextureManager, fUserPreferences, fPropertyManager),
+  fFoldedBackPanel(Panel::Type::kFoldedBack, iTextureManager, fUserPreferences, fPropertyManager)
 {
 }
 
 //------------------------------------------------------------------------
 // Application::init
 //------------------------------------------------------------------------
-void Application::init()
+bool Application::init(std::vector<std::string> iArgs)
 {
-  constexpr auto root = "/Volumes/Development/github/pongasoft/re-cva-7";
+//  constexpr auto root = "/Volumes/Development/github/pongasoft/re-cva-7";
 //  constexpr auto root = "/Volumes/Development/local/com.presteign.Macro-plugin";
+
+  if(iArgs.empty())
+  {
+    RE_EDIT_LOG_ERROR("You must provide the path to the root folder of the device");
+    return false;
+  }
+
+  auto root = iArgs[0];
 
   fDeviceHeightRU = fPropertyManager->init(root);
 
@@ -55,25 +65,7 @@ void Application::init()
   initPanels(re::mock::fmt::path(root, "GUI2D", "device_2D.lua"),
              re::mock::fmt::path(root, "GUI2D", "hdgui_2D.lua"));
 
-//  initPanels("/Volumes/Development/github/org.pongasoft/re-edit/test/resources/re/edit/lua/re-cva-7-device_2D.lua",
-//             "/Volumes/Development/github/org.pongasoft/re-edit/test/resources/re/edit/lua/re-cva-7-hdgui_2D.lua");
-
-//  loadFilmStrip("/Volumes/Development/github/pongasoft/re-cva-7/GUI2D/Panel_Front.png", 1);
-//  loadFilmStrip("/Volumes/Development/github/pongasoft/re-cva-7/GUI2D/Knob_17_matte_63frames.png", 63);
-
-//  fFrontPanel.fPanel.setBackground(fTextureManager->getTexture("Panel_Front"));
-//  {
-//    auto knob = Widget::analog_knob();
-//    knob->setTexture(fTextureManager->getTexture("Knob_17_matte_63frames"));
-//    knob->setPosition({1504, 368});
-//    fFrontPanel.fPanel.addWidget(std::move(knob));
-//  }
-//  {
-//    auto knob = Widget::analog_knob();
-//    knob->setTexture(fTextureManager->getTexture("Knob_17_matte_63frames"));
-//    knob->setPosition({1504, 172});
-//    fFrontPanel.fPanel.addWidget(std::move(knob));
-//  }
+  return true;
 }
 
 //------------------------------------------------------------------------
@@ -84,7 +76,9 @@ void Application::initPanels(std::string const &iDevice2DFile, std::string const
   auto d2d = lua::Device2D::fromFile(iDevice2DFile);
   auto hdg = lua::HDGui2D::fromFile(iHDGui2DFile);
   initPanel(d2d->front(), hdg->front(), fFrontPanel.fPanel);
+  initPanel(d2d->foldedFront(), hdg->foldedFront(), fFoldedFrontPanel.fPanel);
   initPanel(d2d->back(), hdg->back(), fBackPanel.fPanel);
+  initPanel(d2d->foldedBack(), hdg->foldedBack(), fFoldedBackPanel.fPanel);
 }
 
 //------------------------------------------------------------------------
@@ -160,6 +154,8 @@ void Application::render()
   {
     fFrontPanel.render();
     fBackPanel.render();
+    fFoldedFrontPanel.render();
+    fFoldedBackPanel.render();
     ImGui::EndTabBar();
   }
 

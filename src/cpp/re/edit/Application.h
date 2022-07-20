@@ -36,7 +36,7 @@ class Application
 public:
   explicit Application(std::shared_ptr<TextureManager> const &iTextureManager);
 
-  void init();
+  bool init(std::vector<std::string> iArgs);
 
   void render();
 
@@ -55,7 +55,9 @@ private:
   std::shared_ptr<PropertyManager> fPropertyManager{};
   int fDeviceHeightRU{1};
   PanelState fFrontPanel;
+  PanelState fFoldedFrontPanel;
   PanelState fBackPanel;
+  PanelState fFoldedBackPanel;
   bool show_demo_window{false};
 };
 

@@ -48,6 +48,7 @@ else()
 endif()
 
 # Adding dependency on re-mock
+option(RE_MOCK_SUPPORT_FOR_AUDIO_FILE "" ON)
 add_subdirectory(../../pongasoft/re-mock re-mock EXCLUDE_FROM_ALL)
 
 # Defines the location of the sources
