@@ -220,23 +220,36 @@ std::pair<std::shared_ptr<Widget>, int> Panel::deleteWidget(int id)
   }
 }
 
+//------------------------------------------------------------------------
+// Panel::findWidgetOnTopAt
+//------------------------------------------------------------------------
+std::shared_ptr<Widget> Panel::findWidgetOnTopAt(std::vector<int> const &iOrder, ImVec2 const &iPosition) const
+{
+  auto ci = std::find_if(iOrder.rbegin(), iOrder.rend(), [this, &iPosition](auto const id) {
+    auto const &w = fWidgets.at(id);
+    return !w->isHidden() && w->contains(iPosition);
+  });
+
+  if(ci == iOrder.rend())
+    return nullptr;
+  else
+    return fWidgets.at(*ci);
+}
 
 //------------------------------------------------------------------------
 // Panel::selectWidget
 //------------------------------------------------------------------------
 void Panel::selectWidget(DrawContext &iCtx, ImVec2 const &iPosition, bool iMultiple)
 {
-  auto ci = std::find_if(fWidgetsOrder.rbegin(), fWidgetsOrder.rend(), [this, &iPosition, &iCtx](auto const id) {
-    auto const &w = fWidgets[id];
-    return w->contains(iPosition) && !w->isHidden(iCtx);
-  });
-  if(ci == fWidgetsOrder.rend())
+  auto widget = findWidgetOnTopAt(fWidgetsOrder, iPosition);
+  if(!widget)
+    widget = findWidgetOnTopAt(fDecalsOrder, iPosition);
+  if(!widget)
   {
     clearSelection();
   }
   else
   {
-    auto &widget = fWidgets[*ci];
     if(iMultiple)
     {
       if(!widget->isSelected())
@@ -345,13 +358,23 @@ void Panel::endMoveWidgets(ImVec2 const &iPosition)
 std::vector<std::shared_ptr<Widget>> Panel::getSelectedWidgets() const
 {
   std::vector<std::shared_ptr<Widget>> c{};
-  std::for_each(fWidgets.begin(), fWidgets.end(), [&c](auto const &p) {
-    auto &widget = p.second;
+  for(auto &[n, widget]: fWidgets)
+  {
     if(widget->isSelected())
       c.emplace_back(widget);
-  });
+  }
   return c;
 }
+
+//------------------------------------------------------------------------
+// PanelState::computeIsHidden
+//------------------------------------------------------------------------
+void Panel::computeIsHidden(DrawContext &iCtx)
+{
+  for(auto &[n, widget]: fWidgets)
+    widget->computeIsHidden(iCtx);
+}
+
 
 //------------------------------------------------------------------------
 // Panel::checkWidgetForError
@@ -530,20 +553,21 @@ void Panel::editView(EditContext &iCtx)
 //------------------------------------------------------------------------
 void Panel::editOrderView(EditContext &iCtx)
 {
-  if(ImGui::TreeNodeEx("Widgets", ImGuiTreeNodeFlags_DefaultOpen))
+  if(ImGui::BeginTabItem("Widgets"))
   {
-    editOrderView(getWidgetsOrder(), [this](int i1, int i2) { swapWidgets(i1, i2); });
-    ImGui::TreePop();
+    if(ImGui::BeginChild("Content"))
+      editOrderView(getWidgetsOrder(), [this](int i1, int i2) { swapWidgets(i1, i2); });
+    ImGui::EndChild();
+    ImGui::EndTabItem();
   }
 
-  auto ids = getDecalsOrder();
-  if(!ids.empty())
+  if(ImGui::BeginTabItem("Decals"))
   {
-    if(ImGui::TreeNode("Decals"))
-    {
+    auto ids = getDecalsOrder();
+    if(ImGui::BeginChild("Content"))
       editOrderView(ids, [this](int i1, int i2) { swapDecals(i1, i2); });
-      ImGui::TreePop();
-    }
+    ImGui::EndChild();
+    ImGui::EndTabItem();
   }
 }
 

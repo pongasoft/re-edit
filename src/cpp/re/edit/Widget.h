@@ -54,6 +54,8 @@ public:
   constexpr void setSelected(bool iSelected) { fSelected = iSelected; }
   constexpr void toggleSelection() { fSelected = !fSelected; }
 
+  constexpr bool isHidden() const { return fHidden; }
+
   constexpr bool isError() const { return fError; };
   constexpr void setError(bool iError) { fError = iError; };
 
@@ -99,7 +101,7 @@ public:
   friend class Panel;
 
 protected:
-  bool isHidden(DrawContext &iCtx) const;
+  void computeIsHidden(DrawContext &iCtx);
   bool isPanelDecal() const { return fType == WidgetType::kPanelDecal; }
 
 protected:
@@ -124,6 +126,7 @@ private:
   widget::attribute::Graphics fGraphics{};
   int fFrameNumber{};
   bool fSelected{};
+  bool fHidden{};
   bool fError{};
   std::vector<std::unique_ptr<widget::Attribute>> fAttributes{};
 

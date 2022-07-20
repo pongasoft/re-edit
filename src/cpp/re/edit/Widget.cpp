@@ -68,7 +68,7 @@ Widget::Widget(Widget const &iOther, std::string iName) :
 //------------------------------------------------------------------------
 void Widget::draw(DrawContext &iCtx)
 {
-  if(isHidden(iCtx))
+  if(isHidden())
     return;
 
   ImVec4 borderColor{};
@@ -349,11 +349,11 @@ std::unique_ptr<Widget> Widget::clone() const
 }
 
 //------------------------------------------------------------------------
-// Widget::isHidden
+// Widget::computeIsHidden
 //------------------------------------------------------------------------
-bool Widget::isHidden(DrawContext &iCtx) const
+void Widget::computeIsHidden(DrawContext &iCtx)
 {
-  return fVisibility ? fVisibility->isHidden(iCtx) : false;
+  fHidden = fVisibility ? fVisibility->isHidden(iCtx) : false;
 }
 
 //------------------------------------------------------------------------

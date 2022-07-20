@@ -38,6 +38,8 @@ PanelState::PanelState(Panel::Type iPanelType,
 //------------------------------------------------------------------------
 void PanelState::render()
 {
+  fPanel.computeIsHidden(fDrawContext);
+
   if(ImGui::BeginTabItem(fPanel.getName()))
   {
     int zoom = static_cast<int>(fDrawContext.fZoom * 5);
@@ -125,7 +127,11 @@ void PanelState::renderWidgets()
     ImGui::Separator();
 
     // Show list of widgets
-    fPanel.editOrderView(fDrawContext);
+    if(ImGui::BeginTabBar("Widgets & Decals", ImGuiTabBarFlags_None))
+    {
+      fPanel.editOrderView(fDrawContext);
+      ImGui::EndTabBar();
+    }
   }
   ImGui::End();
 }

@@ -70,15 +70,19 @@ public:
   std::string hdgui2D() const;
   std::string device2D() const;
 
+  friend class PanelState;
+
 protected:
   template<typename F>
   void editOrderView(std::vector<int> const &iOrder, F iOnSwap);
 
 private:
   void selectWidget(DrawContext &iCtx, ImVec2 const &iPosition, bool iMultiple);
+  std::shared_ptr<Widget> findWidgetOnTopAt(std::vector<int> const &iOrder, ImVec2 const &iPosition) const;
   void moveWidgets(ImVec2 const &iPosition);
   void endMoveWidgets(ImVec2 const &iPosition);
   void checkWidgetForError(Widget &iWidget);
+  void computeIsHidden(DrawContext &iCtx);
 
 private:
   Type fType;
