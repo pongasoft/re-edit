@@ -28,30 +28,35 @@ extern "C" {
 
 using namespace re::edit::lua;
 
-static int lua_ignored(lua_State *L)
-{
-  return HDGui2D::loadFromRegistry(L)->luaIgnored();
-}
-
-static int lua_ui_text(lua_State *L)
-{
-  return HDGui2D::loadFromRegistry(L)->luaUIText();
-}
-
-static int lua_analog_knob(lua_State *L)
-{
-  return HDGui2D::loadFromRegistry(L)->luaAnalogKnob();
-}
-
-static int lua_static_decoration(lua_State *L)
-{
-  return HDGui2D::loadFromRegistry(L)->luaStaticDecoration();
-}
-
-static int lua_panel(lua_State *L)
-{
-  return HDGui2D::loadFromRegistry(L)->luaPanel();
-}
+static int lua_panel(lua_State *L) { return HDGui2D::loadFromRegistry(L)->luaPanel(); }
+static int lua_ignored(lua_State *L) { return HDGui2D::loadFromRegistry(L)->luaIgnored(); }
+static int lua_analog_knob(lua_State *L) { return HDGui2D::loadFromRegistry(L)->luaAnalogKnob(); }
+static int lua_audio_input_socket(lua_State *L) { RE_MOCK_LOG_WARNING("audio_input_socket not implemented yet"); return HDGui2D::loadFromRegistry(L)->luaIgnored(); }
+static int lua_audio_output_socket(lua_State *L) { RE_MOCK_LOG_WARNING("audio_output_socket not implemented yet"); return HDGui2D::loadFromRegistry(L)->luaIgnored(); }
+static int lua_custom_display(lua_State *L) { RE_MOCK_LOG_WARNING("custom_display not implemented yet"); return HDGui2D::loadFromRegistry(L)->luaIgnored(); }
+static int lua_cv_input_socket(lua_State *L) { RE_MOCK_LOG_WARNING("cv_input_socket not implemented yet"); return HDGui2D::loadFromRegistry(L)->luaIgnored(); }
+static int lua_cv_output_socket(lua_State *L) { RE_MOCK_LOG_WARNING("cv_output_socket not implemented yet"); return HDGui2D::loadFromRegistry(L)->luaIgnored(); }
+static int lua_cv_trim_knob(lua_State *L) { RE_MOCK_LOG_WARNING("cv_trim_knob not implemented yet"); return HDGui2D::loadFromRegistry(L)->luaIgnored(); }
+static int lua_device_name(lua_State *L) { RE_MOCK_LOG_WARNING("device_name not implemented yet"); return HDGui2D::loadFromRegistry(L)->luaIgnored(); }
+static int lua_image(lua_State *L) { RE_MOCK_LOG_WARNING("image not implemented yet"); return HDGui2D::loadFromRegistry(L)->luaIgnored(); }
+static int lua_momentary_button(lua_State *L) { RE_MOCK_LOG_WARNING("momentary_button not implemented yet"); return HDGui2D::loadFromRegistry(L)->luaIgnored(); }
+static int lua_patch_browse_group(lua_State *L) { RE_MOCK_LOG_WARNING("patch_browse_group not implemented yet"); return HDGui2D::loadFromRegistry(L)->luaIgnored(); }
+static int lua_patch_name(lua_State *L) { RE_MOCK_LOG_WARNING("patch_name not implemented yet"); return HDGui2D::loadFromRegistry(L)->luaIgnored(); }
+static int lua_pitch_wheel(lua_State *L) { RE_MOCK_LOG_WARNING("pitch_wheel not implemented yet"); return HDGui2D::loadFromRegistry(L)->luaIgnored(); }
+static int lua_placeholder(lua_State *L) { RE_MOCK_LOG_WARNING("placeholder not implemented yet"); return HDGui2D::loadFromRegistry(L)->luaIgnored(); }
+static int lua_popup_button(lua_State *L) { RE_MOCK_LOG_WARNING("popup_button not implemented yet"); return HDGui2D::loadFromRegistry(L)->luaIgnored(); }
+static int lua_radio_button(lua_State *L) { RE_MOCK_LOG_WARNING("radio_button not implemented yet"); return HDGui2D::loadFromRegistry(L)->luaIgnored(); }
+static int lua_sample_browse_group(lua_State *L) { RE_MOCK_LOG_WARNING("sample_browse_group not implemented yet"); return HDGui2D::loadFromRegistry(L)->luaIgnored(); }
+static int lua_sample_drop_zone(lua_State *L) { RE_MOCK_LOG_WARNING("sample_drop_zone not implemented yet"); return HDGui2D::loadFromRegistry(L)->luaIgnored(); }
+static int lua_sequence_fader(lua_State *L) { RE_MOCK_LOG_WARNING("sequence_fader not implemented yet"); return HDGui2D::loadFromRegistry(L)->luaIgnored(); }
+static int lua_sequence_meter(lua_State *L) { RE_MOCK_LOG_WARNING("sequence_meter not implemented yet"); return HDGui2D::loadFromRegistry(L)->luaIgnored(); }
+static int lua_static_decoration(lua_State *L) { return HDGui2D::loadFromRegistry(L)->luaStaticDecoration(); }
+static int lua_step_button(lua_State *L) { RE_MOCK_LOG_WARNING("step_button not implemented yet"); return HDGui2D::loadFromRegistry(L)->luaIgnored(); }
+static int lua_toggle_button(lua_State *L) { RE_MOCK_LOG_WARNING("toggle_button not implemented yet"); return HDGui2D::loadFromRegistry(L)->luaIgnored(); }
+static int lua_up_down_button(lua_State *L) { RE_MOCK_LOG_WARNING("up_down_button not implemented yet"); return HDGui2D::loadFromRegistry(L)->luaIgnored(); }
+static int lua_value_display(lua_State *L) { RE_MOCK_LOG_WARNING("value_display not implemented yet"); return HDGui2D::loadFromRegistry(L)->luaIgnored(); }
+static int lua_zero_snap_knob(lua_State *L) { RE_MOCK_LOG_WARNING("zero_snap_knob not implemented yet"); return HDGui2D::loadFromRegistry(L)->luaIgnored(); }
+static int lua_ui_text(lua_State *L) { return HDGui2D::loadFromRegistry(L)->luaUIText(); }
 
 }
 
@@ -85,32 +90,32 @@ HDGui2D::HDGui2D()
   static const struct luaL_Reg jboxLib[] = {
     {"panel", lua_panel},
     {"analog_knob", lua_analog_knob},
-    {"audio_input_socket", lua_ignored},
-    {"audio_output_socket", lua_ignored},
-    {"custom_display", lua_ignored},
-    {"cv_input_socket", lua_ignored},
-    {"cv_output_socket", lua_ignored},
-    {"cv_trim_knob", lua_ignored},
-    {"device_name", lua_ignored},
-    {"image", lua_ignored},
-    {"momentary_button", lua_ignored},
-    {"patch_browse_group", lua_ignored},
-    {"patch_name", lua_ignored},
-    {"pitch_wheel", lua_ignored},
-    {"placeholder", lua_ignored},
-    {"popup_button", lua_ignored},
-    {"radio_button", lua_ignored},
-    {"sample_browse_group", lua_ignored},
-    {"sample_drop_zone", lua_ignored},
-    {"sequence_fader", lua_ignored},
-    {"sequence_meter", lua_ignored},
+    {"audio_input_socket", lua_audio_input_socket},
+    {"audio_output_socket", lua_audio_output_socket},
+    {"custom_display", lua_custom_display},
+    {"cv_input_socket", lua_cv_input_socket},
+    {"cv_output_socket", lua_cv_output_socket},
+    {"cv_trim_knob", lua_cv_trim_knob},
+    {"device_name", lua_device_name},
+    {"image", lua_image},
+    {"momentary_button", lua_momentary_button},
+    {"patch_browse_group", lua_patch_browse_group},
+    {"patch_name", lua_patch_name},
+    {"pitch_wheel", lua_pitch_wheel},
+    {"placeholder", lua_placeholder},
+    {"popup_button", lua_popup_button},
+    {"radio_button", lua_radio_button},
+    {"sample_browse_group", lua_sample_browse_group},
+    {"sample_drop_zone", lua_sample_drop_zone},
+    {"sequence_fader", lua_sequence_fader},
+    {"sequence_meter", lua_sequence_meter},
     {"static_decoration", lua_static_decoration},
-    {"step_button", lua_ignored},
-    {"toggle_button", lua_ignored},
+    {"step_button", lua_step_button},
+    {"toggle_button", lua_toggle_button},
     {"ui_text", lua_ui_text},
-    {"up_down_button", lua_ignored},
-    {"value_display", lua_ignored},
-    {"zero_snap_knob", lua_ignored},
+    {"up_down_button", lua_up_down_button},
+    {"value_display", lua_value_display},
+    {"zero_snap_knob", lua_zero_snap_knob},
     {nullptr,                    nullptr}
   };
 
