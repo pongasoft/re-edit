@@ -47,7 +47,6 @@ private:
   bool fShowPanel{true};
   bool fShowPanelWidgets{true};
   bool fShowWidgets{};
-  bool fShowProperties{};
 };
 
 }

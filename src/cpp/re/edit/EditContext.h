@@ -40,7 +40,11 @@ public:
   int getPropertyValueAsInt(std::string const &iPropertyPath) const { return fPropertyManager->getIntValue(iPropertyPath); }
   void propertyEditView(std::string const &iPropertyPath) { fPropertyManager->editView(iPropertyPath); }
 
-  void addPropertyToWatchlist(std::string const &iPropertyPath) { fPropertyManager->addToWatchlist(iPropertyPath); }
+  void addPropertyToWatchlist(std::string const &iPropertyPath, bool iShowProperties = true) {
+    fPropertyManager->addToWatchlist(iPropertyPath);
+    fShowProperties = iShowProperties;
+  }
+
   void removePropertyFromWatchlist(std::string const &iPropertyPath) { fPropertyManager->removeFromWatchlist(iPropertyPath); }
 
   inline std::vector<std::string> const &getTextureKeys() const { return fTextureManager->getTextureKeys(); };
@@ -53,6 +57,7 @@ protected:
   std::shared_ptr<TextureManager> fTextureManager{};
   std::shared_ptr<UserPreferences> fUserPreferences{};
   std::shared_ptr<PropertyManager> fPropertyManager{};
+  bool fShowProperties{};
 };
 
 }

@@ -56,7 +56,7 @@ void PanelState::render()
     ImGui::SameLine();
     ReGui::ToggleButton("Show Widgets", "Hide Widgets", &fShowWidgets);
     ImGui::SameLine();
-    ReGui::ToggleButton("Show Properties", "Hide Properties", &fShowProperties);
+    ReGui::ToggleButton("Show Properties", "Hide Properties", &fDrawContext.fShowProperties);
 
     if(fShowPanel)
       renderPanel();
@@ -67,7 +67,7 @@ void PanelState::render()
     if(fShowWidgets)
       renderWidgets();
 
-    if(fShowProperties)
+    if(fDrawContext.fShowProperties)
       renderProperties();
 
     ImGui::EndTabItem();
@@ -163,7 +163,7 @@ void PanelState::renderPanelWidgets()
 //------------------------------------------------------------------------
 void PanelState::renderProperties()
 {
-  if(ImGui::Begin("Properties", &fShowProperties, ImGuiWindowFlags_HorizontalScrollbar))
+  if(ImGui::Begin("Properties", &fDrawContext.fShowProperties, ImGuiWindowFlags_HorizontalScrollbar))
   {
     {
       if(ImGui::Button("Add"))
@@ -188,31 +188,35 @@ void PanelState::renderProperties()
 
     ImGui::Separator();
 
-    auto properties = fDrawContext.fPropertyManager->getWatchList();
-
-    if(!properties.empty())
+    if(ImGui::BeginChild("Content"))
     {
-      for(auto const &path: properties)
+      auto properties = fDrawContext.fPropertyManager->getWatchList();
+
+      if(!properties.empty())
       {
-        ImGui::PushID(path.c_str());
-        if(ImGui::Button("X"))
-          fDrawContext.fPropertyManager->removeFromWatchlist(path);
-        ImGui::SameLine();
-        ImGui::TextWrapped("%s", path.c_str());
-        if(ImGui::IsItemHovered())
+        for(auto const &path: properties)
         {
-          ImGui::BeginTooltip();
-          ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
-          ImGui::TextUnformatted(fDrawContext.getPropertyInfo(path).c_str());
-          ImGui::PopTextWrapPos();
-          ImGui::EndTooltip();
+          ImGui::PushID(path.c_str());
+          if(ImGui::Button("X"))
+            fDrawContext.fPropertyManager->removeFromWatchlist(path);
+          ImGui::SameLine();
+          ImGui::TextWrapped("%s", path.c_str());
+          if(ImGui::IsItemHovered())
+          {
+            ImGui::BeginTooltip();
+            ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
+            ImGui::TextUnformatted(fDrawContext.getPropertyInfo(path).c_str());
+            ImGui::PopTextWrapPos();
+            ImGui::EndTooltip();
+          }
+          ImGui::Indent();
+          fDrawContext.fPropertyManager->editView(path);
+          ImGui::Unindent();
+          ImGui::PopID();
         }
-        ImGui::Indent();
-        fDrawContext.fPropertyManager->editView(path);
-        ImGui::Unindent();
-        ImGui::PopID();
       }
     }
+    ImGui::EndChild();
   }
   ImGui::End();
 }
