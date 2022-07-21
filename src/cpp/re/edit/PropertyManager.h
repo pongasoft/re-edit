@@ -37,6 +37,9 @@ public:
   // return the size of the device in RU
   int init(std::string const &iDirectory);
 
+  std::vector<Object const *> findObjects(Object::Filter const &iFilter) const;
+//  Object const *findObject(std::string const &iObjectPath) const;
+
   std::vector<Property const *> findProperties(Property::Filter const &iFilter) const;
   Property const *findProperty(std::string const &iPropertyPath) const;
   std::string getPropertyInfo(std::string const &iPropertyPath) const;
@@ -66,6 +69,7 @@ private:
   std::shared_ptr<re::mock::rack::Extension> fDevice{};
   std::map<std::string, Property> fProperties{};
   std::set<std::string> fPropertyWatchlist{};
+  std::map<std::string, Object> fObjects{};
 };
 
 }

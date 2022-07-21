@@ -28,6 +28,17 @@
 
 namespace re::edit {
 
+struct Object
+{
+  using Filter = std::function<bool(Object const &iObject)>;
+
+  constexpr re::mock::JboxObjectType type() const { return fInfo.fType; };
+  constexpr TJBox_ObjectRef ref() const { return fInfo.fObjectRef; };
+  constexpr std::string const &path() const { return fInfo.fObjectPath; };
+
+  re::mock::JboxObjectInfo fInfo{};
+};
+
 struct Property
 {
   using Filter = std::function<bool(Property const &iProperty)>;

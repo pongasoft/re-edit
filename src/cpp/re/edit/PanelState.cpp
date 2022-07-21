@@ -28,6 +28,7 @@ PanelState::PanelState(Panel::Type iPanelType,
                        std::shared_ptr<PropertyManager> iPropertyManager) :
   fPanel(iPanelType)
 {
+  fDrawContext.fPanelState = this;
   fDrawContext.fTextureManager = std::move(iTextureManager);
   fDrawContext.fUserPreferences = std::move(iUserPreferences);
   fDrawContext.fPropertyManager = std::move(iPropertyManager);

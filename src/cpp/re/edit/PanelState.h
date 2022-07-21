@@ -33,6 +33,8 @@ public:
 
   void render();
 
+  friend class EditContext;
+
 protected:
   void renderWidgets();
   void renderPanel();

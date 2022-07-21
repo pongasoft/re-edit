@@ -24,11 +24,25 @@
 
 namespace re::edit {
 
-constexpr char const *kWidgetTypes[] = { "analog_knob", "static_decoration", "panel_decal" };
+constexpr char const *kWidgetTypes[] = {
+  "analog_knob",
+  "audio_input_socket",
+  "audio_output_socket",
+  "cv_input_socket",
+  "cv_output_socket",
+  "device_name",
+  "static_decoration",
+  "panel_decal"
+};
 
 enum class WidgetType : int
 {
   kAnalogKnob = 0,
+  kAudioInputSocket,
+  kAudioOutputSocket,
+  kCVInputSocket,
+  kCVOutputSocket,
+  kDeviceName,
   kStaticDecoration,
   kPanelDecal
 };
@@ -41,6 +55,9 @@ constexpr char const *toString(WidgetType iType)
 constexpr int k1UPixelSize = 345;
 constexpr int kDevicePixelWidth = 3770;
 constexpr int kFoldedDevicePixelHeight = 150;
+
+constexpr auto kAudioSocketSize = ImVec2{95, 105};
+constexpr auto kCVSocketSize = ImVec2{80, 90};
 
 constexpr int toPixelHeight(int iDeviceHeightRU)
 {

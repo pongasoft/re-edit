@@ -64,6 +64,11 @@ public:
 
   int luaPanel();
   int luaAnalogKnob();
+  int luaAudioInputSocket();
+  int luaAudioOutputSocket();
+  int luaCVInputSocket();
+  int luaCVOutputSocket();
+  int luaDeviceName();
   int luaStaticDecoration();
   int luaIgnored();
   int luaUIText();

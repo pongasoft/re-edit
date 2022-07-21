@@ -131,6 +131,16 @@ void Panel::draw(DrawContext &iCtx)
 
   auto selectedWidgets = getSelectedWidgets();
 
+  if(ImGui::BeginPopupContextItem())
+  {
+    auto widgetLocation = (ImGui::GetItemRectMin() - cp) / iCtx.fZoom;
+    ImGui::BeginDisabled(selectedWidgets.empty());
+    renderSelectedWidgetsMenu(selectedWidgets);
+    ImGui::EndDisabled();
+    renderAddWidgetMenu(iCtx, widgetLocation);
+    ImGui::EndPopup();
+  }
+
   if(fMouseDrag && !selectedWidgets.empty())
   {
     auto min = selectedWidgets[0]->getTopLeft();
@@ -169,6 +179,43 @@ void Panel::draw(DrawContext &iCtx)
       logging->debug("dragState", "%s | fDragStart=%fx%f", dragState.c_str(), fMouseDrag->fCurrentPosition.x, fMouseDrag->fCurrentPosition.y);
     else
       logging->debug("dragState", "%s", dragState.c_str());
+  }
+}
+
+//------------------------------------------------------------------------
+// Panel::renderAddWidgetMenu
+//------------------------------------------------------------------------
+void Panel::renderAddWidgetMenu(EditContext &iCtx, ImVec2 const &iPosition)
+{
+  if(ImGui::BeginMenu("Add Widget"))
+  {
+    iCtx.renderAddWidgetMenuView(iPosition);
+    ImGui::EndMenu();
+  }
+  if(ImGui::MenuItem("Add Decal"))
+  {
+    auto widget = Widget::panel_decal();
+    widget->setPosition(iPosition);
+    addWidget(std::move(widget));
+  }
+}
+
+//------------------------------------------------------------------------
+// Panel::renderSelectedWidgetsMenu
+//------------------------------------------------------------------------
+void Panel::renderSelectedWidgetsMenu(std::vector<std::shared_ptr<Widget>> const &iSelectedWidgets)
+{
+  if(ImGui::MenuItem("Clear Selection"))
+    clearSelection();
+  if(ImGui::MenuItem("Duplicate Widgets"))
+  {
+    for(auto const &w: iSelectedWidgets)
+      addWidget(w->clone());
+  }
+  if(ImGui::MenuItem("Delete Widgets"))
+  {
+    for(auto const &w: iSelectedWidgets)
+      deleteWidget(w->getId());
   }
 }
 
@@ -418,8 +465,7 @@ void Panel::editView(EditContext &iCtx)
 
         if(ImGui::BeginPopup("Menu"))
         {
-          if(ImGui::Selectable("Add Decal"))
-            addWidget(Widget::panel_decal());
+          renderAddWidgetMenu(iCtx);
           ImGui::EndPopup();
         }
 
@@ -457,12 +503,7 @@ void Panel::editView(EditContext &iCtx)
 
         if(ImGui::BeginPopup("Menu"))
         {
-          if(ImGui::Selectable("Clear"))
-            unselectWidget(w->getId());
-          if(ImGui::Selectable("Duplicate"))
-            addWidget(w->clone());
-          if(ImGui::Selectable("Delete"))
-            deleteWidget(w->getId());
+          renderSelectedWidgetsMenu(selectedWidgets);
           ImGui::EndPopup();
         }
 
@@ -480,18 +521,7 @@ void Panel::editView(EditContext &iCtx)
 
         if(ImGui::BeginPopup("Menu"))
         {
-          if(ImGui::Selectable("Clear"))
-            clearSelection();
-          if(ImGui::Selectable("Duplicate"))
-          {
-            for(auto const &w: selectedWidgets)
-              addWidget(w->clone());
-          }
-          if(ImGui::Selectable("Delete"))
-          {
-            for(auto const &w: selectedWidgets)
-              deleteWidget(w->getId());
-          }
+          renderSelectedWidgetsMenu(selectedWidgets);
           ImGui::EndPopup();
         }
 

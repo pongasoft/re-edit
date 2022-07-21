@@ -28,10 +28,14 @@
 
 namespace re::edit {
 
+class PanelState;
+
 class EditContext
 {
 public:
   EditContext() = default;
+
+  inline std::vector<Object const *> findObjects(Object::Filter const &iFilter) const { return fPropertyManager->findObjects(iFilter); }
 
   inline std::vector<Property const *> findProperties(Property::Filter const &iFilter) const { return fPropertyManager->findProperties(iFilter); };
   inline std::vector<Property const *> findProperties() const { return findProperties(Property::Filter{}); }
@@ -39,13 +43,13 @@ public:
   inline std::string getPropertyInfo(std::string const &iPropertyPath) const { return fPropertyManager->getPropertyInfo(iPropertyPath); }
   int getPropertyValueAsInt(std::string const &iPropertyPath) const { return fPropertyManager->getIntValue(iPropertyPath); }
   void propertyEditView(std::string const &iPropertyPath) { fPropertyManager->editView(iPropertyPath); }
-
   void addPropertyToWatchlist(std::string const &iPropertyPath, bool iShowProperties = true) {
     fPropertyManager->addToWatchlist(iPropertyPath);
     fShowProperties = iShowProperties;
   }
-
   void removePropertyFromWatchlist(std::string const &iPropertyPath) { fPropertyManager->removeFromWatchlist(iPropertyPath); }
+
+  void renderAddWidgetMenuView(ImVec2 const &iPosition = {});
 
   inline std::vector<std::string> const &getTextureKeys() const { return fTextureManager->getTextureKeys(); };
   inline std::vector<std::string> findTextureKeys(FilmStrip::Filter const &iFilter) const { return fTextureManager->findTextureKeys(iFilter); }
@@ -54,6 +58,7 @@ public:
   friend class PanelState;
 
 protected:
+  PanelState *fPanelState{};
   std::shared_ptr<TextureManager> fTextureManager{};
   std::shared_ptr<UserPreferences> fUserPreferences{};
   std::shared_ptr<PropertyManager> fPropertyManager{};

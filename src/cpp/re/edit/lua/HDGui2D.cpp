@@ -31,13 +31,13 @@ using namespace re::edit::lua;
 static int lua_panel(lua_State *L) { return HDGui2D::loadFromRegistry(L)->luaPanel(); }
 static int lua_ignored(lua_State *L) { return HDGui2D::loadFromRegistry(L)->luaIgnored(); }
 static int lua_analog_knob(lua_State *L) { return HDGui2D::loadFromRegistry(L)->luaAnalogKnob(); }
-static int lua_audio_input_socket(lua_State *L) { RE_MOCK_LOG_WARNING("audio_input_socket not implemented yet"); return HDGui2D::loadFromRegistry(L)->luaIgnored(); }
-static int lua_audio_output_socket(lua_State *L) { RE_MOCK_LOG_WARNING("audio_output_socket not implemented yet"); return HDGui2D::loadFromRegistry(L)->luaIgnored(); }
+static int lua_audio_input_socket(lua_State *L) { return HDGui2D::loadFromRegistry(L)->luaAudioInputSocket(); }
+static int lua_audio_output_socket(lua_State *L) { return HDGui2D::loadFromRegistry(L)->luaAudioOutputSocket(); }
 static int lua_custom_display(lua_State *L) { RE_MOCK_LOG_WARNING("custom_display not implemented yet"); return HDGui2D::loadFromRegistry(L)->luaIgnored(); }
-static int lua_cv_input_socket(lua_State *L) { RE_MOCK_LOG_WARNING("cv_input_socket not implemented yet"); return HDGui2D::loadFromRegistry(L)->luaIgnored(); }
-static int lua_cv_output_socket(lua_State *L) { RE_MOCK_LOG_WARNING("cv_output_socket not implemented yet"); return HDGui2D::loadFromRegistry(L)->luaIgnored(); }
+static int lua_cv_input_socket(lua_State *L) { return HDGui2D::loadFromRegistry(L)->luaCVInputSocket(); }
+static int lua_cv_output_socket(lua_State *L) { return HDGui2D::loadFromRegistry(L)->luaCVOutputSocket(); }
 static int lua_cv_trim_knob(lua_State *L) { RE_MOCK_LOG_WARNING("cv_trim_knob not implemented yet"); return HDGui2D::loadFromRegistry(L)->luaIgnored(); }
-static int lua_device_name(lua_State *L) { RE_MOCK_LOG_WARNING("device_name not implemented yet"); return HDGui2D::loadFromRegistry(L)->luaIgnored(); }
+static int lua_device_name(lua_State *L) { return HDGui2D::loadFromRegistry(L)->luaDeviceName(); }
 static int lua_image(lua_State *L) { RE_MOCK_LOG_WARNING("image not implemented yet"); return HDGui2D::loadFromRegistry(L)->luaIgnored(); }
 static int lua_momentary_button(lua_State *L) { RE_MOCK_LOG_WARNING("momentary_button not implemented yet"); return HDGui2D::loadFromRegistry(L)->luaIgnored(); }
 static int lua_patch_browse_group(lua_State *L) { RE_MOCK_LOG_WARNING("patch_browse_group not implemented yet"); return HDGui2D::loadFromRegistry(L)->luaIgnored(); }
@@ -218,6 +218,75 @@ int HDGui2D::luaAnalogKnob()
     populate<UIText>(p, "tooltip_template");
     populate<Bool>(p, "show_remote_box");
     populate<Bool>(p, "show_automation_rect");
+  }
+  return addObjectOnTopOfStack(std::move(p));
+}
+
+//------------------------------------------------------------------------
+// HDGui2D::luaAudioOutputSocket
+//------------------------------------------------------------------------
+int HDGui2D::luaAudioOutputSocket()
+{
+  auto p = makeWidget(Widget::audio_output_socket());
+  if(checkTableArg())
+  {
+    populateGraphics(p);
+    populate<Socket>(p, "socket");
+  }
+  return addObjectOnTopOfStack(std::move(p));
+}
+
+//------------------------------------------------------------------------
+// HDGui2D::luaAudioInputSocket
+//------------------------------------------------------------------------
+int HDGui2D::luaAudioInputSocket()
+{
+  auto p = makeWidget(Widget::audio_input_socket());
+  if(checkTableArg())
+  {
+    populateGraphics(p);
+    populate<Socket>(p, "socket");
+  }
+  return addObjectOnTopOfStack(std::move(p));
+}
+
+//------------------------------------------------------------------------
+// HDGui2D::luaCVOutputSocket
+//------------------------------------------------------------------------
+int HDGui2D::luaCVOutputSocket()
+{
+  auto p = makeWidget(Widget::cv_output_socket());
+  if(checkTableArg())
+  {
+    populateGraphics(p);
+    populate<Socket>(p, "socket");
+  }
+  return addObjectOnTopOfStack(std::move(p));
+}
+
+//------------------------------------------------------------------------
+// HDGui2D::luaCVInputSocket
+//------------------------------------------------------------------------
+int HDGui2D::luaCVInputSocket()
+{
+  auto p = makeWidget(Widget::cv_input_socket());
+  if(checkTableArg())
+  {
+    populateGraphics(p);
+    populate<Socket>(p, "socket");
+  }
+  return addObjectOnTopOfStack(std::move(p));
+}
+
+//------------------------------------------------------------------------
+// HDGui2D::luaDeviceName
+//------------------------------------------------------------------------
+int HDGui2D::luaDeviceName()
+{
+  auto p = makeWidget(Widget::device_name());
+  if(checkTableArg())
+  {
+    populateGraphics(p);
   }
   return addObjectOnTopOfStack(std::move(p));
 }

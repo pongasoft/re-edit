@@ -83,6 +83,8 @@ private:
   void endMoveWidgets(ImVec2 const &iPosition);
   void checkWidgetForError(Widget &iWidget);
   void computeIsHidden(DrawContext &iCtx);
+  void renderAddWidgetMenu(EditContext &iCtx, ImVec2 const &iPosition = {});
+  void renderSelectedWidgetsMenu(std::vector<std::shared_ptr<Widget>> const &iSelectedWidgets);
 
 private:
   Type fType;

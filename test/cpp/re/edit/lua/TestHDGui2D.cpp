@@ -226,6 +226,12 @@ inline constexpr auto HasBlendMode = [](char const *iExpected = nullptr) {
     return AttributeToString<StaticStringList>("blend_mode", R"(blend_mode={"normal",false})");
 };
 
+//! HasSocket | socket
+inline constexpr auto HasSocket = [](char const *iExpectedPath) {
+  return AttributeToString<Socket>("socket", R"(socket={"%s",true})", iExpectedPath);
+};
+
+
 TEST(HDGui2D, All)
 {
   auto hdg = HDGui2D::fromFile(getResourceFile("all-hdgui_2D.lua"));
@@ -285,8 +291,44 @@ TEST(HDGui2D, All)
     ASSERT_THAT(w, HasVisibility("/sd2_switch", {4, 9, 1}));
   }
 
-
   ASSERT_EQ(hdg->getStackString(), "<empty>");
+
+  auto back = hdg->back();
+  ASSERT_EQ(4, back->fWidgets.size());
+  ASSERT_EQ("Panel_back_bg", back->fGraphicsNode);
+  ASSERT_EQ(std::nullopt, front->fCableOrigin);
+
+  id = 0;
+
+  // au_in_1
+  {
+    auto w = back->fWidgets[id++];
+    ASSERT_EQ("au_in_1_node", w->fGraphics.fNode);
+    ASSERT_THAT(w, HasSocket("/audio_inputs/au_in_1"));
+  }
+
+  // au_ou_1
+  {
+    auto w = back->fWidgets[id++];
+    ASSERT_EQ("au_out_1_node", w->fGraphics.fNode);
+    ASSERT_THAT(w, HasSocket("/audio_outputs/au_out_1"));
+  }
+
+  // cv_in_1
+  {
+    auto w = back->fWidgets[id++];
+    ASSERT_EQ("cv_in_1_node", w->fGraphics.fNode);
+    ASSERT_THAT(w, HasSocket("/cv_inputs/cv_in_1"));
+  }
+
+  // cv_out_1
+  {
+    auto w = back->fWidgets[id++];
+    ASSERT_EQ("cv_out_1_node", w->fGraphics.fNode);
+    ASSERT_THAT(w, HasSocket("/cv_outputs/cv_out_1"));
+  }
+
+
 }
 
 }

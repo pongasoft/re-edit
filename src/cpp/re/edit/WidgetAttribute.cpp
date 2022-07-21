@@ -152,7 +152,6 @@ void Value::editView(EditContext &iCtx)
   if(fUseSwitch)
   {
     fValueSwitch.editView(iCtx,
-                          fValueSwitchFilter,
                           [this] { reset(); },
                           [this](const Property *p) {
                             fValueSwitch.fValue = p->path();
@@ -166,7 +165,7 @@ void Value::editView(EditContext &iCtx)
     ImGui::Checkbox("S", &fUseSwitch);
     ImGui::Indent();
     fValues.editStaticListView(iCtx,
-                               fValueFilter,
+                               fValue.fFilter,
                                [this](int iIndex, const Property *p) { // onSelect
                                  fValues.fValue[iIndex] = p->path();
                                  fValues.fProvided = true;
@@ -176,7 +175,6 @@ void Value::editView(EditContext &iCtx)
   else
   {
     fValue.editView(iCtx,
-                    fValueFilter,
                     [this] { reset(); },
                     [this](const Property *p) {
                       fValue.fValue = p->path();
@@ -302,13 +300,11 @@ void Visibility::hdgui2D(attribute_list_t &oAttributes) const
 //------------------------------------------------------------------------
 void Visibility::editView(EditContext &iCtx)
 {
-  static const auto isDiscreteFilter = [](const Property &p) { return p.isDiscrete(); };
   static const std::string EMPTY_LIST_ERROR = "You must provide at least 1 value";
 
   ImGui::PushID(this);
 
   fSwitch.editView(iCtx,
-                   isDiscreteFilter,
                    [this] () { reset(); }, // onReset
                    [this] (const Property *p) { // onSelect
                      fSwitch.fValue = p->path();
@@ -380,6 +376,13 @@ std::string Visibility::toString() const
                                fValues.toString());
 }
 
+static constexpr auto kIsDiscreteFilter = [](const Property &p) { return p.isDiscrete(); };
+
+//------------------------------------------------------------------------
+// Visibility::Visibility
+//------------------------------------------------------------------------
+Visibility::Visibility() : Attribute("visibility"), fSwitch{"visibility_switch", kIsDiscreteFilter} {}
+
 //------------------------------------------------------------------------
 // String::editView
 //------------------------------------------------------------------------
@@ -407,14 +410,20 @@ void Bool::editView(EditContext &iCtx)
 //------------------------------------------------------------------------
 void PropertyPath::editView(EditContext &iCtx)
 {
-  // not used
+  editView(iCtx,
+           [this] { reset(); },
+           [this](const Property *p) {
+             fValue = p->path();
+             fProvided = true;
+           },
+           [this](auto &iCtx) { editPropertyView(iCtx); },
+           [this](auto &iCtx) { tooltipPropertyView(iCtx); });
 }
 
 //------------------------------------------------------------------------
 // PropertyPath::editView
 //------------------------------------------------------------------------
 void PropertyPath::editView(EditContext &iCtx,
-                            Property::Filter const &iFilter,
                             std::function<void()> const &iOnReset,
                             std::function<void(const Property *)> const &iOnSelect,
                             std::function<void(EditContext &iCtx)> const &iEditPropertyView,
@@ -426,7 +435,7 @@ void PropertyPath::editView(EditContext &iCtx,
 
   if(ImGui::BeginCombo(fName.c_str(), fValue.c_str()))
   {
-    auto properties = iCtx.findProperties(iFilter);
+    auto properties = iCtx.findProperties(fFilter);
     for(auto &p: properties)
     {
       auto const isSelected = p->path() == fValue;
@@ -516,6 +525,63 @@ void PropertyPath::menuView(EditContext &iCtx,
                             std::function<void(EditContext &iCtx)> const &iEditPropertyView)
 {
   menuView(iCtx, fValue, iOnReset, iEditPropertyView);
+}
+
+//------------------------------------------------------------------------
+// ObjectPath::editView
+//------------------------------------------------------------------------
+void ObjectPath::editView(EditContext &iCtx)
+{
+  resetView();
+
+  ImGui::SameLine();
+
+  if(ImGui::BeginCombo(fName.c_str(), fValue.c_str()))
+  {
+    auto objects = iCtx.findObjects(fFilter);
+    for(auto &o: objects)
+    {
+      auto const isSelected = o->path() == fValue;
+      if(ImGui::Selectable(o->path().c_str(), isSelected))
+      {
+        fValue = o->path();
+        fProvided = true;
+      }
+      if(isSelected)
+        ImGui::SetItemDefaultFocus();
+    }
+    ImGui::EndCombo();
+  }
+}
+
+//------------------------------------------------------------------------
+// ObjectPath::editView
+//------------------------------------------------------------------------
+void Socket::editView(EditContext &iCtx)
+{
+  ObjectPath::editView(iCtx);
+
+  if(!fValue.empty())
+  {
+    if(ImGui::IsItemHovered())
+    {
+      ImGui::BeginTooltip();
+      ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
+      ImGui::TextUnformatted(iCtx.getPropertyInfo(re::mock::fmt::printf("%s/%s", fValue, "connected")).c_str());
+      switch(fObjectType)
+      {
+        case re::mock::JboxObjectType::kAudioOutput:
+        case re::mock::JboxObjectType::kCVOutput:
+          ImGui::TextUnformatted(iCtx.getPropertyInfo(re::mock::fmt::printf("%s/%s", fValue, "dsp_latency")).c_str());
+          break;
+        default:
+          // nothing to do
+          break;
+      }
+      ImGui::PopTextWrapPos();
+      ImGui::EndTooltip();
+    }
+  }
 }
 
 //------------------------------------------------------------------------

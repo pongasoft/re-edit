@@ -118,13 +118,12 @@ public:
 class PropertyPath : public String
 {
 public:
-  explicit PropertyPath(std::string iName) : String{std::move(iName)} {}
+  explicit PropertyPath(std::string iName, Property::Filter iFilter = {}) : String{std::move(iName)}, fFilter{std::move(iFilter)} {}
   void editView(EditContext &iCtx) override;
 
   std::unique_ptr<Attribute> clone() const override { return Attribute::clone<PropertyPath>(*this); }
 
   void editView(EditContext &iCtx,
-                Property::Filter const &iFilter,
                 std::function<void()> const &iOnReset,
                 std::function<void(const Property *)> const &iOnSelect,
                 std::function<void(EditContext &iCtx)> const &iEditPropertyView,
@@ -145,6 +144,9 @@ public:
   static void editPropertyView(EditContext &iCtx, std::string const &iPropertyPath);
 
   static void tooltipPropertyView(EditContext &iCtx, std::string const &iPropertyPath);
+
+public:
+  Property::Filter fFilter;
 };
 
 class UIText : public String
@@ -193,9 +195,9 @@ class Value : public Attribute
 public:
   Value(Property::Filter iValueFilter, Property::Filter iValueSwitchFilter) :
     Attribute("value"),
-    fValueFilter(std::move(iValueFilter)),
-    fValueSwitchFilter(std::move(iValueSwitchFilter))
-    {}
+    fValue{"value", std::move(iValueFilter)},
+    fValueSwitch{"value_switch", std::move(iValueSwitchFilter)}
+  {}
   void hdgui2D(attribute_list_t &oAttributes) const override;
   void editView(EditContext &iCtx) override;
 
@@ -214,17 +216,15 @@ protected:
 
 public:
   bool fUseSwitch{};
-  PropertyPath fValue{"value"};
-  Property::Filter fValueFilter{};
-  PropertyPath fValueSwitch{"value_switch"};
-  Property::Filter fValueSwitchFilter{};
+  PropertyPath fValue;
+  PropertyPath fValueSwitch;
   PropertyPathList fValues{"values"};
 };
 
 class Visibility : public Attribute
 {
 public:
-  Visibility() : Attribute("visibility") {}
+  Visibility();
   void hdgui2D(attribute_list_t &oAttributes) const override;
   void editView(EditContext &iCtx) override;
 
@@ -237,7 +237,7 @@ public:
   std::unique_ptr<Attribute> clone() const override { return Attribute::clone<Visibility>(*this); }
 
 public:
-  PropertyPath fSwitch{"visibility_switch"};
+  PropertyPath fSwitch;
   DiscretePropertyValueList fValues{"visibility_values"};
 };
 
@@ -252,6 +252,31 @@ public:
 
 public:
   std::vector<std::string> const &fSelectionList;
+};
+
+class ObjectPath : public String
+{
+public:
+  explicit ObjectPath(std::string iName, re::mock::JboxObjectType iObjectType, Object::Filter iFilter = {}) :
+    String{std::move(iName)},
+    fObjectType{iObjectType},
+    fFilter{std::move(iFilter)} {}
+  void editView(EditContext &iCtx) override;
+
+  std::unique_ptr<Attribute> clone() const override { return Attribute::clone<ObjectPath>(*this); }
+
+public:
+  re::mock::JboxObjectType fObjectType;
+  Object::Filter fFilter;
+};
+
+class Socket : public ObjectPath
+{
+public:
+  explicit Socket(re::mock::JboxObjectType iSocketType, Object::Filter iFilter = {}) : ObjectPath{"socket", iSocketType, std::move(iFilter)} {}
+  void editView(EditContext &iCtx) override;
+
+  std::unique_ptr<Attribute> clone() const override { return Attribute::clone<Socket>(*this); }
 };
 
 //------------------------------------------------------------------------

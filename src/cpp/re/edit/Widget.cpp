@@ -209,6 +209,14 @@ Widget *Widget::value(Property::Filter iValueFilter, Property::Filter iValueSwit
 }
 
 //------------------------------------------------------------------------
+// Widget::socket
+//------------------------------------------------------------------------
+Widget *Widget::socket(re::mock::JboxObjectType iSocketType, Object::Filter iSocketFilter)
+{
+  return addAttribute(std::make_unique<Socket>(iSocketType, std::move(iSocketFilter)));
+}
+
+//------------------------------------------------------------------------
 // Widget::visibility
 //------------------------------------------------------------------------
 Widget *Widget::visibility()
@@ -298,6 +306,91 @@ std::unique_ptr<Widget> Widget::analog_knob()
 }
 
 //------------------------------------------------------------------------
+// Widget::audio_input_socket
+//------------------------------------------------------------------------
+std::unique_ptr<Widget> Widget::audio_input_socket()
+{
+  static const auto kSocketFilter = [](const Object &p) {
+    return p.type() == mock::JboxObjectType::kAudioInput;
+  };
+  auto w = std::make_unique<Widget>(WidgetType::kAudioInputSocket);
+  w ->socket(mock::JboxObjectType::kAudioInput, kSocketFilter)
+    ->setSize(kAudioSocketSize)
+    ;
+  w->fGraphics.fFilter = [](FilmStrip const &iFilmStrip) {
+    return iFilmStrip.frameWidth() == static_cast<int>(kAudioSocketSize.x) &&
+           iFilmStrip.frameHeight() == static_cast<int>(kAudioSocketSize.y);
+  };
+  return w;
+}
+
+//------------------------------------------------------------------------
+// Widget::audio_output_socket
+//------------------------------------------------------------------------
+std::unique_ptr<Widget> Widget::audio_output_socket()
+{
+  static const auto kSocketFilter = [](const Object &p) {
+    return p.type() == mock::JboxObjectType::kAudioOutput;
+  };
+  auto w = std::make_unique<Widget>(WidgetType::kAudioOutputSocket);
+  w ->socket(mock::JboxObjectType::kAudioOutput, kSocketFilter)
+    ->setSize(kAudioSocketSize)
+    ;
+  w->fGraphics.fFilter = [](FilmStrip const &iFilmStrip) {
+    return iFilmStrip.frameWidth() == static_cast<int>(kAudioSocketSize.x) &&
+           iFilmStrip.frameHeight() == static_cast<int>(kAudioSocketSize.y);
+  };
+  return w;
+}
+
+//------------------------------------------------------------------------
+// Widget::cv_input_socket
+//------------------------------------------------------------------------
+std::unique_ptr<Widget> Widget::cv_input_socket()
+{
+  static const auto kSocketFilter = [](const Object &p) {
+    return p.type() == mock::JboxObjectType::kCVInput;
+  };
+  auto w = std::make_unique<Widget>(WidgetType::kCVInputSocket);
+  w ->socket(mock::JboxObjectType::kCVInput, kSocketFilter)
+    ->setSize(kCVSocketSize)
+    ;
+  w->fGraphics.fFilter = [](FilmStrip const &iFilmStrip) {
+    return iFilmStrip.frameWidth() == static_cast<int>(kCVSocketSize.x) &&
+           iFilmStrip.frameHeight() == static_cast<int>(kCVSocketSize.y);
+  };
+  return w;
+}
+
+//------------------------------------------------------------------------
+// Widget::cv_output_socket
+//------------------------------------------------------------------------
+std::unique_ptr<Widget> Widget::cv_output_socket()
+{
+  static const auto kSocketFilter = [](const Object &p) {
+    return p.type() == mock::JboxObjectType::kCVOutput;
+  };
+  auto w = std::make_unique<Widget>(WidgetType::kCVOutputSocket);
+  w ->socket(mock::JboxObjectType::kCVOutput, kSocketFilter)
+    ->setSize(kCVSocketSize)
+    ;
+  w->fGraphics.fFilter = [](FilmStrip const &iFilmStrip) {
+    return iFilmStrip.frameWidth() == static_cast<int>(kCVSocketSize.x) &&
+           iFilmStrip.frameHeight() == static_cast<int>(kCVSocketSize.y);
+  };
+  return w;
+}
+
+
+//------------------------------------------------------------------------
+// Widget::device_name
+//------------------------------------------------------------------------
+std::unique_ptr<Widget> Widget::device_name()
+{
+  return std::make_unique<Widget>(WidgetType::kDeviceName);
+}
+
+//------------------------------------------------------------------------
 // Widget::static_decoration
 //------------------------------------------------------------------------
 std::unique_ptr<Widget> Widget::static_decoration()
@@ -324,20 +417,18 @@ std::unique_ptr<Widget> Widget::panel_decal()
 //------------------------------------------------------------------------
 std::unique_ptr<Widget> Widget::widget(std::string const &iType)
 {
-  std::unique_ptr<Widget> w{};
+  static std::map<std::string, std::function<std::unique_ptr<Widget>()>> kFactory{
+    { "analog_knob",         Widget::analog_knob },
+    { "audio_input_socket",  Widget::audio_input_socket },
+    { "audio_output_socket", Widget::audio_output_socket },
+    { "cv_input_socket",     Widget::cv_input_socket },
+    { "cv_output_socket",    Widget::cv_output_socket },
+    { "device_name",         Widget::device_name },
+    { "panel_decal",         Widget::panel_decal },
+    { "static_decoration",   Widget::static_decoration },
+  };
 
-  if(iType == "analog_knob")
-    w = Widget::analog_knob();
-
-  if(iType == "static_decoration")
-    w = Widget::static_decoration();
-
-  if(iType == "panel_decal")
-    w = Widget::panel_decal();
-
-  RE_EDIT_INTERNAL_ASSERT(w != nullptr);
-
-  return w;
+  return kFactory.at(iType)();
 }
 
 //------------------------------------------------------------------------

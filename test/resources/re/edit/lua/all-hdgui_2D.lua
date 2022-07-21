@@ -62,3 +62,27 @@ front = jbox.panel{
   widgets = front_widgets
 }
 
+--------------------------------------------------------------------------
+-- back_widgets
+--------------------------------------------------------------------------
+back_widgets = {}
+
+back_widgets[#back_widgets + 1] = jbox.audio_input_socket {
+  graphics = { node = "au_in_1_node", }, socket = "/audio_inputs/au_in_1",
+}
+back_widgets[#back_widgets + 1] = jbox.audio_output_socket {
+  graphics = { node = "au_out_1_node", }, socket = "/audio_outputs/au_out_1",
+}
+back_widgets[#back_widgets + 1] = jbox.cv_input_socket {
+  graphics = { node = "cv_in_1_node", }, socket = "/cv_inputs/cv_in_1",
+}
+back_widgets[#back_widgets + 1] = jbox.cv_output_socket {
+  graphics = { node = "cv_out_1_node", }, socket = "/cv_outputs/cv_out_1",
+}
+
+back = jbox.panel{
+  graphics = {
+    node = "Panel_back_bg",
+  },
+  widgets = back_widgets
+}

@@ -49,6 +49,11 @@ int PropertyManager::init(std::string const &iDirectory)
 
   fDevice = std::make_shared<rack::Extension>(fRack.newExtension(config.getConfig()));
 
+  auto objectInfos = fDevice->getObjectInfos();
+
+  for(auto const &info: objectInfos)
+    fObjects[info.fObjectPath] = Object{info};
+
   auto propertyInfos = fDevice->getPropertyInfos();
 
   for(auto const &info: propertyInfos)
@@ -62,6 +67,23 @@ int PropertyManager::init(std::string const &iDirectory)
   fDevice->disableRTCBindings();
 
   return fDevice->getDeviceInfo().fDeviceHeightRU;
+}
+
+//------------------------------------------------------------------------
+// PropertyManager::findObjects
+//------------------------------------------------------------------------
+std::vector<Object const *> PropertyManager::findObjects(Object::Filter const &iFilter) const
+{
+  std::vector<Object const *> res{};
+  if(iFilter)
+  {
+    for(auto const &[name, object]: fObjects)
+    {
+      if(iFilter(object))
+        res.emplace_back(&object);
+    }
+  }
+  return res;
 }
 
 //------------------------------------------------------------------------

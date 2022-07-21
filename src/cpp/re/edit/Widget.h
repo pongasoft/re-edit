@@ -80,9 +80,14 @@ public:
 
   std::unique_ptr<Widget> clone() const;
 
-  static std::unique_ptr<Widget> analog_knob();
-  static std::unique_ptr<Widget> static_decoration();
   static std::unique_ptr<Widget> panel_decal();
+  static std::unique_ptr<Widget> analog_knob();
+  static std::unique_ptr<Widget> audio_input_socket();
+  static std::unique_ptr<Widget> audio_output_socket();
+  static std::unique_ptr<Widget> cv_input_socket();
+  static std::unique_ptr<Widget> cv_output_socket();
+  static std::unique_ptr<Widget> device_name();
+  static std::unique_ptr<Widget> static_decoration();
   static std::unique_ptr<Widget> widget(std::string const &iType);
 
   template<typename T>
@@ -113,6 +118,7 @@ protected:
   Widget *tooltip_template();
   Widget *visibility();
   Widget *blend_mode();
+  Widget *socket(re::mock::JboxObjectType iSocketType, Object::Filter iSocketFilter);
 
 private:
   void computeDefaultWidgetName();
