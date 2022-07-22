@@ -134,9 +134,8 @@ void Panel::draw(DrawContext &iCtx)
   if(ImGui::BeginPopupContextItem())
   {
     auto widgetLocation = (ImGui::GetItemRectMin() - cp) / iCtx.fZoom;
-    ImGui::BeginDisabled(selectedWidgets.empty());
-    renderSelectedWidgetsMenu(selectedWidgets);
-    ImGui::EndDisabled();
+    if(renderSelectedWidgetsMenu(selectedWidgets, widgetLocation))
+      ImGui::Separator();
     renderAddWidgetMenu(iCtx, widgetLocation);
     ImGui::EndPopup();
   }
@@ -203,20 +202,48 @@ void Panel::renderAddWidgetMenu(EditContext &iCtx, ImVec2 const &iPosition)
 //------------------------------------------------------------------------
 // Panel::renderSelectedWidgetsMenu
 //------------------------------------------------------------------------
-void Panel::renderSelectedWidgetsMenu(std::vector<std::shared_ptr<Widget>> const &iSelectedWidgets)
+bool Panel::renderSelectedWidgetsMenu(std::vector<std::shared_ptr<Widget>> const &iSelectedWidgets,
+                                      std::optional<ImVec2> iPosition)
 {
-  if(ImGui::MenuItem("Clear Selection"))
-    clearSelection();
-  if(ImGui::MenuItem("Duplicate Widgets"))
+  bool needSeparator = false;
+
+  if(iPosition)
   {
-    for(auto const &w: iSelectedWidgets)
-      addWidget(w->clone());
+    auto widget = findWidgetOnTopAt(*iPosition);
+    if(widget)
+    {
+      if(ImGui::MenuItem(re::mock::fmt::printf("%s %s",
+                                               widget->isSelected() ? "Unselect" : "Select",
+                                               widget->getName()).c_str()))
+        widget->toggleSelection();
+      if(ImGui::MenuItem(re::mock::fmt::printf("Duplicate %s",
+                                               widget->getName()).c_str()))
+        addWidget(widget->clone());
+      if(ImGui::MenuItem(re::mock::fmt::printf("Delete %s",
+                                               widget->getName()).c_str()))
+        deleteWidget(widget->getId());
+      needSeparator = true;
+    }
   }
-  if(ImGui::MenuItem("Delete Widgets"))
+  if(!iSelectedWidgets.empty())
   {
-    for(auto const &w: iSelectedWidgets)
-      deleteWidget(w->getId());
+    if(needSeparator)
+      ImGui::Separator();
+    if(ImGui::MenuItem("Clear Selection"))
+      clearSelection();
+    if(ImGui::MenuItem("Duplicate Widgets"))
+    {
+      for(auto const &w: iSelectedWidgets)
+        addWidget(w->clone());
+    }
+    if(ImGui::MenuItem("Delete Widgets"))
+    {
+      for(auto const &w: iSelectedWidgets)
+        deleteWidget(w->getId());
+    }
+    needSeparator = true;
   }
+  return needSeparator;
 }
 
 //------------------------------------------------------------------------
@@ -284,13 +311,22 @@ std::shared_ptr<Widget> Panel::findWidgetOnTopAt(std::vector<int> const &iOrder,
 }
 
 //------------------------------------------------------------------------
-// Panel::selectWidget
+// Panel::findWidgetOnTopAt
 //------------------------------------------------------------------------
-void Panel::selectWidget(DrawContext &iCtx, ImVec2 const &iPosition, bool iMultiple)
+std::shared_ptr<Widget> Panel::findWidgetOnTopAt(ImVec2 const &iPosition) const
 {
   auto widget = findWidgetOnTopAt(fWidgetsOrder, iPosition);
   if(!widget)
     widget = findWidgetOnTopAt(fDecalsOrder, iPosition);
+  return widget;
+}
+
+//------------------------------------------------------------------------
+// Panel::selectWidget
+//------------------------------------------------------------------------
+void Panel::selectWidget(DrawContext &iCtx, ImVec2 const &iPosition, bool iMultiple)
+{
+  auto widget = findWidgetOnTopAt(iPosition);
   if(!widget)
   {
     clearSelection();

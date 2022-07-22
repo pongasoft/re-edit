@@ -79,12 +79,14 @@ protected:
 private:
   void selectWidget(DrawContext &iCtx, ImVec2 const &iPosition, bool iMultiple);
   std::shared_ptr<Widget> findWidgetOnTopAt(std::vector<int> const &iOrder, ImVec2 const &iPosition) const;
+  std::shared_ptr<Widget> findWidgetOnTopAt(ImVec2 const &iPosition) const;
   void moveWidgets(ImVec2 const &iPosition);
   void endMoveWidgets(ImVec2 const &iPosition);
   void checkWidgetForError(Widget &iWidget);
   void computeIsHidden(DrawContext &iCtx);
   void renderAddWidgetMenu(EditContext &iCtx, ImVec2 const &iPosition = {});
-  void renderSelectedWidgetsMenu(std::vector<std::shared_ptr<Widget>> const &iSelectedWidgets);
+  bool renderSelectedWidgetsMenu(std::vector<std::shared_ptr<Widget>> const &iSelectedWidgets,
+                                 std::optional<ImVec2> iPosition = std::nullopt);
 
 private:
   Type fType;
