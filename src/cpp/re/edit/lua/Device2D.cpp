@@ -133,7 +133,12 @@ void Device2D::processGfxNode(std::string const &iName, ImVec2 iOffset, panel_no
 
   if(lua_type(L, -1) == LUA_TTABLE)
   {
-    iterateLuaTable([this, &iName, &iOffset, &oPanelNodes](lua_table_key_t const &key) {
+    auto node = gfx_node{
+      .fName = iName,
+      .fPosition = iOffset
+    };
+
+    iterateLuaTable([this, &node](lua_table_key_t const &key) {
       if(std::holds_alternative<std::string>(key))
       {
         // do nothing (already handled)
@@ -143,11 +148,6 @@ void Device2D::processGfxNode(std::string const &iName, ImVec2 iOffset, panel_no
         // make sure that we have a table
         if(lua_type(L, -1) == LUA_TTABLE)
         {
-          auto node = gfx_node{
-            .fName = iName,
-            .fPosition = iOffset
-          };
-
           // check for size
           lua_getfield(L, -1, "size");
           if(lua_type(L, -1) == LUA_TTABLE)
@@ -165,11 +165,11 @@ void Device2D::processGfxNode(std::string const &iName, ImVec2 iOffset, panel_no
             node.fNumFrames = static_cast<int>(frames.value());
 
 
-          oPanelNodes.fNodes[iName] = node;
         }
       }
     }, true, false);
 
+    oPanelNodes.fNodes[iName] = node;
   }
 }
 

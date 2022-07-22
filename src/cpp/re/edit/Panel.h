@@ -50,6 +50,7 @@ public:
   void editOrderView(EditContext &iCtx);
 
   inline void setBackground(std::shared_ptr<Texture> iBackground) { fGraphics.setTexture(std::move(iBackground)); }
+  inline void setCableOrigin(ImVec2 const &iPosition) { fCableOrigin = iPosition; }
   int addWidget(std::shared_ptr<Widget> iWidget);
   std::vector<std::shared_ptr<Widget>> getSelectedWidgets() const;
   std::vector<int> getWidgetsOrder() const { return fWidgetsOrder; }
@@ -87,12 +88,16 @@ private:
   void renderAddWidgetMenu(EditContext &iCtx, ImVec2 const &iPosition = {});
   bool renderSelectedWidgetsMenu(std::vector<std::shared_ptr<Widget>> const &iSelectedWidgets,
                                  std::optional<ImVec2> iPosition = std::nullopt);
+  void drawWidgets(DrawContext &iCtx, std::vector<int> const &iOrder);
+  void drawCableOrigin(DrawContext &iCtx);
 
 private:
   Type fType;
   int fDeviceHeightRU{1};
   std::string fNodeName;
   widget::attribute::Graphics fGraphics{};
+  std::optional<ImVec2> fCableOrigin;
+  bool fShowCableOrigin{};
   std::map<int, std::shared_ptr<Widget>> fWidgets{};
   std::vector<int> fWidgetsOrder{};
   std::vector<int> fDecalsOrder{};

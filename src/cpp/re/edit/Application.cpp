@@ -76,9 +76,9 @@ void Application::initPanels(std::string const &iDevice2DFile, std::string const
   auto d2d = lua::Device2D::fromFile(iDevice2DFile);
   auto hdg = lua::HDGui2D::fromFile(iHDGui2DFile);
   initPanel(d2d->front(), hdg->front(), fFrontPanel.fPanel);
-  initPanel(d2d->foldedFront(), hdg->foldedFront(), fFoldedFrontPanel.fPanel);
+  initPanel(d2d->folded_front(), hdg->folded_front(), fFoldedFrontPanel.fPanel);
   initPanel(d2d->back(), hdg->back(), fBackPanel.fPanel);
-  initPanel(d2d->foldedBack(), hdg->foldedBack(), fFoldedBackPanel.fPanel);
+  initPanel(d2d->folded_back(), hdg->folded_back(), fFoldedBackPanel.fPanel);
 }
 
 //------------------------------------------------------------------------
@@ -107,7 +107,19 @@ void Application::initPanel(std::shared_ptr<lua::panel_nodes> const &iPanelNodes
     }
   }
 
-  // TODO handle cable origin
+  // Cable origin
+  {
+    if(iPanel->fCableOrigin)
+    {
+      auto node = iPanelNodes->findNodeByName(*iPanel->fCableOrigin);
+      if(node)
+        oPanel.setCableOrigin(node->fPosition);
+      else
+        RE_EDIT_LOG_WARNING ("Could not locate cable origin for panel [%s]", *iPanel->fCableOrigin,
+                             oPanel.getName());
+    }
+
+  }
 
   for(auto const &w: iPanel->fWidgets)
   {

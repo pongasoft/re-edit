@@ -114,6 +114,42 @@ TEST(Device2D, All)
     ASSERT_EQ("Anonymous2_path", n.fKey);
   }
 
+  auto foldedBack = d2d->folded_back();
+  offset = {};
+
+  ASSERT_EQ(3, foldedBack->fNodes.size());
+  ASSERT_EQ(0, foldedBack->fAnonymousNodes.size());
+
+  // Panel_folded_back_bg
+  {
+    auto &n = foldedBack->fNodes.at("Panel_folded_back_bg");
+    ASSERT_EQ("Panel_folded_back_bg", n.fName);
+    ASSERT_TRUE(Eq(offset, n.fPosition));
+    ASSERT_EQ("Panel_folded_back", std::get<std::string>(n.fKeyOrSize));
+    ASSERT_EQ(1, n.fNumFrames);
+  }
+
+  // DeviceName
+  {
+    auto deviceNameOffset = offset + ImVec2{1330 , 45};
+    auto &n = foldedBack->fNodes.at("DeviceName");
+    ASSERT_EQ("DeviceName", n.fName);
+    ASSERT_TRUE(Eq(deviceNameOffset, n.fPosition));
+    ASSERT_EQ("Tape_Horizontal_1frames", std::get<std::string>(n.fKeyOrSize));
+    ASSERT_EQ(1, n.fNumFrames);
+  }
+
+  // CableOrigin
+  {
+    auto cableOriginOffset = offset + ImVec2{695 , 75};
+    auto &n = foldedBack->fNodes.at("CableOrigin");
+    ASSERT_EQ("CableOrigin", n.fName);
+    ASSERT_TRUE(Eq(cableOriginOffset, n.fPosition));
+    ASSERT_FALSE(n.hasSize());
+    ASSERT_FALSE(n.hasKey());
+    ASSERT_EQ(1, n.fNumFrames);
+  }
+
   ASSERT_EQ(d2d->getStackString(), "<empty>");
 }
 

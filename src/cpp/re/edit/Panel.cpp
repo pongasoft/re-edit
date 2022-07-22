@@ -30,7 +30,8 @@ namespace re::edit {
 //------------------------------------------------------------------------
 Panel::Panel(Panel::Type iType) :
   fType{iType},
-  fNodeName{re::mock::fmt::printf("Panel_%s_bg", toString(iType))}
+  fNodeName{re::mock::fmt::printf("Panel_%s_bg", toString(iType))},
+  fCableOrigin{fType == Type::kFoldedBack ? std::optional<ImVec2>({kDevicePixelWidth / 2.0f, kFoldedDevicePixelHeight / 2.0f}) : std::nullopt }
 {
   setDeviceHeightRU(1);
 }
@@ -117,17 +118,13 @@ void Panel::draw(DrawContext &iCtx)
   ImGui::SetCursorScreenPos(cp); // InvisibleButton moves the cursor so we restore it
 
   // always draw decals first
-  for(auto id: fDecalsOrder)
-  {
-    auto &w = fWidgets[id];
-    w->draw(iCtx);
-  }
+  drawWidgets(iCtx, fDecalsOrder);
 
-  for(auto id: fWidgetsOrder)
-  {
-    auto &w = fWidgets[id];
-    w->draw(iCtx);
-  }
+  // then draws the widgets
+  drawWidgets(iCtx, fWidgetsOrder);
+
+  // then the cable origin
+  drawCableOrigin(iCtx);
 
   auto selectedWidgets = getSelectedWidgets();
 
@@ -180,6 +177,36 @@ void Panel::draw(DrawContext &iCtx)
       logging->debug("dragState", "%s", dragState.c_str());
   }
 }
+
+//------------------------------------------------------------------------
+// Panel::drawWidgets
+//------------------------------------------------------------------------
+void Panel::drawWidgets(DrawContext &iCtx, std::vector<int> const &iOrder)
+{
+  for(auto id: iOrder)
+  {
+    auto &w = fWidgets[id];
+    w->draw(iCtx);
+  }
+}
+
+//------------------------------------------------------------------------
+// Panel::drawCableOrigin
+//------------------------------------------------------------------------
+void Panel::drawCableOrigin(DrawContext &iCtx)
+{
+  static constexpr auto kCableOriginSize = 10.0f;
+  if(fShowCableOrigin && fCableOrigin)
+  {
+    iCtx.drawLine({ fCableOrigin->x - kCableOriginSize, fCableOrigin->y - kCableOriginSize},
+                  { fCableOrigin->x + kCableOriginSize, fCableOrigin->y + kCableOriginSize},
+                  iCtx.getUserPreferences().fSelectedWidgetColor);
+    iCtx.drawLine({ fCableOrigin->x - kCableOriginSize, fCableOrigin->y + kCableOriginSize},
+                  { fCableOrigin->x + kCableOriginSize, fCableOrigin->y - kCableOriginSize},
+                  iCtx.getUserPreferences().fSelectedWidgetColor);
+  }
+}
+
 
 //------------------------------------------------------------------------
 // Panel::renderAddWidgetMenu
@@ -510,6 +537,19 @@ void Panel::editView(EditContext &iCtx)
 
         fGraphics.editView(iCtx);
 
+        if(fCableOrigin)
+        {
+          if(ImGui::TreeNode("Cable Origin"))
+          {
+            fShowCableOrigin = true;
+            ReGui::InputInt("x", &fCableOrigin->x, 1, 5);
+            ReGui::InputInt("y", &fCableOrigin->y, 1, 5);
+            ImGui::TreePop();
+          }
+          else
+            fShowCableOrigin = false;
+        }
+
         if(ImGui::TreeNode("hdgui2D"))
         {
           auto windowSize = ImGui::GetWindowSize();
@@ -689,7 +729,10 @@ std::string Panel::hdgui2D() const
     s << re::mock::fmt::printf("%s[#%s + 1] = %s\n", arrayName, arrayName, w->hdgui2D());
   }
 
-  s << re::mock::fmt::printf("%s = jbox.panel{ graphics = { node = \"%s\" }, widgets = %s }\n", panelName, fNodeName, arrayName);
+  if(fCableOrigin)
+    s << re::mock::fmt::printf("%s = jbox.panel{ graphics = { node = \"%s\" }, cable_origin = { node = \"CableOrigin\" }, widgets = %s }\n", panelName, fNodeName, arrayName);
+  else
+    s << re::mock::fmt::printf("%s = jbox.panel{ graphics = { node = \"%s\" }, widgets = %s }\n", panelName, fNodeName, arrayName);
 
   return s.str();
 }
@@ -719,6 +762,9 @@ std::string Panel::device2D() const
     auto const &w = fWidgets.at(id);
     s << re::mock::fmt::printf("%s[\"%s\"] = %s\n", panelName, w->fName, w->device2D());
   }
+  if(fCableOrigin)
+    s << re::mock::fmt::printf("%s[\"CableOrigin\"] = {offset = {%d, %d}}\n", panelName,
+                               static_cast<int>(fCableOrigin->x), static_cast<int>(fCableOrigin->y));
 
   return s.str();
 }
@@ -765,7 +811,5 @@ void Panel::setDeviceHeightRU(int iDeviceHeightRU)
     return f.width() == kDevicePixelWidth && f.height() == h;
   };
 }
-
-
 
 }

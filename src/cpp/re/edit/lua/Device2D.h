@@ -29,7 +29,7 @@ struct gfx_node
 {
   std::string fName{};
   ImVec2 fPosition{};
-  std::variant<std::string, ImVec2> fKeyOrSize{};
+  std::variant<std::monostate, std::string, ImVec2> fKeyOrSize{};
   int fNumFrames{1};
 
   bool hasKey() const { return std::holds_alternative<std::string>(fKeyOrSize); }
@@ -59,9 +59,9 @@ public:
   Device2D() = default;
 
   std::shared_ptr<panel_nodes> front() const { return getPanelNodes("front"); }
-  std::shared_ptr<panel_nodes> foldedFront() const { return getPanelNodes("folded_front"); }
+  std::shared_ptr<panel_nodes> folded_front() const { return getPanelNodes("folded_front"); }
   std::shared_ptr<panel_nodes> back() const { return getPanelNodes("back"); }
-  std::shared_ptr<panel_nodes> foldedBack() const { return getPanelNodes("folded_back"); }
+  std::shared_ptr<panel_nodes> folded_back() const { return getPanelNodes("folded_back"); }
 
   static std::unique_ptr<Device2D> fromFile(std::string const &iLuaFilename);
 

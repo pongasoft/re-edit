@@ -26,3 +26,15 @@ front = {
   }
  }
 }
+
+--------------------------------------------------------------------------
+-- folded_back (cable origin)
+--------------------------------------------------------------------------
+folded_back = {
+    Panel_folded_back_bg = {
+        { path = "Panel_folded_back" }
+    },
+}
+
+folded_back['DeviceName'] = { offset = { 1330, 45 }, { path = 'Tape_Horizontal_1frames' } }
+folded_back['CableOrigin'] = { offset = { 695, 75 } }
