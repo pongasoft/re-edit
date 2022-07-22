@@ -227,6 +227,23 @@ void Panel::renderAddWidgetMenu(EditContext &iCtx, ImVec2 const &iPosition)
 }
 
 //------------------------------------------------------------------------
+// Panel::renderWidgetMenu
+//------------------------------------------------------------------------
+void Panel::renderWidgetMenu(std::shared_ptr<Widget> const &iWidget)
+{
+  if(ImGui::MenuItem(re::mock::fmt::printf("%s %s",
+                                           iWidget->isSelected() ? "Unselect" : "Select",
+                                           iWidget->getName()).c_str()))
+    iWidget->toggleSelection();
+  if(ImGui::MenuItem(re::mock::fmt::printf("Duplicate %s",
+                                           iWidget->getName()).c_str()))
+    addWidget(iWidget->clone());
+  if(ImGui::MenuItem(re::mock::fmt::printf("Delete %s",
+                                           iWidget->getName()).c_str()))
+    deleteWidget(iWidget->getId());
+}
+
+//------------------------------------------------------------------------
 // Panel::renderSelectedWidgetsMenu
 //------------------------------------------------------------------------
 bool Panel::renderSelectedWidgetsMenu(std::vector<std::shared_ptr<Widget>> const &iSelectedWidgets,
@@ -234,39 +251,46 @@ bool Panel::renderSelectedWidgetsMenu(std::vector<std::shared_ptr<Widget>> const
 {
   bool needSeparator = false;
 
+  std::shared_ptr<Widget> widget{};
+
   if(iPosition)
   {
-    auto widget = findWidgetOnTopAt(*iPosition);
+    widget = findWidgetOnTopAt(*iPosition);
     if(widget)
     {
-      if(ImGui::MenuItem(re::mock::fmt::printf("%s %s",
-                                               widget->isSelected() ? "Unselect" : "Select",
-                                               widget->getName()).c_str()))
-        widget->toggleSelection();
-      if(ImGui::MenuItem(re::mock::fmt::printf("Duplicate %s",
-                                               widget->getName()).c_str()))
-        addWidget(widget->clone());
-      if(ImGui::MenuItem(re::mock::fmt::printf("Delete %s",
-                                               widget->getName()).c_str()))
-        deleteWidget(widget->getId());
+      renderWidgetMenu(widget);
       needSeparator = true;
     }
   }
   if(!iSelectedWidgets.empty())
   {
-    if(needSeparator)
-      ImGui::Separator();
-    if(ImGui::MenuItem("Clear Selection"))
-      clearSelection();
-    if(ImGui::MenuItem("Duplicate Widgets"))
+    if(iSelectedWidgets.size() == 1)
     {
-      for(auto const &w: iSelectedWidgets)
-        addWidget(w->clone());
+      if(iSelectedWidgets[0] != widget)
+      {
+        if(needSeparator)
+          ImGui::Separator();
+
+        renderWidgetMenu(iSelectedWidgets[0]);
+      }
     }
-    if(ImGui::MenuItem("Delete Widgets"))
+    else
     {
-      for(auto const &w: iSelectedWidgets)
-        deleteWidget(w->getId());
+      if(needSeparator)
+        ImGui::Separator();
+
+      if(ImGui::MenuItem("Clear Selection"))
+        clearSelection();
+      if(ImGui::MenuItem("Duplicate Widgets"))
+      {
+        for(auto const &w: iSelectedWidgets)
+          addWidget(w->clone());
+      }
+      if(ImGui::MenuItem("Delete Widgets"))
+      {
+        for(auto const &w: iSelectedWidgets)
+          deleteWidget(w->getId());
+      }
     }
     needSeparator = true;
   }

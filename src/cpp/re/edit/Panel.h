@@ -88,6 +88,7 @@ private:
   void renderAddWidgetMenu(EditContext &iCtx, ImVec2 const &iPosition = {});
   bool renderSelectedWidgetsMenu(std::vector<std::shared_ptr<Widget>> const &iSelectedWidgets,
                                  std::optional<ImVec2> iPosition = std::nullopt);
+  void renderWidgetMenu(std::shared_ptr<Widget> const &iWidget);
   void drawWidgets(DrawContext &iCtx, std::vector<int> const &iOrder);
   void drawCableOrigin(DrawContext &iCtx);
 
