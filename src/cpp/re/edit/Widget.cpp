@@ -76,7 +76,7 @@ void Widget::draw(DrawContext &iCtx)
     borderColor = iCtx.getUserPreferences().fSelectedWidgetColor;
   else
   {
-    if(iCtx.fShowWidgetBorder)
+    if(iCtx.fShowBorder == DrawContext::ShowBorder::kWidget)
       borderColor = iCtx.getUserPreferences().fWidgetBorderColor;
   }
 
@@ -130,6 +130,9 @@ void Widget::editView(EditContext &iCtx)
                          fFrameNumber = 0;
                        }
     );
+    ImGui::Indent();
+    fGraphics.editHitBoundariesView(iCtx);
+    ImGui::Unindent();
     ImGui::PopID();
 
     for(auto &w: fAttributes)

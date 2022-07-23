@@ -49,7 +49,16 @@ void PanelState::render()
     ImGui::SameLine();
     ImGui::Text("%d%%", static_cast<int>(fDrawContext.fZoom * 100));
 
-    ImGui::Checkbox("Show Widget Border", &fDrawContext.fShowWidgetBorder);
+    ImGui::Text("Show Border");
+    ImGui::SameLine();
+    if(ImGui::RadioButton("None", fDrawContext.fShowBorder == EditContext::ShowBorder::kNone))
+      fDrawContext.fShowBorder = EditContext::ShowBorder::kNone;
+    ImGui::SameLine();
+    if(ImGui::RadioButton("Widget", fDrawContext.fShowBorder == EditContext::ShowBorder::kWidget))
+      fDrawContext.fShowBorder = EditContext::ShowBorder::kWidget;
+    ImGui::SameLine();
+    if(ImGui::RadioButton("Hit Boundaries", fDrawContext.fShowBorder == EditContext::ShowBorder::kHitBoundaries))
+      fDrawContext.fShowBorder = EditContext::ShowBorder::kHitBoundaries;
 
     ReGui::ToggleButton("Show Panel", "Hide Panel", &fShowPanel);
     ImGui::SameLine();

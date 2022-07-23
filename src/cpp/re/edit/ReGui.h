@@ -66,6 +66,26 @@ inline bool InputInt(const char* label, float* v, int step = 1, int step_fast = 
 }
 
 //------------------------------------------------------------------------
+// ReGui::SliderInt2
+// Handle float <-> int conversion
+//------------------------------------------------------------------------
+inline bool SliderInt2(const char* label, float *v[2], int v_min, int v_max, const char* format = "%d", ImGuiSliderFlags flags = 0)
+{
+  int ar[] = { static_cast<int>(std::round(*v[0])), static_cast<int>(std::round(*v[1]))};
+
+  if(ImGui::SliderInt2(label, ar, v_min, v_max, format, flags))
+  {
+    *v[0] = static_cast<float>(ar[0]);
+    *v[1] = static_cast<float>(ar[1]);
+    return true;
+  }
+
+  return false;
+}
+
+
+
+//------------------------------------------------------------------------
 // ReGui::ToggleButton
 // Behaves like a checkbox but with a shape of a toggle
 //------------------------------------------------------------------------

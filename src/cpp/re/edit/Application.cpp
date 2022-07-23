@@ -142,6 +142,9 @@ void Application::initPanel(std::shared_ptr<lua::panel_nodes> const &iPanelNodes
       if(node->hasSize())
         widget->setSize(node->getSize());
 
+      if(w->fGraphics.fHitBoundaries)
+        widget->setHitBoundaries(*w->fGraphics.fHitBoundaries);
+
       widget->setPosition(node->fPosition);
       widget->setName(node->fName);
     }

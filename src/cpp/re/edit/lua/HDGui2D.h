@@ -29,7 +29,7 @@ namespace re::edit::lua {
 
 struct graphics_t {
   std::string fNode;
-  // TODO hit_boundaries
+  std::optional<HitBoundaries> fHitBoundaries{};
 };
 
 struct jbox_widget

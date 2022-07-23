@@ -22,6 +22,7 @@ front_widgets[#front_widgets + 1] = jbox.analog_knob {
 front_widgets[#front_widgets + 1] = jbox.analog_knob {
   graphics = {
     node = "ak2_node",
+    hit_boundaries = { top = 1, bottom = 2, left = 3, right = 4 }
   },
   value_switch = "/ak2_switch",
   values = { "/ak2_v1", "/ak2_v2" },

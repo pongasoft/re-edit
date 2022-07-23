@@ -247,6 +247,7 @@ TEST(HDGui2D, All)
   {
     auto w = front->fWidgets[id++];
     ASSERT_EQ("ak1_node", w->fGraphics.fNode);
+    ASSERT_EQ(std::nullopt, w->fGraphics.fHitBoundaries);
     ASSERT_THAT(w, HasValue("/ak1"));
     ASSERT_THAT(w, HasNoVisibility());
     ASSERT_THAT(w, HasTooltipPosition());
@@ -259,6 +260,7 @@ TEST(HDGui2D, All)
   {
     auto w = front->fWidgets[id++];
     ASSERT_EQ("ak2_node", w->fGraphics.fNode);
+    ASSERT_EQ((HitBoundaries{ 3, 1, 4, 2}), w->fGraphics.fHitBoundaries.value());
     ASSERT_THAT(w, HasValueSwitch("/ak2_switch", {"/ak2_v1", "/ak2_v2"}));
     ASSERT_THAT(w, HasNoVisibility());
     ASSERT_THAT(w, HasTooltipPosition("top"));

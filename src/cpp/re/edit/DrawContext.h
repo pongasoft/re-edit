@@ -60,7 +60,6 @@ public: // Texture
 
 public:
   float fZoom{0.20f};
-  bool fShowWidgetBorder{};
 };
 
 }

@@ -33,6 +33,14 @@ class PanelState;
 class EditContext
 {
 public:
+  enum class ShowBorder
+  {
+    kNone,
+    kWidget,
+    kHitBoundaries
+  };
+
+public:
   EditContext() = default;
 
   inline std::vector<Object const *> findObjects(Object::Filter const &iFilter) const { return fPropertyManager->findObjects(iFilter); }
@@ -56,6 +64,9 @@ public:
   inline std::shared_ptr<Texture> getTexture(std::string const &iKey) const { return fTextureManager->getTexture(iKey); };
 
   friend class PanelState;
+
+public:
+  ShowBorder fShowBorder{ShowBorder::kNone};
 
 protected:
   PanelState *fPanelState{};

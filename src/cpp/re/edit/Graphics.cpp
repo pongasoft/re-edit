@@ -18,6 +18,28 @@
 
 #include "Graphics.h"
 
+namespace re::edit {
+
+//------------------------------------------------------------------------
+// HitBoundaries::operator==
+//------------------------------------------------------------------------
+bool operator==(HitBoundaries const &lhs, HitBoundaries const &rhs)
+{
+  return lhs.fLeftInset == rhs.fLeftInset &&
+         lhs.fTopInset == rhs.fTopInset &&
+         lhs.fRightInset == rhs.fRightInset &&
+         lhs.fBottomInset == rhs.fBottomInset;
+}
+
+//------------------------------------------------------------------------
+// HitBoundaries::operator!=
+//------------------------------------------------------------------------
+bool operator!=(HitBoundaries const &lhs, HitBoundaries const &rhs)
+{
+  return !(rhs == lhs);
+}
+
+}
 namespace re::edit::widget::attribute {
 
 //------------------------------------------------------------------------
@@ -26,13 +48,26 @@ namespace re::edit::widget::attribute {
 void Graphics::draw(DrawContext &iCtx, int iFrameNumber, ImVec4 const &iBorderCol) const
 {
   if(hasTexture())
-    iCtx.drawTexture(getTexture(), fPosition, iFrameNumber, iBorderCol);
+    iCtx.drawTexture(getTexture(), fPosition, iFrameNumber);
   else
-  {
     iCtx.drawRectFilled(fPosition, getSize(), ImVec4{1, 0, 0, 1});
-    if(iBorderCol.w > 0.0f)
-      iCtx.drawRect(fPosition, getSize(), iBorderCol);
-  }
+
+  if(iCtx.fShowBorder == EditContext::ShowBorder::kHitBoundaries)
+    drawHitBoundaries(iCtx, kHitBoundariesColor);
+
+  if(iBorderCol.w > 0.0f)
+    iCtx.drawRect(fPosition, getSize(), iBorderCol);
+}
+
+//------------------------------------------------------------------------
+// Graphics::drawHitBoundaries
+//------------------------------------------------------------------------
+void Graphics::drawHitBoundaries(DrawContext &iCtx, ImVec4 const &iColor) const
+{
+  iCtx.drawRect(fPosition + ImVec2{fHitBoundaries.fLeftInset, fHitBoundaries.fTopInset},
+                getSize() - ImVec2{fHitBoundaries.fLeftInset + fHitBoundaries.fRightInset,
+                                   fHitBoundaries.fTopInset + fHitBoundaries.fBottomInset},
+                iColor);
 }
 
 //------------------------------------------------------------------------
@@ -100,12 +135,28 @@ void Graphics::editView(EditContext &iCtx)
 }
 
 //------------------------------------------------------------------------
+// Graphics::editHitBoundariesView
+//------------------------------------------------------------------------
+void Graphics::editHitBoundariesView(EditContext &iCtx)
+{
+  if(iCtx.fShowBorder == EditContext::ShowBorder::kHitBoundaries)
+  {
+    float *tb[] = { &fHitBoundaries.fTopInset, &fHitBoundaries.fBottomInset };
+    ReGui::SliderInt2("hit_boundaries - Top | Bottom", tb, 0, static_cast<int>(getSize().y), "inset: %d", ImGuiSliderFlags_AlwaysClamp);
+
+    float *lr[] = { &fHitBoundaries.fLeftInset, &fHitBoundaries.fRightInset };
+    ReGui::SliderInt2("hit_boundaries - Left | Right", lr, 0, static_cast<int>(getSize().x), "inset: %d", ImGuiSliderFlags_AlwaysClamp);
+  }
+}
+
+//------------------------------------------------------------------------
 // Graphics::reset
 //------------------------------------------------------------------------
 void Graphics::reset()
 {
   fSize = fTexture ? fTexture->frameSize() : ImVec2{100, 100};
   fTexture = nullptr;
+  fHitBoundaries = {};
 }
 
 //------------------------------------------------------------------------
@@ -113,7 +164,18 @@ void Graphics::reset()
 //------------------------------------------------------------------------
 void Graphics::hdgui2D(std::string const &iNodeName, attribute_list_t &oAttributes) const
 {
-  oAttributes.emplace_back(attribute_t{fName, re::mock::fmt::printf("{ node = { \"%s\" } }", iNodeName)});
+  if(hasHitBoundaries())
+  {
+    oAttributes.emplace_back(attribute_t{fName, re::mock::fmt::printf("{ node = { \"%s\" }, hit_boundaries = { left = %d, top = %d, right = %d, bottom = %d }}",
+                                                                      iNodeName,
+                                                                      static_cast<int>(fHitBoundaries.fLeftInset),
+                                                                      static_cast<int>(fHitBoundaries.fTopInset),
+                                                                      static_cast<int>(fHitBoundaries.fRightInset),
+                                                                      static_cast<int>(fHitBoundaries.fBottomInset)
+                                                                      )});
+  }
+  else
+    oAttributes.emplace_back(attribute_t{fName, re::mock::fmt::printf("{ node = { \"%s\" } }", iNodeName)});
 }
 
 //------------------------------------------------------------------------

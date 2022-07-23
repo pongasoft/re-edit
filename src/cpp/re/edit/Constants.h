@@ -56,6 +56,8 @@ constexpr int k1UPixelSize = 345;
 constexpr int kDevicePixelWidth = 3770;
 constexpr int kFoldedDevicePixelHeight = 150;
 
+constexpr auto kHitBoundariesColor = ImVec4{ 60.0f / 255.0f, 1.0f, 2.0f / 255.0f, 1};
+
 constexpr auto kAudioSocketSize = ImVec2{95, 105};
 constexpr auto kCVSocketSize = ImVec2{80, 90};
 

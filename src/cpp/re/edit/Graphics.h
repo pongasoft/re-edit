@@ -21,6 +21,21 @@
 
 #include "WidgetAttribute.h"
 
+namespace re::edit {
+
+struct HitBoundaries
+{
+  friend bool operator==(HitBoundaries const &lhs, HitBoundaries const &rhs);
+  friend bool operator!=(HitBoundaries const &lhs, HitBoundaries const &rhs);
+
+  float fLeftInset{};
+  float fTopInset{};
+  float fRightInset{};
+  float fBottomInset{};
+};
+
+}
+
 namespace re::edit::widget::attribute {
 
 class Graphics : public Attribute
@@ -46,6 +61,9 @@ public:
 
   constexpr void setPosition(ImVec2 const &iPosition) { fPosition = iPosition; }
 
+  constexpr void setHitBoundaries(HitBoundaries const &iHitBoundaries) { fHitBoundaries = iHitBoundaries; }
+  constexpr bool hasHitBoundaries() const { return fHitBoundaries.fLeftInset > 0 || fHitBoundaries.fTopInset > 0 || fHitBoundaries.fRightInset > 0 || fHitBoundaries.fBottomInset > 0; }
+
   constexpr void move(ImVec2 const &iDelta) { fPosition = fPosition + iDelta; }
 
   constexpr bool hasTexture() const { return getTexture() != nullptr; }
@@ -56,6 +74,7 @@ public:
   void reset() override;
 
   void editView(EditContext &iCtx) override;
+  void editHitBoundariesView(EditContext &iCtx);
 
   void editView(EditContext &iCtx,
                 FilmStrip::Filter const &iFilter,
@@ -64,11 +83,13 @@ public:
                 std::function<void(ImVec2 const &)> const &iOnSizeUpdate) const;
 
   void draw(DrawContext &iCtx, int iFrameNumber, const ImVec4& iBorderCol) const;
+  void drawHitBoundaries(DrawContext &iCtx, const ImVec4& iColor) const;
 
   std::unique_ptr<Attribute> clone() const override { return Attribute::clone<Graphics>(*this); }
 
 public:
   ImVec2 fPosition{};
+  HitBoundaries fHitBoundaries{};
   std::shared_ptr<Texture> fTexture{};
   ImVec2 fSize{100, 100};
   FilmStrip::Filter fFilter{};

@@ -314,6 +314,14 @@ void HDGui2D::populateGraphics(std::shared_ptr<jbox_widget> &oWidget)
   withField(1, "graphics", LUA_TTABLE, [this, &oWidget]() {
     auto node = L.getTableValueAsString("node");
     oWidget->fGraphics.fNode = L.getTableValueAsString("node");
+    withField(-1, "hit_boundaries", LUA_TTABLE, [this, &oWidget]() {
+      HitBoundaries hb{};
+      hb.fTopInset = static_cast<float>(L.getTableValueAsInteger("top"));
+      hb.fBottomInset = static_cast<float>(L.getTableValueAsInteger("bottom"));
+      hb.fLeftInset = static_cast<float>(L.getTableValueAsInteger("left"));
+      hb.fRightInset = static_cast<float>(L.getTableValueAsInteger("right"));
+      oWidget->fGraphics.fHitBoundaries = hb;
+    });
   });
 }
 

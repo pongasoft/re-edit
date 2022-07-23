@@ -59,6 +59,8 @@ public:
   constexpr bool isError() const { return fError; };
   constexpr void setError(bool iError) { fError = iError; };
 
+  constexpr void setHitBoundaries(HitBoundaries const &iHitBoundaries) { fGraphics.setHitBoundaries(iHitBoundaries); }
+
   constexpr void move(ImVec2 const &iDelta) { fGraphics.move(iDelta); }
 
   inline void setTexture(std::shared_ptr<Texture> iTexture) { fGraphics.setTexture(std::move(iTexture)); }
