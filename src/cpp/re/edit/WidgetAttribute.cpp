@@ -161,8 +161,13 @@ void Value::editView(EditContext &iCtx)
                           },
                           [this](auto &iCtx) { editValueView(iCtx); },
                           [this](auto &iCtx) { tooltipView(iCtx); });
-    ImGui::SameLine();
-    ImGui::Checkbox("S", &fUseSwitch);
+    if(ImGui::BeginPopup("Menu"))
+    {
+      ImGui::Separator();
+      if(ImGui::MenuItem("Use value"))
+        fUseSwitch = false;
+      ImGui::EndPopup();
+    }
     ImGui::Indent();
     fValues.editStaticListView(iCtx,
                                fValue.fFilter,
@@ -182,8 +187,13 @@ void Value::editView(EditContext &iCtx)
                     },
                     [this](auto &iCtx) { fValue.editPropertyView(iCtx); },
                     [this](auto &iCtx) { fValue.tooltipPropertyView(iCtx); });
-    ImGui::SameLine();
-    ImGui::Checkbox("S", &fUseSwitch);
+    if(ImGui::BeginPopup("Menu"))
+    {
+      ImGui::Separator();
+      if(ImGui::MenuItem("Use value_switch"))
+        fUseSwitch = true;
+      ImGui::EndPopup();
+    }
   }
 
   ImGui::EndGroup();
@@ -475,13 +485,13 @@ void PropertyPath::menuView(EditContext &iCtx,
 
   if(ImGui::BeginPopup("Menu"))
   {
-    if(ImGui::Selectable("Reset"))
+    if(ImGui::MenuItem("Reset"))
       iOnReset();
 
     ImGui::BeginDisabled(iPropertyPath.empty());
-    if(ImGui::Selectable("Watch"))
+    if(ImGui::MenuItem("Watch"))
       iCtx.addPropertyToWatchlist(iPropertyPath);
-    if(ImGui::Selectable("Edit"))
+    if(ImGui::MenuItem("Edit"))
       ImGui::OpenPopup(editPopupId);
     ImGui::EndDisabled();
 
