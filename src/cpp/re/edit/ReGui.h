@@ -83,8 +83,6 @@ inline bool SliderInt2(const char* label, float *v[2], int v_min, int v_max, con
   return false;
 }
 
-
-
 //------------------------------------------------------------------------
 // ReGui::ToggleButton
 // Behaves like a checkbox but with a shape of a toggle
@@ -94,6 +92,21 @@ inline bool ToggleButton(char const *iFalseLabel, char const *iTrueLabel, bool* 
   if(ImGui::Button(*v ? iTrueLabel : iFalseLabel, size))
   {
     *v = !*v;
+    return true;
+  }
+  return false;
+}
+
+//------------------------------------------------------------------------
+// ReGui::RadioButton
+// With a better api
+//------------------------------------------------------------------------
+template<typename T>
+inline bool RadioButton(char const *iLabel, T *ioCurrentValue, T iSelectedValue)
+{
+  if(ImGui::RadioButton(iLabel, *ioCurrentValue == iSelectedValue))
+  {
+    *ioCurrentValue = iSelectedValue;
     return true;
   }
   return false;
