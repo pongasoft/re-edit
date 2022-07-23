@@ -53,7 +53,12 @@ struct jbox_ui_text
   std::string fText{};
 };
 
-using jbox_object = std::variant<jbox_ignored, std::shared_ptr<jbox_widget>, std::shared_ptr<jbox_panel>, jbox_ui_text>;
+struct jbox_image
+{
+  std::string fPath;
+};
+
+using jbox_object = std::variant<jbox_ignored, std::shared_ptr<jbox_widget>, jbox_ui_text, jbox_image>;
 
 }
 
@@ -69,9 +74,11 @@ public:
   int luaCVInputSocket();
   int luaCVOutputSocket();
   int luaDeviceName();
+  int luaImage();
   int luaStaticDecoration();
-  int luaIgnored();
   int luaUIText();
+
+  int luaIgnored();
 
   static std::unique_ptr<HDGui2D> fromFile(std::string const &iLuaFilename);
 

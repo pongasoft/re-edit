@@ -38,7 +38,7 @@ static int lua_cv_input_socket(lua_State *L) { return HDGui2D::loadFromRegistry(
 static int lua_cv_output_socket(lua_State *L) { return HDGui2D::loadFromRegistry(L)->luaCVOutputSocket(); }
 static int lua_cv_trim_knob(lua_State *L) { RE_MOCK_LOG_WARNING("cv_trim_knob not implemented yet"); return HDGui2D::loadFromRegistry(L)->luaIgnored(); }
 static int lua_device_name(lua_State *L) { return HDGui2D::loadFromRegistry(L)->luaDeviceName(); }
-static int lua_image(lua_State *L) { RE_MOCK_LOG_WARNING("image not implemented yet"); return HDGui2D::loadFromRegistry(L)->luaIgnored(); }
+static int lua_image(lua_State *L) { return HDGui2D::loadFromRegistry(L)->luaImage(); }
 static int lua_momentary_button(lua_State *L) { RE_MOCK_LOG_WARNING("momentary_button not implemented yet"); return HDGui2D::loadFromRegistry(L)->luaIgnored(); }
 static int lua_patch_browse_group(lua_State *L) { RE_MOCK_LOG_WARNING("patch_browse_group not implemented yet"); return HDGui2D::loadFromRegistry(L)->luaIgnored(); }
 static int lua_patch_name(lua_State *L) { RE_MOCK_LOG_WARNING("patch_name not implemented yet"); return HDGui2D::loadFromRegistry(L)->luaIgnored(); }
@@ -201,6 +201,17 @@ int HDGui2D::luaUIText()
   int t = lua_type(L, 1);
   luaL_argexpected(L, t == LUA_TSTRING, 1, "jbox.ui_text() is expecting a string argument");
   return addObjectOnTopOfStack(impl::jbox_ui_text{lua_tostring(L, 1)});
+}
+
+//------------------------------------------------------------------------
+// HDGui2D::luaImage
+//------------------------------------------------------------------------
+int HDGui2D::luaImage()
+{
+  RE_EDIT_ASSERT(lua_gettop(L) == 1, "jbox.image() is expecting 1 argument");
+  int t = lua_type(L, 1);
+  luaL_argexpected(L, t == LUA_TTABLE, 1, "jbox.image() is expecting a table argument");
+  return addObjectOnTopOfStack(impl::jbox_image{L.getTableValueAsString("path", 1)});
 }
 
 //------------------------------------------------------------------------
@@ -499,20 +510,13 @@ std::shared_ptr<jbox_widget> toWidget(std::optional<impl::jbox_object> iObject)
 //------------------------------------------------------------------------
 int HDGui2D::luaPanel()
 {
-  auto p = std::make_shared<jbox_panel>();
-  if(checkTableArg())
-  {
-    withField(1, "graphics", LUA_TTABLE, [this, p]() { p->fGraphicsNode = L.getTableValueAsString("node"); });
-    withField(1, "cable_origin", LUA_TTABLE, [this, p]() { p->fCableOrigin = L.getTableValueAsString("node"); });
-    withField(1, "widgets", LUA_TTABLE, [this, p]() {
-      iterateLuaTable([this, p](lua_table_key_t const &key) {
-        auto widget = toWidget(getObjectOnTopOfStack());
-        if(widget)
-          p->fWidgets.emplace_back(std::move(widget));
-      }, false);
-    });
-  }
-  return addObjectOnTopOfStack(std::move(p));
+  // Implementation note: we "delay" the processing of the map until when it is needed because there are cases
+  // when the map argument is modified after calling jbox.panel() and it is a valid use case in Render2D
+  // As a result this function simply returns the map that was provided as an argument (after making sure it is a map)
+  RE_EDIT_ASSERT(lua_gettop(L) == 1, "jbox.panel() is expecting 1 argument");
+  int t = lua_type(L, 1);
+  luaL_argexpected(L, t == LUA_TTABLE, 1, "jbox.panel() is expecting a table argument");
+  return 1;
 }
 
 //------------------------------------------------------------------------
@@ -532,9 +536,20 @@ std::shared_ptr<jbox_panel> HDGui2D::getPanel(char const *iPanelName)
 {
   if(lua_getglobal(L, iPanelName) != LUA_TNIL)
   {
-    auto o = getObjectOnTopOfStack();
-    if(o && std::holds_alternative<std::shared_ptr<jbox_panel>>(o.value()))
-      return std::get<std::shared_ptr<jbox_panel>>(o.value());
+    auto p = std::make_shared<jbox_panel>();
+    if(checkTableArg())
+    {
+      withField(1, "graphics", LUA_TTABLE, [this, p]() { p->fGraphicsNode = L.getTableValueAsString("node"); });
+      withField(1, "cable_origin", LUA_TTABLE, [this, p]() { p->fCableOrigin = L.getTableValueAsString("node"); });
+      withField(1, "widgets", LUA_TTABLE, [this, p]() {
+        iterateLuaTable([this, p](lua_table_key_t const &key) {
+          auto widget = toWidget(getObjectOnTopOfStack());
+          if(widget)
+            p->fWidgets.emplace_back(std::move(widget));
+        }, false);
+      });
+    }
+    return p;
   }
 
   return nullptr;
