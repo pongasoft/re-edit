@@ -84,12 +84,12 @@ set(re-edit_BUILD_SOURCES
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/TextureManager.h"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/TextureManager.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/UserPreferences.h"
-    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/View.h"
+    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/Views.h"
+    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/Views.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/Widget.h"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/Widget.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/WidgetAttribute.h"
-    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/WidgetAttribute.cpp"
-    )
+    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/WidgetAttribute.cpp")
 
 # Defines the macos main
 if(APPLE)

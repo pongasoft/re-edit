@@ -212,6 +212,14 @@ Widget *Widget::value(Property::Filter iValueFilter, Property::Filter iValueSwit
 }
 
 //------------------------------------------------------------------------
+// Widget::values
+//------------------------------------------------------------------------
+Widget *Widget::values(Property::Filter iValuesFilter)
+{
+  return addAttribute(std::make_unique<PropertyPathList>("values", std::move(iValuesFilter)));
+}
+
+//------------------------------------------------------------------------
 // Widget::socket
 //------------------------------------------------------------------------
 Widget *Widget::socket(re::mock::JboxObjectType iSocketType, Object::Filter iSocketFilter)
@@ -347,6 +355,23 @@ std::unique_ptr<Widget> Widget::audio_output_socket()
 }
 
 //------------------------------------------------------------------------
+// Widget::custom_display
+//------------------------------------------------------------------------
+std::unique_ptr<Widget> Widget::custom_display()
+{
+  static const auto kValuesFilter = [](const Property &p) {
+    return (p.type() == kJBox_Boolean || p.type() == kJBox_Number || p.type() == kJBox_String);
+  };
+  auto w = std::make_unique<Widget>(WidgetType::kCustomDisplay);
+  w ->values(kValuesFilter)
+    ->show_remote_box()
+    ->show_automation_rect()
+    ;
+  w->disableHitBoundaries();
+  return w;
+}
+
+//------------------------------------------------------------------------
 // Widget::cv_input_socket
 //------------------------------------------------------------------------
 std::unique_ptr<Widget> Widget::cv_input_socket()
@@ -420,10 +445,11 @@ std::unique_ptr<Widget> Widget::panel_decal()
 //------------------------------------------------------------------------
 std::unique_ptr<Widget> Widget::widget(std::string const &iType)
 {
-  static std::map<std::string, std::function<std::unique_ptr<Widget>()>> kFactory{
+  static const std::map<std::string, std::function<std::unique_ptr<Widget>()>> kFactory{
     { "analog_knob",         Widget::analog_knob },
     { "audio_input_socket",  Widget::audio_input_socket },
     { "audio_output_socket", Widget::audio_output_socket },
+    { "custom_display",      Widget::custom_display },
     { "cv_input_socket",     Widget::cv_input_socket },
     { "cv_output_socket",    Widget::cv_output_socket },
     { "device_name",         Widget::device_name },

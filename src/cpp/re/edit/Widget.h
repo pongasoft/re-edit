@@ -60,6 +60,7 @@ public:
   constexpr void setError(bool iError) { fError = iError; };
 
   constexpr void setHitBoundaries(HitBoundaries const &iHitBoundaries) { fGraphics.setHitBoundaries(iHitBoundaries); }
+  constexpr void disableHitBoundaries() { fGraphics.fHitBoundariesEnabled = false; }
 
   constexpr void move(ImVec2 const &iDelta) { fGraphics.move(iDelta); }
 
@@ -86,6 +87,7 @@ public:
   static std::unique_ptr<Widget> analog_knob();
   static std::unique_ptr<Widget> audio_input_socket();
   static std::unique_ptr<Widget> audio_output_socket();
+  static std::unique_ptr<Widget> custom_display();
   static std::unique_ptr<Widget> cv_input_socket();
   static std::unique_ptr<Widget> cv_output_socket();
   static std::unique_ptr<Widget> device_name();
@@ -114,6 +116,7 @@ protected:
 protected:
   Widget *addAttribute(std::unique_ptr<widget::Attribute> iAttribute) { fAttributes.emplace_back(std::move(iAttribute)); return this; }
   Widget *value(Property::Filter iValueFilter, Property::Filter iValueSwitchFilter);
+  Widget *values(Property::Filter iValuesFilter);
   Widget *show_remote_box();
   Widget *show_automation_rect();
   Widget *tooltip_position();

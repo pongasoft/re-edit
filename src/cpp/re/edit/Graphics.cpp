@@ -64,10 +64,11 @@ void Graphics::draw(DrawContext &iCtx, int iFrameNumber, ImVec4 const &iBorderCo
 //------------------------------------------------------------------------
 void Graphics::drawHitBoundaries(DrawContext &iCtx, ImVec4 const &iColor) const
 {
-  iCtx.drawRect(fPosition + ImVec2{fHitBoundaries.fLeftInset, fHitBoundaries.fTopInset},
-                getSize() - ImVec2{fHitBoundaries.fLeftInset + fHitBoundaries.fRightInset,
-                                   fHitBoundaries.fTopInset + fHitBoundaries.fBottomInset},
-                iColor);
+  if(fHitBoundariesEnabled)
+    iCtx.drawRect(fPosition + ImVec2{fHitBoundaries.fLeftInset, fHitBoundaries.fTopInset},
+                  getSize() - ImVec2{fHitBoundaries.fLeftInset + fHitBoundaries.fRightInset,
+                                     fHitBoundaries.fTopInset + fHitBoundaries.fBottomInset},
+                  iColor);
 }
 
 //------------------------------------------------------------------------
@@ -139,7 +140,7 @@ void Graphics::editView(EditContext &iCtx)
 //------------------------------------------------------------------------
 void Graphics::editHitBoundariesView(EditContext &iCtx)
 {
-  if(iCtx.fShowBorder == EditContext::ShowBorder::kHitBoundaries)
+  if(fHitBoundariesEnabled && iCtx.fShowBorder == EditContext::ShowBorder::kHitBoundaries)
   {
     float *tb[] = { &fHitBoundaries.fTopInset, &fHitBoundaries.fBottomInset };
     ReGui::SliderInt2("hit_boundaries - Top | Bottom", tb, 0, static_cast<int>(getSize().y), "inset: %d", ImGuiSliderFlags_AlwaysClamp);

@@ -100,7 +100,23 @@ std::vector<Property const *> PropertyManager::findProperties(Property::Filter c
         res.emplace_back(&property);
     }
   }
+  return res;
+}
 
+//------------------------------------------------------------------------
+// PropertyManager::findPropertyNames
+//------------------------------------------------------------------------
+std::vector<std::string> PropertyManager::findPropertyNames(Property::Filter const &iFilter) const
+{
+  std::vector<std::string> res{};
+  if(iFilter)
+  {
+    for(auto const &[name, property]: fProperties)
+    {
+      if(iFilter(property))
+        res.emplace_back(name);
+    }
+  }
   return res;
 }
 

@@ -49,6 +49,7 @@ void PanelState::render()
     ImGui::SameLine();
     ImGui::Text("%d%%", static_cast<int>(fDrawContext.fZoom * 100));
 
+    ImGui::AlignTextToFramePadding();
     ImGui::Text("Border");
     ImGui::SameLine();
     ReGui::RadioButton("None", &fDrawContext.fShowBorder, EditContext::ShowBorder::kNone);

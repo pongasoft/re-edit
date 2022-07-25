@@ -639,6 +639,60 @@ void PropertyPathList::editStaticListView(EditContext &iCtx,
 }
 
 //------------------------------------------------------------------------
+// PropertyPathList::editView
+//------------------------------------------------------------------------
+void PropertyPathList::editView(EditContext &iCtx)
+{
+  resetView();
+
+  ImGui::SameLine();
+
+  auto const popupTitleName = re::mock::fmt::printf("%s Editor", fName);
+
+  if(ImGui::Button(re::mock::fmt::printf("[%d] properties", fValue.size()).c_str(), ImVec2{ImGui::CalcItemWidth(), 0}))
+  {
+    ImGui::OpenPopup(popupTitleName.c_str());
+    fStringListEditView = views::StringListEdit(iCtx.findPropertyNames(fFilter),
+                                                "Properties",
+                                                true,
+                                                fValue,
+                                                fName,
+                                                false);
+  }
+  ImGui::SameLine(0, ImGui::GetStyle().ItemInnerSpacing.x);
+  ImGui::Text("%s", fName.c_str());
+
+  if(fStringListEditView)
+  {
+    // Always center this window when appearing
+    ImVec2 center = ImGui::GetMainViewport()->GetCenter();
+    ImGui::SetNextWindowPos(center, ImGuiCond_Once, ImVec2(0.5f, 0.5f));
+
+    if(ImGui::BeginPopupModal(popupTitleName.c_str(), nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+    {
+      fStringListEditView->editView();
+
+      if(ImGui::Button("OK", ImVec2(120, 0)))
+      {
+        fValue = std::move(fStringListEditView->destination());
+        fStringListEditView = std::nullopt;
+        fProvided = true;
+        ImGui::CloseCurrentPopup();
+      }
+      ImGui::SetItemDefaultFocus();
+      ImGui::SameLine();
+      if(ImGui::Button("Cancel", ImVec2(120, 0)))
+      {
+        fStringListEditView = std::nullopt;
+        ImGui::CloseCurrentPopup();
+      }
+      ImGui::EndPopup();
+    }
+  }
+
+}
+
+//------------------------------------------------------------------------
 // StaticStringList::editView
 //------------------------------------------------------------------------
 void StaticStringList::editView(EditContext &iCtx)

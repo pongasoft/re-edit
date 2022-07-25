@@ -23,6 +23,7 @@
 #include "Texture.h"
 #include "EditContext.h"
 #include "DrawContext.h"
+#include "Views.h"
 #include "ReGui.h"
 
 #include <string>
@@ -163,14 +164,21 @@ class PropertyPathList : public SingleAttribute<std::vector<std::string>>
 {
 public:
 //  Kind getKind() const override { return Kind::kPropertyPathList; }
-  explicit PropertyPathList(std::string iName) : SingleAttribute<std::vector<std::string>>{std::move(iName)} {}
+  explicit PropertyPathList(std::string iName, Property::Filter iFilter = {}) :
+    SingleAttribute<std::vector<std::string>>{std::move(iName)},
+    fFilter{std::move(iFilter)}
+    {}
   std::string getValueAsLua() const override;
-//  void editView(EditContext &iCtx) override;
+  void editView(EditContext &iCtx) override;
   void editStaticListView(EditContext &iCtx,
                           Property::Filter const &iFilter,
                           std::function<void(int iIndex, const Property *)> const &iOnSelect) const;
 
   std::unique_ptr<Attribute> clone() const override { return Attribute::clone<PropertyPathList>(*this); }
+
+public:
+  Property::Filter fFilter;
+  std::optional<views::StringListEdit> fStringListEditView{};
 };
 
 class DiscretePropertyValueList : public SingleAttribute<std::vector<int>>

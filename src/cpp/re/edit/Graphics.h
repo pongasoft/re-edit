@@ -90,6 +90,7 @@ public:
 public:
   ImVec2 fPosition{};
   HitBoundaries fHitBoundaries{};
+  bool fHitBoundariesEnabled{true};
   std::shared_ptr<Texture> fTexture{};
   ImVec2 fSize{100, 100};
   FilmStrip::Filter fFilter{};
