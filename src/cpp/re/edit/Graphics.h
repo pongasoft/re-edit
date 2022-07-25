@@ -96,6 +96,19 @@ public:
   FilmStrip::Filter fFilter{};
 };
 
+class Background : public String
+{
+public:
+  explicit Background(std::string iName) : String(std::move(iName)) {}
+
+  void hdgui2D(attribute_list_t &oAttributes) const override;
+
+  void editView(EditContext &iCtx) override;
+//  void draw(DrawContext &iCtx, Graphics const *iParent) const;
+
+  std::unique_ptr<Attribute> clone() const override { return Attribute::clone<Background>(*this); }
+};
+
 }
 
 #endif //RE_EDIT_GRAPHICS_NODE_H

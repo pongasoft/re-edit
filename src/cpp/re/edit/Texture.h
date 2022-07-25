@@ -68,17 +68,22 @@ public:
 
   inline void Item(ImVec2 const &iPosition, float iZoom, int iFrameNumber, const ImVec4& iBorderCol = ImVec4(0,0,0,0)) const
   {
-    doDraw(true, iPosition, iZoom, iFrameNumber, iBorderCol);
+    doDraw(true, iPosition, iZoom, iZoom, iFrameNumber, iBorderCol);
   }
   inline void draw(ImVec2 const &iPosition, float iZoom, int iFrameNumber, const ImVec4& iBorderCol = ImVec4(0,0,0,0)) const
   {
-    doDraw(false, iPosition, iZoom, iFrameNumber, iBorderCol);
+    doDraw(false, iPosition, iZoom, iZoom, iFrameNumber, iBorderCol);
+  }
+
+  inline void draw(ImVec2 const &iPosition, float iPositionZoom, float iTextureZoom, int iFrameNumber, const ImVec4& iBorderCol = ImVec4(0,0,0,0)) const
+  {
+    doDraw(false, iPosition, iPositionZoom, iTextureZoom, iFrameNumber, iBorderCol);
   }
 
   void addData(std::unique_ptr<Data> iData) { fData.emplace_back(std::move(iData)); }
 
 protected:
-  void doDraw(bool iAddItem, ImVec2 const &iPosition, float iZoom, int iFrameNumber, const ImVec4& iBorderCol) const;
+  void doDraw(bool iAddItem, ImVec2 const &iPosition, float iPositionZoom, float iTextureZoom, int iFrameNumber, const ImVec4& iBorderCol) const;
 
 protected:
   std::shared_ptr<FilmStrip> fFilmStrip{};

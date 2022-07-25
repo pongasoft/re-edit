@@ -99,12 +99,21 @@ public:
 class Bool : public SingleAttribute<bool>
 {
 public:
-//  Kind getKind() const override { return Kind::kBool; }
   explicit Bool(std::string iName) : SingleAttribute<bool>{std::move(iName)} {}
   std::string getValueAsLua() const override { return fValue ? "true" : "false"; }
   void editView(EditContext &iCtx) override;
 
   std::unique_ptr<Attribute> clone() const override { return Attribute::clone<Bool>(*this); }
+};
+
+class Integer : public SingleAttribute<int>
+{
+public:
+  explicit Integer(std::string iName) : SingleAttribute<int>{std::move(iName)} {}
+  std::string getValueAsLua() const override { return std::to_string(fValue); }
+  void editView(EditContext &iCtx) override;
+
+  std::unique_ptr<Attribute> clone() const override { return Attribute::clone<Integer>(*this); }
 };
 
 class String : public SingleAttribute<std::string>
@@ -114,6 +123,8 @@ public:
   explicit String(std::string iName) : SingleAttribute<std::string>{std::move(iName)} {}
   std::string getValueAsLua() const override;
   void editView(EditContext &iCtx) override;
+
+  std::unique_ptr<Attribute> clone() const override { return Attribute::clone<String>(*this); }
 };
 
 class PropertyPath : public String

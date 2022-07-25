@@ -81,6 +81,7 @@ public:
   std::string hdgui2D() const;
   std::string device2D() const { return fGraphics.device2D(); }
 
+  std::unique_ptr<Widget> copy() const;
   std::unique_ptr<Widget> clone() const;
 
   static std::unique_ptr<Widget> panel_decal();
@@ -128,6 +129,7 @@ protected:
 private:
   void computeDefaultWidgetName();
   Widget(Widget const &iOther, std::string iName);
+  Widget(Widget const &iOther);
   void init(int id) { fId = id; }
 
 private:

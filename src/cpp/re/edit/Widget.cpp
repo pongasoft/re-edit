@@ -41,6 +41,29 @@ Widget::Widget(WidgetType iType) : fType{iType}
 //------------------------------------------------------------------------
 // Widget::Widget
 //------------------------------------------------------------------------
+Widget::Widget(Widget const &iOther) :
+  fType(iOther.fType),
+  fName(iOther.fName),
+  fGraphics(iOther.fGraphics)
+{
+  for(auto &attribute: iOther.fAttributes)
+  {
+    auto newAttribute = attribute->clone();
+    auto visibility = dynamic_cast<widget::attribute::Visibility *>(newAttribute.get());
+    if(visibility)
+    {
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "LocalValueEscapesScope"
+      fVisibility = visibility;
+#pragma clang diagnostic pop
+    }
+    fAttributes.emplace_back(std::move(newAttribute));
+  }
+}
+
+//------------------------------------------------------------------------
+// Widget::Widget
+//------------------------------------------------------------------------
 Widget::Widget(Widget const &iOther, std::string iName) :
   fType(iOther.fType),
   fName(std::move(iName)),
@@ -362,11 +385,21 @@ std::unique_ptr<Widget> Widget::custom_display()
   static const auto kValuesFilter = [](const Property &p) {
     return (p.type() == kJBox_Boolean || p.type() == kJBox_Number || p.type() == kJBox_String);
   };
+
   auto w = std::make_unique<Widget>(WidgetType::kCustomDisplay);
-  w ->values(kValuesFilter)
+
+  w ->addAttribute(Attribute::build<Background>("background", ""))
+    ->addAttribute(Attribute::build<Integer>("display_width_pixels", 0))
+    ->addAttribute(Attribute::build<Integer>("display_height_pixels", 0))
+    ->addAttribute(Attribute::build<String>("draw_function", ""))
+    ->addAttribute(Attribute::build<String>("invalidate_function", ""))
+    ->addAttribute(Attribute::build<String>("gesture_function", ""))
+    ->values(kValuesFilter)
+    ->visibility()
     ->show_remote_box()
     ->show_automation_rect()
     ;
+
   w->disableHitBoundaries();
   return w;
 }
@@ -463,9 +496,17 @@ std::unique_ptr<Widget> Widget::widget(std::string const &iType)
 //------------------------------------------------------------------------
 // Widget::widget
 //------------------------------------------------------------------------
-std::unique_ptr<Widget> Widget::clone() const
+std::unique_ptr<Widget> Widget::copy() const
 {
   return std::unique_ptr<Widget>(new Widget(*this, re::mock::fmt::printf("%s Copy", fName)));
+}
+
+//------------------------------------------------------------------------
+// Widget::widget
+//------------------------------------------------------------------------
+std::unique_ptr<Widget> Widget::clone() const
+{
+  return std::unique_ptr<Widget>(new Widget(*this));
 }
 
 //------------------------------------------------------------------------

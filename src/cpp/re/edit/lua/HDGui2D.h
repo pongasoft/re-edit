@@ -71,6 +71,7 @@ public:
   int luaAnalogKnob();
   int luaAudioInputSocket();
   int luaAudioOutputSocket();
+  int luaCustomDisplay();
   int luaCVInputSocket();
   int luaCVOutputSocket();
   int luaDeviceName();
@@ -93,6 +94,7 @@ protected:
   int addObjectOnTopOfStack(impl::jbox_object iObject);
   std::optional<impl::jbox_object> getObjectOnTopOfStack();
   std::optional<impl::jbox_ui_text> getTableValueAsOptionalUIText(char const *iKey, int idx = -1);
+  std::optional<impl::jbox_image> getTableValueAsOptionalImage(char const *iKey, int idx = -1);
   std::shared_ptr<jbox_panel> getPanel(char const *iPanelName);
 
   bool checkTableArg();
@@ -102,6 +104,8 @@ protected:
   void populate(widget::attribute::Value *oValue);
   void populate(widget::attribute::Bool *oValue);
   void populate(widget::attribute::String *oValue);
+  void populate(widget::attribute::Integer *oValue);
+  void populate(widget::attribute::Background *oValue);
   void populate(widget::attribute::UIText *oValue);
   void populate(widget::attribute::StaticStringList *oValue);
   void populate(widget::attribute::PropertyPathList *oList);

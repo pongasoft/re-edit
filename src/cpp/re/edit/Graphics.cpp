@@ -52,7 +52,7 @@ void Graphics::draw(DrawContext &iCtx, int iFrameNumber, ImVec4 const &iBorderCo
   else
     iCtx.drawRectFilled(fPosition, getSize(), ImVec4{1, 0, 0, 1});
 
-  if(iCtx.fShowBorder == EditContext::ShowBorder::kHitBoundaries)
+  if(fHitBoundariesEnabled && iCtx.fShowBorder == EditContext::ShowBorder::kHitBoundaries)
     drawHitBoundaries(iCtx, kHitBoundariesColor);
 
   if(iBorderCol.w > 0.0f)
@@ -64,11 +64,10 @@ void Graphics::draw(DrawContext &iCtx, int iFrameNumber, ImVec4 const &iBorderCo
 //------------------------------------------------------------------------
 void Graphics::drawHitBoundaries(DrawContext &iCtx, ImVec4 const &iColor) const
 {
-  if(fHitBoundariesEnabled)
-    iCtx.drawRect(fPosition + ImVec2{fHitBoundaries.fLeftInset, fHitBoundaries.fTopInset},
-                  getSize() - ImVec2{fHitBoundaries.fLeftInset + fHitBoundaries.fRightInset,
-                                     fHitBoundaries.fTopInset + fHitBoundaries.fBottomInset},
-                  iColor);
+  iCtx.drawRect(fPosition + ImVec2{fHitBoundaries.fLeftInset, fHitBoundaries.fTopInset},
+                getSize() - ImVec2{fHitBoundaries.fLeftInset + fHitBoundaries.fRightInset,
+                                   fHitBoundaries.fTopInset + fHitBoundaries.fBottomInset},
+                iColor);
 }
 
 //------------------------------------------------------------------------
@@ -207,6 +206,72 @@ std::string Graphics::device2D() const
                                  static_cast<int>(pos.x),
                                  static_cast<int>(pos.y),
                                  path);
+}
+
+////------------------------------------------------------------------------
+//// Background::draw
+////------------------------------------------------------------------------
+//void Background::draw(DrawContext &iCtx, Graphics const *iParent) const
+//{
+//  if(hasTexture())
+//  {
+//    auto zoom = iCtx.fZoom * iParent->getSize().x / fTexture->frameWidth();
+//    getTexture()->draw(iParent->fPosition, iCtx.fZoom, zoom, 0);
+//  }
+//}
+
+//------------------------------------------------------------------------
+// Background::editView
+//------------------------------------------------------------------------
+void Background::editView(EditContext &iCtx)
+{
+  static const auto kBackgroundFilter = [](FilmStrip const &f) { return f.numFrames() == 1; };
+
+  if(ImGui::Button("X"))
+    reset();
+  ImGui::SameLine();
+
+  if(ImGui::BeginCombo(fName.c_str(), fValue.c_str()))
+  {
+    auto textureKeys = iCtx.findTextureKeys(kBackgroundFilter);
+    for(auto &p: textureKeys)
+    {
+      auto const isSelected = p == fValue;
+      if(ImGui::Selectable(p.c_str(), isSelected))
+      {
+        fValue = p;
+        fProvided = true;
+      }
+      if(isSelected)
+        ImGui::SetItemDefaultFocus();
+    }
+    ImGui::EndCombo();
+  }
+}
+
+namespace impl {
+
+inline bool ends_with(std::string const &s, std::string const &iSuffix)
+{
+  if(s.size() < iSuffix.size())
+    return false;
+  return s.substr(s.size() - iSuffix.size()) == iSuffix;
+}
+
+}
+
+//------------------------------------------------------------------------
+// Background::hdgui2D
+//------------------------------------------------------------------------
+void Background::hdgui2D(attribute_list_t &oAttributes) const
+{
+  if(fProvided)
+  {
+    auto path = fValue;
+    if(impl::ends_with(path, "-HD"))
+      path = path.substr(path.size() - 3);
+    oAttributes.emplace_back(attribute_t{fName, re::mock::fmt::printf("jbox.image{ path = { \"%s\" } }", path)});
+  }
 }
 
 }

@@ -123,7 +123,7 @@ void Application::initPanel(std::shared_ptr<lua::panel_nodes> const &iPanelNodes
 
   for(auto const &w: iPanel->fWidgets)
   {
-    auto widget = w->fWidget;
+    auto widget = w->fWidget->clone();
 
     auto node = iPanelNodes->findNodeByName(w->fGraphics.fNode);
     if(node)

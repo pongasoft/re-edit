@@ -416,6 +416,17 @@ void Bool::editView(EditContext &iCtx)
 }
 
 //------------------------------------------------------------------------
+// Integer::editView
+//------------------------------------------------------------------------
+void Integer::editView(EditContext &iCtx)
+{
+  resetView();
+  ImGui::SameLine();
+  if(ImGui::InputInt(fName.c_str(), &fValue))
+    fProvided = true;
+}
+
+//------------------------------------------------------------------------
 // PropertyPath::editView
 //------------------------------------------------------------------------
 void PropertyPath::editView(EditContext &iCtx)

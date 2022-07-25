@@ -77,16 +77,17 @@ std::shared_ptr<Texture> TextureManager::findTexture(std::string const &iKey) co
 //------------------------------------------------------------------------
 void Texture::doDraw(bool iAddItem,
                      ImVec2 const &iPosition,
-                     float iZoom,
+                     float iPositionZoom,
+                     float iTextureZoom,
                      int iFrameNumber,
                      ImVec4 const &iBorderCol) const
 {
   if(fData.empty())
     return;
 
-  auto const cp = ImGui::GetCursorScreenPos() + iPosition * iZoom;
+  auto const cp = ImGui::GetCursorScreenPos() + iPosition * iPositionZoom;
 
-  auto size = ImVec2{frameWidth() * iZoom, frameHeight() * iZoom};
+  auto size = ImVec2{frameWidth() * iTextureZoom, frameHeight() * iTextureZoom};
   const ImRect rect{cp, cp + size};
 
   // do we treat the texture as a ImGui item (clickable, etc...)

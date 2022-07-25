@@ -114,7 +114,7 @@ void PanelState::renderWidgets()
       if(ImGui::Button("Dup"))
       {
         for(auto const &w: selectedWidgets)
-          fPanel.addWidget(w->clone());
+          fPanel.addWidget(w->copy());
       }
 
       ImGui::SameLine();

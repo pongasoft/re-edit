@@ -33,7 +33,7 @@ static int lua_ignored(lua_State *L) { return HDGui2D::loadFromRegistry(L)->luaI
 static int lua_analog_knob(lua_State *L) { return HDGui2D::loadFromRegistry(L)->luaAnalogKnob(); }
 static int lua_audio_input_socket(lua_State *L) { return HDGui2D::loadFromRegistry(L)->luaAudioInputSocket(); }
 static int lua_audio_output_socket(lua_State *L) { return HDGui2D::loadFromRegistry(L)->luaAudioOutputSocket(); }
-static int lua_custom_display(lua_State *L) { RE_MOCK_LOG_WARNING("custom_display not implemented yet"); return HDGui2D::loadFromRegistry(L)->luaIgnored(); }
+static int lua_custom_display(lua_State *L) { return HDGui2D::loadFromRegistry(L)->luaCustomDisplay(); }
 static int lua_cv_input_socket(lua_State *L) { return HDGui2D::loadFromRegistry(L)->luaCVInputSocket(); }
 static int lua_cv_output_socket(lua_State *L) { return HDGui2D::loadFromRegistry(L)->luaCVOutputSocket(); }
 static int lua_cv_trim_knob(lua_State *L) { RE_MOCK_LOG_WARNING("cv_trim_knob not implemented yet"); return HDGui2D::loadFromRegistry(L)->luaIgnored(); }
@@ -262,6 +262,29 @@ int HDGui2D::luaAudioInputSocket()
 }
 
 //------------------------------------------------------------------------
+// HDGui2D::luaCustomDisplay
+//------------------------------------------------------------------------
+int HDGui2D::luaCustomDisplay()
+{
+  auto p = makeWidget(Widget::custom_display());
+  if(checkTableArg())
+  {
+    populateGraphics(p);
+    populate<Background>(p, "background");
+    populate<Integer>(p, "display_width_pixels");
+    populate<Integer>(p, "display_height_pixels");
+    populate<PropertyPathList>(p, "values");
+    populate<String>(p, "invalidate_function");
+    populate<String>(p, "draw_function");
+    populate<String>(p, "gesture_function");
+    populate<Bool>(p, "show_remote_box");
+    populate<Bool>(p, "show_automation_rect");
+    populate<Visibility>(p, "visibility");
+  }
+  return addObjectOnTopOfStack(std::move(p));
+}
+
+//------------------------------------------------------------------------
 // HDGui2D::luaCVOutputSocket
 //------------------------------------------------------------------------
 int HDGui2D::luaCVOutputSocket()
@@ -385,28 +408,54 @@ void HDGui2D::populate(String *oValue)
 }
 
 //------------------------------------------------------------------------
-// toUIText
+// HDGui2D::populate | Integer
 //------------------------------------------------------------------------
-std::optional<impl::jbox_ui_text> toUIText(std::optional<impl::jbox_object> iObject)
+void HDGui2D::populate(Integer *oValue)
+{
+  if(oValue)
+    impl::setValue(*oValue, L.getTableValueAsOptionalInteger(oValue->fName.c_str()));
+}
+
+//------------------------------------------------------------------------
+// toOptional
+//------------------------------------------------------------------------
+template<typename T>
+std::optional<T> toOptional(std::optional<impl::jbox_object> iObject)
 {
   if(!iObject)
     return std::nullopt;
 
-  if(std::holds_alternative<impl::jbox_ui_text>(iObject.value()))
-    return std::get<impl::jbox_ui_text>(iObject.value());
+  if(std::holds_alternative<T>(iObject.value()))
+    return std::get<T>(iObject.value());
   else
     return std::nullopt;
 }
 
+
 //------------------------------------------------------------------------
-// LuaState::getTableValueAsOptionalBoolean
+// LuaState::getTableValueAsOptionalUIText
+//------------------------------------------------------------------------
+std::optional<impl::jbox_image> HDGui2D::getTableValueAsOptionalImage(char const *iKey, int idx)
+{
+  std::optional<impl::jbox_image> res{};
+  luaL_checktype(L, idx, LUA_TTABLE);
+  if(lua_getfield(L, idx, iKey) != LUA_TNIL)
+    res = toOptional<impl::jbox_image>(getObjectOnTopOfStack());
+  else
+    lua_pop(L, 1);
+  return res;
+}
+
+
+//------------------------------------------------------------------------
+// LuaState::getTableValueAsOptionalUIText
 //------------------------------------------------------------------------
 std::optional<impl::jbox_ui_text> HDGui2D::getTableValueAsOptionalUIText(char const *iKey, int idx)
 {
   std::optional<impl::jbox_ui_text> res{};
   luaL_checktype(L, idx, LUA_TTABLE);
   if(lua_getfield(L, idx, iKey) != LUA_TNIL)
-    res = toUIText(getObjectOnTopOfStack());
+    res = toOptional<impl::jbox_ui_text>(getObjectOnTopOfStack());
   else
     lua_pop(L, 1);
   return res;
@@ -423,6 +472,19 @@ void HDGui2D::populate(UIText *oValue)
     auto uiText = getTableValueAsOptionalUIText(oValue->fName.c_str());
     if(uiText)
       impl::setValue(*oValue, std::optional<std::string>(uiText->fText));
+  }
+}
+
+//------------------------------------------------------------------------
+// HDGui2D::populate | Background
+//------------------------------------------------------------------------
+void HDGui2D::populate(Background *oValue)
+{
+  if(oValue)
+  {
+    auto image = getTableValueAsOptionalImage(oValue->fName.c_str());
+    if(image)
+      impl::setValue(*oValue, std::optional<std::string>(image->fPath));
   }
 }
 

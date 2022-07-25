@@ -237,7 +237,7 @@ void Panel::renderWidgetMenu(std::shared_ptr<Widget> const &iWidget)
     iWidget->toggleSelection();
   if(ImGui::MenuItem(re::mock::fmt::printf("Duplicate %s",
                                            iWidget->getName()).c_str()))
-    addWidget(iWidget->clone());
+    addWidget(iWidget->copy());
   if(ImGui::MenuItem(re::mock::fmt::printf("Delete %s",
                                            iWidget->getName()).c_str()))
     deleteWidget(iWidget->getId());
@@ -284,7 +284,7 @@ bool Panel::renderSelectedWidgetsMenu(std::vector<std::shared_ptr<Widget>> const
       if(ImGui::MenuItem("Duplicate Widgets"))
       {
         for(auto const &w: iSelectedWidgets)
-          addWidget(w->clone());
+          addWidget(w->copy());
       }
       if(ImGui::MenuItem("Delete Widgets"))
       {
