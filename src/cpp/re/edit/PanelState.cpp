@@ -49,6 +49,7 @@ void PanelState::render()
     ImGui::SameLine();
     ImGui::Text("%d%%", static_cast<int>(fDrawContext.fZoom * 100));
 
+    ImGui::PushID("Border");
     ImGui::AlignTextToFramePadding();
     ImGui::Text("Border");
     ImGui::SameLine();
@@ -57,6 +58,20 @@ void PanelState::render()
     ReGui::RadioButton("Widget", &fDrawContext.fShowBorder, EditContext::ShowBorder::kWidget);
     ImGui::SameLine();
     ReGui::RadioButton("Hit Boundaries", &fDrawContext.fShowBorder, EditContext::ShowBorder::kHitBoundaries);
+    ImGui::PopID();
+
+    ImGui::PushID("Custom Display");
+    ImGui::AlignTextToFramePadding();
+    ImGui::Text("Custom Display");
+    ImGui::SameLine();
+    ReGui::RadioButton("None", &fDrawContext.fShowCustomDisplay, EditContext::ShowCustomDisplay::kNone);
+    ImGui::SameLine();
+    ReGui::RadioButton("Main", &fDrawContext.fShowCustomDisplay, EditContext::ShowCustomDisplay::kMain);
+    ImGui::SameLine();
+    ReGui::RadioButton("SD Bg", &fDrawContext.fShowCustomDisplay, EditContext::ShowCustomDisplay::kBackgroundSD);
+    ImGui::SameLine();
+    ReGui::RadioButton("HD Bg", &fDrawContext.fShowCustomDisplay, EditContext::ShowCustomDisplay::kBackgroundHD);
+    ImGui::PopID();
 
     ReGui::ToggleButton("Show Panel", "Hide Panel", &fShowPanel);
     ImGui::SameLine();

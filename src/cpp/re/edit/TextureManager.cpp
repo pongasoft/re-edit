@@ -42,7 +42,7 @@ std::shared_ptr<Texture> TextureManager::getTexture(std::string const &iKey) con
 }
 
 //------------------------------------------------------------------------
-// TextureManager::getTexture
+// TextureManager::findTexture
 //------------------------------------------------------------------------
 std::shared_ptr<Texture> TextureManager::findTexture(std::string const &iKey) const
 {
@@ -70,6 +70,14 @@ std::shared_ptr<Texture> TextureManager::findTexture(std::string const &iKey) co
   // create a new texture
   fTextures[filmStrip->key()] = filmStrip->isValid() ? createTexture(filmStrip) : std::make_unique<Texture>(filmStrip);
   return fTextures.at(filmStrip->key());
+}
+
+//------------------------------------------------------------------------
+// TextureManager::findHDTexture
+//------------------------------------------------------------------------
+std::shared_ptr<Texture> TextureManager::findHDTexture(std::string const &iKey) const
+{
+  return findTexture(iKey + "-HD");
 }
 
 //------------------------------------------------------------------------

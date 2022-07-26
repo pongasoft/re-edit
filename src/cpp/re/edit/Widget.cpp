@@ -103,7 +103,30 @@ void Widget::draw(DrawContext &iCtx)
       borderColor = iCtx.getUserPreferences().fWidgetBorderColor;
   }
 
-  fGraphics.draw(iCtx, fFrameNumber, borderColor);
+  if(fType == WidgetType::kCustomDisplay)
+  {
+    switch(iCtx.fShowCustomDisplay)
+    {
+      case EditContext::ShowCustomDisplay::kNone:
+        fGraphics.drawBorder(iCtx, borderColor);
+        break;
+      case EditContext::ShowCustomDisplay::kMain:
+        fGraphics.draw(iCtx, fFrameNumber, borderColor);
+        break;
+      case EditContext::ShowCustomDisplay::kBackgroundSD:
+      case EditContext::ShowCustomDisplay::kBackgroundHD:
+      {
+        auto bgAttribute = findAttributeByNameAndType<Background>("background");
+        bgAttribute->draw(iCtx, &fGraphics);
+        fGraphics.drawBorder(iCtx, borderColor);
+        break;
+      }
+      default:
+        RE_EDIT_FAIL("not reached");
+    }
+  }
+  else
+    fGraphics.draw(iCtx, fFrameNumber, borderColor);
 
   if(fError)
     iCtx.drawRectFilled(fGraphics.fPosition, fGraphics.getSize(), iCtx.getUserPreferences().fWidgetErrorColor);
@@ -382,6 +405,7 @@ std::unique_ptr<Widget> Widget::audio_output_socket()
 //------------------------------------------------------------------------
 std::unique_ptr<Widget> Widget::custom_display()
 {
+  // TODO can only bind to custom properties
   static const auto kValuesFilter = [](const Property &p) {
     return (p.type() == kJBox_Boolean || p.type() == kJBox_Number || p.type() == kJBox_String);
   };

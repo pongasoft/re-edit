@@ -83,6 +83,7 @@ public:
                 std::function<void(ImVec2 const &)> const &iOnSizeUpdate) const;
 
   void draw(DrawContext &iCtx, int iFrameNumber, const ImVec4& iBorderCol) const;
+  void drawBorder(DrawContext &iCtx, const ImVec4& iBorderCol) const;
   void drawHitBoundaries(DrawContext &iCtx, const ImVec4& iColor) const;
 
   std::unique_ptr<Attribute> clone() const override { return Attribute::clone<Graphics>(*this); }
@@ -104,7 +105,7 @@ public:
   void hdgui2D(attribute_list_t &oAttributes) const override;
 
   void editView(EditContext &iCtx) override;
-//  void draw(DrawContext &iCtx, Graphics const *iParent) const;
+  bool draw(DrawContext &iCtx, Graphics const *iParent) const;
 
   std::unique_ptr<Attribute> clone() const override { return Attribute::clone<Background>(*this); }
 };

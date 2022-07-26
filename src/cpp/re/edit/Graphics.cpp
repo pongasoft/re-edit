@@ -17,6 +17,7 @@
  */
 
 #include "Graphics.h"
+#include "Errors.h"
 
 namespace re::edit {
 
@@ -56,7 +57,15 @@ void Graphics::draw(DrawContext &iCtx, int iFrameNumber, ImVec4 const &iBorderCo
     drawHitBoundaries(iCtx, kHitBoundariesColor);
 
   if(iBorderCol.w > 0.0f)
-    iCtx.drawRect(fPosition, getSize(), iBorderCol);
+    drawBorder(iCtx, iBorderCol);
+}
+
+//------------------------------------------------------------------------
+// Graphics::drawBorder
+//------------------------------------------------------------------------
+void Graphics::drawBorder(DrawContext &iCtx, ImVec4 const &iBorderCol) const
+{
+  iCtx.drawRect(fPosition, getSize(), iBorderCol);
 }
 
 //------------------------------------------------------------------------
@@ -208,17 +217,55 @@ std::string Graphics::device2D() const
                                  path);
 }
 
-////------------------------------------------------------------------------
-//// Background::draw
-////------------------------------------------------------------------------
-//void Background::draw(DrawContext &iCtx, Graphics const *iParent) const
-//{
-//  if(hasTexture())
-//  {
-//    auto zoom = iCtx.fZoom * iParent->getSize().x / fTexture->frameWidth();
-//    getTexture()->draw(iParent->fPosition, iCtx.fZoom, zoom, 0);
-//  }
-//}
+//------------------------------------------------------------------------
+// Background::draw
+//------------------------------------------------------------------------
+bool Background::draw(DrawContext &iCtx, Graphics const *iParent) const
+{
+  if(fProvided)
+  {
+    switch(iCtx.fShowCustomDisplay)
+    {
+      case EditContext::ShowCustomDisplay::kBackgroundSD:
+      {
+        auto texture = iCtx.findTexture(fValue);
+        if(texture)
+        {
+          auto zoom = iCtx.fZoom * iParent->getSize().x / texture->frameWidth();
+          texture->draw(iParent->fPosition, iCtx.fZoom, zoom, 0);
+          return true;
+        }
+        break;
+      }
+
+      case EditContext::ShowCustomDisplay::kBackgroundHD:
+      {
+        auto texture = iCtx.findHDTexture(fValue);
+        if(texture)
+        {
+          iCtx.drawTexture(texture.get(), iParent->fPosition);
+          return true;
+        }
+        break;
+      }
+      default:
+        RE_EDIT_FAIL("not reached");
+    }
+  }
+
+  return false;
+}
+
+namespace impl {
+
+inline bool ends_with(std::string const &s, std::string const &iSuffix)
+{
+  if(s.size() < iSuffix.size())
+    return false;
+  return s.substr(s.size() - iSuffix.size()) == iSuffix;
+}
+
+}
 
 //------------------------------------------------------------------------
 // Background::editView
@@ -234,12 +281,21 @@ void Background::editView(EditContext &iCtx)
   if(ImGui::BeginCombo(fName.c_str(), fValue.c_str()))
   {
     auto textureKeys = iCtx.findTextureKeys(kBackgroundFilter);
-    for(auto &p: textureKeys)
+    for(auto const &p: textureKeys)
     {
-      auto const isSelected = p == fValue;
-      if(ImGui::Selectable(p.c_str(), isSelected))
+      auto key = p;
+      auto path = p;
+
+      if(impl::ends_with(key, "-HD"))
       {
-        fValue = p;
+        key = key.substr(0, key.size() - 3);
+        path = re::mock::fmt::printf("%s (HD)", key);
+      }
+
+      auto const isSelected = key == fValue;
+      if(ImGui::Selectable(path.c_str(), isSelected))
+      {
+        fValue = key;
         fProvided = true;
       }
       if(isSelected)
@@ -249,29 +305,13 @@ void Background::editView(EditContext &iCtx)
   }
 }
 
-namespace impl {
-
-inline bool ends_with(std::string const &s, std::string const &iSuffix)
-{
-  if(s.size() < iSuffix.size())
-    return false;
-  return s.substr(s.size() - iSuffix.size()) == iSuffix;
-}
-
-}
-
 //------------------------------------------------------------------------
 // Background::hdgui2D
 //------------------------------------------------------------------------
 void Background::hdgui2D(attribute_list_t &oAttributes) const
 {
   if(fProvided)
-  {
-    auto path = fValue;
-    if(impl::ends_with(path, "-HD"))
-      path = path.substr(path.size() - 3);
-    oAttributes.emplace_back(attribute_t{fName, re::mock::fmt::printf("jbox.image{ path = { \"%s\" } }", path)});
-  }
+    oAttributes.emplace_back(attribute_t{fName, re::mock::fmt::printf("jbox.image{ path = { \"%s\" } }", fValue)});
 }
 
 }

@@ -40,6 +40,14 @@ public:
     kHitBoundaries
   };
 
+  enum class ShowCustomDisplay
+  {
+    kNone,
+    kMain,
+    kBackgroundSD,
+    kBackgroundHD
+  };
+
 public:
   EditContext() = default;
 
@@ -63,11 +71,14 @@ public:
   inline std::vector<std::string> const &getTextureKeys() const { return fTextureManager->getTextureKeys(); };
   inline std::vector<std::string> findTextureKeys(FilmStrip::Filter const &iFilter) const { return fTextureManager->findTextureKeys(iFilter); }
   inline std::shared_ptr<Texture> getTexture(std::string const &iKey) const { return fTextureManager->getTexture(iKey); };
+  inline std::shared_ptr<Texture> findTexture(std::string const &iKey) const { return fTextureManager->findTexture(iKey); }
+  inline std::shared_ptr<Texture> findHDTexture(std::string const &iKey) const { return fTextureManager->findHDTexture(iKey); }
 
   friend class PanelState;
 
 public:
   ShowBorder fShowBorder{ShowBorder::kNone};
+  ShowCustomDisplay fShowCustomDisplay{ShowCustomDisplay::kMain};
 
 protected:
   PanelState *fPanelState{};
