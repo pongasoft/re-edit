@@ -374,10 +374,7 @@ std::unique_ptr<Widget> Widget::audio_input_socket()
   w ->socket(mock::JboxObjectType::kAudioInput, kSocketFilter)
     ->setSize(kAudioSocketSize)
     ;
-  w->fGraphics.fFilter = [](FilmStrip const &iFilmStrip) {
-    return iFilmStrip.frameWidth() == static_cast<int>(kAudioSocketSize.x) &&
-           iFilmStrip.frameHeight() == static_cast<int>(kAudioSocketSize.y);
-  };
+  w->fGraphics.fFilter = FilmStrip::bySizeFilter(kAudioSocketSize);
   return w;
 }
 
@@ -393,10 +390,7 @@ std::unique_ptr<Widget> Widget::audio_output_socket()
   w ->socket(mock::JboxObjectType::kAudioOutput, kSocketFilter)
     ->setSize(kAudioSocketSize)
     ;
-  w->fGraphics.fFilter = [](FilmStrip const &iFilmStrip) {
-    return iFilmStrip.frameWidth() == static_cast<int>(kAudioSocketSize.x) &&
-           iFilmStrip.frameHeight() == static_cast<int>(kAudioSocketSize.y);
-  };
+  w->fGraphics.fFilter = FilmStrip::bySizeFilter(kAudioSocketSize);
   return w;
 }
 
@@ -440,10 +434,7 @@ std::unique_ptr<Widget> Widget::cv_input_socket()
   w ->socket(mock::JboxObjectType::kCVInput, kSocketFilter)
     ->setSize(kCVSocketSize)
     ;
-  w->fGraphics.fFilter = [](FilmStrip const &iFilmStrip) {
-    return iFilmStrip.frameWidth() == static_cast<int>(kCVSocketSize.x) &&
-           iFilmStrip.frameHeight() == static_cast<int>(kCVSocketSize.y);
-  };
+  w->fGraphics.fFilter = FilmStrip::bySizeFilter(kCVSocketSize);
   return w;
 }
 
@@ -459,10 +450,7 @@ std::unique_ptr<Widget> Widget::cv_output_socket()
   w ->socket(mock::JboxObjectType::kCVOutput, kSocketFilter)
     ->setSize(kCVSocketSize)
     ;
-  w->fGraphics.fFilter = [](FilmStrip const &iFilmStrip) {
-    return iFilmStrip.frameWidth() == static_cast<int>(kCVSocketSize.x) &&
-           iFilmStrip.frameHeight() == static_cast<int>(kCVSocketSize.y);
-  };
+  w->fGraphics.fFilter = FilmStrip::bySizeFilter(kCVSocketSize);
   return w;
 }
 
@@ -473,6 +461,17 @@ std::unique_ptr<Widget> Widget::cv_output_socket()
 std::unique_ptr<Widget> Widget::device_name()
 {
   return std::make_unique<Widget>(WidgetType::kDeviceName);
+}
+
+//------------------------------------------------------------------------
+// Widget::placeholder
+//------------------------------------------------------------------------
+std::unique_ptr<Widget> Widget::placeholder()
+{
+  auto w = std::make_unique<Widget>(WidgetType::kPlaceholder);
+  w->setSize(kPlaceholderSize);
+  w->fGraphics.fFilter = FilmStrip::bySizeFilter(kPlaceholderSize);
+  return w;
 }
 
 //------------------------------------------------------------------------
@@ -510,8 +509,9 @@ std::unique_ptr<Widget> Widget::widget(std::string const &iType)
     { "cv_input_socket",     Widget::cv_input_socket },
     { "cv_output_socket",    Widget::cv_output_socket },
     { "device_name",         Widget::device_name },
-    { "panel_decal",         Widget::panel_decal },
+    { "placeholder",         Widget::placeholder },
     { "static_decoration",   Widget::static_decoration },
+    { "panel_decal",         Widget::panel_decal }
   };
 
   return kFactory.at(iType)();

@@ -76,6 +76,7 @@ public:
   int luaCVOutputSocket();
   int luaDeviceName();
   int luaImage();
+  int luaPlaceholder();
   int luaStaticDecoration();
   int luaUIText();
 

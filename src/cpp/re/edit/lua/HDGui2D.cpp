@@ -43,7 +43,7 @@ static int lua_momentary_button(lua_State *L) { RE_MOCK_LOG_WARNING("momentary_b
 static int lua_patch_browse_group(lua_State *L) { RE_MOCK_LOG_WARNING("patch_browse_group not implemented yet"); return HDGui2D::loadFromRegistry(L)->luaIgnored(); }
 static int lua_patch_name(lua_State *L) { RE_MOCK_LOG_WARNING("patch_name not implemented yet"); return HDGui2D::loadFromRegistry(L)->luaIgnored(); }
 static int lua_pitch_wheel(lua_State *L) { RE_MOCK_LOG_WARNING("pitch_wheel not implemented yet"); return HDGui2D::loadFromRegistry(L)->luaIgnored(); }
-static int lua_placeholder(lua_State *L) { RE_MOCK_LOG_WARNING("placeholder not implemented yet"); return HDGui2D::loadFromRegistry(L)->luaIgnored(); }
+static int lua_placeholder(lua_State *L) { return HDGui2D::loadFromRegistry(L)->luaPlaceholder(); }
 static int lua_popup_button(lua_State *L) { RE_MOCK_LOG_WARNING("popup_button not implemented yet"); return HDGui2D::loadFromRegistry(L)->luaIgnored(); }
 static int lua_radio_button(lua_State *L) { RE_MOCK_LOG_WARNING("radio_button not implemented yet"); return HDGui2D::loadFromRegistry(L)->luaIgnored(); }
 static int lua_sample_browse_group(lua_State *L) { RE_MOCK_LOG_WARNING("sample_browse_group not implemented yet"); return HDGui2D::loadFromRegistry(L)->luaIgnored(); }
@@ -318,6 +318,19 @@ int HDGui2D::luaCVInputSocket()
 int HDGui2D::luaDeviceName()
 {
   auto p = makeWidget(Widget::device_name());
+  if(checkTableArg())
+  {
+    populateGraphics(p);
+  }
+  return addObjectOnTopOfStack(std::move(p));
+}
+
+//------------------------------------------------------------------------
+// HDGui2D::luaPlaceholder
+//------------------------------------------------------------------------
+int HDGui2D::luaPlaceholder()
+{
+  auto p = makeWidget(Widget::placeholder());
   if(checkTableArg())
   {
     populateGraphics(p);

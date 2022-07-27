@@ -32,6 +32,7 @@ constexpr char const *kWidgetTypes[] = {
   "cv_input_socket",
   "cv_output_socket",
   "device_name",
+  "placeholder",
   "static_decoration",
   "panel_decal"
 };
@@ -45,6 +46,7 @@ enum class WidgetType : int
   kCVInputSocket,
   kCVOutputSocket,
   kDeviceName,
+  kPlaceholder,
   kStaticDecoration,
   kPanelDecal
 };
@@ -62,6 +64,7 @@ constexpr auto kHitBoundariesColor = ImVec4{ 60.0f / 255.0f, 1.0f, 2.0f / 255.0f
 
 constexpr auto kAudioSocketSize = ImVec2{95, 105};
 constexpr auto kCVSocketSize = ImVec2{80, 90};
+constexpr auto kPlaceholderSize = ImVec2{300, 100};
 
 constexpr int toPixelHeight(int iDeviceHeightRU)
 {

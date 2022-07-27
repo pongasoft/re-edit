@@ -244,8 +244,7 @@ void StringListEdit::editView()
 {
   if(ImGui::BeginTable("StringListEdit", 3, ImGuiTableFlags_Resizable | ImGuiTableFlags_Borders))
   {
-    auto height = fSize.y;
-
+    // TODO: Add a way to sort the columns by a criteria (ex: property by name or tag)
     ImGui::TableSetupColumn(fSourceName.c_str());
     ImGui::TableSetupColumn("Action");
     ImGui::TableSetupColumn(fDestinationName.c_str());

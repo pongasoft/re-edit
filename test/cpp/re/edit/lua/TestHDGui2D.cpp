@@ -367,7 +367,7 @@ TEST(HDGui2D, All)
   ASSERT_EQ(hdg->getStackString(), "<empty>");
 
   auto back = hdg->back();
-  ASSERT_EQ(4, back->fWidgets.size());
+  ASSERT_EQ(5, back->fWidgets.size());
   ASSERT_EQ("Panel_back_bg", back->fGraphicsNode);
   ASSERT_EQ(std::nullopt, front->fCableOrigin);
 
@@ -376,6 +376,7 @@ TEST(HDGui2D, All)
   // au_in_1
   {
     auto w = back->fWidgets[id++];
+    ASSERT_EQ(WidgetType::kAudioInputSocket, w->fWidget->getType());
     ASSERT_EQ("au_in_1_node", w->fGraphics.fNode);
     ASSERT_THAT(w, HasSocket("/audio_inputs/au_in_1"));
   }
@@ -383,6 +384,7 @@ TEST(HDGui2D, All)
   // au_ou_1
   {
     auto w = back->fWidgets[id++];
+    ASSERT_EQ(WidgetType::kAudioOutputSocket, w->fWidget->getType());
     ASSERT_EQ("au_out_1_node", w->fGraphics.fNode);
     ASSERT_THAT(w, HasSocket("/audio_outputs/au_out_1"));
   }
@@ -390,6 +392,7 @@ TEST(HDGui2D, All)
   // cv_in_1
   {
     auto w = back->fWidgets[id++];
+    ASSERT_EQ(WidgetType::kCVInputSocket, w->fWidget->getType());
     ASSERT_EQ("cv_in_1_node", w->fGraphics.fNode);
     ASSERT_THAT(w, HasSocket("/cv_inputs/cv_in_1"));
   }
@@ -397,8 +400,16 @@ TEST(HDGui2D, All)
   // cv_out_1
   {
     auto w = back->fWidgets[id++];
+    ASSERT_EQ(WidgetType::kCVOutputSocket, w->fWidget->getType());
     ASSERT_EQ("cv_out_1_node", w->fGraphics.fNode);
     ASSERT_THAT(w, HasSocket("/cv_outputs/cv_out_1"));
+  }
+
+  // placeholder
+  {
+    auto w = back->fWidgets[id++];
+    ASSERT_EQ(WidgetType::kPlaceholder, w->fWidget->getType());
+    ASSERT_EQ("ph1_node", w->fGraphics.fNode);
   }
 
 

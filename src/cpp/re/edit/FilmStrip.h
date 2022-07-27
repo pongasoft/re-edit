@@ -24,6 +24,7 @@
 #include <map>
 #include <memory>
 #include <vector>
+#include <imgui.h>
 
 namespace re::edit {
 
@@ -72,6 +73,14 @@ public:
   void overrideNumFrames(int iNumFrames);
 
   static std::unique_ptr<FilmStrip> load(std::shared_ptr<File> const &iFile);
+
+  static constexpr auto bySizeFilter(ImVec2 const &iSize) {
+    return [&iSize](FilmStrip const &iFilmStrip) {
+      return iFilmStrip.frameWidth() == static_cast<int>(iSize.x) &&
+             iFilmStrip.frameHeight() == static_cast<int>(iSize.y) &&
+             iFilmStrip.numFrames() == 1;
+    };
+  }
 
 private:
   FilmStrip(std::shared_ptr<File> iFile, char const *iErrorMessage);

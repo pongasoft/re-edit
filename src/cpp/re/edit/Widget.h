@@ -92,6 +92,7 @@ public:
   static std::unique_ptr<Widget> cv_input_socket();
   static std::unique_ptr<Widget> cv_output_socket();
   static std::unique_ptr<Widget> device_name();
+  static std::unique_ptr<Widget> placeholder();
   static std::unique_ptr<Widget> static_decoration();
   static std::unique_ptr<Widget> widget(std::string const &iType);
 
