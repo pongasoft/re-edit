@@ -27,11 +27,11 @@ namespace re::edit {
 //------------------------------------------------------------------------
 void EditContext::renderAddWidgetMenuView(ImVec2 const &iPosition)
 {
-  for(auto widgetType: kWidgetTypes)
+  for(auto const &def: fPanelState->fWidgetDefs)
   {
-    if(ImGui::MenuItem(widgetType))
+    if(ImGui::MenuItem(def.fName))
     {
-      auto widget = Widget::widget(widgetType);
+      auto widget = def.fFactory();
       widget->setPosition(iPosition);
       fPanelState->fPanel.addWidget(std::move(widget));
     }

@@ -26,12 +26,30 @@
 namespace re::edit {
 
 //------------------------------------------------------------------------
+// kWidgetTypeToNames
+//------------------------------------------------------------------------
+std::map<WidgetType, char const *> kWidgetTypeToNames = []() {
+  std::map<WidgetType, char const *> res{};
+  for(auto const &def: kAllWidgetDefs)
+    res[def.fType] = def.fName;
+  return res;
+}();
+
+//------------------------------------------------------------------------
+// toString
+//------------------------------------------------------------------------
+char const *toString(WidgetType iWidgetType)
+{
+  return kWidgetTypeToNames.at(iWidgetType);
+}
+
+//------------------------------------------------------------------------
 // Panel::draw
 //------------------------------------------------------------------------
-Panel::Panel(Panel::Type iType) :
+Panel::Panel(PanelType iType) :
   fType{iType},
   fNodeName{re::mock::fmt::printf("Panel_%s_bg", toString(iType))},
-  fCableOrigin{fType == Type::kFoldedBack ? std::optional<ImVec2>({kDevicePixelWidth / 2.0f, kFoldedDevicePixelHeight / 2.0f}) : std::nullopt }
+  fCableOrigin{fType == PanelType::kFoldedBack ? std::optional<ImVec2>({kDevicePixelWidth / 2.0f, kFoldedDevicePixelHeight / 2.0f}) : std::nullopt }
 {
   setDeviceHeightRU(1);
 }
@@ -39,14 +57,14 @@ Panel::Panel(Panel::Type iType) :
 //------------------------------------------------------------------------
 // Panel::toString
 //------------------------------------------------------------------------
-char const *Panel::toString(Panel::Type iType)
+char const *Panel::toString(PanelType iType)
 {
   switch(iType)
   {
-    case Type::kFront: return "front";
-    case Type::kFoldedFront: return "folded_front";
-    case Type::kBack: return "back";
-    case Type::kFoldedBack: return "folded_Back";
+    case PanelType::kFront: return "front";
+    case PanelType::kFoldedFront: return "folded_front";
+    case PanelType::kBack: return "back";
+    case PanelType::kFoldedBack: return "folded_Back";
     default:
       RE_EDIT_FAIL("Not reached");
   }
@@ -732,10 +750,10 @@ char const *Panel::getName() const
 {
   switch(fType)
   {
-    case Type::kFront: return "Front";
-    case Type::kFoldedFront: return "Folded Front";
-    case Type::kBack: return "Back";
-    case Type::kFoldedBack: return "Folded Back";
+    case PanelType::kFront: return "Front";
+    case PanelType::kFoldedFront: return "Folded Front";
+    case PanelType::kBack: return "Back";
+    case PanelType::kFoldedBack: return "Folded Back";
     default:
       RE_EDIT_FAIL("Not reached");
   }
@@ -838,7 +856,7 @@ void Panel::editOrderView(std::vector<int> const &iOrder, F iOnSwap)
 void Panel::setDeviceHeightRU(int iDeviceHeightRU)
 {
   fDeviceHeightRU = iDeviceHeightRU;
-  auto h = (fType == Type::kFront || fType == Type::kBack) ? toPixelHeight(fDeviceHeightRU) : kFoldedDevicePixelHeight;
+  auto h = isPanelType(fType, PanelType::kAnyUnfolded) ? toPixelHeight(fDeviceHeightRU) : kFoldedDevicePixelHeight;
   fGraphics.fFilter = [h](FilmStrip const &f) {
     return f.width() == kDevicePixelWidth && f.height() == h;
   };

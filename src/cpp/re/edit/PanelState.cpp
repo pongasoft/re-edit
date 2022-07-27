@@ -22,7 +22,7 @@ namespace re::edit {
 //------------------------------------------------------------------------
 // PanelState::PanelState
 //------------------------------------------------------------------------
-PanelState::PanelState(Panel::Type iPanelType,
+PanelState::PanelState(PanelType iPanelType,
                        std::shared_ptr<TextureManager> iTextureManager,
                        std::shared_ptr<UserPreferences> iUserPreferences,
                        std::shared_ptr<PropertyManager> iPropertyManager) :
@@ -32,6 +32,8 @@ PanelState::PanelState(Panel::Type iPanelType,
   fDrawContext.fTextureManager = std::move(iTextureManager);
   fDrawContext.fUserPreferences = std::move(iUserPreferences);
   fDrawContext.fPropertyManager = std::move(iPropertyManager);
+  std::copy_if(std::begin(kAllWidgetDefs), std::end(kAllWidgetDefs), std::back_inserter(fWidgetDefs),
+               [iPanelType](auto const &def) { return isPanelType(def.fAllowedPanels, iPanelType); });
 }
 
 //------------------------------------------------------------------------
@@ -111,10 +113,10 @@ void PanelState::renderWidgets()
 
       if(ImGui::BeginPopup("add_widget"))
       {
-        for(auto widgetType: kWidgetTypes)
+        for(auto const &def: fWidgetDefs)
         {
-          if(ImGui::Selectable(widgetType))
-            fPanel.addWidget(Widget::widget(widgetType));
+          if(ImGui::MenuItem(def.fName))
+            fPanel.addWidget(def.fFactory());
         }
         ImGui::EndPopup();
       }

@@ -26,7 +26,7 @@ namespace re::edit {
 class PanelState
 {
 public:
-  PanelState(Panel::Type iPanelType,
+  PanelState(PanelType iPanelType,
              std::shared_ptr<TextureManager> iTextureManager,
              std::shared_ptr<UserPreferences> iUserPreferences,
              std::shared_ptr<PropertyManager> iPropertyManager);
@@ -46,6 +46,7 @@ public:
 
 private:
   DrawContext fDrawContext;
+  std::vector<WidgetDef> fWidgetDefs{};
   bool fShowPanel{true};
   bool fShowPanelWidgets{true};
   bool fShowWidgets{};

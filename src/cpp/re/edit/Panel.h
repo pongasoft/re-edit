@@ -31,14 +31,34 @@ struct MouseDrag
   ImVec2 fCurrentPosition{};
 };
 
+struct WidgetDef
+{
+  WidgetType fType{};
+  char const *fName{};
+  std::function<std::unique_ptr<Widget>()> fFactory{};
+  PanelType fAllowedPanels{};
+};
+
+static const WidgetDef kAllWidgetDefs[] {
+  { WidgetType::kAnalogKnob,        "analog_knob",         Widget::analog_knob,         PanelType::kAnyFront },
+  { WidgetType::kAudioInputSocket,  "audio_input_socket",  Widget::audio_input_socket,  PanelType::kBack },
+  { WidgetType::kAudioOutputSocket, "audio_output_socket", Widget::audio_output_socket, PanelType::kBack },
+  { WidgetType::kCustomDisplay,     "custom_display",      Widget::custom_display,      PanelType::kAnyFront },
+  { WidgetType::kCVInputSocket,     "cv_input_socket",     Widget::cv_input_socket,     PanelType::kBack },
+  { WidgetType::kCVOutputSocket,    "cv_output_socket",    Widget::cv_output_socket,    PanelType::kBack },
+  { WidgetType::kDeviceName,        "device_name",         Widget::device_name,         PanelType::kAny },
+  { WidgetType::kPlaceholder,       "placeholder",         Widget::placeholder,         PanelType::kBack },
+  { WidgetType::kStaticDecoration,  "static_decoration",   Widget::static_decoration,   PanelType::kAny },
+  { WidgetType::kPanelDecal,        "panel_decal",         Widget::panel_decal,         PanelType::kAny },
+};
+
 class Panel
 {
 public:
-  enum class Type { kFront, kBack, kFoldedFront, kFoldedBack  };
-  static char const *toString(Type iType);
+  static char const *toString(PanelType iType);
 
 public:
-  explicit Panel(Type iType);
+  explicit Panel(PanelType iType);
 
   char const *getName() const;
   constexpr std::string const &getNodeName() const { return fNodeName; };
@@ -93,7 +113,7 @@ private:
   void drawCableOrigin(DrawContext &iCtx);
 
 private:
-  Type fType;
+  PanelType fType;
   int fDeviceHeightRU{1};
   std::string fNodeName;
   widget::attribute::Graphics fGraphics{};

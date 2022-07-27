@@ -24,18 +24,24 @@
 
 namespace re::edit {
 
-constexpr char const *kWidgetTypes[] = {
-  "analog_knob",
-  "audio_input_socket",
-  "audio_output_socket",
-  "custom_display",
-  "cv_input_socket",
-  "cv_output_socket",
-  "device_name",
-  "placeholder",
-  "static_decoration",
-  "panel_decal"
+enum class PanelType : int
+{
+  kInvalid     = 0,
+  kFront       = 1 << 0,
+  kBack        = 1 << 1,
+  kFoldedFront = 1 << 2,
+  kFoldedBack  = 1 << 3,
+  kAnyFront    = kFront | kFoldedFront,
+  kAnyBack     = kBack | kFoldedBack,
+  kAnyUnfolded = kFront | kBack,
+  kAnyFolded   = kFoldedFront | kFoldedBack,
+  kAny         = kFront | kBack | kFoldedFront | kFoldedBack
 };
+
+constexpr bool isPanelType(PanelType self, PanelType ofKind)
+{
+  return (static_cast<int>(self) & static_cast<int>(ofKind)) != 0;
+}
 
 enum class WidgetType : int
 {
@@ -51,10 +57,7 @@ enum class WidgetType : int
   kPanelDecal
 };
 
-constexpr char const *toString(WidgetType iType)
-{
-  return kWidgetTypes[static_cast<int>(iType)];
-}
+char const *toString(WidgetType iType);
 
 constexpr int k1UPixelSize = 345;
 constexpr int kDevicePixelWidth = 3770;

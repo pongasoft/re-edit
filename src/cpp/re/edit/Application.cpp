@@ -33,10 +33,10 @@ Application::Application(std::shared_ptr<TextureManager> const &iTextureManager)
   fTextureManager{iTextureManager},
   fUserPreferences{std::make_shared<UserPreferences>()},
   fPropertyManager{std::make_shared<PropertyManager>()},
-  fFrontPanel(Panel::Type::kFront, iTextureManager, fUserPreferences, fPropertyManager),
-  fFoldedFrontPanel(Panel::Type::kFoldedFront, iTextureManager, fUserPreferences, fPropertyManager),
-  fBackPanel(Panel::Type::kBack, iTextureManager, fUserPreferences, fPropertyManager),
-  fFoldedBackPanel(Panel::Type::kFoldedBack, iTextureManager, fUserPreferences, fPropertyManager)
+  fFrontPanel(PanelType::kFront, iTextureManager, fUserPreferences, fPropertyManager),
+  fFoldedFrontPanel(PanelType::kFoldedFront, iTextureManager, fUserPreferences, fPropertyManager),
+  fBackPanel(PanelType::kBack, iTextureManager, fUserPreferences, fPropertyManager),
+  fFoldedBackPanel(PanelType::kFoldedBack, iTextureManager, fUserPreferences, fPropertyManager)
 {
 }
 

@@ -22,6 +22,7 @@
 #include <imgui.h>
 #include <misc/cpp/imgui_stdlib.h>
 #include "Errors.h"
+#include "Panel.h"
 
 namespace re::edit {
 
@@ -494,27 +495,6 @@ std::unique_ptr<Widget> Widget::panel_decal()
   auto w = std::make_unique<Widget>(WidgetType::kPanelDecal);
   w->fGraphics.fFilter = [](FilmStrip const &iFilmStrip) { return iFilmStrip.numFrames() == 1; };
   return w;
-}
-
-//------------------------------------------------------------------------
-// Widget::widget
-//------------------------------------------------------------------------
-std::unique_ptr<Widget> Widget::widget(std::string const &iType)
-{
-  static const std::map<std::string, std::function<std::unique_ptr<Widget>()>> kFactory{
-    { "analog_knob",         Widget::analog_knob },
-    { "audio_input_socket",  Widget::audio_input_socket },
-    { "audio_output_socket", Widget::audio_output_socket },
-    { "custom_display",      Widget::custom_display },
-    { "cv_input_socket",     Widget::cv_input_socket },
-    { "cv_output_socket",    Widget::cv_output_socket },
-    { "device_name",         Widget::device_name },
-    { "placeholder",         Widget::placeholder },
-    { "static_decoration",   Widget::static_decoration },
-    { "panel_decal",         Widget::panel_decal }
-  };
-
-  return kFactory.at(iType)();
 }
 
 //------------------------------------------------------------------------
