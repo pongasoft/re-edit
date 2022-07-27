@@ -464,6 +464,22 @@ std::unique_ptr<Widget> Widget::cv_output_socket()
   return w;
 }
 
+//------------------------------------------------------------------------
+// Widget::cv_trim_knob
+//------------------------------------------------------------------------
+std::unique_ptr<Widget> Widget::cv_trim_knob()
+{
+  static const auto kSocketFilter = [](const Object &p) {
+    return p.type() == mock::JboxObjectType::kCVInput;
+  };
+  auto w = std::make_unique<Widget>(WidgetType::kCVTrimKnob);
+  w ->socket(mock::JboxObjectType::kCVInput, kSocketFilter)
+    ->setSize(kCVTrimKnobSize)
+    ;
+  w->fGraphics.fFilter = FilmStrip::bySizeFilter(kCVTrimKnobSize);
+  return w;
+}
+
 
 //------------------------------------------------------------------------
 // Widget::device_name

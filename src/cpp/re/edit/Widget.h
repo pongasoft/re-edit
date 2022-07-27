@@ -91,6 +91,7 @@ public:
   static std::unique_ptr<Widget> custom_display();
   static std::unique_ptr<Widget> cv_input_socket();
   static std::unique_ptr<Widget> cv_output_socket();
+  static std::unique_ptr<Widget> cv_trim_knob();
   static std::unique_ptr<Widget> device_name();
   static std::unique_ptr<Widget> placeholder();
   static std::unique_ptr<Widget> sequence_fader();

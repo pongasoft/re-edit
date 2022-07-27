@@ -51,6 +51,7 @@ enum class WidgetType : int
   kCustomDisplay,
   kCVInputSocket,
   kCVOutputSocket,
+  kCVTrimKnob,
   kDeviceName,
   kPlaceholder,
   kSequenceFader,
@@ -68,6 +69,7 @@ constexpr auto kHitBoundariesColor = ImVec4{ 60.0f / 255.0f, 1.0f, 2.0f / 255.0f
 
 constexpr auto kAudioSocketSize = ImVec2{95, 105};
 constexpr auto kCVSocketSize = ImVec2{80, 90};
+constexpr auto kCVTrimKnobSize = ImVec2{100, 100};
 constexpr auto kPlaceholderSize = ImVec2{300, 100};
 
 constexpr int toPixelHeight(int iDeviceHeightRU)

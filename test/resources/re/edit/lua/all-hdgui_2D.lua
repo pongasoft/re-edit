@@ -125,6 +125,9 @@ back_widgets[#back_widgets + 1] = jbox.cv_input_socket {
 back_widgets[#back_widgets + 1] = jbox.cv_output_socket {
   graphics = { node = "cv_out_1_node", }, socket = "/cv_outputs/cv_out_1",
 }
+back_widgets[#back_widgets + 1] = jbox.cv_trim_knob {
+  graphics = { node = "cv_trim_knob_node", }, socket = "/cv_inputs/cv_trim_1",
+}
 back_widgets[#back_widgets + 1] = jbox.placeholder {
   graphics = { node = "ph1_node", }
 }

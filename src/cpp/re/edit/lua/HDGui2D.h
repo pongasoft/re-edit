@@ -74,6 +74,7 @@ public:
   int luaCustomDisplay();
   int luaCVInputSocket();
   int luaCVOutputSocket();
+  int luaCVTrimKnob();
   int luaDeviceName();
   int luaImage();
   int luaPlaceholder();

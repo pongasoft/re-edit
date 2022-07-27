@@ -422,7 +422,7 @@ TEST(HDGui2D, All)
   ASSERT_EQ(hdg->getStackString(), "<empty>");
 
   auto back = hdg->back();
-  ASSERT_EQ(5, back->fWidgets.size());
+  ASSERT_EQ(6, back->fWidgets.size());
   ASSERT_EQ("Panel_back_bg", back->fGraphicsNode);
   ASSERT_EQ(std::nullopt, front->fCableOrigin);
 
@@ -458,6 +458,14 @@ TEST(HDGui2D, All)
     ASSERT_EQ(WidgetType::kCVOutputSocket, w->fWidget->getType());
     ASSERT_EQ("cv_out_1_node", w->fGraphics.fNode);
     ASSERT_THAT(w, HasSocket("/cv_outputs/cv_out_1"));
+  }
+
+  // cv_trim_1
+  {
+    auto w = back->fWidgets[id++];
+    ASSERT_EQ(WidgetType::kCVTrimKnob, w->fWidget->getType());
+    ASSERT_EQ("cv_trim_knob_node", w->fGraphics.fNode);
+    ASSERT_THAT(w, HasSocket("/cv_inputs/cv_trim_1"));
   }
 
   // placeholder
