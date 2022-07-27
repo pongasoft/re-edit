@@ -48,7 +48,7 @@ static int lua_popup_button(lua_State *L) { RE_MOCK_LOG_WARNING("popup_button no
 static int lua_radio_button(lua_State *L) { RE_MOCK_LOG_WARNING("radio_button not implemented yet"); return HDGui2D::loadFromRegistry(L)->luaIgnored(); }
 static int lua_sample_browse_group(lua_State *L) { RE_MOCK_LOG_WARNING("sample_browse_group not implemented yet"); return HDGui2D::loadFromRegistry(L)->luaIgnored(); }
 static int lua_sample_drop_zone(lua_State *L) { RE_MOCK_LOG_WARNING("sample_drop_zone not implemented yet"); return HDGui2D::loadFromRegistry(L)->luaIgnored(); }
-static int lua_sequence_fader(lua_State *L) { RE_MOCK_LOG_WARNING("sequence_fader not implemented yet"); return HDGui2D::loadFromRegistry(L)->luaIgnored(); }
+static int lua_sequence_fader(lua_State *L) { return HDGui2D::loadFromRegistry(L)->luaSequenceFader(); }
 static int lua_sequence_meter(lua_State *L) { RE_MOCK_LOG_WARNING("sequence_meter not implemented yet"); return HDGui2D::loadFromRegistry(L)->luaIgnored(); }
 static int lua_static_decoration(lua_State *L) { return HDGui2D::loadFromRegistry(L)->luaStaticDecoration(); }
 static int lua_step_button(lua_State *L) { RE_MOCK_LOG_WARNING("step_button not implemented yet"); return HDGui2D::loadFromRegistry(L)->luaIgnored(); }
@@ -334,6 +334,30 @@ int HDGui2D::luaPlaceholder()
   if(checkTableArg())
   {
     populateGraphics(p);
+  }
+  return addObjectOnTopOfStack(std::move(p));
+}
+
+//------------------------------------------------------------------------
+// HDGui2D::luaSequenceFader
+//------------------------------------------------------------------------
+int HDGui2D::luaSequenceFader()
+{
+  auto p = makeWidget(Widget::sequence_fader());
+  if(checkTableArg())
+  {
+    populateGraphics(p);
+    populate<Value>(p, "value");
+    populate<StaticStringList>(p, "orientation");
+    populate<Integer>(p, "inset1");
+    populate<Integer>(p, "inset2");
+    populate<Integer>(p, "handle_size");
+    populate<Visibility>(p, "visibility");
+    populate<StaticStringList>(p, "tooltip_position");
+    populate<UIText>(p, "tooltip_template");
+    populate<Bool>(p, "inverted");
+    populate<Bool>(p, "show_remote_box");
+    populate<Bool>(p, "show_automation_rect");
   }
   return addObjectOnTopOfStack(std::move(p));
 }

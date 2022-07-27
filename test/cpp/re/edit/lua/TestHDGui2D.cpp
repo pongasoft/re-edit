@@ -226,9 +226,26 @@ inline constexpr auto HasBlendMode = [](char const *iExpected = nullptr) {
     return AttributeToString<StaticStringList>("blend_mode", R"(blend_mode={"normal",false})");
 };
 
+//! HasOrientation | orientation
+inline constexpr auto HasOrientation = [](char const *iExpected = nullptr) {
+  if(iExpected)
+    return AttributeToString<StaticStringList>("orientation", R"(orientation={"%s",true})", iExpected);
+  else
+    return AttributeToString<StaticStringList>("orientation", R"(orientation={"vertical",false})");
+};
+
+
 //! HasValues | values
 inline constexpr auto HasValues = [](const std::vector<char const *>& iExpectedValues) {
   return AttributeToString<PropertyPathList>("values", R"(values={%s,true})", toString(iExpectedValues));
+};
+
+//! HasBoolValue | bool value
+inline constexpr auto HasBoolValue = [](char const *iName, std::optional<bool> iExpectedValue = std::nullopt) {
+  if(iExpectedValue)
+    return AttributeToString<Bool>(iName, R"(%s={%s,true})", iName, *iExpectedValue ? "true" : "false");
+  else
+    return AttributeToString<Bool>(iName, R"(%s={false,false})", iName);
 };
 
 //! HasIntegerValue | integer value
@@ -266,7 +283,7 @@ TEST(HDGui2D, All)
   auto hdg = HDGui2D::fromFile(getResourceFile("all-hdgui_2D.lua"));
 
   auto front = hdg->front();
-  ASSERT_EQ(7, front->fWidgets.size());
+  ASSERT_EQ(9, front->fWidgets.size());
   ASSERT_EQ("Panel_front_bg", front->fGraphicsNode);
   ASSERT_EQ(std::nullopt, front->fCableOrigin);
 
@@ -359,6 +376,44 @@ TEST(HDGui2D, All)
     ASSERT_THAT(w, HasShowAutomationRect(false));
     ASSERT_THAT(w, HasVisibility("/cd2_switch", {8, 1}));
     ASSERT_THAT(w, HasBackground("cd2_bg"));
+  }
+
+  // sf1
+  {
+    auto w = front->fWidgets[id++];
+    ASSERT_EQ(WidgetType::kSequenceFader, w->fWidget->getType());
+    ASSERT_EQ("sf1_node", w->fGraphics.fNode);
+    ASSERT_EQ(std::nullopt, w->fGraphics.fHitBoundaries);
+    ASSERT_THAT(w, HasValue("/sf1"));
+    ASSERT_THAT(w, HasOrientation());
+    ASSERT_THAT(w, HasBoolValue("inverted"));
+    ASSERT_THAT(w, HasIntegerValue("inset1"));
+    ASSERT_THAT(w, HasIntegerValue("inset2"));
+    ASSERT_THAT(w, HasIntegerValue("handle_size"));
+    ASSERT_THAT(w, HasNoVisibility());
+    ASSERT_THAT(w, HasTooltipPosition());
+    ASSERT_THAT(w, HasShowRemoteBox());
+    ASSERT_THAT(w, HasShowAutomationRect());
+    ASSERT_THAT(w, HasTooltipTemplate());
+  }
+
+  // sf2
+  {
+    auto w = front->fWidgets[id++];
+    ASSERT_EQ(WidgetType::kSequenceFader, w->fWidget->getType());
+    ASSERT_EQ("sf2_node", w->fGraphics.fNode);
+    ASSERT_EQ(std::nullopt, w->fGraphics.fHitBoundaries);
+    ASSERT_THAT(w, HasValueSwitch("/sf2_switch", {"/sf2_v1"}));
+    ASSERT_THAT(w, HasOrientation("horizontal"));
+    ASSERT_THAT(w, HasBoolValue("inverted", true));
+    ASSERT_THAT(w, HasIntegerValue("inset1", 10));
+    ASSERT_THAT(w, HasIntegerValue("inset2", 20));
+    ASSERT_THAT(w, HasIntegerValue("handle_size", 30));
+    ASSERT_THAT(w, HasVisibility("/sf2_switch", {3, 1}));
+    ASSERT_THAT(w, HasTooltipPosition("top"));
+    ASSERT_THAT(w, HasTooltipTemplate("sf2_tooltip_template"));
+    ASSERT_THAT(w, HasShowRemoteBox(false));
+    ASSERT_THAT(w, HasShowAutomationRect(false));
   }
 
   //------------------------------------------------------------------------

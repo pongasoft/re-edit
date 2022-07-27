@@ -304,6 +304,15 @@ Widget *Widget::show_automation_rect()
 }
 
 //------------------------------------------------------------------------
+// Widget::orientation
+//------------------------------------------------------------------------
+Widget *Widget::orientation()
+{
+  static const std::vector<std::string> kOrientations = { "horizontal", "vertical"};
+  return addAttribute(Attribute::build<StaticStringList>("orientation", "vertical", kOrientations));
+}
+
+//------------------------------------------------------------------------
 // Widget::tooltip_position
 //------------------------------------------------------------------------
 Widget *Widget::tooltip_position()
@@ -474,6 +483,32 @@ std::unique_ptr<Widget> Widget::placeholder()
   w->fGraphics.fFilter = FilmStrip::bySizeFilter(kPlaceholderSize);
   return w;
 }
+
+//------------------------------------------------------------------------
+// Widget::sequence_fader
+//------------------------------------------------------------------------
+std::unique_ptr<Widget> Widget::sequence_fader()
+{
+  static const auto kValueFilter = [](const Property &p) {
+    return (p.type() == kJBox_Boolean || p.type() == kJBox_Number) && kDocGuiOwnerFilter(p);
+  };
+  static const auto kValueSwitchFilter = [](const Property &p) { return p.isDiscrete() && kDocGuiOwnerFilter(p); };
+  auto w = std::make_unique<Widget>(WidgetType::kSequenceFader);
+  w ->value(kValueFilter, kValueSwitchFilter)
+    ->orientation()
+    ->addAttribute(Attribute::build<Integer>("inset1", 0))
+    ->addAttribute(Attribute::build<Integer>("inset2", 0))
+    ->addAttribute(Attribute::build<Integer>("handle_size", 0))
+    ->visibility()
+    ->tooltip_position()
+    ->tooltip_template()
+    ->addAttribute(Attribute::build<Bool>("inverted", false))
+    ->show_remote_box()
+    ->show_automation_rect()
+    ;
+  return w;
+}
+
 
 //------------------------------------------------------------------------
 // Widget::static_decoration

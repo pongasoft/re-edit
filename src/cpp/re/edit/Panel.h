@@ -48,6 +48,7 @@ static const WidgetDef kAllWidgetDefs[] {
   { WidgetType::kCVOutputSocket,    "cv_output_socket",    Widget::cv_output_socket,    PanelType::kBack },
   { WidgetType::kDeviceName,        "device_name",         Widget::device_name,         PanelType::kAny },
   { WidgetType::kPlaceholder,       "placeholder",         Widget::placeholder,         PanelType::kBack },
+  { WidgetType::kSequenceFader,     "sequence_fader",      Widget::sequence_fader,      PanelType::kAny },
   { WidgetType::kStaticDecoration,  "static_decoration",   Widget::static_decoration,   PanelType::kAny },
   { WidgetType::kPanelDecal,        "panel_decal",         Widget::panel_decal,         PanelType::kAny },
 };

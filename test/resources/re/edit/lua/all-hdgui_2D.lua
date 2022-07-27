@@ -79,6 +79,28 @@ front_widgets[#front_widgets + 1] = jbox.custom_display {
   background = jbox.image{ path = "cd2_bg" }
 }
 
+front_widgets[#front_widgets + 1] = jbox.sequence_fader {
+  graphics = { node = "sf1_node" },
+  value = "/sf1"
+}
+
+front_widgets[#front_widgets + 1] = jbox.sequence_fader {
+  graphics = { node = "sf2_node" },
+  value_switch = "/sf2_switch",
+  values = { "/sf2_v1" },
+  orientation = "horizontal",
+  inverted = true,
+  inset1 = 10,
+  inset2 = 20,
+  handle_size = 30,
+  visibility_switch = "/sf2_switch",
+  visibility_values = { 3, 1 },
+  tooltip_position = "top",
+  tooltip_template = jbox.ui_text("sf2_tooltip_template"),
+  show_remote_box = false,
+  show_automation_rect = false,
+}
+
 front = jbox.panel{
   graphics = {
     node = "Panel_front_bg",

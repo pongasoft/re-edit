@@ -77,6 +77,7 @@ public:
   int luaDeviceName();
   int luaImage();
   int luaPlaceholder();
+  int luaSequenceFader();
   int luaStaticDecoration();
   int luaUIText();
 

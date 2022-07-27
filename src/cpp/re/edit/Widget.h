@@ -93,6 +93,7 @@ public:
   static std::unique_ptr<Widget> cv_output_socket();
   static std::unique_ptr<Widget> device_name();
   static std::unique_ptr<Widget> placeholder();
+  static std::unique_ptr<Widget> sequence_fader();
   static std::unique_ptr<Widget> static_decoration();
 
   template<typename T>
@@ -118,6 +119,7 @@ protected:
   Widget *addAttribute(std::unique_ptr<widget::Attribute> iAttribute) { fAttributes.emplace_back(std::move(iAttribute)); return this; }
   Widget *value(Property::Filter iValueFilter, Property::Filter iValueSwitchFilter);
   Widget *values(Property::Filter iValuesFilter);
+  Widget *orientation();
   Widget *show_remote_box();
   Widget *show_automation_rect();
   Widget *tooltip_position();
