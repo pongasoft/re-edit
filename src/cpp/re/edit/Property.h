@@ -44,7 +44,8 @@ struct Property
   using Filter = std::function<bool(Property const &iProperty)>;
 
   constexpr TJBox_PropertyRef const &ref() const { return fInfo.fPropertyRef; };
-  constexpr TJBox_ObjectRef parent() const { return fInfo.fPropertyRef.fObject; };
+  constexpr Object const &parent() const { return fParent; };
+  constexpr TJBox_ObjectRef parentRef() const { return fInfo.fPropertyRef.fObject; };
   constexpr std::string const &path() const { return fInfo.fPropertyPath; };
   constexpr TJBox_ValueType type() const { return fInfo.fValueType; };
   constexpr int stepCount() const { return fInfo.fStepCount; };
@@ -55,6 +56,7 @@ struct Property
   constexpr bool isDiscrete() const { return fInfo.fStepCount > 0; }
 
   re::mock::JboxPropertyInfo fInfo{};
+  Object fParent{};
 };
 
 

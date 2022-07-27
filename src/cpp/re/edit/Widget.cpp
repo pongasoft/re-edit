@@ -409,9 +409,11 @@ std::unique_ptr<Widget> Widget::audio_output_socket()
 //------------------------------------------------------------------------
 std::unique_ptr<Widget> Widget::custom_display()
 {
-  // TODO can only bind to custom properties
+  // TODO error message states that can use only custom properties (ex: cannot use audio socket connected)
+  // TODO but I fear that it is not entirely correct... what about sample rate? Need to investigate
   static const auto kValuesFilter = [](const Property &p) {
-    return (p.type() == kJBox_Boolean || p.type() == kJBox_Number || p.type() == kJBox_String);
+    return p.parent().type() == mock::JboxObjectType::kCustomProperties &&
+           (p.type() == kJBox_Boolean || p.type() == kJBox_Number || p.type() == kJBox_String);
   };
 
   auto w = std::make_unique<Widget>(WidgetType::kCustomDisplay);

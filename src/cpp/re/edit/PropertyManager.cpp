@@ -51,13 +51,18 @@ int PropertyManager::init(std::string const &iDirectory)
 
   auto objectInfos = fDevice->getObjectInfos();
 
+  std::map<TJBox_ObjectRef, Object> objectsByRef{};
+
   for(auto const &info: objectInfos)
+  {
     fObjects[info.fObjectPath] = Object{info};
+    objectsByRef[info.fObjectRef] = Object{info};
+  }
 
   auto propertyInfos = fDevice->getPropertyInfos();
 
   for(auto const &info: propertyInfos)
-    fProperties[info.fPropertyPath] = Property{info};
+    fProperties[info.fPropertyPath] = Property{info, objectsByRef.at(info.fPropertyRef.fObject)};
 
   // we run the first batch which initialize the device
   fRack.nextBatch();
