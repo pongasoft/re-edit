@@ -56,6 +56,29 @@ front_widgets[#front_widgets + 1] = jbox.static_decoration {
   visibility_values = { 4, 9, 1 }
 }
 
+front_widgets[#front_widgets + 1] = jbox.custom_display {
+  graphics = { node = "cd1_node", },
+  values = { "/cd1" },
+	display_width_pixels = 30,
+	display_height_pixels = 10,
+	draw_function = "draw_cd1"
+}
+
+front_widgets[#front_widgets + 1] = jbox.custom_display {
+  graphics = { node = "cd2_node", },
+	display_width_pixels = 35,
+	display_height_pixels = 40,
+  values = { "/cd2_1", "/cd2_2" },
+	invalidate_function = "invalidate_cd2",
+	draw_function = "draw_cd2",
+	gesture_function = "gesture_cd2",
+  show_remote_box = false,
+  show_automation_rect = false,
+  visibility_switch = "/cd2_switch",
+  visibility_values = { 8, 1 },
+  background = jbox.image{ path = "cd2_bg" }
+}
+
 front = jbox.panel{
   graphics = {
     node = "Panel_front_bg",

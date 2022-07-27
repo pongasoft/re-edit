@@ -102,7 +102,7 @@ class Background : public String
 public:
   explicit Background(std::string iName) : String(std::move(iName)) {}
 
-  void hdgui2D(attribute_list_t &oAttributes) const override;
+  std::string getValueAsLua() const override;
 
   void editView(EditContext &iCtx) override;
   bool draw(DrawContext &iCtx, Graphics const *iParent) const;

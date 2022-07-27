@@ -308,10 +308,9 @@ void Background::editView(EditContext &iCtx)
 //------------------------------------------------------------------------
 // Background::hdgui2D
 //------------------------------------------------------------------------
-void Background::hdgui2D(attribute_list_t &oAttributes) const
+std::string Background::getValueAsLua() const
 {
-  if(fProvided)
-    oAttributes.emplace_back(attribute_t{fName, re::mock::fmt::printf("jbox.image{ path = { \"%s\" } }", fValue)});
+  return re::mock::fmt::printf("jbox.image{ path = \"%s\" }", fValue);
 }
 
 }
