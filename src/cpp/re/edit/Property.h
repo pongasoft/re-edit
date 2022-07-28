@@ -22,9 +22,16 @@
 #include <functional>
 #include <re/mock/Motherboard.h>
 #include <JukeboxTypes.h>
+#include <bitmask_operators.hpp>
 
 #ifndef RE_EDIT_PROPERTY_H
 #define RE_EDIT_PROPERTY_H
+
+//! Enabling binary operators for re::mock::JboxObjectType
+template<>
+struct enable_bitmask_operators<re::mock::JboxObjectType>{
+  static const bool enable=true;
+};
 
 namespace re::edit {
 

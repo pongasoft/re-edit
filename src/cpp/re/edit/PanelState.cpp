@@ -33,7 +33,7 @@ PanelState::PanelState(PanelType iPanelType,
   fDrawContext.fUserPreferences = std::move(iUserPreferences);
   fDrawContext.fPropertyManager = std::move(iPropertyManager);
   std::copy_if(std::begin(kAllWidgetDefs), std::end(kAllWidgetDefs), std::back_inserter(fWidgetDefs),
-               [iPanelType](auto const &def) { return isPanelType(def.fAllowedPanels, iPanelType); });
+               [iPanelType](auto const &def) { return isPanelOfType(iPanelType, def.fAllowedPanels); });
 }
 
 //------------------------------------------------------------------------

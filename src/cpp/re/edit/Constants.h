@@ -21,27 +21,36 @@
 
 #include <string>
 #include <imgui.h>
+#include <bitmask_operators.hpp>
 
 namespace re::edit {
 
 enum class PanelType : int
 {
-  kInvalid     = 0,
+  kUnknown     = 0,
   kFront       = 1 << 0,
   kBack        = 1 << 1,
   kFoldedFront = 1 << 2,
   kFoldedBack  = 1 << 3,
-  kAnyFront    = kFront | kFoldedFront,
-  kAnyBack     = kBack | kFoldedBack,
-  kAnyUnfolded = kFront | kBack,
-  kAnyFolded   = kFoldedFront | kFoldedBack,
-  kAny         = kFront | kBack | kFoldedFront | kFoldedBack
 };
 
-constexpr bool isPanelType(PanelType self, PanelType ofKind)
-{
-  return (static_cast<int>(self) & static_cast<int>(ofKind)) != 0;
 }
+
+template<>
+struct enable_bitmask_operators<re::edit::PanelType> {
+  static const bool enable=true;
+};
+
+namespace re::edit {
+
+constexpr bool isPanelOfType(PanelType iSelf, PanelType iOfType)
+{
+  return (iSelf & iOfType) != PanelType::kUnknown;
+}
+
+constexpr auto kPanelTypeAny         = PanelType::kFront | PanelType::kBack | PanelType::kFoldedFront | PanelType::kFoldedBack;
+constexpr auto kPanelTypeAnyFront    = PanelType::kFront | PanelType::kFoldedFront;
+constexpr auto kPanelTypeAnyUnfolded = PanelType::kFront | PanelType::kBack;
 
 enum class WidgetType : int
 {

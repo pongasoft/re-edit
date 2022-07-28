@@ -856,7 +856,7 @@ void Panel::editOrderView(std::vector<int> const &iOrder, F iOnSwap)
 void Panel::setDeviceHeightRU(int iDeviceHeightRU)
 {
   fDeviceHeightRU = iDeviceHeightRU;
-  auto h = isPanelType(fType, PanelType::kAnyUnfolded) ? toPixelHeight(fDeviceHeightRU) : kFoldedDevicePixelHeight;
+  auto h = isPanelOfType(fType, kPanelTypeAnyUnfolded) ? toPixelHeight(fDeviceHeightRU) : kFoldedDevicePixelHeight;
   fGraphics.fFilter = [h](FilmStrip const &f) {
     return f.width() == kDevicePixelWidth && f.height() == h;
   };

@@ -100,6 +100,7 @@ endif()
 
 # Build the static library
 add_library("${target}_lib" "${re-edit_BUILD_SOURCES}")
+target_include_directories("${target}_lib" PUBLIC "external/misc")
 target_link_libraries("${target}_lib" PUBLIC imgui stb re-mock)
 
 # Build the executable

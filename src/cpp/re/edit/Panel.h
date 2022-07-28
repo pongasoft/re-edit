@@ -40,18 +40,18 @@ struct WidgetDef
 };
 
 static const WidgetDef kAllWidgetDefs[] {
-  { WidgetType::kAnalogKnob,        "analog_knob",         Widget::analog_knob,         PanelType::kAnyFront },
+  { WidgetType::kAnalogKnob,        "analog_knob",         Widget::analog_knob,         kPanelTypeAnyFront },
   { WidgetType::kAudioInputSocket,  "audio_input_socket",  Widget::audio_input_socket,  PanelType::kBack },
   { WidgetType::kAudioOutputSocket, "audio_output_socket", Widget::audio_output_socket, PanelType::kBack },
-  { WidgetType::kCustomDisplay,     "custom_display",      Widget::custom_display,      PanelType::kAnyFront },
+  { WidgetType::kCustomDisplay,     "custom_display",      Widget::custom_display,      kPanelTypeAnyFront },
   { WidgetType::kCVInputSocket,     "cv_input_socket",     Widget::cv_input_socket,     PanelType::kBack },
   { WidgetType::kCVOutputSocket,    "cv_output_socket",    Widget::cv_output_socket,    PanelType::kBack },
   { WidgetType::kCVTrimKnob,        "cv_trim_knob",        Widget::cv_trim_knob,        PanelType::kBack },
-  { WidgetType::kDeviceName,        "device_name",         Widget::device_name,         PanelType::kAny },
+  { WidgetType::kDeviceName,        "device_name",         Widget::device_name,         kPanelTypeAny },
   { WidgetType::kPlaceholder,       "placeholder",         Widget::placeholder,         PanelType::kBack },
-  { WidgetType::kSequenceFader,     "sequence_fader",      Widget::sequence_fader,      PanelType::kAny },
-  { WidgetType::kStaticDecoration,  "static_decoration",   Widget::static_decoration,   PanelType::kAny },
-  { WidgetType::kPanelDecal,        "panel_decal",         Widget::panel_decal,         PanelType::kAny },
+  { WidgetType::kSequenceFader,     "sequence_fader",      Widget::sequence_fader,      kPanelTypeAnyFront },
+  { WidgetType::kStaticDecoration,  "static_decoration",   Widget::static_decoration,   kPanelTypeAny },
+  { WidgetType::kPanelDecal,        "panel_decal",         Widget::panel_decal,         kPanelTypeAny },
 };
 
 class Panel
