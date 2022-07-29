@@ -66,6 +66,7 @@ enum class WidgetType : int
   kPlaceholder,
   kSequenceFader,
   kStaticDecoration,
+  kStepButton,
   kToggleButton,
 
   kPanelDecal // re-edit widget

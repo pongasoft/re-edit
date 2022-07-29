@@ -97,6 +97,7 @@ public:
   static std::unique_ptr<Widget> placeholder();
   static std::unique_ptr<Widget> sequence_fader();
   static std::unique_ptr<Widget> static_decoration();
+  static std::unique_ptr<Widget> step_button();
   static std::unique_ptr<Widget> toggle_button();
 
   template<typename T>

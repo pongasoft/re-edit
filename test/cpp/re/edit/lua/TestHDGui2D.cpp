@@ -239,6 +239,14 @@ inline constexpr auto HasOrientation = [](char const *iExpected = nullptr) {
     return AttributeToString<StaticStringList>("orientation", R"(orientation={"vertical",false})");
 };
 
+//! HasIncreasing | increasing
+inline constexpr auto HasIncreasing = [](std::optional<bool> iExpected = std::nullopt) {
+  if(iExpected)
+    return AttributeToString<Bool>("increasing", R"(increasing={%s,true})", toString(*iExpected));
+  else
+    return AttributeToString<Bool>("increasing", R"(increasing={true,false})");
+};
+
 
 //! HasValues | values
 inline constexpr auto HasValues = [](const std::vector<char const *>& iExpectedValues) {
@@ -288,7 +296,7 @@ TEST(HDGui2D, All)
   auto hdg = HDGui2D::fromFile(getResourceFile("all-hdgui_2D.lua"));
 
   auto front = hdg->front();
-  ASSERT_EQ(13, front->fWidgets.size());
+  ASSERT_EQ(15, front->fWidgets.size());
   ASSERT_EQ("Panel_front_bg", front->fGraphicsNode);
   ASSERT_EQ(std::nullopt, front->fCableOrigin);
 
@@ -471,6 +479,34 @@ TEST(HDGui2D, All)
     ASSERT_THAT(w, HasShowRemoteBox(false));
     ASSERT_THAT(w, HasShowAutomationRect(false));
     ASSERT_THAT(w, HasTooltipTemplate("tb2_tooltip_template"));
+  }
+
+  // sb1
+  {
+    auto w = front->fWidgets[id++];
+    ASSERT_EQ(WidgetType::kStepButton, w->fWidget->getType());
+    ASSERT_EQ("sb1_node", w->fGraphics.fNode);
+    ASSERT_THAT(w, HasValue("/sb1"));
+    ASSERT_THAT(w, HasNoVisibility());
+    ASSERT_THAT(w, HasTooltipPosition());
+    ASSERT_THAT(w, HasIncreasing());
+    ASSERT_THAT(w, HasShowRemoteBox());
+    ASSERT_THAT(w, HasShowAutomationRect());
+    ASSERT_THAT(w, HasTooltipTemplate());
+  }
+
+  // sb2
+  {
+    auto w = front->fWidgets[id++];
+    ASSERT_EQ(WidgetType::kStepButton, w->fWidget->getType());
+    ASSERT_EQ("sb2_node", w->fGraphics.fNode);
+    ASSERT_THAT(w, HasValue("/sb2"));
+    ASSERT_THAT(w, HasVisibility("/sb2_switch", {6, 5}));
+    ASSERT_THAT(w, HasTooltipPosition("no_tooltip"));
+    ASSERT_THAT(w, HasIncreasing(false));
+    ASSERT_THAT(w, HasShowRemoteBox(false));
+    ASSERT_THAT(w, HasShowAutomationRect(false));
+    ASSERT_THAT(w, HasTooltipTemplate("sb2_tooltip_template"));
   }
 
   //------------------------------------------------------------------------

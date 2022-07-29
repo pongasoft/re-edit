@@ -133,6 +133,23 @@ front_widgets[#front_widgets + 1] = jbox.toggle_button {
   show_automation_rect = false,
 }
 
+front_widgets[#front_widgets + 1] = jbox.step_button {
+  graphics = { node = "sb1_node", },
+  value = "/sb1",
+}
+
+front_widgets[#front_widgets + 1] = jbox.step_button {
+  graphics = { node = "sb2_node", },
+  value = "/sb2",
+  visibility_switch = "/sb2_switch",
+  visibility_values = { 6, 5 },
+  tooltip_position = "no_tooltip",
+  tooltip_template = jbox.ui_text("sb2_tooltip_template"),
+  increasing = false,
+  show_remote_box = false,
+  show_automation_rect = false,
+}
+
 front = jbox.panel{
   graphics = {
     node = "Panel_front_bg",

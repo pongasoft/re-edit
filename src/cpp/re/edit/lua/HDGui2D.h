@@ -81,6 +81,7 @@ public:
   int luaPlaceholder();
   int luaSequenceFader();
   int luaStaticDecoration();
+  int luaStepButton();
   int luaToggleButton();
   int luaUIText();
 
