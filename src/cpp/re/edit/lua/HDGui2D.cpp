@@ -39,7 +39,7 @@ static int lua_cv_output_socket(lua_State *L) { return HDGui2D::loadFromRegistry
 static int lua_cv_trim_knob(lua_State *L) { return HDGui2D::loadFromRegistry(L)->luaCVTrimKnob(); }
 static int lua_device_name(lua_State *L) { return HDGui2D::loadFromRegistry(L)->luaDeviceName(); }
 static int lua_image(lua_State *L) { return HDGui2D::loadFromRegistry(L)->luaImage(); }
-static int lua_momentary_button(lua_State *L) { RE_MOCK_LOG_WARNING("momentary_button not implemented yet"); return HDGui2D::loadFromRegistry(L)->luaIgnored(); }
+static int lua_momentary_button(lua_State *L) { return HDGui2D::loadFromRegistry(L)->luaMomentaryButton(); }
 static int lua_patch_browse_group(lua_State *L) { RE_MOCK_LOG_WARNING("patch_browse_group not implemented yet"); return HDGui2D::loadFromRegistry(L)->luaIgnored(); }
 static int lua_patch_name(lua_State *L) { RE_MOCK_LOG_WARNING("patch_name not implemented yet"); return HDGui2D::loadFromRegistry(L)->luaIgnored(); }
 static int lua_pitch_wheel(lua_State *L) { RE_MOCK_LOG_WARNING("pitch_wheel not implemented yet"); return HDGui2D::loadFromRegistry(L)->luaIgnored(); }
@@ -335,6 +335,25 @@ int HDGui2D::luaDeviceName()
   if(checkTableArg())
   {
     populateGraphics(p);
+  }
+  return addObjectOnTopOfStack(std::move(p));
+}
+
+//------------------------------------------------------------------------
+// HDGui2D::luaMomentaryButton
+//------------------------------------------------------------------------
+int HDGui2D::luaMomentaryButton()
+{
+  auto p = makeWidget(Widget::momentary_button());
+  if(checkTableArg())
+  {
+    populateGraphics(p);
+    populate<PropertyPath>(p, "value");
+    populate<Visibility>(p, "visibility");
+    populate<StaticStringList>(p, "tooltip_position");
+    populate<UIText>(p, "tooltip_template");
+    populate<Bool>(p, "show_remote_box");
+    populate<Bool>(p, "show_automation_rect");
   }
   return addObjectOnTopOfStack(std::move(p));
 }

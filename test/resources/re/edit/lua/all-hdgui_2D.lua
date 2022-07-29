@@ -101,6 +101,22 @@ front_widgets[#front_widgets + 1] = jbox.sequence_fader {
   show_automation_rect = false,
 }
 
+front_widgets[#front_widgets + 1] = jbox.momentary_button {
+  graphics = { node = "mb1_node", },
+  value = "/mb1",
+}
+
+front_widgets[#front_widgets + 1] = jbox.momentary_button {
+  graphics = { node = "mb2_node", },
+  value = "/mb2",
+  visibility_switch = "/mb2_switch",
+  visibility_values = { 7, 2 },
+  tooltip_position = "center",
+  tooltip_template = jbox.ui_text("mb2_tooltip_template"),
+  show_remote_box = false,
+  show_automation_rect = false,
+}
+
 front = jbox.panel{
   graphics = {
     node = "Panel_front_bg",

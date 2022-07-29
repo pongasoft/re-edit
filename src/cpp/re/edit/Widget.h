@@ -93,6 +93,7 @@ public:
   static std::unique_ptr<Widget> cv_output_socket();
   static std::unique_ptr<Widget> cv_trim_knob();
   static std::unique_ptr<Widget> device_name();
+  static std::unique_ptr<Widget> momentary_button();
   static std::unique_ptr<Widget> placeholder();
   static std::unique_ptr<Widget> sequence_fader();
   static std::unique_ptr<Widget> static_decoration();
@@ -118,7 +119,8 @@ protected:
 
 protected:
   Widget *addAttribute(std::unique_ptr<widget::Attribute> iAttribute) { fAttributes.emplace_back(std::move(iAttribute)); return this; }
-  Widget *value(Property::Filter iValueFilter, Property::Filter iValueSwitchFilter);
+  Widget *value(Property::Filter iValueFilter, Property::Filter iValueSwitchFilter); // value + value_switch
+  Widget *value(Property::Filter iValueFilter); // value only
   Widget *values(Property::Filter iValuesFilter);
   Widget *orientation();
   Widget *show_remote_box();

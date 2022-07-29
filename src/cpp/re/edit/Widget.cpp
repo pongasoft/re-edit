@@ -259,6 +259,14 @@ Widget *Widget::value(Property::Filter iValueFilter, Property::Filter iValueSwit
 }
 
 //------------------------------------------------------------------------
+// Widget::value
+//------------------------------------------------------------------------
+Widget *Widget::value(Property::Filter iValueFilter)
+{
+  return addAttribute(std::make_unique<PropertyPath>("value", std::move(iValueFilter)));
+}
+
+//------------------------------------------------------------------------
 // Widget::values
 //------------------------------------------------------------------------
 Widget *Widget::values(Property::Filter iValuesFilter)
@@ -489,6 +497,27 @@ std::unique_ptr<Widget> Widget::cv_trim_knob()
 std::unique_ptr<Widget> Widget::device_name()
 {
   return std::make_unique<Widget>(WidgetType::kDeviceName);
+}
+
+//------------------------------------------------------------------------
+// Widget::momentary_button
+//------------------------------------------------------------------------
+std::unique_ptr<Widget> Widget::momentary_button()
+{
+  static const auto kValueFilter = [](const Property &p) {
+    return (p.type() == kJBox_Boolean || p.isDiscrete()) && kDocGuiOwnerFilter(p);
+  };
+  auto w = std::make_unique<Widget>(WidgetType::kMomentaryButton);
+  w ->value(kValueFilter)
+    ->visibility()
+    ->tooltip_position()
+    ->tooltip_template()
+    ->show_remote_box()
+    ->show_automation_rect()
+    ;
+  // exactly 2 frames
+  w->fGraphics.fFilter = [](FilmStrip const &iFilmStrip) { return iFilmStrip.numFrames() == 2; };
+  return w;
 }
 
 //------------------------------------------------------------------------

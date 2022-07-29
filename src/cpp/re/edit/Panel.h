@@ -33,14 +33,17 @@ struct MouseDrag
 
 struct WidgetDef
 {
+  // Implementation node: using std::function prevents kAllWidgetDefs to be a constexpr
+  using factory_t = std::unique_ptr<Widget> (*)();
+
   WidgetType fType{};
   char const *fName{};
-  std::function<std::unique_ptr<Widget>()> fFactory{};
+  factory_t fFactory{};
   PanelType fAllowedPanels{};
 };
 
-static const WidgetDef kAllWidgetDefs[] {
-  { WidgetType::kAnalogKnob,        "analog_knob",         Widget::analog_knob,         kPanelTypeAnyFront },
+static constexpr WidgetDef kAllWidgetDefs[] {
+  { WidgetType::kAnalogKnob,        "analog_knob",         Widget::analog_knob,         kPanelTypeAny },
   { WidgetType::kAudioInputSocket,  "audio_input_socket",  Widget::audio_input_socket,  PanelType::kBack },
   { WidgetType::kAudioOutputSocket, "audio_output_socket", Widget::audio_output_socket, PanelType::kBack },
   { WidgetType::kCustomDisplay,     "custom_display",      Widget::custom_display,      kPanelTypeAnyFront },
@@ -48,8 +51,9 @@ static const WidgetDef kAllWidgetDefs[] {
   { WidgetType::kCVOutputSocket,    "cv_output_socket",    Widget::cv_output_socket,    PanelType::kBack },
   { WidgetType::kCVTrimKnob,        "cv_trim_knob",        Widget::cv_trim_knob,        PanelType::kBack },
   { WidgetType::kDeviceName,        "device_name",         Widget::device_name,         kPanelTypeAny },
+  { WidgetType::kMomentaryButton,   "momentary_button",    Widget::momentary_button,    kPanelTypeAny },
   { WidgetType::kPlaceholder,       "placeholder",         Widget::placeholder,         PanelType::kBack },
-  { WidgetType::kSequenceFader,     "sequence_fader",      Widget::sequence_fader,      kPanelTypeAnyFront },
+  { WidgetType::kSequenceFader,     "sequence_fader",      Widget::sequence_fader,      kPanelTypeAny },
   { WidgetType::kStaticDecoration,  "static_decoration",   Widget::static_decoration,   kPanelTypeAny },
   { WidgetType::kPanelDecal,        "panel_decal",         Widget::panel_decal,         kPanelTypeAny },
 };

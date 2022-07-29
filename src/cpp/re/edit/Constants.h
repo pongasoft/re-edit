@@ -62,6 +62,7 @@ enum class WidgetType : int
   kCVOutputSocket,
   kCVTrimKnob,
   kDeviceName,
+  kMomentaryButton,
   kPlaceholder,
   kSequenceFader,
   kStaticDecoration,

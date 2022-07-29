@@ -77,6 +77,7 @@ public:
   int luaCVTrimKnob();
   int luaDeviceName();
   int luaImage();
+  int luaMomentaryButton();
   int luaPlaceholder();
   int luaSequenceFader();
   int luaStaticDecoration();

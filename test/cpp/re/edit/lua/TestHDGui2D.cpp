@@ -168,6 +168,11 @@ testing::Matcher<std::shared_ptr<jbox_widget> const &> AttributeToString(char co
 
 //! HasValue | value only
 inline constexpr auto HasValue = [](char const *iExpectedPath) {
+  return AttributeToString<PropertyPath>("value", R"(value={"%s",true})", iExpectedPath);
+};
+
+//! HasValueNoSwitch | value only
+inline constexpr auto HasValueNoSwitch = [](char const *iExpectedPath) {
   return AttributeToString<Value>("value", R"(value={fUseSwitch=false,value={"%s",true},value_switch={"",false},values={{},false}})", iExpectedPath);
 };
 
@@ -283,7 +288,7 @@ TEST(HDGui2D, All)
   auto hdg = HDGui2D::fromFile(getResourceFile("all-hdgui_2D.lua"));
 
   auto front = hdg->front();
-  ASSERT_EQ(9, front->fWidgets.size());
+  ASSERT_EQ(11, front->fWidgets.size());
   ASSERT_EQ("Panel_front_bg", front->fGraphicsNode);
   ASSERT_EQ(std::nullopt, front->fCableOrigin);
 
@@ -295,7 +300,7 @@ TEST(HDGui2D, All)
     ASSERT_EQ(WidgetType::kAnalogKnob, w->fWidget->getType());
     ASSERT_EQ("ak1_node", w->fGraphics.fNode);
     ASSERT_EQ(std::nullopt, w->fGraphics.fHitBoundaries);
-    ASSERT_THAT(w, HasValue("/ak1"));
+    ASSERT_THAT(w, HasValueNoSwitch("/ak1"));
     ASSERT_THAT(w, HasNoVisibility());
     ASSERT_THAT(w, HasTooltipPosition());
     ASSERT_THAT(w, HasShowRemoteBox());
@@ -322,7 +327,7 @@ TEST(HDGui2D, All)
     auto w = front->fWidgets[id++];
     ASSERT_EQ(WidgetType::kAnalogKnob, w->fWidget->getType());
     ASSERT_EQ("ak3_node", w->fGraphics.fNode);
-    ASSERT_THAT(w, HasValue("/ak3"));
+    ASSERT_THAT(w, HasValueNoSwitch("/ak3"));
     ASSERT_THAT(w, HasVisibility("/ak3_switch", {1,0,3}));
   }
 
@@ -384,7 +389,7 @@ TEST(HDGui2D, All)
     ASSERT_EQ(WidgetType::kSequenceFader, w->fWidget->getType());
     ASSERT_EQ("sf1_node", w->fGraphics.fNode);
     ASSERT_EQ(std::nullopt, w->fGraphics.fHitBoundaries);
-    ASSERT_THAT(w, HasValue("/sf1"));
+    ASSERT_THAT(w, HasValueNoSwitch("/sf1"));
     ASSERT_THAT(w, HasOrientation());
     ASSERT_THAT(w, HasBoolValue("inverted"));
     ASSERT_THAT(w, HasIntegerValue("inset1"));
@@ -414,6 +419,32 @@ TEST(HDGui2D, All)
     ASSERT_THAT(w, HasTooltipTemplate("sf2_tooltip_template"));
     ASSERT_THAT(w, HasShowRemoteBox(false));
     ASSERT_THAT(w, HasShowAutomationRect(false));
+  }
+
+  // mb1
+  {
+    auto w = front->fWidgets[id++];
+    ASSERT_EQ(WidgetType::kMomentaryButton, w->fWidget->getType());
+    ASSERT_EQ("mb1_node", w->fGraphics.fNode);
+    ASSERT_THAT(w, HasValue("/mb1"));
+    ASSERT_THAT(w, HasNoVisibility());
+    ASSERT_THAT(w, HasTooltipPosition());
+    ASSERT_THAT(w, HasShowRemoteBox());
+    ASSERT_THAT(w, HasShowAutomationRect());
+    ASSERT_THAT(w, HasTooltipTemplate());
+  }
+
+  // mb2
+  {
+    auto w = front->fWidgets[id++];
+    ASSERT_EQ(WidgetType::kMomentaryButton, w->fWidget->getType());
+    ASSERT_EQ("mb2_node", w->fGraphics.fNode);
+    ASSERT_THAT(w, HasValue("/mb2"));
+    ASSERT_THAT(w, HasVisibility("/mb2_switch", {7, 2}));
+    ASSERT_THAT(w, HasTooltipPosition("center"));
+    ASSERT_THAT(w, HasShowRemoteBox(false));
+    ASSERT_THAT(w, HasShowAutomationRect(false));
+    ASSERT_THAT(w, HasTooltipTemplate("mb2_tooltip_template"));
   }
 
   //------------------------------------------------------------------------
