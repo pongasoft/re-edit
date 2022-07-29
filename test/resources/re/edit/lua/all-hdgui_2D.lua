@@ -117,6 +117,22 @@ front_widgets[#front_widgets + 1] = jbox.momentary_button {
   show_automation_rect = false,
 }
 
+front_widgets[#front_widgets + 1] = jbox.toggle_button {
+  graphics = { node = "tb1_node", },
+  value = "/tb1",
+}
+
+front_widgets[#front_widgets + 1] = jbox.toggle_button {
+  graphics = { node = "tb2_node", },
+  value = "/tb2",
+  visibility_switch = "/tb2_switch",
+  visibility_values = { 5, 0 },
+  tooltip_position = "top_right",
+  tooltip_template = jbox.ui_text("tb2_tooltip_template"),
+  show_remote_box = false,
+  show_automation_rect = false,
+}
+
 front = jbox.panel{
   graphics = {
     node = "Panel_front_bg",

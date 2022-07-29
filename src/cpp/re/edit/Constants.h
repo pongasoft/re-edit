@@ -66,7 +66,9 @@ enum class WidgetType : int
   kPlaceholder,
   kSequenceFader,
   kStaticDecoration,
-  kPanelDecal
+  kToggleButton,
+
+  kPanelDecal // re-edit widget
 };
 
 char const *toString(WidgetType iType);

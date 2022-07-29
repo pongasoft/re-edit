@@ -570,6 +570,27 @@ std::unique_ptr<Widget> Widget::static_decoration()
 }
 
 //------------------------------------------------------------------------
+// Widget::toggle_button
+//------------------------------------------------------------------------
+std::unique_ptr<Widget> Widget::toggle_button()
+{
+  static const auto kValueFilter = [](const Property &p) {
+    return (p.type() == kJBox_Boolean || p.isDiscrete()) && kDocGuiOwnerFilter(p);
+  };
+  auto w = std::make_unique<Widget>(WidgetType::kToggleButton);
+  w ->value(kValueFilter)
+    ->visibility()
+    ->tooltip_position()
+    ->tooltip_template()
+    ->show_remote_box()
+    ->show_automation_rect()
+    ;
+  // 2 or 4 frames
+  w->fGraphics.fFilter = [](FilmStrip const &iFilmStrip) { return iFilmStrip.numFrames() == 2 || iFilmStrip.numFrames() == 4; };
+  return w;
+}
+
+//------------------------------------------------------------------------
 // Widget::panel_decal
 //------------------------------------------------------------------------
 std::unique_ptr<Widget> Widget::panel_decal()
