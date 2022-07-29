@@ -53,7 +53,7 @@ static int lua_sequence_meter(lua_State *L) { RE_MOCK_LOG_WARNING("sequence_mete
 static int lua_static_decoration(lua_State *L) { return HDGui2D::loadFromRegistry(L)->luaStaticDecoration(); }
 static int lua_step_button(lua_State *L) { return HDGui2D::loadFromRegistry(L)->luaStepButton(); }
 static int lua_toggle_button(lua_State *L) { return HDGui2D::loadFromRegistry(L)->luaToggleButton(); }
-static int lua_up_down_button(lua_State *L) { RE_MOCK_LOG_WARNING("up_down_button not implemented yet"); return HDGui2D::loadFromRegistry(L)->luaIgnored(); }
+static int lua_up_down_button(lua_State *L) { return HDGui2D::loadFromRegistry(L)->luaUpDownButton(); }
 static int lua_value_display(lua_State *L) { RE_MOCK_LOG_WARNING("value_display not implemented yet"); return HDGui2D::loadFromRegistry(L)->luaIgnored(); }
 static int lua_zero_snap_knob(lua_State *L) { RE_MOCK_LOG_WARNING("zero_snap_knob not implemented yet"); return HDGui2D::loadFromRegistry(L)->luaIgnored(); }
 static int lua_ui_text(lua_State *L) { return HDGui2D::loadFromRegistry(L)->luaUIText(); }
@@ -442,6 +442,26 @@ int HDGui2D::luaToggleButton()
     populateGraphics(p);
     populate<PropertyPath>(p, "value");
     populate<Visibility>(p, "visibility");
+    populate<StaticStringList>(p, "tooltip_position");
+    populate<UIText>(p, "tooltip_template");
+    populate<Bool>(p, "show_remote_box");
+    populate<Bool>(p, "show_automation_rect");
+  }
+  return addObjectOnTopOfStack(std::move(p));
+}
+
+//------------------------------------------------------------------------
+// HDGui2D::luaUpDownButton
+//------------------------------------------------------------------------
+int HDGui2D::luaUpDownButton()
+{
+  auto p = makeWidget(Widget::up_down_button());
+  if(checkTableArg())
+  {
+    populateGraphics(p);
+    populate<PropertyPath>(p, "value");
+    populate<Visibility>(p, "visibility");
+    populate<Bool>(p, "inverted");
     populate<StaticStringList>(p, "tooltip_position");
     populate<UIText>(p, "tooltip_template");
     populate<Bool>(p, "show_remote_box");

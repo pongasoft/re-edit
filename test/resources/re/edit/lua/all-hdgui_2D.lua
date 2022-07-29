@@ -150,6 +150,23 @@ front_widgets[#front_widgets + 1] = jbox.step_button {
   show_automation_rect = false,
 }
 
+front_widgets[#front_widgets + 1] = jbox.up_down_button {
+  graphics = { node = "udb1_node", },
+  value = "/udb1",
+}
+
+front_widgets[#front_widgets + 1] = jbox.up_down_button {
+  graphics = { node = "udb2_node", },
+  value = "/udb2",
+  visibility_switch = "/udb2_switch",
+  visibility_values = { 0, 9 },
+  tooltip_position = "top",
+  tooltip_template = jbox.ui_text("udb2_tooltip_template"),
+  inverted = true,
+  show_remote_box = false,
+  show_automation_rect = false,
+}
+
 front = jbox.panel{
   graphics = {
     node = "Panel_front_bg",

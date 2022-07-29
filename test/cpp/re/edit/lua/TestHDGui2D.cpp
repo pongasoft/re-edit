@@ -296,7 +296,7 @@ TEST(HDGui2D, All)
   auto hdg = HDGui2D::fromFile(getResourceFile("all-hdgui_2D.lua"));
 
   auto front = hdg->front();
-  ASSERT_EQ(15, front->fWidgets.size());
+  ASSERT_EQ(17, front->fWidgets.size());
   ASSERT_EQ("Panel_front_bg", front->fGraphicsNode);
   ASSERT_EQ(std::nullopt, front->fCableOrigin);
 
@@ -507,6 +507,34 @@ TEST(HDGui2D, All)
     ASSERT_THAT(w, HasShowRemoteBox(false));
     ASSERT_THAT(w, HasShowAutomationRect(false));
     ASSERT_THAT(w, HasTooltipTemplate("sb2_tooltip_template"));
+  }
+
+  // udb1
+  {
+    auto w = front->fWidgets[id++];
+    ASSERT_EQ(WidgetType::kUpDownButton, w->fWidget->getType());
+    ASSERT_EQ("udb1_node", w->fGraphics.fNode);
+    ASSERT_THAT(w, HasValue("/udb1"));
+    ASSERT_THAT(w, HasNoVisibility());
+    ASSERT_THAT(w, HasTooltipPosition());
+    ASSERT_THAT(w, HasBoolValue("inverted"));
+    ASSERT_THAT(w, HasShowRemoteBox());
+    ASSERT_THAT(w, HasShowAutomationRect());
+    ASSERT_THAT(w, HasTooltipTemplate());
+  }
+
+  // udb2
+  {
+    auto w = front->fWidgets[id++];
+    ASSERT_EQ(WidgetType::kUpDownButton, w->fWidget->getType());
+    ASSERT_EQ("udb2_node", w->fGraphics.fNode);
+    ASSERT_THAT(w, HasValue("/udb2"));
+    ASSERT_THAT(w, HasVisibility("/udb2_switch", {0, 9}));
+    ASSERT_THAT(w, HasTooltipPosition("top"));
+    ASSERT_THAT(w, HasBoolValue("inverted", true));
+    ASSERT_THAT(w, HasShowRemoteBox(false));
+    ASSERT_THAT(w, HasShowAutomationRect(false));
+    ASSERT_THAT(w, HasTooltipTemplate("udb2_tooltip_template"));
   }
 
   //------------------------------------------------------------------------

@@ -83,6 +83,7 @@ public:
   int luaStaticDecoration();
   int luaStepButton();
   int luaToggleButton();
+  int luaUpDownButton();
   int luaUIText();
 
   int luaIgnored();

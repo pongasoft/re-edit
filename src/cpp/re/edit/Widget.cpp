@@ -591,7 +591,6 @@ std::unique_ptr<Widget> Widget::step_button()
   return w;
 }
 
-
 //------------------------------------------------------------------------
 // Widget::toggle_button
 //------------------------------------------------------------------------
@@ -610,6 +609,26 @@ std::unique_ptr<Widget> Widget::toggle_button()
     ;
   // 2 or 4 frames
   w->fGraphics.fFilter = [](FilmStrip const &iFilmStrip) { return iFilmStrip.numFrames() == 2 || iFilmStrip.numFrames() == 4; };
+  return w;
+}
+
+//------------------------------------------------------------------------
+// Widget::up_down_button
+//------------------------------------------------------------------------
+std::unique_ptr<Widget> Widget::up_down_button()
+{
+  static const auto kValueFilter = [](const Property &p) { return p.isDiscrete() && kDocGuiOwnerFilter(p); };
+  auto w = std::make_unique<Widget>(WidgetType::kUpDownButton);
+  w ->value(kValueFilter)
+    ->visibility()
+    ->tooltip_position()
+    ->tooltip_template()
+    ->addAttribute(Attribute::build<Bool>("inverted", false))
+    ->show_remote_box()
+    ->show_automation_rect()
+    ;
+  // 3 frames
+  w->fGraphics.fFilter = [](FilmStrip const &iFilmStrip) { return iFilmStrip.numFrames() == 3; };
   return w;
 }
 

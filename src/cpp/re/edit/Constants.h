@@ -68,6 +68,7 @@ enum class WidgetType : int
   kStaticDecoration,
   kStepButton,
   kToggleButton,
+  kUpDownButton,
 
   kPanelDecal // re-edit widget
 };

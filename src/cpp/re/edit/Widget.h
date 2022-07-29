@@ -99,6 +99,7 @@ public:
   static std::unique_ptr<Widget> static_decoration();
   static std::unique_ptr<Widget> step_button();
   static std::unique_ptr<Widget> toggle_button();
+  static std::unique_ptr<Widget> up_down_button();
 
   template<typename T>
   T *findAttributeByNameAndType(std::string const &iAttributeName) const;
