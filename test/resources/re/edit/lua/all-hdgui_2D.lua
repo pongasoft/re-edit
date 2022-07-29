@@ -189,6 +189,22 @@ front_widgets[#front_widgets + 1] = jbox.patch_browse_group {
   fx_patch = true
 }
 
+front_widgets[#front_widgets + 1] = jbox.pitch_wheel {
+  graphics = { node = "pw1_node", },
+  value = "/pw1",
+}
+
+front_widgets[#front_widgets + 1] = jbox.pitch_wheel {
+  graphics = { node = "pw2_node", },
+  value = "/pw2",
+  visibility_switch = "/pw2_switch",
+  visibility_values = { 5, 0 },
+  tooltip_position = "top_right",
+  tooltip_template = jbox.ui_text("pw2_tooltip_template"),
+  show_remote_box = false,
+  show_automation_rect = false,
+}
+
 front = jbox.panel{
   graphics = {
     node = "Panel_front_bg",

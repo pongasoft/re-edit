@@ -546,6 +546,26 @@ std::unique_ptr<Widget> Widget::placeholder()
 }
 
 //------------------------------------------------------------------------
+// Widget::pitch_wheel
+//------------------------------------------------------------------------
+std::unique_ptr<Widget> Widget::pitch_wheel()
+{
+  // TODO: note that there is currently no way to filter on performance_pitchbend as this information is not available
+  static const auto kValueFilter = [](const Property &p) {
+    return p.type() == kJBox_Number && kDocGuiOwnerFilter(p);
+  };
+  auto w = std::make_unique<Widget>(WidgetType::kPitchWheel);
+  w ->value(kValueFilter)
+    ->visibility()
+    ->tooltip_position()
+    ->tooltip_template()
+    ->show_remote_box()
+    ->show_automation_rect()
+    ;
+  return w;
+}
+
+//------------------------------------------------------------------------
 // Widget::sequence_fader
 //------------------------------------------------------------------------
 std::unique_ptr<Widget> Widget::sequence_fader()

@@ -64,6 +64,7 @@ enum class WidgetType : int
   kDeviceName,
   kMomentaryButton,
   kPatchBrowseGroup,
+  kPitchWheel,
   kPlaceholder,
   kSequenceFader,
   kSequenceMeter,

@@ -296,7 +296,7 @@ TEST(HDGui2D, All)
   auto hdg = HDGui2D::fromFile(getResourceFile("all-hdgui_2D.lua"));
 
   auto front = hdg->front();
-  ASSERT_EQ(21, front->fWidgets.size());
+  ASSERT_EQ(23, front->fWidgets.size());
   ASSERT_EQ("Panel_front_bg", front->fGraphicsNode);
   ASSERT_EQ(std::nullopt, front->fCableOrigin);
 
@@ -572,6 +572,33 @@ TEST(HDGui2D, All)
     ASSERT_THAT(w, HasBoolValue("fx_patch", true));
     ASSERT_THAT(w, HasTooltipPosition("top"));
   }
+
+  // pw1
+  {
+    auto w = front->fWidgets[id++];
+    ASSERT_EQ(WidgetType::kPitchWheel, w->fWidget->getType());
+    ASSERT_EQ("pw1_node", w->fGraphics.fNode);
+    ASSERT_THAT(w, HasValue("/pw1"));
+    ASSERT_THAT(w, HasNoVisibility());
+    ASSERT_THAT(w, HasTooltipPosition());
+    ASSERT_THAT(w, HasShowRemoteBox());
+    ASSERT_THAT(w, HasShowAutomationRect());
+    ASSERT_THAT(w, HasTooltipTemplate());
+  }
+
+  // pw2
+  {
+    auto w = front->fWidgets[id++];
+    ASSERT_EQ(WidgetType::kPitchWheel, w->fWidget->getType());
+    ASSERT_EQ("pw2_node", w->fGraphics.fNode);
+    ASSERT_THAT(w, HasValue("/pw2"));
+    ASSERT_THAT(w, HasVisibility("/pw2_switch", {5, 0}));
+    ASSERT_THAT(w, HasTooltipPosition("top_right"));
+    ASSERT_THAT(w, HasShowRemoteBox(false));
+    ASSERT_THAT(w, HasShowAutomationRect(false));
+    ASSERT_THAT(w, HasTooltipTemplate("pw2_tooltip_template"));
+  }
+
 
   //------------------------------------------------------------------------
   // Back

@@ -78,8 +78,9 @@ public:
   int luaDeviceName();
   int luaImage();
   int luaMomentaryButton();
-  int luaPlaceholder();
   int luaPatchBrowseGroup();
+  int luaPitchWheel();
+  int luaPlaceholder();
   int luaSequenceFader();
   int luaSequenceMeter();
   int luaStaticDecoration();
