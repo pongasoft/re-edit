@@ -25,6 +25,7 @@
 #include "DrawContext.h"
 #include "Views.h"
 #include "ReGui.h"
+#include "Color.h"
 
 #include <string>
 #include <vector>
@@ -59,7 +60,7 @@ public:
   void clearError() { fError = std::nullopt; };
 
   template<typename T, typename... ConstructorArgs>
-  static std::unique_ptr<T> build(std::string const &iName, typename T::value_t const &iDefaultValue, ConstructorArgs&& ...iArgs);
+  static std::unique_ptr<T> build(std::string const &iName, bool iRequired, typename T::value_t const &iDefaultValue, ConstructorArgs&& ...iArgs);
 
   virtual std::unique_ptr<Attribute> clone() const = 0;
 
@@ -68,7 +69,8 @@ protected:
   static std::unique_ptr<Attribute> clone(T const &iAttribute);
 
 public:
-  std::string fName{};
+  std::string fName;
+  bool fRequired{};
   std::optional<std::string> fError{};
 };
 
@@ -216,7 +218,9 @@ public:
     Attribute("value"),
     fValue{"value", std::move(iValueFilter)},
     fValueSwitch{"value_switch", std::move(iValueSwitchFilter)}
-  {}
+  {
+    fRequired = true;
+  }
   void hdgui2D(attribute_list_t &oAttributes) const override;
   void editView(EditContext &iCtx) override;
 
@@ -298,6 +302,16 @@ public:
   std::unique_ptr<Attribute> clone() const override { return Attribute::clone<Socket>(*this); }
 };
 
+class Color3 : public SingleAttribute<JboxColor3>
+{
+public:
+  explicit Color3(std::string iName) : SingleAttribute<JboxColor3>{std::move(iName)} {}
+  std::string getValueAsLua() const override;
+  void editView(EditContext &iCtx) override;
+
+  std::unique_ptr<Attribute> clone() const override { return Attribute::clone<Color3>(*this); }
+};
+
 //------------------------------------------------------------------------
 // SingleAttribute<T>::reset
 //------------------------------------------------------------------------
@@ -334,7 +348,7 @@ void SingleAttribute<T>::resetView(const std::function<void()>& iOnReset) const
 template<typename T>
 void SingleAttribute<T>::hdgui2D(attribute_list_t &oAttributes) const
 {
-  if(fProvided)
+  if(fRequired || fProvided)
     oAttributes.emplace_back(attribute_t{fName, getValueAsLua()});
 }
 
@@ -353,10 +367,11 @@ std::string SingleAttribute<T>::toString() const
 // Attribute::build
 //------------------------------------------------------------------------
 template<typename T, typename... ConstructorArgs>
-std::unique_ptr<T> Attribute::build(std::string const &iName, typename T::value_t const &iDefaultValue, ConstructorArgs&& ...iArgs)
+std::unique_ptr<T> Attribute::build(std::string const &iName, bool iRequired, typename T::value_t const &iDefaultValue, ConstructorArgs&& ...iArgs)
 {
   auto attribute = std::make_unique<T>(iName, std::forward<ConstructorArgs>(iArgs)...);
   attribute->fName = iName;
+  attribute->fRequired = iRequired;
   attribute->fDefaultValue = iDefaultValue;
   attribute->fValue = iDefaultValue;
   return attribute;

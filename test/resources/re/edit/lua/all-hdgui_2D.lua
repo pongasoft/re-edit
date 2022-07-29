@@ -205,6 +205,24 @@ front_widgets[#front_widgets + 1] = jbox.pitch_wheel {
   show_automation_rect = false,
 }
 
+front_widgets[#front_widgets + 1] = jbox.popup_button {
+  graphics = { node = "ppb1_node", },
+  value = "/ppb1",
+  text_style = "Label font",
+  text_color = {10, 20, 30}
+}
+
+front_widgets[#front_widgets + 1] = jbox.popup_button {
+  graphics = { node = "ppb2_node", },
+  value = "/ppb2",
+  text_style = "Arial medium large bold font",
+  text_color = {100, 200, 40},
+  visibility_switch = "/ppb2_switch",
+  visibility_values = { 7 },
+  show_remote_box = false,
+  show_automation_rect = false,
+}
+
 front = jbox.panel{
   graphics = {
     node = "Panel_front_bg",

@@ -97,6 +97,7 @@ public:
   static std::unique_ptr<Widget> patch_browse_group();
   static std::unique_ptr<Widget> pitch_wheel();
   static std::unique_ptr<Widget> placeholder();
+  static std::unique_ptr<Widget> popup_button();
   static std::unique_ptr<Widget> sequence_fader();
   static std::unique_ptr<Widget> sequence_meter();
   static std::unique_ptr<Widget> static_decoration();
@@ -131,6 +132,8 @@ protected:
   Widget *orientation();
   Widget *show_remote_box();
   Widget *show_automation_rect();
+  Widget *text_color();
+  Widget *text_style();
   Widget *tooltip_position();
   Widget *tooltip_template();
   Widget *visibility();

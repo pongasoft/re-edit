@@ -66,6 +66,7 @@ enum class WidgetType : int
   kPatchBrowseGroup,
   kPitchWheel,
   kPlaceholder,
+  kPopupButton,
   kSequenceFader,
   kSequenceMeter,
   kStaticDecoration,
@@ -94,6 +95,9 @@ constexpr int toPixelHeight(int iDeviceHeightRU)
 {
   return k1UPixelSize * static_cast<int>(iDeviceHeightRU);
 }
+
+constexpr float toFloatColor(int iColor) { return static_cast<float>(iColor) / 255.0f; }
+constexpr int toIntColor(float iColor) { return static_cast<int>(iColor * 255.0f); }
 
 }
 

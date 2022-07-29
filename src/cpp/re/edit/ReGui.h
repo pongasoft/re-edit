@@ -21,6 +21,8 @@
 
 #include <imgui.h>
 #include <cmath>
+#include "Color.h"
+#include "Constants.h"
 
 static constexpr ImVec2 operator*(const ImVec2& lhs, const float rhs)              { return {lhs.x * rhs, lhs.y * rhs}; }
 static constexpr ImVec2 operator/(const ImVec2& lhs, const float rhs)              { return {lhs.x / rhs, lhs.y / rhs}; }
@@ -107,6 +109,22 @@ inline bool RadioButton(char const *iLabel, T *ioCurrentValue, T iSelectedValue)
   if(ImGui::RadioButton(iLabel, *ioCurrentValue == iSelectedValue))
   {
     *ioCurrentValue = iSelectedValue;
+    return true;
+  }
+  return false;
+}
+
+//------------------------------------------------------------------------
+// ReGui::ColorEdit
+//------------------------------------------------------------------------
+inline bool ColorEdit(const char* label, JboxColor3 *ioColor, ImGuiColorEditFlags flags = 0)
+{
+  float colors[]{toFloatColor(ioColor->fRed), toFloatColor(ioColor->fGreen), toFloatColor(ioColor->fBlue)};
+  if(ImGui::ColorEdit3(label, colors, flags))
+  {
+    ioColor->fRed = toIntColor(colors[0]);
+    ioColor->fGreen = toIntColor(colors[1]);
+    ioColor->fBlue = toIntColor(colors[2]);
     return true;
   }
   return false;

@@ -44,7 +44,7 @@ static int lua_patch_browse_group(lua_State *L) { return HDGui2D::loadFromRegist
 static int lua_patch_name(lua_State *L) { RE_MOCK_LOG_WARNING("patch_name not implemented yet"); return HDGui2D::loadFromRegistry(L)->luaIgnored(); }
 static int lua_pitch_wheel(lua_State *L) { return HDGui2D::loadFromRegistry(L)->luaPitchWheel(); }
 static int lua_placeholder(lua_State *L) { return HDGui2D::loadFromRegistry(L)->luaPlaceholder(); }
-static int lua_popup_button(lua_State *L) { RE_MOCK_LOG_WARNING("popup_button not implemented yet"); return HDGui2D::loadFromRegistry(L)->luaIgnored(); }
+static int lua_popup_button(lua_State *L) { return HDGui2D::loadFromRegistry(L)->luaPopupButton(); }
 static int lua_radio_button(lua_State *L) { RE_MOCK_LOG_WARNING("radio_button not implemented yet"); return HDGui2D::loadFromRegistry(L)->luaIgnored(); }
 static int lua_sample_browse_group(lua_State *L) { RE_MOCK_LOG_WARNING("sample_browse_group not implemented yet"); return HDGui2D::loadFromRegistry(L)->luaIgnored(); }
 static int lua_sample_drop_zone(lua_State *L) { RE_MOCK_LOG_WARNING("sample_drop_zone not implemented yet"); return HDGui2D::loadFromRegistry(L)->luaIgnored(); }
@@ -406,6 +406,25 @@ int HDGui2D::luaPlaceholder()
 }
 
 //------------------------------------------------------------------------
+// HDGui2D::luaPopupButton
+//------------------------------------------------------------------------
+int HDGui2D::luaPopupButton()
+{
+  auto p = makeWidget(Widget::popup_button());
+  if(checkTableArg())
+  {
+    populateGraphics(p);
+    populate<PropertyPath>(p, "value");
+    populate<Visibility>(p, "visibility");
+    populate<Color3>(p, "text_color");
+    populate<StaticStringList>(p, "text_style");
+    populate<Bool>(p, "show_remote_box");
+    populate<Bool>(p, "show_automation_rect");
+  }
+  return addObjectOnTopOfStack(std::move(p));
+}
+
+//------------------------------------------------------------------------
 // HDGui2D::luaSequenceFader
 //------------------------------------------------------------------------
 int HDGui2D::luaSequenceFader()
@@ -593,6 +612,23 @@ void HDGui2D::populate(Integer *oValue)
 {
   if(oValue)
     impl::setValue(*oValue, L.getTableValueAsOptionalInteger(oValue->fName.c_str()));
+}
+
+//------------------------------------------------------------------------
+// HDGui2D::populate | Color3
+//------------------------------------------------------------------------
+void HDGui2D::populate(Color3 *oValue)
+{
+  if(oValue)
+  {
+    oValue->reset();
+    withField(-1, oValue->fName.c_str(), LUA_TTABLE, [this, oValue]() {
+      oValue->fValue.fRed = static_cast<int>(L.getArrayValueAsInteger(1));
+      oValue->fValue.fGreen = static_cast<int>(L.getArrayValueAsInteger(2));
+      oValue->fValue.fBlue = static_cast<int>(L.getArrayValueAsInteger(3));
+      oValue->fProvided = true;
+    });
+  }
 }
 
 //------------------------------------------------------------------------

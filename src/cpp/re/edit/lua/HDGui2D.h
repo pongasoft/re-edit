@@ -81,6 +81,7 @@ public:
   int luaPatchBrowseGroup();
   int luaPitchWheel();
   int luaPlaceholder();
+  int luaPopupButton();
   int luaSequenceFader();
   int luaSequenceMeter();
   int luaStaticDecoration();
@@ -115,6 +116,7 @@ protected:
   void populate(widget::attribute::Bool *oValue);
   void populate(widget::attribute::String *oValue);
   void populate(widget::attribute::Integer *oValue);
+  void populate(widget::attribute::Color3 *oValue);
   void populate(widget::attribute::Background *oValue);
   void populate(widget::attribute::UIText *oValue);
   void populate(widget::attribute::StaticStringList *oValue);

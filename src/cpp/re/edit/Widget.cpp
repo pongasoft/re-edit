@@ -300,7 +300,7 @@ Widget *Widget::visibility()
 //------------------------------------------------------------------------
 Widget *Widget::show_remote_box()
 {
-  return addAttribute(Attribute::build<Bool>("show_remote_box", true));
+  return addAttribute(Attribute::build<Bool>("show_remote_box", false, true));
 }
 
 //------------------------------------------------------------------------
@@ -308,7 +308,7 @@ Widget *Widget::show_remote_box()
 //------------------------------------------------------------------------
 Widget *Widget::show_automation_rect()
 {
-  return addAttribute(Attribute::build<Bool>("show_automation_rect", true));
+  return addAttribute(Attribute::build<Bool>("show_automation_rect", false, true));
 }
 
 //------------------------------------------------------------------------
@@ -317,7 +317,29 @@ Widget *Widget::show_automation_rect()
 Widget *Widget::orientation()
 {
   static const std::vector<std::string> kOrientations = { "horizontal", "vertical"};
-  return addAttribute(Attribute::build<StaticStringList>("orientation", "vertical", kOrientations));
+  return addAttribute(Attribute::build<StaticStringList>("orientation", false, "vertical", kOrientations));
+}
+
+//------------------------------------------------------------------------
+// Widget::text_color
+//------------------------------------------------------------------------
+Widget *Widget::text_color()
+{
+  return addAttribute(Attribute::build<Color3>("text_color", true, JboxColor3{}));
+}
+
+//------------------------------------------------------------------------
+// Widget::text_style
+//------------------------------------------------------------------------
+Widget *Widget::text_style()
+{
+  static const std::vector<std::string> textStyles =
+    { "LCD font", "Bold LCD font", "Small LCD font", "Big bold LCD font", "Huge bold LCD font",
+      "Label font", "Small label font",
+      "Arial small font", "Arial medium small font", "Arial medium font", "Arial medium bold font",
+      "Arial medium large font", "Arial medium large bold font", "Arial large font", "Arial large bold font",
+      "Arial medium large toolbar font"};
+  return addAttribute(Attribute::build<StaticStringList>("text_style", true, "LCD font", textStyles));
 }
 
 //------------------------------------------------------------------------
@@ -327,7 +349,7 @@ Widget *Widget::tooltip_position()
 {
   static const std::vector<std::string> tooltipPositions =
     { "bottom_left", "bottom", "bottom_right", "right", "top_right", "top", "top_left", "left", "no_tooltip"};
-  return addAttribute(Attribute::build<StaticStringList>("tooltip_position", "", tooltipPositions));
+  return addAttribute(Attribute::build<StaticStringList>("tooltip_position", false, "", tooltipPositions));
 }
 
 //------------------------------------------------------------------------
@@ -335,7 +357,7 @@ Widget *Widget::tooltip_position()
 //------------------------------------------------------------------------
 Widget *Widget::tooltip_template()
 {
-  return addAttribute(Attribute::build<UIText>("tooltip_template", ""));
+  return addAttribute(Attribute::build<UIText>("tooltip_template", false, ""));
 }
 
 //------------------------------------------------------------------------
@@ -345,7 +367,7 @@ Widget *Widget::blend_mode()
 {
   static const std::vector<std::string> blend_modes =
     { "normal", "luminance"};
-  return addAttribute(Attribute::build<StaticStringList>("blend_mode", "normal", blend_modes));
+  return addAttribute(Attribute::build<StaticStringList>("blend_mode", false, "normal", blend_modes));
 }
 
 //------------------------------------------------------------------------
@@ -426,12 +448,12 @@ std::unique_ptr<Widget> Widget::custom_display()
 
   auto w = std::make_unique<Widget>(WidgetType::kCustomDisplay);
 
-  w ->addAttribute(Attribute::build<Background>("background", ""))
-    ->addAttribute(Attribute::build<Integer>("display_width_pixels", 0))
-    ->addAttribute(Attribute::build<Integer>("display_height_pixels", 0))
-    ->addAttribute(Attribute::build<String>("draw_function", ""))
-    ->addAttribute(Attribute::build<String>("invalidate_function", ""))
-    ->addAttribute(Attribute::build<String>("gesture_function", ""))
+  w ->addAttribute(Attribute::build<Background>("background", false, ""))
+    ->addAttribute(Attribute::build<Integer>("display_width_pixels", true, 0))
+    ->addAttribute(Attribute::build<Integer>("display_height_pixels", true, 0))
+    ->addAttribute(Attribute::build<String>("draw_function", true, ""))
+    ->addAttribute(Attribute::build<String>("invalidate_function", false, ""))
+    ->addAttribute(Attribute::build<String>("gesture_function", false, ""))
     ->values(kValuesFilter)
     ->visibility()
     ->show_remote_box()
@@ -527,21 +549,10 @@ std::unique_ptr<Widget> Widget::patch_browse_group()
 {
   auto w = std::make_unique<Widget>(WidgetType::kPatchBrowseGroup);
   w ->tooltip_position()
-    ->addAttribute(Attribute::build<Bool>("fx_patch", false))
+    ->addAttribute(Attribute::build<Bool>("fx_patch", false, false))
     ;
   w->setSize(kPatchBrowseGroupSize);
   w->fGraphics.fFilter = FilmStrip::bySizeFilter(kPatchBrowseGroupSize);
-  return w;
-}
-
-//------------------------------------------------------------------------
-// Widget::placeholder
-//------------------------------------------------------------------------
-std::unique_ptr<Widget> Widget::placeholder()
-{
-  auto w = std::make_unique<Widget>(WidgetType::kPlaceholder);
-  w->setSize(kPlaceholderSize);
-  w->fGraphics.fFilter = FilmStrip::bySizeFilter(kPlaceholderSize);
   return w;
 }
 
@@ -566,6 +577,39 @@ std::unique_ptr<Widget> Widget::pitch_wheel()
 }
 
 //------------------------------------------------------------------------
+// Widget::placeholder
+//------------------------------------------------------------------------
+std::unique_ptr<Widget> Widget::placeholder()
+{
+  auto w = std::make_unique<Widget>(WidgetType::kPlaceholder);
+  w->setSize(kPlaceholderSize);
+  w->fGraphics.fFilter = FilmStrip::bySizeFilter(kPlaceholderSize);
+  return w;
+}
+
+
+//------------------------------------------------------------------------
+// Widget::popup_button
+//------------------------------------------------------------------------
+std::unique_ptr<Widget> Widget::popup_button()
+{
+  static const auto kValueFilter = [](const Property &p) {
+    return (p.type() == kJBox_Boolean || p.isDiscrete()) && kDocGuiOwnerFilter(p);
+  };
+  auto w = std::make_unique<Widget>(WidgetType::kPopupButton);
+  w ->value(kValueFilter)
+    ->visibility()
+    ->text_style()
+    ->text_color()
+    ->show_remote_box()
+    ->show_automation_rect()
+    ;
+  // 2 or 4 frames
+  w->fGraphics.fFilter = [](FilmStrip const &iFilmStrip) { return iFilmStrip.numFrames() == 2 || iFilmStrip.numFrames() == 4; };
+  return w;
+}
+
+//------------------------------------------------------------------------
 // Widget::sequence_fader
 //------------------------------------------------------------------------
 std::unique_ptr<Widget> Widget::sequence_fader()
@@ -577,13 +621,13 @@ std::unique_ptr<Widget> Widget::sequence_fader()
   auto w = std::make_unique<Widget>(WidgetType::kSequenceFader);
   w ->value(kValueFilter, kValueSwitchFilter)
     ->orientation()
-    ->addAttribute(Attribute::build<Integer>("inset1", 0))
-    ->addAttribute(Attribute::build<Integer>("inset2", 0))
-    ->addAttribute(Attribute::build<Integer>("handle_size", 0))
+    ->addAttribute(Attribute::build<Integer>("inset1", false, 0))
+    ->addAttribute(Attribute::build<Integer>("inset2", false, 0))
+    ->addAttribute(Attribute::build<Integer>("handle_size", false, 0))
     ->visibility()
     ->tooltip_position()
     ->tooltip_template()
-    ->addAttribute(Attribute::build<Bool>("inverted", false))
+    ->addAttribute(Attribute::build<Bool>("inverted", false, false))
     ->show_remote_box()
     ->show_automation_rect()
     ;
@@ -630,7 +674,7 @@ std::unique_ptr<Widget> Widget::step_button()
     ->visibility()
     ->tooltip_position()
     ->tooltip_template()
-    ->addAttribute(Attribute::build<Bool>("increasing", true))
+    ->addAttribute(Attribute::build<Bool>("increasing", false, true))
     ->show_remote_box()
     ->show_automation_rect()
     ;
@@ -671,7 +715,7 @@ std::unique_ptr<Widget> Widget::up_down_button()
     ->visibility()
     ->tooltip_position()
     ->tooltip_template()
-    ->addAttribute(Attribute::build<Bool>("inverted", false))
+    ->addAttribute(Attribute::build<Bool>("inverted", false, false))
     ->show_remote_box()
     ->show_automation_rect()
     ;

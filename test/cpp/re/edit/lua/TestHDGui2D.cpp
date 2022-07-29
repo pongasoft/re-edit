@@ -199,6 +199,16 @@ inline constexpr auto HasTooltipPosition = [](char const *iExpectedTooltipPositi
     return AttributeToString<StaticStringList>("tooltip_position", R"(tooltip_position={"",false})");
 };
 
+//! HasTextStyle | text_style
+inline constexpr auto HasTextStyle = [](char const *iExpectedTextStyle) {
+  return AttributeToString<StaticStringList>("text_style", R"(text_style={"%s",true})", iExpectedTextStyle);
+};
+
+//! HasTextColor | text_color
+inline constexpr auto HasTextColor = [](JboxColor3 const &iColor) {
+  return AttributeToString<Color3>("text_color", R"(text_color={{%d,%d,%d},true})", iColor.fRed, iColor.fGreen, iColor.fBlue);
+};
+
 //! HasShowRemoteBox | show_remote_box
 inline constexpr auto HasShowRemoteBox = [](std::optional<bool> iExpected = std::nullopt) {
   if(iExpected)
@@ -296,7 +306,7 @@ TEST(HDGui2D, All)
   auto hdg = HDGui2D::fromFile(getResourceFile("all-hdgui_2D.lua"));
 
   auto front = hdg->front();
-  ASSERT_EQ(23, front->fWidgets.size());
+  ASSERT_EQ(25, front->fWidgets.size());
   ASSERT_EQ("Panel_front_bg", front->fGraphicsNode);
   ASSERT_EQ(std::nullopt, front->fCableOrigin);
 
@@ -597,6 +607,32 @@ TEST(HDGui2D, All)
     ASSERT_THAT(w, HasShowRemoteBox(false));
     ASSERT_THAT(w, HasShowAutomationRect(false));
     ASSERT_THAT(w, HasTooltipTemplate("pw2_tooltip_template"));
+  }
+
+  // ppb1
+  {
+    auto w = front->fWidgets[id++];
+    ASSERT_EQ(WidgetType::kPopupButton, w->fWidget->getType());
+    ASSERT_EQ("ppb1_node", w->fGraphics.fNode);
+    ASSERT_THAT(w, HasValue("/ppb1"));
+    ASSERT_THAT(w, HasTextStyle("Label font"));
+    ASSERT_THAT(w, HasTextColor({10, 20, 30}));
+    ASSERT_THAT(w, HasNoVisibility());
+    ASSERT_THAT(w, HasShowRemoteBox());
+    ASSERT_THAT(w, HasShowAutomationRect());
+  }
+
+  // ppb2
+  {
+    auto w = front->fWidgets[id++];
+    ASSERT_EQ(WidgetType::kPopupButton, w->fWidget->getType());
+    ASSERT_EQ("ppb2_node", w->fGraphics.fNode);
+    ASSERT_THAT(w, HasValue("/ppb2"));
+    ASSERT_THAT(w, HasTextStyle("Arial medium large bold font"));
+    ASSERT_THAT(w, HasTextColor({100, 200, 40}));
+    ASSERT_THAT(w, HasVisibility("/ppb2_switch", {7}));
+    ASSERT_THAT(w, HasShowRemoteBox(false));
+    ASSERT_THAT(w, HasShowAutomationRect(false));
   }
 
 
