@@ -80,6 +80,7 @@ public:
   int luaMomentaryButton();
   int luaPlaceholder();
   int luaSequenceFader();
+  int luaSequenceMeter();
   int luaStaticDecoration();
   int luaStepButton();
   int luaToggleButton();

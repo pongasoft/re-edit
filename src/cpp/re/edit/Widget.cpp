@@ -556,6 +556,20 @@ std::unique_ptr<Widget> Widget::sequence_fader()
   return w;
 }
 
+//------------------------------------------------------------------------
+// Widget::sequence_meter
+//------------------------------------------------------------------------
+std::unique_ptr<Widget> Widget::sequence_meter()
+{
+  static const auto kValueFilter = [](const Property &p) {
+    return (p.type() == kJBox_Boolean || p.isDiscrete()) && p.owner() == mock::PropertyOwner::kRTOwner;
+  };
+  auto w = std::make_unique<Widget>(WidgetType::kSequenceMeter);
+  w ->value(kValueFilter)
+    ->visibility()
+    ;
+  return w;
+}
 
 //------------------------------------------------------------------------
 // Widget::static_decoration

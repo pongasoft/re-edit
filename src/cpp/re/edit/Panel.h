@@ -54,6 +54,7 @@ static constexpr WidgetDef kAllWidgetDefs[] {
   { WidgetType::kMomentaryButton,   "momentary_button",    Widget::momentary_button,    kPanelTypeAny },
   { WidgetType::kPlaceholder,       "placeholder",         Widget::placeholder,         PanelType::kBack },
   { WidgetType::kSequenceFader,     "sequence_fader",      Widget::sequence_fader,      kPanelTypeAny },
+  { WidgetType::kSequenceMeter,     "sequence_meter",      Widget::sequence_meter,      kPanelTypeAny },
   { WidgetType::kStaticDecoration,  "static_decoration",   Widget::static_decoration,   kPanelTypeAny },
   { WidgetType::kStepButton,        "step_button",         Widget::step_button,         kPanelTypeAny },
   { WidgetType::kToggleButton,      "toggle_button",       Widget::toggle_button,       kPanelTypeAny },

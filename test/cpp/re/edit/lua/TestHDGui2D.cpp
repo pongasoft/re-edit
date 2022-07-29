@@ -296,7 +296,7 @@ TEST(HDGui2D, All)
   auto hdg = HDGui2D::fromFile(getResourceFile("all-hdgui_2D.lua"));
 
   auto front = hdg->front();
-  ASSERT_EQ(17, front->fWidgets.size());
+  ASSERT_EQ(19, front->fWidgets.size());
   ASSERT_EQ("Panel_front_bg", front->fGraphicsNode);
   ASSERT_EQ(std::nullopt, front->fCableOrigin);
 
@@ -536,6 +536,25 @@ TEST(HDGui2D, All)
     ASSERT_THAT(w, HasShowAutomationRect(false));
     ASSERT_THAT(w, HasTooltipTemplate("udb2_tooltip_template"));
   }
+
+  // sm1
+  {
+    auto w = front->fWidgets[id++];
+    ASSERT_EQ(WidgetType::kSequenceMeter, w->fWidget->getType());
+    ASSERT_EQ("sm1_node", w->fGraphics.fNode);
+    ASSERT_THAT(w, HasValue("/sm1"));
+    ASSERT_THAT(w, HasNoVisibility());
+  }
+
+  // sm2
+  {
+    auto w = front->fWidgets[id++];
+    ASSERT_EQ(WidgetType::kSequenceMeter, w->fWidget->getType());
+    ASSERT_EQ("sm2_node", w->fGraphics.fNode);
+    ASSERT_THAT(w, HasValue("/sm2"));
+    ASSERT_THAT(w, HasVisibility("/sm2_switch", {8}));
+  }
+
 
   //------------------------------------------------------------------------
   // Back

@@ -167,6 +167,18 @@ front_widgets[#front_widgets + 1] = jbox.up_down_button {
   show_automation_rect = false,
 }
 
+front_widgets[#front_widgets + 1] = jbox.sequence_meter {
+  graphics = { node = "sm1_node", },
+  value = "/sm1",
+}
+
+front_widgets[#front_widgets + 1] = jbox.sequence_meter {
+  graphics = { node = "sm2_node", },
+  value = "/sm2",
+  visibility_switch = "/sm2_switch",
+  visibility_values = { 8 },
+}
+
 front = jbox.panel{
   graphics = {
     node = "Panel_front_bg",

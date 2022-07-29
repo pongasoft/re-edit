@@ -65,6 +65,7 @@ enum class WidgetType : int
   kMomentaryButton,
   kPlaceholder,
   kSequenceFader,
+  kSequenceMeter,
   kStaticDecoration,
   kStepButton,
   kToggleButton,
