@@ -179,6 +179,16 @@ front_widgets[#front_widgets + 1] = jbox.sequence_meter {
   visibility_values = { 8 },
 }
 
+front_widgets[#front_widgets + 1] = jbox.patch_browse_group {
+  graphics = { node = "pbg1_node", },
+}
+
+front_widgets[#front_widgets + 1] = jbox.patch_browse_group {
+  graphics = { node = "pbg2_node", },
+  tooltip_position = "top",
+  fx_patch = true
+}
+
 front = jbox.panel{
   graphics = {
     node = "Panel_front_bg",

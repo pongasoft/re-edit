@@ -52,6 +52,7 @@ static constexpr WidgetDef kAllWidgetDefs[] {
   { WidgetType::kCVTrimKnob,        "cv_trim_knob",        Widget::cv_trim_knob,        PanelType::kBack },
   { WidgetType::kDeviceName,        "device_name",         Widget::device_name,         kPanelTypeAny },
   { WidgetType::kMomentaryButton,   "momentary_button",    Widget::momentary_button,    kPanelTypeAny },
+  { WidgetType::kPatchBrowseGroup,  "patch_browse_group",  Widget::patch_browse_group,  kPanelTypeAny },
   { WidgetType::kPlaceholder,       "placeholder",         Widget::placeholder,         PanelType::kBack },
   { WidgetType::kSequenceFader,     "sequence_fader",      Widget::sequence_fader,      kPanelTypeAny },
   { WidgetType::kSequenceMeter,     "sequence_meter",      Widget::sequence_meter,      kPanelTypeAny },

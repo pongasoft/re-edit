@@ -296,7 +296,7 @@ TEST(HDGui2D, All)
   auto hdg = HDGui2D::fromFile(getResourceFile("all-hdgui_2D.lua"));
 
   auto front = hdg->front();
-  ASSERT_EQ(19, front->fWidgets.size());
+  ASSERT_EQ(21, front->fWidgets.size());
   ASSERT_EQ("Panel_front_bg", front->fGraphicsNode);
   ASSERT_EQ(std::nullopt, front->fCableOrigin);
 
@@ -555,6 +555,23 @@ TEST(HDGui2D, All)
     ASSERT_THAT(w, HasVisibility("/sm2_switch", {8}));
   }
 
+  // pbg1
+  {
+    auto w = front->fWidgets[id++];
+    ASSERT_EQ(WidgetType::kPatchBrowseGroup, w->fWidget->getType());
+    ASSERT_EQ("pbg1_node", w->fGraphics.fNode);
+    ASSERT_THAT(w, HasBoolValue("fx_patch"));
+    ASSERT_THAT(w, HasTooltipPosition());
+  }
+
+  // pbg2
+  {
+    auto w = front->fWidgets[id++];
+    ASSERT_EQ(WidgetType::kPatchBrowseGroup, w->fWidget->getType());
+    ASSERT_EQ("pbg2_node", w->fGraphics.fNode);
+    ASSERT_THAT(w, HasBoolValue("fx_patch", true));
+    ASSERT_THAT(w, HasTooltipPosition("top"));
+  }
 
   //------------------------------------------------------------------------
   // Back

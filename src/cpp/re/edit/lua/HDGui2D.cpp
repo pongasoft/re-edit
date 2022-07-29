@@ -40,7 +40,7 @@ static int lua_cv_trim_knob(lua_State *L) { return HDGui2D::loadFromRegistry(L)-
 static int lua_device_name(lua_State *L) { return HDGui2D::loadFromRegistry(L)->luaDeviceName(); }
 static int lua_image(lua_State *L) { return HDGui2D::loadFromRegistry(L)->luaImage(); }
 static int lua_momentary_button(lua_State *L) { return HDGui2D::loadFromRegistry(L)->luaMomentaryButton(); }
-static int lua_patch_browse_group(lua_State *L) { RE_MOCK_LOG_WARNING("patch_browse_group not implemented yet"); return HDGui2D::loadFromRegistry(L)->luaIgnored(); }
+static int lua_patch_browse_group(lua_State *L) { return HDGui2D::loadFromRegistry(L)->luaPatchBrowseGroup(); }
 static int lua_patch_name(lua_State *L) { RE_MOCK_LOG_WARNING("patch_name not implemented yet"); return HDGui2D::loadFromRegistry(L)->luaIgnored(); }
 static int lua_pitch_wheel(lua_State *L) { RE_MOCK_LOG_WARNING("pitch_wheel not implemented yet"); return HDGui2D::loadFromRegistry(L)->luaIgnored(); }
 static int lua_placeholder(lua_State *L) { return HDGui2D::loadFromRegistry(L)->luaPlaceholder(); }
@@ -354,6 +354,21 @@ int HDGui2D::luaMomentaryButton()
     populate<UIText>(p, "tooltip_template");
     populate<Bool>(p, "show_remote_box");
     populate<Bool>(p, "show_automation_rect");
+  }
+  return addObjectOnTopOfStack(std::move(p));
+}
+
+//------------------------------------------------------------------------
+// HDGui2D::luaPlaceholder
+//------------------------------------------------------------------------
+int HDGui2D::luaPatchBrowseGroup()
+{
+  auto p = makeWidget(Widget::patch_browse_group());
+  if(checkTableArg())
+  {
+    populateGraphics(p);
+    populate<Bool>(p, "fx_patch");
+    populate<StaticStringList>(p, "tooltip_position");
   }
   return addObjectOnTopOfStack(std::move(p));
 }

@@ -521,6 +521,20 @@ std::unique_ptr<Widget> Widget::momentary_button()
 }
 
 //------------------------------------------------------------------------
+// Widget::patch_browse_group
+//------------------------------------------------------------------------
+std::unique_ptr<Widget> Widget::patch_browse_group()
+{
+  auto w = std::make_unique<Widget>(WidgetType::kPatchBrowseGroup);
+  w ->tooltip_position()
+    ->addAttribute(Attribute::build<Bool>("fx_patch", false))
+    ;
+  w->setSize(kPatchBrowseGroupSize);
+  w->fGraphics.fFilter = FilmStrip::bySizeFilter(kPatchBrowseGroupSize);
+  return w;
+}
+
+//------------------------------------------------------------------------
 // Widget::placeholder
 //------------------------------------------------------------------------
 std::unique_ptr<Widget> Widget::placeholder()

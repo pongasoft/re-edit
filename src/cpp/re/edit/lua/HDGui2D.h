@@ -79,6 +79,7 @@ public:
   int luaImage();
   int luaMomentaryButton();
   int luaPlaceholder();
+  int luaPatchBrowseGroup();
   int luaSequenceFader();
   int luaSequenceMeter();
   int luaStaticDecoration();
