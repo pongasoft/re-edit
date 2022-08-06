@@ -56,7 +56,7 @@ bool Application::init(std::vector<std::string> iArgs)
 
   auto root = iArgs[0];
 
-  fDeviceHeightRU = fPropertyManager->init(root);
+  setDeviceHeightRU(fPropertyManager->init(root));
 
   fTextureManager->init(re::mock::fmt::path(root, "GUI2D"));
   fTextureManager->scanDirectory();
@@ -75,83 +75,10 @@ void Application::initPanels(std::string const &iDevice2DFile, std::string const
 {
   auto d2d = lua::Device2D::fromFile(iDevice2DFile);
   auto hdg = lua::HDGui2D::fromFile(iHDGui2DFile);
-  initPanel(d2d->front(), hdg->front(), fFrontPanel.fPanel);
-  initPanel(d2d->folded_front(), hdg->folded_front(), fFoldedFrontPanel.fPanel);
-  initPanel(d2d->back(), hdg->back(), fBackPanel.fPanel);
-  initPanel(d2d->folded_back(), hdg->folded_back(), fFoldedBackPanel.fPanel);
-}
-
-//------------------------------------------------------------------------
-// Application::initPanel
-//------------------------------------------------------------------------
-void Application::initPanel(std::shared_ptr<lua::panel_nodes> const &iPanelNodes,
-                            std::shared_ptr<lua::jbox_panel> const &iPanel,
-                            Panel &oPanel)
-{
-  oPanel.setDeviceHeightRU(fDeviceHeightRU);
-
-  if(iPanelNodes == nullptr || iPanel == nullptr)
-    return;
-
-  // handle background
-  {
-    auto node = iPanelNodes->findNodeByName(iPanel->fGraphicsNode);
-    if(node && node->hasKey())
-    {
-      auto background = fTextureManager->findTexture(node->getKey());
-      if(background)
-        oPanel.setBackground(std::move(background));
-      else
-        RE_EDIT_LOG_WARNING ("Could not locate background texture [%s] for panel [%s]", iPanel->fGraphicsNode,
-                             oPanel.getName());
-    }
-  }
-
-  // Cable origin
-  {
-    if(iPanel->fCableOrigin)
-    {
-      auto node = iPanelNodes->findNodeByName(*iPanel->fCableOrigin);
-      if(node)
-        oPanel.setCableOrigin(node->fPosition);
-      else
-        RE_EDIT_LOG_WARNING ("Could not locate cable origin for panel [%s]", *iPanel->fCableOrigin,
-                             oPanel.getName());
-    }
-
-  }
-
-  for(auto const &w: iPanel->fWidgets)
-  {
-    auto widget = w->fWidget->clone();
-
-    auto node = iPanelNodes->findNodeByName(w->fGraphics.fNode);
-    if(node)
-    {
-      if(node->hasKey())
-      {
-        auto graphics = fTextureManager->findTexture(node->getKey());
-        if(graphics)
-        {
-          if(graphics->numFrames() != node->fNumFrames)
-            graphics->getFilmStrip()->overrideNumFrames(node->fNumFrames);
-          widget->setTexture(std::move(graphics));
-        }
-      }
-
-      if(node->hasSize())
-        widget->setSize(node->getSize());
-
-      if(w->fGraphics.fHitBoundaries)
-        widget->setHitBoundaries(*w->fGraphics.fHitBoundaries);
-
-      widget->setPosition(node->fPosition);
-      widget->setName(node->fName);
-    }
-
-
-    oPanel.addWidget(std::move(widget));
-  }
+  fFrontPanel.initPanel(d2d->front(), hdg->front());
+  fFoldedFrontPanel.initPanel(d2d->folded_front(), hdg->folded_front());
+  fBackPanel.initPanel(d2d->back(), hdg->back());
+  fFoldedBackPanel.initPanel(d2d->folded_back(), hdg->folded_back());
 }
 
 //------------------------------------------------------------------------
@@ -199,6 +126,18 @@ void Application::render()
   ImGui::End();
 
   fPropertyManager->afterRenderFrame();
+}
+
+//------------------------------------------------------------------------
+// Application::setDeviceHeightRU
+//------------------------------------------------------------------------
+void Application::setDeviceHeightRU(int iDeviceHeightRU)
+{
+  fDeviceHeightRU = iDeviceHeightRU;
+  fFrontPanel.fPanel.setDeviceHeightRU(iDeviceHeightRU);
+  fFoldedFrontPanel.fPanel.setDeviceHeightRU(iDeviceHeightRU);
+  fBackPanel.fPanel.setDeviceHeightRU(iDeviceHeightRU);
+  fFoldedBackPanel.fPanel.setDeviceHeightRU(iDeviceHeightRU);
 }
 
 ////------------------------------------------------------------------------

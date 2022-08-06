@@ -20,6 +20,8 @@
 #define RE_EDIT_PANEL_STATE_H
 
 #include "Panel.h"
+#include "lua/HDGui2D.h"
+#include "lua/Device2D.h"
 
 namespace re::edit {
 
@@ -30,6 +32,9 @@ public:
              std::shared_ptr<TextureManager> iTextureManager,
              std::shared_ptr<UserPreferences> iUserPreferences,
              std::shared_ptr<PropertyManager> iPropertyManager);
+
+  void initPanel(std::shared_ptr<lua::panel_nodes> const &iPanelNodes,
+                 std::shared_ptr<lua::jbox_panel> const &iPanel);
 
   void render();
 

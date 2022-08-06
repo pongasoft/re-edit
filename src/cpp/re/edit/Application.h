@@ -37,6 +37,7 @@ public:
   explicit Application(std::shared_ptr<TextureManager> const &iTextureManager);
 
   bool init(std::vector<std::string> iArgs);
+  void setDeviceHeightRU(int iDeviceHeightRU);
 
   void render();
 
@@ -45,9 +46,6 @@ public:
 
 protected:
   void initPanels(std::string const &iDevice2DFile, std::string const &iHDGui2DFile);
-  void initPanel(std::shared_ptr<lua::panel_nodes> const &iPanelNodes,
-                 std::shared_ptr<lua::jbox_panel> const &iPanel,
-                 Panel &oPanel);
 
 private:
   std::shared_ptr<TextureManager> fTextureManager;

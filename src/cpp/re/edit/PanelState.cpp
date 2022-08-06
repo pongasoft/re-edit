@@ -17,8 +17,10 @@
  */
 
 #include "PanelState.h"
+#include "Errors.h"
 
 namespace re::edit {
+
 //------------------------------------------------------------------------
 // PanelState::PanelState
 //------------------------------------------------------------------------
@@ -34,6 +36,76 @@ PanelState::PanelState(PanelType iPanelType,
   fDrawContext.fPropertyManager = std::move(iPropertyManager);
   std::copy_if(std::begin(kAllWidgetDefs), std::end(kAllWidgetDefs), std::back_inserter(fWidgetDefs),
                [iPanelType](auto const &def) { return isPanelOfType(iPanelType, def.fAllowedPanels); });
+}
+
+//------------------------------------------------------------------------
+// PanelState::initPanel
+//------------------------------------------------------------------------
+void PanelState::initPanel(std::shared_ptr<lua::panel_nodes> const &iPanelNodes,
+                           std::shared_ptr<lua::jbox_panel> const &iPanel)
+{
+  if(iPanelNodes == nullptr || iPanel == nullptr)
+    return;
+
+  // handle background
+  {
+    auto node = iPanelNodes->findNodeByName(iPanel->fGraphicsNode);
+    if(node && node->hasKey())
+    {
+      auto background = fDrawContext.fTextureManager->findTexture(node->getKey());
+      if(background)
+        fPanel.setBackground(std::move(background));
+      else
+        RE_EDIT_LOG_WARNING ("Could not locate background texture [%s] for panel [%s]", iPanel->fGraphicsNode,
+                             fPanel.getName());
+    }
+  }
+
+  // Cable origin
+  {
+    if(iPanel->fCableOrigin)
+    {
+      auto node = iPanelNodes->findNodeByName(*iPanel->fCableOrigin);
+      if(node)
+        fPanel.setCableOrigin(node->fPosition);
+      else
+        RE_EDIT_LOG_WARNING ("Could not locate cable origin for panel [%s]", *iPanel->fCableOrigin,
+                             fPanel.getName());
+    }
+
+  }
+
+  for(auto const &w: iPanel->fWidgets)
+  {
+    auto widget = w->fWidget->clone();
+
+    auto node = iPanelNodes->findNodeByName(w->fGraphics.fNode);
+    if(node)
+    {
+      if(node->hasKey())
+      {
+        auto graphics = fDrawContext.fTextureManager->findTexture(node->getKey());
+        if(graphics)
+        {
+          if(graphics->numFrames() != node->fNumFrames)
+            graphics->getFilmStrip()->overrideNumFrames(node->fNumFrames);
+          widget->setTexture(std::move(graphics));
+        }
+      }
+
+      if(node->hasSize())
+        widget->setSize(node->getSize());
+
+      if(w->fGraphics.fHitBoundaries)
+        widget->setHitBoundaries(*w->fGraphics.fHitBoundaries);
+
+      widget->setPosition(node->fPosition);
+      widget->setName(node->fName);
+    }
+
+
+    fPanel.addWidget(std::move(widget));
+  }
 }
 
 //------------------------------------------------------------------------
