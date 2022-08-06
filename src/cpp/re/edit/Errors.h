@@ -55,7 +55,11 @@ void log_error(char const *iFile, int iLine, const std::string &format, Args ...
 #define RE_EDIT_ASSERT RE_MOCK_ASSERT
 #define RE_EDIT_FAIL RE_MOCK_FAIL
 #define RE_EDIT_TBD RE_MOCK_TBD
-#define RE_EDIT_INTERNAL_ASSERT RE_MOCK_INTERNAL_ASSERT
+#if ENABLE_RE_EDIT_INTERNAL_ASSERT
+#define RE_EDIT_INTERNAL_ASSERT(test, ...) (test) == true ? (void)0 : re::mock::Exception::throwException("INTERNAL CHECK FAILED: \"" #test "\"", __FILE__, __LINE__, ##__VA_ARGS__)
+#else
+#define RE_EDIT_INTERNAL_ASSERT(test, ...)
+#endif
 #define RE_EDIT_LOG_INFO(...) re::edit::log_info(__FILE__, __LINE__, __VA_ARGS__)
 #define RE_EDIT_LOG_WARNING(...) re::edit::log_warning(__FILE__, __LINE__, __VA_ARGS__)
 #define RE_EDIT_LOG_ERROR(...) re::edit::log_error(__FILE__, __LINE__, __VA_ARGS__)

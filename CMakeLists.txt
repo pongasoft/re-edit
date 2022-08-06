@@ -104,6 +104,7 @@ endif()
 add_library("${target}_lib" "${re-edit_BUILD_SOURCES}")
 target_include_directories("${target}_lib" PUBLIC "external/misc")
 target_link_libraries("${target}_lib" PUBLIC imgui stb re-mock)
+target_compile_definitions("${target}_lib" PUBLIC ENABLE_RE_EDIT_INTERNAL_ASSERT=1)
 
 # Build the executable
 add_executable(${target} "${re-edit_MAIN_SRC}")
