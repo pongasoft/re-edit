@@ -4,8 +4,6 @@
 // Implemented features:
 //  [X] Renderer: User texture binding. Use 'MTLTexture' as ImTextureID. Read the FAQ about ImTextureID!
 //  [X] Renderer: Support for large meshes (64k+ vertices) with 16-bit indices.
-// Missing features:
-//  [ ] Renderer: Multi-viewport / platform windows.
 
 // You can use unmodified imgui_impl_* files in your project. See examples/ folder for examples of using this. 
 // Prefer including the entire imgui/ repository into your project (either as a copy or as a submodule), and only build the backends you need.
@@ -26,7 +24,7 @@
 IMGUI_IMPL_API bool ImGui_ImplMetal_Init(id<MTLDevice> device);
 IMGUI_IMPL_API void ImGui_ImplMetal_Shutdown();
 IMGUI_IMPL_API void ImGui_ImplMetal_NewFrame(MTLRenderPassDescriptor* renderPassDescriptor);
-IMGUI_IMPL_API void ImGui_ImplMetal_RenderDrawData(ImDrawData* draw_data,
+IMGUI_IMPL_API void ImGui_ImplMetal_RenderDrawData(ImDrawData* drawData,
                                                    id<MTLCommandBuffer> commandBuffer,
                                                    id<MTLRenderCommandEncoder> commandEncoder);
 
@@ -51,9 +49,12 @@ IMGUI_IMPL_API void ImGui_ImplMetal_DestroyDeviceObjects();
 #import <QuartzCore/QuartzCore.hpp>
 
 MTL::Device *ImGui_ImplMetal_Layer_GetDevice(void* layer);
+void ImGui_ImplMetal_Layer_SetDevice(void* layer, MTL::Device *iDevice);
 void ImGui_ImplMetal_Layer_SetDrawableSize(void* layer, int iWidth, int iHeight);
 void ImGui_ImplMetal_Layer_SetPixelFormat(void* layer, int pixelFormat);
 CA::MetalDrawable* ImGui_ImplMetal_Layer_GetNextDrawable(void* layer);
+void* ImGui_ImplMetal_Layer();
+void ImGui_ImplMetal_NSWindow_SetLayer(void *iWindow, void* layer);
 
 #ifndef __OBJC__
 

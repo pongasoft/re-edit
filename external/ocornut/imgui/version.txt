@@ -1,2 +1,2 @@
-Version 505f19e3b00d54623566dda354980c7f3410f2b5 (docking branch)
-Cloned from https://github.com/ocornut/imgui/tree/docking on 2022/04/15
+Version 9aae45eb4a05a5a1f96be1ef37eb503a12ceb889 (v1.88 / main)
+Cloned from https://github.com/ocornut/imgui on 2022/08/07

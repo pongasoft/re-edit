@@ -1,18 +1,37 @@
-// Dear ImGui: standalone example application for SDL2 + Metal
-// (SDL is a cross-platform general purpose library for handling windows, inputs, OpenGL/Vulkan/Metal graphics context creation, etc.)
+// Dear ImGui: standalone example application for GLFW + Metal, using programmable pipeline
+// (GLFW is a cross-platform general purpose library for handling windows, inputs, OpenGL/Vulkan/Metal graphics context creation, etc.)
 // If you are new to Dear ImGui, read documentation from the docs/ folder + read the top of imgui.cpp.
 // Read online: https://github.com/ocornut/imgui/tree/master/docs
 
 #include <imgui.h>
-#include <backends/imgui_impl_sdl.h>
+#include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_metal.h>
 #include <stdio.h>
-#include <SDL2/SDL.h>
 #include "../Application.h"
 #include "../MTLTextureManager.h"
 
+
+#define GLFW_INCLUDE_NONE
+#define GLFW_EXPOSE_NATIVE_COCOA
+
+#include <GLFW/glfw3.h>
+#include <GLFW/glfw3native.h>
+
+#define NS_PRIVATE_IMPLEMENTATION
+#define MTL_PRIVATE_IMPLEMENTATION
+
 #import <Metal/Metal.hpp>
+
 #import <Metal/MTLPixelFormat.hpp>
+
+#define CA_PRIVATE_IMPLEMENTATION
+
+#include "QuartzCore/QuartzCore.hpp"
+
+static void glfw_error_callback(int error, const char *description)
+{
+  fprintf(stderr, "Glfw Error %d: %s\n", error, description);
+}
 
 int main(int argc, char **argv)
 {
@@ -20,7 +39,7 @@ int main(int argc, char **argv)
   IMGUI_CHECKVERSION();
   ImGui::CreateContext();
   ImGuiIO &io = ImGui::GetIO();
-  io.ConfigWindowsMoveFromTitleBarOnly = true;
+  (void) io;
   //io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;  // Enable Keyboard Controls
   //io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;   // Enable Gamepad Controls
 
@@ -43,44 +62,37 @@ int main(int argc, char **argv)
   //ImFont* font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
   //IM_ASSERT(font != NULL);
 
-  // Setup SDL
-  // (Some versions of SDL before <2.0.10 appears to have performance/stalling issues on a minority of Windows systems,
-  // depending on whether SDL_INIT_GAMECONTROLLER is enabled or disabled.. updating to latest version of SDL is recommended!)
-  if(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_GAMECONTROLLER) != 0)
-  {
-    printf("Error: %s\n", SDL_GetError());
-    return -1;
-  }
+  // Setup window
+  glfwSetErrorCallback(glfw_error_callback);
+  if(!glfwInit())
+    return 1;
 
-  // Inform SDL that we will be using metal for rendering. Without this hint initialization of metal renderer may fail.
-  SDL_SetHint(SDL_HINT_RENDER_DRIVER, "metal");
+  // Create window with graphics context
+  glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+  GLFWwindow *window = glfwCreateWindow(1280, 720, "re-edit", nullptr, nullptr);
+  if(window == nullptr)
+    return 1;
 
-  SDL_Window *window = SDL_CreateWindow("RE Edit", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-                                        1280, 720, SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
-  if(window == NULL)
-  {
-    printf("Error creating window: %s\n", SDL_GetError());
-    return -2;
-  }
-
-  SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
-  if(renderer == NULL)
-  {
-    printf("Error creating renderer: %s\n", SDL_GetError());
-    return -3;
-  }
+  auto device = MTL::CreateSystemDefaultDevice();
+  auto commandQueue = device->newCommandQueue();
 
   // Setup Platform/Renderer backends
-  auto layer = SDL_RenderGetMetalLayer(renderer);
-  auto device = ImGui_ImplMetal_Layer_GetDevice(layer);
-  ImGui_ImplMetal_Layer_SetPixelFormat(layer, MTL::PixelFormatBGRA8Unorm);
+  ImGui_ImplGlfw_InitForOpenGL(window, true);
   ImGui_ImplMetal_Init(device);
-  ImGui_ImplSDL2_InitForMetal(window);
 
-  auto commandQueue = device->newCommandQueue();
+  auto nswin = glfwGetCocoaWindow(window);
+  auto layer = ImGui_ImplMetal_Layer();
+  ImGui_ImplMetal_Layer_SetDevice(layer, device);
+  ImGui_ImplMetal_Layer_SetPixelFormat(layer, MTL::PixelFormatBGRA8Unorm);
+  ImGui_ImplMetal_NSWindow_SetLayer(nswin, layer);
+
   auto renderPassDescriptor = MTL::RenderPassDescriptor::alloc()->init();
 
   // Our state
+  bool show_demo_window = true;
+  bool show_another_window = false;
+  float clear_color[4] = {0.45f, 0.55f, 0.60f, 1.00f};
+
   re::edit::Application application{std::make_shared<re::edit::MTLTextureManager>(device)};
 
   std::vector<std::string> args{};
@@ -91,30 +103,20 @@ int main(int argc, char **argv)
     return 1;
 
   // Main loop
-  bool done = false;
-  while(!done)
+  while(!glfwWindowShouldClose(window))
   {
-    {
-      NS::AutoreleasePool* pPool = NS::AutoreleasePool::alloc()->init();
+    NS::AutoreleasePool *pPool = NS::AutoreleasePool::alloc()->init();
 
+    {
       // Poll and handle events (inputs, window resize, etc.)
       // You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to tell if dear imgui wants to use your inputs.
       // - When io.WantCaptureMouse is true, do not dispatch mouse input data to your main application, or clear/overwrite your copy of the mouse data.
       // - When io.WantCaptureKeyboard is true, do not dispatch keyboard input data to your main application, or clear/overwrite your copy of the keyboard data.
       // Generally you may always pass all inputs to dear imgui, and hide them from your application based on those two flags.
-      SDL_Event event;
-      while(SDL_PollEvent(&event))
-      {
-        ImGui_ImplSDL2_ProcessEvent(&event);
-        if(event.type == SDL_QUIT)
-          done = true;
-        if(event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_CLOSE &&
-           event.window.windowID == SDL_GetWindowID(window))
-          done = true;
-      }
+      glfwPollEvents();
 
       int width, height;
-      SDL_GetRendererOutputSize(renderer, &width, &height);
+      glfwGetFramebufferSize(window, &width, &height);
       ImGui_ImplMetal_Layer_SetDrawableSize(layer, width, height);
       auto drawable = ImGui_ImplMetal_Layer_GetNextDrawable(layer);
 
@@ -132,7 +134,7 @@ int main(int argc, char **argv)
 
       // Start the Dear ImGui frame
       ImGui_ImplMetal_NewFrame(renderPassDescriptor);
-      ImGui_ImplSDL2_NewFrame();
+      ImGui_ImplGlfw_NewFrame();
       ImGui::NewFrame();
 
       // Main rendering
@@ -147,19 +149,17 @@ int main(int argc, char **argv)
 
       commandBuffer->presentDrawable(drawable);
       commandBuffer->commit();
-
-      pPool->release();
     }
+    pPool->release();
   }
 
   // Cleanup
   ImGui_ImplMetal_Shutdown();
-  ImGui_ImplSDL2_Shutdown();
+  ImGui_ImplGlfw_Shutdown();
   ImGui::DestroyContext();
 
-  SDL_DestroyRenderer(renderer);
-  SDL_DestroyWindow(window);
-  SDL_Quit();
+  glfwDestroyWindow(window);
+  glfwTerminate();
 
   return 0;
 }

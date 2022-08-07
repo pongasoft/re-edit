@@ -97,7 +97,6 @@ set(re-edit_BUILD_SOURCES
 if(APPLE)
   list(APPEND re-edit_BUILD_SOURCES "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/MTLTextureManager.cpp")
   set(re-edit_MAIN_SRC "${re-edit_CPP_SRC_DIR}/re/edit/macos/main.cpp" "${re-edit_CPP_SRC_DIR}/re/edit/macos/metal.cpp")
-#  set(re-edit_MAIN_SRC "${re-edit_CPP_SRC_DIR}/re/edit/macos/main.mm")
 endif()
 
 # Build the static library
