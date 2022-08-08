@@ -37,6 +37,7 @@ long Widget::fWidgetIota = 1;
 Widget::Widget(WidgetType iType) : fType{iType}
 {
   computeDefaultWidgetName();
+  fGraphics.init(0);
 }
 
 //------------------------------------------------------------------------
@@ -133,6 +134,58 @@ void Widget::draw(DrawContext &iCtx)
     iCtx.drawRectFilled(fGraphics.fPosition, fGraphics.getSize(), iCtx.getUserPreferences().fWidgetErrorColor);
 }
 
+//------------------------------------------------------------------------
+// Widget::hasAttributeErrors
+//------------------------------------------------------------------------
+bool Widget::hasAttributeErrors() const
+{
+  for(auto &w: fAttributes)
+  {
+    if(w->fError)
+      return true;
+  }
+  return false;
+}
+
+//------------------------------------------------------------------------
+// Widget::init
+//------------------------------------------------------------------------
+void Widget::init(EditContext &iCtx)
+{
+  iCtx.setCurrentWidget(this);
+  fGraphics.init(iCtx);
+  for(auto &w: fAttributes)
+    w->init(iCtx);
+  iCtx.setCurrentWidget(nullptr);
+}
+
+//------------------------------------------------------------------------
+// Widget::errorView
+//------------------------------------------------------------------------
+bool Widget::errorView(EditContext &iCtx)
+{
+  if(isError() || hasAttributeErrors())
+  {
+    ImGui::TextColored(ImVec4(1,0,0,1), "(?)");
+    if(ImGui::IsItemHovered())
+    {
+      ImGui::BeginTooltip();
+      ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
+      if(isError())
+        ImGui::TextUnformatted("Widget out of bound");
+      for(auto &w: fAttributes)
+      {
+        if(w->fError)
+          ImGui::Text("%s | %s", w->fName.c_str(), w->fError->c_str());
+      }
+      ImGui::PopTextWrapPos();
+      ImGui::EndTooltip();
+    }
+    return true;
+  }
+
+  return false;
+}
 
 //------------------------------------------------------------------------
 // Widget::editView
@@ -375,16 +428,22 @@ Widget *Widget::blend_mode()
 }
 
 //------------------------------------------------------------------------
+// Widget::horizontal_justification
+//------------------------------------------------------------------------
+Widget *Widget::horizontal_justification()
+{
+  static const std::vector<std::string> kHorizontalJustification =
+    { "left", "center", "right"};
+  return addAttribute(Attribute::build<StaticStringList>("horizontal_justification", false, "center", kHorizontalJustification));
+}
+
+//------------------------------------------------------------------------
 // Widget::computeDefaultWidgetName
 //------------------------------------------------------------------------
 void Widget::computeDefaultWidgetName()
 {
   fName = re::mock::fmt::printf("%s_%ld", toString(fType), fWidgetIota++);
 }
-
-static constexpr auto kDocGuiOwnerFilter = [](const Property &p) {
-  return p.owner() == mock::PropertyOwner::kDocOwner || p.owner() == mock::PropertyOwner::kGUIOwner;
-};
 
 //------------------------------------------------------------------------
 // Widget::analog_knob
@@ -729,6 +788,33 @@ std::unique_ptr<Widget> Widget::up_down_button()
 }
 
 //------------------------------------------------------------------------
+// Widget::value_display
+//------------------------------------------------------------------------
+std::unique_ptr<Widget> Widget::value_display()
+{
+  static const auto kReadWriteValueFilter = [](const Property &p) {
+    return (p.type() == kJBox_Boolean || p.type() == kJBox_Number) && kDocGuiOwnerFilter(p);
+  };
+  static const auto kValueSwitchFilter = [](const Property &p) { return p.isDiscrete() && kDocGuiOwnerFilter(p); };
+
+  auto w = std::make_unique<Widget>(WidgetType::kValueDisplay);
+  w ->value(kReadWriteValueFilter, kValueSwitchFilter)
+    ->addAttribute(Attribute::build<ValueTemplates>("value_templates", false, {}, 1))
+    ->visibility()
+    ->text_style()
+    ->text_color()
+    ->horizontal_justification()
+    ->tooltip_position()
+    ->tooltip_template()
+    ->addAttribute(Attribute::build<ReadOnly>("read_only", true, false, 1))
+    ->show_remote_box()
+    ->show_automation_rect()
+    ;
+
+  return w;
+}
+
+//------------------------------------------------------------------------
 // Widget::panel_decal
 //------------------------------------------------------------------------
 std::unique_ptr<Widget> Widget::panel_decal()
@@ -779,7 +865,7 @@ widget::Attribute *Widget::findAttributeByName(std::string const &iAttributeName
 //------------------------------------------------------------------------
 Widget *Widget::addAttribute(std::unique_ptr<widget::Attribute> iAttribute)
 {
-  auto id = static_cast<int>(fAttributes.size());
+  auto id = static_cast<int>(fAttributes.size() + 1);
   iAttribute->init(id);
   fAttributes.emplace_back(std::move(iAttribute)); return this;
 }

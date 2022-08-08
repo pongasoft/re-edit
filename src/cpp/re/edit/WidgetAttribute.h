@@ -56,6 +56,7 @@ public:
 
   virtual void reset() {}
   virtual void editView(EditContext &iCtx) {}
+  virtual void init(EditContext &iCtx) {}
   virtual std::string toString() const;
   void clearError() { fError = std::nullopt; };
 
@@ -315,6 +316,37 @@ public:
   void editView(EditContext &iCtx) override;
 
   std::unique_ptr<Attribute> clone() const override { return Attribute::clone<Color3>(*this); }
+};
+
+class ValueTemplates : public SingleAttribute<std::vector<std::string>>
+{
+public:
+  ValueTemplates(std::string iName, int iValueAttributeId) :
+    SingleAttribute<std::vector<std::string>>{std::move(iName)}, fValueAttributeId{iValueAttributeId} {}
+  std::string getValueAsLua() const override;
+  void editView(EditContext &iCtx) override;
+  std::unique_ptr<Attribute> clone() const override { return Attribute::clone<ValueTemplates>(*this); }
+
+protected:
+  int fValueAttributeId;
+};
+
+class ReadOnly : public Bool
+{
+public:
+  explicit ReadOnly(std::string iName, int iValueAttributeId) :
+    Bool{std::move(iName)}, fValueAttributeId{iValueAttributeId} {}
+  void editView(EditContext &iCtx) override;
+
+  void init(EditContext &iCtx) override { onChanged(iCtx); }
+
+  std::unique_ptr<Attribute> clone() const override { return Attribute::clone<ReadOnly>(*this); }
+
+protected:
+  void onChanged(EditContext &iCtx);
+
+protected:
+  int fValueAttributeId;
 };
 
 //------------------------------------------------------------------------

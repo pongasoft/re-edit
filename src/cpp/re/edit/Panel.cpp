@@ -633,7 +633,10 @@ void Panel::editView(EditContext &iCtx)
 
         ImGui::SameLine();
         ImGui::Text("%s", re::edit::toString(w->getType()));
-
+        ImGui::SameLine();
+        if(!w->errorView(iCtx))
+          ImGui::NewLine();
+        
         w->editView(iCtx);
         break;
       }

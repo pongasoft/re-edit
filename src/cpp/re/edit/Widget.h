@@ -25,6 +25,7 @@
 #include "DrawContext.h"
 #include "WidgetAttribute.h"
 #include "Graphics.h"
+#include "Errors.h"
 
 #include <string>
 #include <vector>
@@ -58,6 +59,7 @@ public:
 
   constexpr bool isError() const { return fError; };
   constexpr void setError(bool iError) { fError = iError; };
+  bool hasAttributeErrors() const;
 
   constexpr void setHitBoundaries(HitBoundaries const &iHitBoundaries) { fGraphics.setHitBoundaries(iHitBoundaries); }
   constexpr void disableHitBoundaries() { fGraphics.fHitBoundariesEnabled = false; }
@@ -75,8 +77,10 @@ public:
 
   inline bool contains(ImVec2 const &iPosition) const { return fGraphics.contains(iPosition); }
 
+  void init(EditContext &iCtx);
   void draw(DrawContext &iCtx);
   void editView(EditContext &iCtx);
+  bool errorView(EditContext &iCtx);
 
   std::string hdgui2D() const;
   std::string device2D() const { return fGraphics.device2D(); }
@@ -104,6 +108,7 @@ public:
   static std::unique_ptr<Widget> step_button();
   static std::unique_ptr<Widget> toggle_button();
   static std::unique_ptr<Widget> up_down_button();
+  static std::unique_ptr<Widget> value_display();
 
   template<typename T>
   T *findAttributeByNameAndType(std::string const &iAttributeName) const;
@@ -141,6 +146,7 @@ protected:
   Widget *tooltip_template();
   Widget *visibility();
   Widget *blend_mode();
+  Widget *horizontal_justification();
   Widget *socket(re::mock::JboxObjectType iSocketType, Object::Filter iSocketFilter);
 
 private:
@@ -181,7 +187,15 @@ T *Widget::findAttributeByNameAndType(std::string const &iAttributeName) const
 template<typename T>
 T *Widget::findAttributeByIdAndType(int id) const
 {
-  return dynamic_cast<T *>(fAttributes[id]);
+  if constexpr(std::is_convertible_v<T, widget::attribute::Graphics>)
+  {
+    RE_EDIT_INTERNAL_ASSERT(fGraphics.fId == id);
+    return const_cast<widget::attribute::Graphics *>(&fGraphics);
+  }
+  else
+  {
+    return dynamic_cast<T *>(fAttributes[id - 1].get());
+  }
 }
 
 

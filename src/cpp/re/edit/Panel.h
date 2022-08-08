@@ -62,6 +62,7 @@ static constexpr WidgetDef kAllWidgetDefs[] {
   { WidgetType::kStepButton,        "step_button",         Widget::step_button,         kPanelTypeAny },
   { WidgetType::kToggleButton,      "toggle_button",       Widget::toggle_button,       kPanelTypeAny },
   { WidgetType::kUpDownButton,      "up_down_button",      Widget::up_down_button,      kPanelTypeAny },
+  { WidgetType::kValueDisplay,      "value_display",       Widget::value_display,      kPanelTypeAny },
   { WidgetType::kPanelDecal,        "panel_decal",         Widget::panel_decal,         kPanelTypeAny },
 };
 

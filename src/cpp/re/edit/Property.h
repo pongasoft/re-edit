@@ -66,6 +66,10 @@ struct Property
   Object fParent{};
 };
 
+static constexpr auto kDocGuiOwnerFilter = [](const Property &p) {
+  return p.owner() == mock::PropertyOwner::kDocOwner || p.owner() == mock::PropertyOwner::kGUIOwner;
+};
+
 
 }
 

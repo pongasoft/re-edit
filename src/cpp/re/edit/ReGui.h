@@ -130,6 +130,19 @@ inline bool ColorEdit(const char* label, JboxColor3 *ioColor, ImGuiColorEditFlag
   return false;
 }
 
+//------------------------------------------------------------------------
+// ReGui::MenuToggle
+//------------------------------------------------------------------------
+inline bool MenuToggle(char const *iFalseLabel, char const *iTrueLabel, bool *v)
+{
+  if(ImGui::MenuItem(*v ? iTrueLabel : iFalseLabel))
+  {
+    *v = !*v;
+    return true;
+  }
+  return false;
+}
+
 }
 
 #endif //RE_EDIT_RE_GUI_H

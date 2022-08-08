@@ -17,7 +17,7 @@
  */
 
 #include "WidgetAttribute.h"
-#include "ReGui.h"
+#include "Widget.h"
 #include "Errors.h"
 #include <re/mock/fmt.h>
 #include <imgui.h>
@@ -31,6 +31,14 @@ namespace re::edit::widget {
 std::string Attribute::toString() const
 {
   return re::mock::fmt::printf(R"(name="%s")", fName);
+}
+
+//------------------------------------------------------------------------
+// toUIText
+//------------------------------------------------------------------------
+std::string toUIText(std::string const &s)
+{
+  return re::mock::fmt::printf("jbox.ui_text(\"%s\")", s);
 }
 
 }
@@ -55,7 +63,7 @@ std::string String::getValueAsLua() const { return escapeString(fValue); }
 //------------------------------------------------------------------------
 std::string UIText::getValueAsLua() const
 {
-  return re::mock::fmt::printf("jbox.ui_text(\"%s\")", fValue);
+  return toUIText(fValue);
 }
 
 //------------------------------------------------------------------------
@@ -727,6 +735,101 @@ void StaticStringList::editView(EditContext &iCtx)
   }
 }
 
+//------------------------------------------------------------------------
+// ValueTemplates::getValueAsLua
+//------------------------------------------------------------------------
+std::string ValueTemplates::getValueAsLua() const
+{
+  if(fValue.empty())
+    return "{}";
+  std::vector<std::string> l{};
+  std::transform(fValue.begin(), fValue.end(), std::back_inserter(l), toUIText);
+  return re::mock::fmt::printf("{ %s }", re::mock::stl::join_to_string(l));
+}
+
+//------------------------------------------------------------------------
+// ValueTemplates::editView
+//------------------------------------------------------------------------
+void ValueTemplates::editView(EditContext &iCtx)
+{
+  resetView();
+
+  ImGui::SameLine();
+
+  ImGui::BeginGroup();
+  int deleteItemIdx = -1;
+  for(int i = 0; i < fValue.size(); i++)
+  {
+    ImGui::PushID(i);
+    if(ImGui::Button("-"))
+      deleteItemIdx = i;
+    ImGui::SameLine();
+    auto value = fValue[i];
+    if(ImGui::InputText(re::mock::fmt::printf("%s [%d]", fName, i).c_str(), &fValue[i]))
+      fProvided = true;
+    ImGui::PopID();
+  }
+
+  if(deleteItemIdx >= 0)
+    fValue.erase(fValue.begin() + deleteItemIdx);
+
+  ImGui::PushID(static_cast<int>(fValue.size()));
+
+  if(ImGui::Button("+"))
+  {
+    fValue.resize(fValue.size() + 1);
+  }
+
+  ImGui::SameLine();
+  ImGui::LabelText(fName.c_str(), "Click + to add");
+
+  ImGui::PopID();
+  ImGui::EndGroup();
+
+  clearError();
+
+  if(fValue.size() > 1)
+  {
+    auto valueAtt = iCtx.getCurrentWidget()->findAttributeByIdAndType<Value>(fValueAttributeId);
+    if(valueAtt->fUseSwitch)
+    {
+      auto property = iCtx.findProperty(valueAtt->fValueSwitch.fValue);
+      if(property && property->stepCount() != fValue.size())
+        fError = re::mock::fmt::printf("Should be 1 value (apply to all) or exactly %d values", property->stepCount());
+    }
+    else
+      fError = "Only 1 value max allowed";
+  }
+}
+
+//------------------------------------------------------------------------
+// ReadOnly::editView
+//------------------------------------------------------------------------
+void ReadOnly::editView(EditContext &iCtx)
+{
+  auto previousValue = fValue;
+  Bool::editView(iCtx);
+  if(previousValue != fValue)
+    onChanged(iCtx);
+}
+
+//------------------------------------------------------------------------
+// ReadOnly::onChanged
+//------------------------------------------------------------------------
+void ReadOnly::onChanged(EditContext &iCtx)
+{
+  static const auto kReadWriteValueFilter = [](const Property &p) {
+    return (p.type() == kJBox_Boolean || p.type() == kJBox_Number) && kDocGuiOwnerFilter(p);
+  };
+  static const auto kReadOnlyValueFilter = [](const Property &p) {
+    return (p.type() == kJBox_Boolean || p.type() == kJBox_Number)
+           && p.owner() == mock::PropertyOwner::kRTOwner;
+  };
+
+  auto valueAtt = iCtx.getCurrentWidget()->findAttributeByIdAndType<Value>(fValueAttributeId);
+  valueAtt->fValue.fFilter = fValue ? kReadOnlyValueFilter : kReadWriteValueFilter;
+  RE_EDIT_LOG_INFO("detected readonly change [%s]", fValue ? "true" : "false");
+}
 
 }
 

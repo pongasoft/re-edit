@@ -73,6 +73,7 @@ enum class WidgetType : int
   kStepButton,
   kToggleButton,
   kUpDownButton,
+  kValueDisplay,
 
   kPanelDecal // re-edit widget
 };
