@@ -29,6 +29,7 @@
 namespace re::edit {
 
 class PanelState;
+class Widget;
 
 class EditContext
 {
@@ -74,11 +75,17 @@ public:
   inline std::shared_ptr<Texture> findTexture(std::string const &iKey) const { return fTextureManager->findTexture(iKey); }
   inline std::shared_ptr<Texture> findHDTexture(std::string const &iKey) const { return fTextureManager->findHDTexture(iKey); }
 
+  inline Widget *getCurrentWidget() const { return fCurrentWidget; }
+
   friend class PanelState;
+  friend class Widget;
 
 public:
   ShowBorder fShowBorder{ShowBorder::kNone};
   ShowCustomDisplay fShowCustomDisplay{ShowCustomDisplay::kMain};
+
+protected:
+  inline void setCurrentWidget(Widget *iWidget) { fCurrentWidget = iWidget; }
 
 protected:
   PanelState *fPanelState{};
@@ -86,6 +93,7 @@ protected:
   std::shared_ptr<UserPreferences> fUserPreferences{};
   std::shared_ptr<PropertyManager> fPropertyManager{};
   bool fShowProperties{};
+  Widget *fCurrentWidget{};
 };
 
 }

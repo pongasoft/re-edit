@@ -64,11 +64,16 @@ public:
 
   virtual std::unique_ptr<Attribute> clone() const = 0;
 
+  friend class re::edit::Widget;
+
 protected:
   template<typename T>
   static std::unique_ptr<Attribute> clone(T const &iAttribute);
 
+  void init(int id) { fId = id; }
+
 public:
+  int fId{-1};
   std::string fName;
   bool fRequired{};
   std::optional<std::string> fError{};

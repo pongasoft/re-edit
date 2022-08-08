@@ -108,6 +108,9 @@ public:
   template<typename T>
   T *findAttributeByNameAndType(std::string const &iAttributeName) const;
 
+  template<typename T>
+  T *findAttributeByIdAndType(int id) const;
+
   widget::Attribute *findAttributeByName(std::string const &iAttributeName) const;
 
 //
@@ -125,7 +128,7 @@ protected:
   bool isPanelDecal() const { return fType == WidgetType::kPanelDecal; }
 
 protected:
-  Widget *addAttribute(std::unique_ptr<widget::Attribute> iAttribute) { fAttributes.emplace_back(std::move(iAttribute)); return this; }
+  Widget *addAttribute(std::unique_ptr<widget::Attribute> iAttribute);
   Widget *value(Property::Filter iValueFilter, Property::Filter iValueSwitchFilter); // value + value_switch
   Widget *value(Property::Filter iValueFilter); // value only
   Widget *values(Property::Filter iValuesFilter);
@@ -147,7 +150,7 @@ private:
   void init(int id) { fId = id; }
 
 private:
-  int fId{};
+  int fId{-1};
   WidgetType fType{};
   std::string fName{};
   widget::attribute::Graphics fGraphics{};
@@ -170,6 +173,15 @@ template<typename T>
 T *Widget::findAttributeByNameAndType(std::string const &iAttributeName) const
 {
   return dynamic_cast<T *>(findAttributeByName(iAttributeName));
+}
+
+//------------------------------------------------------------------------
+// Widget::findAttributeByIdAndType
+//------------------------------------------------------------------------
+template<typename T>
+T *Widget::findAttributeByIdAndType(int id) const
+{
+  return dynamic_cast<T *>(fAttributes[id]);
 }
 
 

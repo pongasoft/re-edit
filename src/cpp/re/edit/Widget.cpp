@@ -139,6 +139,8 @@ void Widget::draw(DrawContext &iCtx)
 //------------------------------------------------------------------------
 void Widget::editView(EditContext &iCtx)
 {
+  iCtx.setCurrentWidget(this);
+
   ImGui::PushID("Widget");
 
   ImGui::InputText("name", &fName);
@@ -226,6 +228,8 @@ void Widget::editView(EditContext &iCtx)
   }
 
   ImGui::PopID();
+
+  iCtx.setCurrentWidget(nullptr);
 }
 
 //------------------------------------------------------------------------
@@ -755,7 +759,7 @@ std::unique_ptr<Widget> Widget::clone() const
 //------------------------------------------------------------------------
 void Widget::computeIsHidden(DrawContext &iCtx)
 {
-  fHidden = fVisibility ? fVisibility->isHidden(iCtx) : false;
+  fHidden = fVisibility != nullptr && fVisibility->isHidden(iCtx);
 }
 
 //------------------------------------------------------------------------
@@ -768,6 +772,16 @@ widget::Attribute *Widget::findAttributeByName(std::string const &iAttributeName
     return iter->get();
   else
     return nullptr;
+}
+
+//------------------------------------------------------------------------
+// Widget::addAttribute
+//------------------------------------------------------------------------
+Widget *Widget::addAttribute(std::unique_ptr<widget::Attribute> iAttribute)
+{
+  auto id = static_cast<int>(fAttributes.size());
+  iAttribute->init(id);
+  fAttributes.emplace_back(std::move(iAttribute)); return this;
 }
 
 }
