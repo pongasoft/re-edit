@@ -54,7 +54,7 @@ static int lua_static_decoration(lua_State *L) { return HDGui2D::loadFromRegistr
 static int lua_step_button(lua_State *L) { return HDGui2D::loadFromRegistry(L)->luaStepButton(); }
 static int lua_toggle_button(lua_State *L) { return HDGui2D::loadFromRegistry(L)->luaToggleButton(); }
 static int lua_up_down_button(lua_State *L) { return HDGui2D::loadFromRegistry(L)->luaUpDownButton(); }
-static int lua_value_display(lua_State *L) { RE_MOCK_LOG_WARNING("value_display not implemented yet"); return HDGui2D::loadFromRegistry(L)->luaIgnored(); }
+static int lua_value_display(lua_State *L) { return HDGui2D::loadFromRegistry(L)->luaValueDisplay(); }
 static int lua_zero_snap_knob(lua_State *L) { RE_MOCK_LOG_WARNING("zero_snap_knob not implemented yet"); return HDGui2D::loadFromRegistry(L)->luaIgnored(); }
 static int lua_ui_text(lua_State *L) { return HDGui2D::loadFromRegistry(L)->luaUIText(); }
 
@@ -539,6 +539,30 @@ int HDGui2D::luaUpDownButton()
 }
 
 //------------------------------------------------------------------------
+// HDGui2D::luaValueDisplay
+//------------------------------------------------------------------------
+int HDGui2D::luaValueDisplay()
+{
+  auto p = makeWidget(Widget::value_display());
+  if(checkTableArg())
+  {
+    populateGraphics(p);
+    populate<Value>(p, "value");
+    populate<ValueTemplates>(p, "value_templates");
+    populate<Visibility>(p, "visibility");
+    populate<StaticStringList>(p, "tooltip_position");
+    populate<StaticStringList>(p, "horizontal_justification");
+    populate<Color3>(p, "text_color");
+    populate<StaticStringList>(p, "text_style");
+    populate<UIText>(p, "tooltip_template");
+    populate<Bool>(p, "read_only");
+    populate<Bool>(p, "show_remote_box");
+    populate<Bool>(p, "show_automation_rect");
+  }
+  return addObjectOnTopOfStack(std::move(p));
+}
+
+//------------------------------------------------------------------------
 // HDGui2D::populateGraphics
 //------------------------------------------------------------------------
 void HDGui2D::populateGraphics(std::shared_ptr<jbox_widget> &oWidget)
@@ -763,6 +787,25 @@ void HDGui2D::populate(DiscretePropertyValueList *oList)
         if(lua_type(L, -1) == LUA_TNUMBER)
           values->emplace_back(lua_tonumber(L, -1));
       }, true, false);
+      oList->fProvided = true;
+    });
+  }
+}
+
+//------------------------------------------------------------------------
+// HDGui2D::populate | ValueTemplates
+//------------------------------------------------------------------------
+void HDGui2D::populate(ValueTemplates *oList)
+{
+  if(oList)
+  {
+    oList->fValue.clear();
+    withField(-1, oList->fName.c_str(), LUA_TTABLE, [this, oList]() {
+      iterateLuaArray([this, values = &oList->fValue](auto i) {
+        auto ui_text = toOptional<impl::jbox_ui_text>(getObjectOnTopOfStack());
+        if(ui_text)
+          values->emplace_back(ui_text->fText);
+      }, false, false);
       oList->fProvided = true;
     });
   }

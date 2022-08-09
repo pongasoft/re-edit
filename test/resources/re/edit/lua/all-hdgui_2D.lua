@@ -223,6 +223,30 @@ front_widgets[#front_widgets + 1] = jbox.popup_button {
   show_automation_rect = false,
 }
 
+front_widgets[#front_widgets + 1] = jbox.value_display {
+  graphics = { node = "vd1_node", },
+  value = "/vd1",
+  text_style = "Small LCD font",
+  text_color = {11, 21, 31}
+}
+
+front_widgets[#front_widgets + 1] = jbox.value_display {
+  graphics = { node = "vd2_node", },
+  value_switch = "/vd2_switch",
+  values = { "/vd2_v1", "/vd2_v2" },
+  read_only = true,
+  horizontal_justification = "right",
+  value_templates = { jbox.ui_text("vd2_vt_1"), jbox.ui_text("vd2_vt_2") },
+  text_style = "Arial medium font",
+  text_color = {101, 201, 41},
+  visibility_switch = "/vd2_visibility_switch",
+  visibility_values = { 9 },
+  tooltip_position = "left",
+  tooltip_template = jbox.ui_text("vd2_tooltip_template"),
+  show_remote_box = false,
+  show_automation_rect = false,
+}
+
 front = jbox.panel{
   graphics = {
     node = "Panel_front_bg",

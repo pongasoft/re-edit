@@ -88,6 +88,7 @@ public:
   int luaStepButton();
   int luaToggleButton();
   int luaUpDownButton();
+  int luaValueDisplay();
   int luaUIText();
 
   int luaIgnored();
@@ -124,6 +125,7 @@ protected:
   void populate(widget::attribute::PropertyPath *oPath);
   void populate(widget::attribute::Visibility *oVisibility);
   void populate(widget::attribute::DiscretePropertyValueList *oList);
+  void populate(widget::attribute::ValueTemplates *oValue);
 
   /**
    * Returns `true` if the widget has an attribute of the given type/name combination NOT if the population happens

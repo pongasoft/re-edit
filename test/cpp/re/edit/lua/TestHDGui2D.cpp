@@ -45,9 +45,17 @@ std::string getResourceFile(std::string const &iFilename)
 //------------------------------------------------------------------------
 // escapeString
 //------------------------------------------------------------------------
-std::string escapeString(std::string const &s)
+std::string escapeString(char const *s)
 {
   return re::mock::fmt::printf("\"%s\"", s);
+}
+
+//------------------------------------------------------------------------
+// toUIText
+//------------------------------------------------------------------------
+std::string toUIText(char const *s)
+{
+  return re::mock::fmt::printf("jbox.ui_text(\"%s\")", s);
 }
 
 //------------------------------------------------------------------------
@@ -80,6 +88,18 @@ std::string toString(std::vector<int> const &iValue)
 std::string toString(bool iValue)
 {
   return iValue ? "true" : "false";
+}
+
+//------------------------------------------------------------------------
+// toUIText
+//------------------------------------------------------------------------
+std::string toUITexts(std::vector<char const *> const &iValue)
+{
+  if(iValue.empty())
+    return "{}";
+  std::vector<std::string> l{};
+  std::transform(iValue.begin(), iValue.end(), std::back_inserter(l), toUIText);
+  return re::mock::fmt::printf("{ %s }", re::mock::stl::join_to_string(l));
 }
 
 //------------------------------------------------------------------------
@@ -249,6 +269,14 @@ inline constexpr auto HasOrientation = [](char const *iExpected = nullptr) {
     return AttributeToString<StaticStringList>("orientation", R"(orientation={"vertical",false})");
 };
 
+//! HasHorizontalJustification | horizontal_justification
+inline constexpr auto HasHorizontalJustification = [](char const *iExpected = nullptr) {
+  if(iExpected)
+    return AttributeToString<StaticStringList>("horizontal_justification", R"(horizontal_justification={"%s",true})", iExpected);
+  else
+    return AttributeToString<StaticStringList>("horizontal_justification", R"(horizontal_justification={"center",false})");
+};
+
 //! HasIncreasing | increasing
 inline constexpr auto HasIncreasing = [](std::optional<bool> iExpected = std::nullopt) {
   if(iExpected)
@@ -300,13 +328,21 @@ inline constexpr auto HasSocket = [](char const *iExpectedPath) {
   return AttributeToString<Socket>("socket", R"(socket={"%s",true})", iExpectedPath);
 };
 
+//! HasValueTemplates | value_templates
+inline constexpr auto HasValueTemplates = [](std::optional<std::vector<char const *>> const &iExpected = std::nullopt) {
+  if(iExpected)
+    return AttributeToString<ValueTemplates>("value_templates", R"(value_templates={%s,true})", toUITexts(*iExpected));
+  else
+    return AttributeToString<ValueTemplates>("value_templates", R"(value_templates={{},false})");
+};
+
 
 TEST(HDGui2D, All)
 {
   auto hdg = HDGui2D::fromFile(getResourceFile("all-hdgui_2D.lua"));
 
   auto front = hdg->front();
-  ASSERT_EQ(25, front->fWidgets.size());
+  ASSERT_EQ(27, front->fWidgets.size());
   ASSERT_EQ("Panel_front_bg", front->fGraphicsNode);
   ASSERT_EQ(std::nullopt, front->fCableOrigin);
 
@@ -635,6 +671,42 @@ TEST(HDGui2D, All)
     ASSERT_THAT(w, HasShowAutomationRect(false));
   }
 
+  // vd1
+  {
+    auto w = front->fWidgets[id++];
+    ASSERT_EQ(WidgetType::kValueDisplay, w->fWidget->getType());
+    ASSERT_EQ("vd1_node", w->fGraphics.fNode);
+    ASSERT_THAT(w, HasValueNoSwitch("/vd1"));
+    ASSERT_THAT(w, HasValueTemplates());
+    ASSERT_THAT(w, HasTextStyle("Small LCD font"));
+    ASSERT_THAT(w, HasTextColor({11, 21, 31}));
+    ASSERT_THAT(w, HasHorizontalJustification());
+    ASSERT_THAT(w, HasBoolValue("read_only"));
+    ASSERT_THAT(w, HasNoVisibility());
+    ASSERT_THAT(w, HasTooltipPosition());
+    ASSERT_THAT(w, HasShowRemoteBox());
+    ASSERT_THAT(w, HasShowAutomationRect());
+    ASSERT_THAT(w, HasTooltipTemplate());
+  }
+
+  // vd2
+  {
+    auto w = front->fWidgets[id++];
+    ASSERT_EQ(WidgetType::kValueDisplay, w->fWidget->getType());
+    ASSERT_EQ("vd2_node", w->fGraphics.fNode);
+    ASSERT_THAT(w, HasValueSwitch("/vd2_switch", {"/vd2_v1", "/vd2_v2"}));
+    auto value_templates = std::vector<char const *>{"vd2_vt_1", "vd2_vt_2"};
+    ASSERT_THAT(w, HasValueTemplates(value_templates));
+    ASSERT_THAT(w, HasTextStyle("Arial medium font"));
+    ASSERT_THAT(w, HasTextColor({101, 201, 41}));
+    ASSERT_THAT(w, HasHorizontalJustification("right"));
+    ASSERT_THAT(w, HasBoolValue("read_only", true));
+    ASSERT_THAT(w, HasVisibility("/vd2_visibility_switch", {9}));
+    ASSERT_THAT(w, HasTooltipPosition("left"));
+    ASSERT_THAT(w, HasShowRemoteBox(false));
+    ASSERT_THAT(w, HasShowAutomationRect(false));
+    ASSERT_THAT(w, HasTooltipTemplate("vd2_tooltip_template"));
+  }
 
   //------------------------------------------------------------------------
   // Back
