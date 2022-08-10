@@ -186,7 +186,7 @@ bool Widget::checkForErrors(EditContext &iCtx)
   {
     auto error = att->checkForErrors(iCtx);
     fError |= error != widget::Attribute::kNoError;
-    att->fError = std::move(error);
+    att->fError = error;
   }
   iCtx.setCurrentWidget(nullptr);
   return fError;
@@ -207,7 +207,7 @@ bool Widget::errorView(EditContext &iCtx)
       for(auto &att: fAttributes)
       {
         if(att->fError)
-          ImGui::Text("%s | %s", att->fName.c_str(), att->fError->c_str());
+          ImGui::Text("%s | %s", att->fName.c_str(), att->fError);
       }
       ImGui::PopTextWrapPos();
       ImGui::EndTooltip();
@@ -245,7 +245,7 @@ void Widget::editView(EditContext &iCtx)
         {
           ImGui::BeginTooltip();
           ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
-          ImGui::TextUnformatted(att->fError->c_str());
+          ImGui::TextUnformatted(att->fError);
           ImGui::PopTextWrapPos();
           ImGui::EndTooltip();
         }

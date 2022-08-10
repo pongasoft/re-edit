@@ -337,7 +337,7 @@ void Visibility::hdgui2D(attribute_list_t &oAttributes) const
 //------------------------------------------------------------------------
 void Visibility::editView(EditContext &iCtx)
 {
-  static const std::string EMPTY_LIST_ERROR = "You must provide at least 1 value";
+  static const Attribute::error_t EMPTY_LIST_ERROR = "You must provide at least 1 value";
 
   ImGui::PushID(this);
 
@@ -759,7 +759,7 @@ void StaticStringList::editView(EditContext &iCtx)
 //------------------------------------------------------------------------
 Attribute::error_t Values::checkForErrors(EditContext &iCtx) const
 {
-  static const std::string kEmptyListError = "The list must contain at least one entry";
+  static const Attribute::error_t kEmptyListError = "The list must contain at least one entry";
   if(fValue.empty())
     return kEmptyListError;
   else
@@ -783,6 +783,8 @@ std::string ValueTemplates::getValueAsLua() const
 //------------------------------------------------------------------------
 void ValueTemplates::editView(EditContext &iCtx)
 {
+  static const Attribute::error_t kInvalidSize = "May contain one entry, or the same number of entries as the number of entries in values";
+
   resetView();
 
   ImGui::SameLine();
@@ -826,7 +828,7 @@ void ValueTemplates::editView(EditContext &iCtx)
     {
       auto property = iCtx.findProperty(valueAtt->fValueSwitch.fValue);
       if(property && property->stepCount() != fValue.size())
-        fError = re::mock::fmt::printf("Should be 1 value (apply to all) or exactly %d values", property->stepCount());
+        fError = kInvalidSize;
     }
     else
       fError = "Only 1 value max allowed";
@@ -859,7 +861,6 @@ void ReadOnly::onChanged(EditContext &iCtx)
 
   auto valueAtt = iCtx.getCurrentWidget()->findAttributeByIdAndType<Value>(fValueAttributeId);
   valueAtt->fValue.fFilter = fValue ? kReadOnlyValueFilter : kReadWriteValueFilter;
-  RE_EDIT_LOG_INFO("detected readonly change [%s]", fValue ? "true" : "false");
 }
 
 }

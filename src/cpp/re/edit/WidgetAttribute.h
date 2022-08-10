@@ -49,7 +49,7 @@ namespace widget {
 class Attribute
 {
 public:
-  using error_t = std::optional<std::string>;
+  using error_t = char const *;
   inline static error_t kNoError{};
 
 public:
@@ -101,8 +101,6 @@ public:
   virtual std::string getValueAsLua() const = 0;
   void reset() override;
 
-  error_t checkForErrors(EditContext &iCtx) const override;
-
   std::string toString() const override;
 
 public:
@@ -119,6 +117,7 @@ public:
   void editView(EditContext &iCtx) override;
 
   std::unique_ptr<Attribute> clone() const override { return Attribute::clone<Bool>(*this); }
+
 };
 
 class Integer : public SingleAttribute<int>
@@ -406,20 +405,6 @@ void SingleAttribute<T>::hdgui2D(attribute_list_t &oAttributes) const
 {
   if(fRequired || fProvided)
     oAttributes.emplace_back(attribute_t{fName, getValueAsLua()});
-}
-
-//------------------------------------------------------------------------
-// SingleAttribute<T>::checkForErrors
-//------------------------------------------------------------------------
-template<typename T>
-Attribute::error_t SingleAttribute<T>::checkForErrors(EditContext &iCtx) const
-{
-  static const std::string kRequiredButNotProvidedError = "Required";
-
-  if(fRequired && !fProvided)
-    return kRequiredButNotProvidedError;
-  else
-    return kNoError;
 }
 
 //------------------------------------------------------------------------

@@ -191,7 +191,7 @@ void Graphics::reset()
 //------------------------------------------------------------------------
 Attribute::error_t Graphics::checkForErrors(EditContext &iCtx) const
 {
-  static const std::string kOutOfBoundError = "Out of bound";
+  static const Attribute::error_t kOutOfBoundError = "Out of bound";
 
   auto max = iCtx.getPanelSize();
   auto p = getTopLeft();
