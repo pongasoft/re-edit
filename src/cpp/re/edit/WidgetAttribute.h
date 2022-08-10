@@ -49,6 +49,10 @@ namespace widget {
 class Attribute
 {
 public:
+  using error_t = std::optional<std::string>;
+  inline static error_t kNoError{};
+
+public:
   explicit Attribute(std::string iName) : fName{std::move(iName)} {}
   virtual ~Attribute() = default;
   virtual void hdgui2D(attribute_list_t &oAttributes) const {}
@@ -58,7 +62,8 @@ public:
   virtual void editView(EditContext &iCtx) {}
   virtual void init(EditContext &iCtx) {}
   virtual std::string toString() const;
-  void clearError() { fError = std::nullopt; };
+  void clearError() { fError = kNoError; };
+  virtual error_t checkForErrors(EditContext &iCtx) const { return kNoError; }
 
   template<typename T, typename... ConstructorArgs>
   static std::unique_ptr<T> build(std::string const &iName, bool iRequired, typename T::value_t const &iDefaultValue, ConstructorArgs&& ...iArgs);
@@ -77,7 +82,7 @@ public:
   int fId{-1};
   std::string fName;
   bool fRequired{};
-  std::optional<std::string> fError{};
+  error_t fError{};
 };
 
 namespace attribute {
@@ -95,6 +100,8 @@ public:
   void resetView(const std::function<void()>& iOnReset) const;
   virtual std::string getValueAsLua() const = 0;
   void reset() override;
+
+  error_t checkForErrors(EditContext &iCtx) const override;
 
   std::string toString() const override;
 
@@ -232,6 +239,8 @@ public:
 
   void editValueView(EditContext &iCtx);
   void tooltipView(EditContext &iCtx);
+
+  error_t checkForErrors(EditContext &iCtx) const override;
 //  std::string getPropertyInfo(EditContext &iCtx);
 
   std::string toString() const override;
@@ -318,6 +327,16 @@ public:
   std::unique_ptr<Attribute> clone() const override { return Attribute::clone<Color3>(*this); }
 };
 
+class Values : public PropertyPathList
+{
+public:
+  explicit Values(std::string iName, Property::Filter iFilter = {}) :
+    PropertyPathList{std::move(iName), std::move(iFilter)}
+  {}
+
+  error_t checkForErrors(EditContext &iCtx) const override;
+};
+
 class ValueTemplates : public SingleAttribute<std::vector<std::string>>
 {
 public:
@@ -387,6 +406,20 @@ void SingleAttribute<T>::hdgui2D(attribute_list_t &oAttributes) const
 {
   if(fRequired || fProvided)
     oAttributes.emplace_back(attribute_t{fName, getValueAsLua()});
+}
+
+//------------------------------------------------------------------------
+// SingleAttribute<T>::checkForErrors
+//------------------------------------------------------------------------
+template<typename T>
+Attribute::error_t SingleAttribute<T>::checkForErrors(EditContext &iCtx) const
+{
+  static const std::string kRequiredButNotProvidedError = "Required";
+
+  if(fRequired && !fProvided)
+    return kRequiredButNotProvidedError;
+  else
+    return kNoError;
 }
 
 //------------------------------------------------------------------------

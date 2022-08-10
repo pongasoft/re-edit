@@ -46,10 +46,10 @@ namespace re::edit::widget::attribute {
 //------------------------------------------------------------------------
 // Graphics::draw
 //------------------------------------------------------------------------
-void Graphics::draw(DrawContext &iCtx, int iFrameNumber, ImVec4 const &iBorderCol) const
+void Graphics::draw(DrawContext &iCtx, ImVec4 const &iBorderCol) const
 {
   if(hasTexture())
-    iCtx.drawTexture(getTexture(), fPosition, iFrameNumber);
+    iCtx.drawTexture(getTexture(), fPosition, fFrameNumber);
   else
     iCtx.drawRectFilled(fPosition, getSize(), ImVec4{1, 0, 0, 1});
 
@@ -84,17 +84,12 @@ void Graphics::drawHitBoundaries(DrawContext &iCtx, ImVec4 const &iColor) const
 //------------------------------------------------------------------------
 void Graphics::editView(EditContext &iCtx,
                         FilmStrip::Filter const &iFilter,
-                        std::function<void()> const &iOnReset,
                         std::function<void(std::string const &)> const &iOnTextureUpdate,
-                        std::function<void(ImVec2 const &)> const &iOnSizeUpdate) const
+                        std::function<void(ImVec2 const &)> const &iOnSizeUpdate)
 {
-
-  if(iOnReset)
-  {
-    if(ImGui::Button("X"))
-      iOnReset();
-    ImGui::SameLine();
-  }
+  if(ImGui::Button("X"))
+    reset();
+  ImGui::SameLine();
 
   ImGui::BeginGroup();
   auto const *texture = getTexture();
@@ -129,18 +124,41 @@ void Graphics::editView(EditContext &iCtx,
 }
 
 //------------------------------------------------------------------------
+// Graphics::editPositionView
+//------------------------------------------------------------------------
+void Graphics::editPositionView(EditContext &iCtx)
+{
+  ReGui::InputInt("x", &fPosition.x, 1, 5);
+  ReGui::InputInt("y", &fPosition.y, 1, 5);
+
+  if(hasTexture())
+  {
+    auto numFrames = getTexture()->numFrames();
+    if(numFrames > 1)
+      ImGui::SliderInt("Frame", &fFrameNumber, 0, numFrames - 1);
+  }
+}
+
+//------------------------------------------------------------------------
 // Graphics::editView
 //------------------------------------------------------------------------
 void Graphics::editView(EditContext &iCtx)
 {
-  return editView(iCtx,
-                  fFilter,
-                  {},
-                  [this, &iCtx](auto &k) {
-                    fTexture = iCtx.getTexture(k);
-                  },
-                  [this](auto &s) { fSize = s; }
+  editView(iCtx,
+           fFilter,
+           [this, &iCtx](auto &k) {
+             fTexture = iCtx.getTexture(k);
+             fFrameNumber = 0;
+           },
+           [this](auto &s) {
+             fSize = s;
+             fTexture = nullptr;
+             fFrameNumber = 0;
+           }
   );
+  ImGui::Indent();
+  editHitBoundariesView(iCtx);
+  ImGui::Unindent();
 }
 
 //------------------------------------------------------------------------
@@ -167,6 +185,28 @@ void Graphics::reset()
   fTexture = nullptr;
   fHitBoundaries = {};
 }
+
+//------------------------------------------------------------------------
+// Graphics::checkForErrors
+//------------------------------------------------------------------------
+Attribute::error_t Graphics::checkForErrors(EditContext &iCtx) const
+{
+  static const std::string kOutOfBoundError = "Out of bound";
+
+  auto max = iCtx.getPanelSize();
+  auto p = getTopLeft();
+  if(p.x < 0 || p.y < 0 || p.x > max.x || p.y > max.y)
+  {
+    return kOutOfBoundError;
+  }
+  p = getBottomRight();
+  if(p.x < 0 || p.y < 0 || p.x > max.x || p.y > max.y)
+  {
+    return kOutOfBoundError;
+  }
+  return Attribute::kNoError;
+}
+
 
 //------------------------------------------------------------------------
 // Graphics::hdgui2D

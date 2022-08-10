@@ -46,10 +46,10 @@ public:
   constexpr int getId() const { return fId; }
   constexpr WidgetType getType() const { return fType; }
 
-  constexpr ImVec2 getPosition() const { return fGraphics.getPosition(); }
-  constexpr ImVec2 getTopLeft() const { return fGraphics.getTopLeft(); }
-  constexpr ImVec2 getBottomRight() const { return fGraphics.getBottomRight(); }
-  constexpr void setPosition(ImVec2 const &iPosition) { fGraphics.setPosition(iPosition); }
+  constexpr ImVec2 getPosition() const { return fGraphics->getPosition(); }
+  constexpr ImVec2 getTopLeft() const { return fGraphics->getTopLeft(); }
+  constexpr ImVec2 getBottomRight() const { return fGraphics->getBottomRight(); }
+  constexpr void setPosition(ImVec2 const &iPosition) { fGraphics->setPosition(iPosition); }
 
   constexpr bool isSelected() const { return fSelected; }
   constexpr void setSelected(bool iSelected) { fSelected = iSelected; }
@@ -61,29 +61,30 @@ public:
   constexpr void setError(bool iError) { fError = iError; };
   bool hasAttributeErrors() const;
 
-  constexpr void setHitBoundaries(HitBoundaries const &iHitBoundaries) { fGraphics.setHitBoundaries(iHitBoundaries); }
-  constexpr void disableHitBoundaries() { fGraphics.fHitBoundariesEnabled = false; }
+  constexpr void setHitBoundaries(HitBoundaries const &iHitBoundaries) { fGraphics->setHitBoundaries(iHitBoundaries); }
+  constexpr void disableHitBoundaries() { fGraphics->fHitBoundariesEnabled = false; }
 
-  constexpr void move(ImVec2 const &iDelta) { fGraphics.move(iDelta); }
+  constexpr void move(ImVec2 const &iDelta) { fGraphics->move(iDelta); }
 
-  inline void setTexture(std::shared_ptr<Texture> iTexture) { fGraphics.setTexture(std::move(iTexture)); }
-  inline void setSize(ImVec2 const &iSize) { fGraphics.setSize(iSize); }
+  inline void setTexture(std::shared_ptr<Texture> iTexture) { fGraphics->setTexture(std::move(iTexture)); }
+  inline void setSize(ImVec2 const &iSize) { fGraphics->setSize(iSize); }
 
-  constexpr int getFrameNumber() const { return fFrameNumber; }
-  constexpr int &getFrameNumber() { return fFrameNumber; }
-  constexpr void setFrameNumber(int iFrameNumber) { fFrameNumber = iFrameNumber; }
+  constexpr int getFrameNumber() const { return fGraphics->fFrameNumber; }
+  constexpr int &getFrameNumber() { return fGraphics->fFrameNumber; }
+  constexpr void setFrameNumber(int iFrameNumber) { fGraphics->fFrameNumber = iFrameNumber; }
 
-  constexpr Texture const *getTexture() const { return fGraphics.getTexture(); }
+  constexpr Texture const *getTexture() const { return fGraphics->getTexture(); }
 
-  inline bool contains(ImVec2 const &iPosition) const { return fGraphics.contains(iPosition); }
+  inline bool contains(ImVec2 const &iPosition) const { return fGraphics->contains(iPosition); }
 
   void init(EditContext &iCtx);
   void draw(DrawContext &iCtx);
   void editView(EditContext &iCtx);
+  bool checkForErrors(EditContext &iCtx);
   bool errorView(EditContext &iCtx);
 
   std::string hdgui2D() const;
-  std::string device2D() const { return fGraphics.device2D(); }
+  std::string device2D() const { return fGraphics->device2D(); }
 
   std::unique_ptr<Widget> copy() const;
   std::unique_ptr<Widget> clone() const;
@@ -159,14 +160,14 @@ private:
   int fId{-1};
   WidgetType fType{};
   std::string fName{};
-  widget::attribute::Graphics fGraphics{};
-  int fFrameNumber{};
   bool fSelected{};
   bool fHidden{};
   bool fError{};
   std::vector<std::unique_ptr<widget::Attribute>> fAttributes{};
 
-  widget::attribute::Visibility *fVisibility{};  // denormalized access to attribute
+  // denormalized access to attributes
+  widget::attribute::Graphics *fGraphics{};
+  widget::attribute::Visibility *fVisibility{};
 
 private:
   static long fWidgetIota;
@@ -187,15 +188,7 @@ T *Widget::findAttributeByNameAndType(std::string const &iAttributeName) const
 template<typename T>
 T *Widget::findAttributeByIdAndType(int id) const
 {
-  if constexpr(std::is_convertible_v<T, widget::attribute::Graphics>)
-  {
-    RE_EDIT_INTERNAL_ASSERT(fGraphics.fId == id);
-    return const_cast<widget::attribute::Graphics *>(&fGraphics);
-  }
-  else
-  {
-    return dynamic_cast<T *>(fAttributes[id - 1].get());
-  }
+  return dynamic_cast<T *>(fAttributes[id].get());
 }
 
 

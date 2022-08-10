@@ -471,12 +471,11 @@ void Panel::moveWidgets(ImVec2 const &iPosition)
     auto delta = iPosition - fLastMovePosition.value();
     if(delta.x != 0 || delta.y != 0)
     {
-      std::for_each(fWidgets.begin(), fWidgets.end(), [&delta, this](auto const &p) {
+      std::for_each(fWidgets.begin(), fWidgets.end(), [&delta](auto const &p) {
         auto &widget = p.second;
         if(widget->isSelected())
         {
           widget->move(delta);
-          checkWidgetForError(*widget);
         }
       });
     }
@@ -489,7 +488,7 @@ void Panel::moveWidgets(ImVec2 const &iPosition)
 //------------------------------------------------------------------------
 void Panel::endMoveWidgets(ImVec2 const &iPosition)
 {
-  std::for_each(fWidgets.begin(), fWidgets.end(), [this](auto const &p) {
+  std::for_each(fWidgets.begin(), fWidgets.end(), [](auto const &p) {
     auto &widget = p.second;
     if(widget->isSelected())
     {
@@ -497,7 +496,6 @@ void Panel::endMoveWidgets(ImVec2 const &iPosition)
       position.x = std::round(position.x);
       position.y = std::round(position.y);
       widget->setPosition(position);
-      checkWidgetForError(*widget);
     }
   });
 
@@ -519,34 +517,21 @@ std::vector<std::shared_ptr<Widget>> Panel::getSelectedWidgets() const
 }
 
 //------------------------------------------------------------------------
+// PanelState::checkForWidgetErrors
+//------------------------------------------------------------------------
+void Panel::checkForWidgetErrors(EditContext &iCtx)
+{
+  for(auto &[n, widget]: fWidgets)
+    widget->checkForErrors(iCtx);
+}
+
+//------------------------------------------------------------------------
 // PanelState::computeIsHidden
 //------------------------------------------------------------------------
 void Panel::computeIsHidden(DrawContext &iCtx)
 {
   for(auto &[n, widget]: fWidgets)
     widget->computeIsHidden(iCtx);
-}
-
-
-//------------------------------------------------------------------------
-// Panel::checkWidgetForError
-//------------------------------------------------------------------------
-void Panel::checkWidgetForError(Widget &iWidget)
-{
-  auto max = fGraphics.getSize();
-  auto p = iWidget.getTopLeft();
-  if(p.x < 0 || p.y < 0 || p.x > max.x || p.y > max.y)
-  {
-    iWidget.setError(true);
-    return;
-  }
-  p = iWidget.getBottomRight();
-  if(p.x < 0 || p.y < 0 || p.x > max.x || p.y > max.y)
-  {
-    iWidget.setError(true);
-    return;
-  }
-  iWidget.setError(false);
 }
 
 //------------------------------------------------------------------------

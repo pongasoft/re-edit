@@ -115,10 +115,11 @@ void PanelState::initPanel(std::shared_ptr<lua::panel_nodes> const &iPanelNodes,
 //------------------------------------------------------------------------
 void PanelState::render()
 {
-  fPanel.computeIsHidden(fDrawContext);
-
   if(ImGui::BeginTabItem(fPanel.getName()))
   {
+    fPanel.computeIsHidden(fDrawContext);
+    fPanel.checkForWidgetErrors(fDrawContext);
+
     int zoom = static_cast<int>(fDrawContext.fZoom * 5);
     if(ImGui::SliderInt("zoom", &zoom, 1, 10))
       fDrawContext.fZoom = static_cast<float>(zoom) / 5.0f;

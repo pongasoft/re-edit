@@ -37,7 +37,9 @@ long Widget::fWidgetIota = 1;
 Widget::Widget(WidgetType iType) : fType{iType}
 {
   computeDefaultWidgetName();
-  fGraphics.init(0);
+  auto graphics = std::make_unique<Graphics>();
+  fGraphics = graphics.get();
+  addAttribute(std::move(graphics));
 }
 
 //------------------------------------------------------------------------
@@ -45,12 +47,19 @@ Widget::Widget(WidgetType iType) : fType{iType}
 //------------------------------------------------------------------------
 Widget::Widget(Widget const &iOther) :
   fType(iOther.fType),
-  fName(iOther.fName),
-  fGraphics(iOther.fGraphics)
+  fName(iOther.fName)
 {
   for(auto &attribute: iOther.fAttributes)
   {
     auto newAttribute = attribute->clone();
+    auto graphics = dynamic_cast<widget::attribute::Graphics *>(newAttribute.get());
+    if(graphics)
+    {
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "LocalValueEscapesScope"
+      fGraphics = graphics;
+#pragma clang diagnostic pop
+    }
     auto visibility = dynamic_cast<widget::attribute::Visibility *>(newAttribute.get());
     if(visibility)
     {
@@ -68,12 +77,19 @@ Widget::Widget(Widget const &iOther) :
 //------------------------------------------------------------------------
 Widget::Widget(Widget const &iOther, std::string iName) :
   fType(iOther.fType),
-  fName(std::move(iName)),
-  fGraphics(iOther.fGraphics)
+  fName(std::move(iName))
 {
   for(auto &attribute: iOther.fAttributes)
   {
     auto newAttribute = attribute->clone();
+    auto graphics = dynamic_cast<widget::attribute::Graphics *>(newAttribute.get());
+    if(graphics)
+    {
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "LocalValueEscapesScope"
+      fGraphics = graphics;
+#pragma clang diagnostic pop
+    }
     auto visibility = dynamic_cast<widget::attribute::Visibility *>(newAttribute.get());
     if(visibility)
     {
@@ -84,7 +100,7 @@ Widget::Widget(Widget const &iOther, std::string iName) :
     }
     fAttributes.emplace_back(std::move(newAttribute));
   }
-  fGraphics.setPosition(iOther.getPosition() + ImVec2(iOther.fGraphics.getSize().x + 5,0));
+  fGraphics->setPosition(iOther.getPosition() + ImVec2(iOther.fGraphics->getSize().x + 5,0));
   fSelected = true;
 }
 
@@ -110,17 +126,17 @@ void Widget::draw(DrawContext &iCtx)
     switch(iCtx.fShowCustomDisplay)
     {
       case EditContext::ShowCustomDisplay::kNone:
-        fGraphics.drawBorder(iCtx, borderColor);
+        fGraphics->drawBorder(iCtx, borderColor);
         break;
       case EditContext::ShowCustomDisplay::kMain:
-        fGraphics.draw(iCtx, fFrameNumber, borderColor);
+        fGraphics->draw(iCtx, borderColor);
         break;
       case EditContext::ShowCustomDisplay::kBackgroundSD:
       case EditContext::ShowCustomDisplay::kBackgroundHD:
       {
         auto bgAttribute = findAttributeByNameAndType<Background>("background");
-        bgAttribute->draw(iCtx, &fGraphics);
-        fGraphics.drawBorder(iCtx, borderColor);
+        bgAttribute->draw(iCtx, fGraphics);
+        fGraphics->drawBorder(iCtx, borderColor);
         break;
       }
       default:
@@ -128,10 +144,10 @@ void Widget::draw(DrawContext &iCtx)
     }
   }
   else
-    fGraphics.draw(iCtx, fFrameNumber, borderColor);
+    fGraphics->draw(iCtx, borderColor);
 
   if(fError)
-    iCtx.drawRectFilled(fGraphics.fPosition, fGraphics.getSize(), iCtx.getUserPreferences().fWidgetErrorColor);
+    iCtx.drawRectFilled(fGraphics->fPosition, fGraphics->getSize(), iCtx.getUserPreferences().fWidgetErrorColor);
 }
 
 //------------------------------------------------------------------------
@@ -139,9 +155,9 @@ void Widget::draw(DrawContext &iCtx)
 //------------------------------------------------------------------------
 bool Widget::hasAttributeErrors() const
 {
-  for(auto &w: fAttributes)
+  for(auto &att: fAttributes)
   {
-    if(w->fError)
+    if(att->fError)
       return true;
   }
   return false;
@@ -153,10 +169,27 @@ bool Widget::hasAttributeErrors() const
 void Widget::init(EditContext &iCtx)
 {
   iCtx.setCurrentWidget(this);
-  fGraphics.init(iCtx);
-  for(auto &w: fAttributes)
-    w->init(iCtx);
+  for(auto &att: fAttributes)
+    att->init(iCtx);
   iCtx.setCurrentWidget(nullptr);
+}
+
+//------------------------------------------------------------------------
+// Widget::checkForErrors
+//------------------------------------------------------------------------
+bool Widget::checkForErrors(EditContext &iCtx)
+{
+  fError = false;
+
+  iCtx.setCurrentWidget(this);
+  for(auto &att: fAttributes)
+  {
+    auto error = att->checkForErrors(iCtx);
+    fError |= error != widget::Attribute::kNoError;
+    att->fError = std::move(error);
+  }
+  iCtx.setCurrentWidget(nullptr);
+  return fError;
 }
 
 //------------------------------------------------------------------------
@@ -164,19 +197,17 @@ void Widget::init(EditContext &iCtx)
 //------------------------------------------------------------------------
 bool Widget::errorView(EditContext &iCtx)
 {
-  if(isError() || hasAttributeErrors())
+  if(fError)
   {
     ImGui::TextColored(ImVec4(1,0,0,1), "(?)");
     if(ImGui::IsItemHovered())
     {
       ImGui::BeginTooltip();
       ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
-      if(isError())
-        ImGui::TextUnformatted("Widget out of bound");
-      for(auto &w: fAttributes)
+      for(auto &att: fAttributes)
       {
-        if(w->fError)
-          ImGui::Text("%s | %s", w->fName.c_str(), w->fError->c_str());
+        if(att->fError)
+          ImGui::Text("%s | %s", att->fName.c_str(), att->fError->c_str());
       }
       ImGui::PopTextWrapPos();
       ImGui::EndTooltip();
@@ -197,51 +228,16 @@ void Widget::editView(EditContext &iCtx)
   ImGui::PushID("Widget");
 
   ImGui::InputText("name", &fName);
-  ReGui::InputInt("x", &fGraphics.fPosition.x, 1, 5);
-  ReGui::InputInt("y", &fGraphics.fPosition.y, 1, 5);
 
-  if(fGraphics.hasTexture())
-  {
-    auto numFrames = fGraphics.getTexture()->numFrames();
-    if(numFrames > 2)
-      ImGui::SliderInt("Frame", &fFrameNumber, 0, numFrames - 1);
-
-    if(numFrames == 2)
-    {
-      bool v = fFrameNumber == 1;
-      if(ImGui::Checkbox("Frame", &v))
-        fFrameNumber = v ? 1 : 0;
-    }
-  }
+  fGraphics->editPositionView(iCtx);
 
   if(ImGui::TreeNode("Attributes"))
   {
-    ImGui::PushID(fGraphics.fName.c_str());
-    fGraphics.editView(iCtx,
-                       fGraphics.fFilter,
-                       [this]() {
-                         fGraphics.reset();
-                       },
-                       [this, &iCtx](std::string const &iTextureKey) {
-                         fGraphics.setTexture(iCtx.getTexture(iTextureKey));
-                         fFrameNumber = 0;
-                       },
-                       [this](auto &s) {
-                         fGraphics.fSize = s;
-                         fGraphics.fTexture = nullptr;
-                         fFrameNumber = 0;
-                       }
-    );
-    ImGui::Indent();
-    fGraphics.editHitBoundariesView(iCtx);
-    ImGui::Unindent();
-    ImGui::PopID();
-
-    for(auto &w: fAttributes)
+    for(auto &att: fAttributes)
     {
-      ImGui::PushID(w->fName.c_str());
-      w->editView(iCtx);
-      if(w->fError)
+      ImGui::PushID(att->fName.c_str());
+      att->editView(iCtx);
+      if(att->fError)
       {
         ImGui::SameLine();
         ImGui::TextColored(ImVec4(1,0,0,1), "(?)");
@@ -249,7 +245,7 @@ void Widget::editView(EditContext &iCtx)
         {
           ImGui::BeginTooltip();
           ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
-          ImGui::TextUnformatted(w->fError->c_str());
+          ImGui::TextUnformatted(att->fError->c_str());
           ImGui::PopTextWrapPos();
           ImGui::EndTooltip();
         }
@@ -295,10 +291,8 @@ std::string Widget::hdgui2D() const
 
   attribute_list_t atts{};
 
-  fGraphics.hdgui2D(fName, atts);
-
-  for(auto &w: fAttributes)
-    w->hdgui2D(atts);
+  for(auto &att: fAttributes)
+    att->hdgui2D(atts);
 
   std::vector<std::string> l{};
   std::transform(atts.begin(), atts.end(), std::back_inserter(l), [](auto &att) {
@@ -328,7 +322,7 @@ Widget *Widget::value(Property::Filter iValueFilter)
 //------------------------------------------------------------------------
 Widget *Widget::values(Property::Filter iValuesFilter)
 {
-  return addAttribute(std::make_unique<PropertyPathList>("values", std::move(iValuesFilter)));
+  return addAttribute(std::make_unique<Values>("values", std::move(iValuesFilter)));
 }
 
 //------------------------------------------------------------------------
@@ -477,7 +471,7 @@ std::unique_ptr<Widget> Widget::audio_input_socket()
   w ->socket(mock::JboxObjectType::kAudioInput, kSocketFilter)
     ->setSize(kAudioSocketSize)
     ;
-  w->fGraphics.fFilter = FilmStrip::bySizeFilter(kAudioSocketSize);
+  w->fGraphics->fFilter = FilmStrip::bySizeFilter(kAudioSocketSize);
   return w;
 }
 
@@ -493,7 +487,7 @@ std::unique_ptr<Widget> Widget::audio_output_socket()
   w ->socket(mock::JboxObjectType::kAudioOutput, kSocketFilter)
     ->setSize(kAudioSocketSize)
     ;
-  w->fGraphics.fFilter = FilmStrip::bySizeFilter(kAudioSocketSize);
+  w->fGraphics->fFilter = FilmStrip::bySizeFilter(kAudioSocketSize);
   return w;
 }
 
@@ -539,7 +533,7 @@ std::unique_ptr<Widget> Widget::cv_input_socket()
   w ->socket(mock::JboxObjectType::kCVInput, kSocketFilter)
     ->setSize(kCVSocketSize)
     ;
-  w->fGraphics.fFilter = FilmStrip::bySizeFilter(kCVSocketSize);
+  w->fGraphics->fFilter = FilmStrip::bySizeFilter(kCVSocketSize);
   return w;
 }
 
@@ -555,7 +549,7 @@ std::unique_ptr<Widget> Widget::cv_output_socket()
   w ->socket(mock::JboxObjectType::kCVOutput, kSocketFilter)
     ->setSize(kCVSocketSize)
     ;
-  w->fGraphics.fFilter = FilmStrip::bySizeFilter(kCVSocketSize);
+  w->fGraphics->fFilter = FilmStrip::bySizeFilter(kCVSocketSize);
   return w;
 }
 
@@ -571,7 +565,7 @@ std::unique_ptr<Widget> Widget::cv_trim_knob()
   w ->socket(mock::JboxObjectType::kCVInput, kSocketFilter)
     ->setSize(kCVTrimKnobSize)
     ;
-  w->fGraphics.fFilter = FilmStrip::bySizeFilter(kCVTrimKnobSize);
+  w->fGraphics->fFilter = FilmStrip::bySizeFilter(kCVTrimKnobSize);
   return w;
 }
 
@@ -601,7 +595,7 @@ std::unique_ptr<Widget> Widget::momentary_button()
     ->show_automation_rect()
     ;
   // exactly 2 frames
-  w->fGraphics.fFilter = [](FilmStrip const &iFilmStrip) { return iFilmStrip.numFrames() == 2; };
+  w->fGraphics->fFilter = [](FilmStrip const &iFilmStrip) { return iFilmStrip.numFrames() == 2; };
   return w;
 }
 
@@ -615,7 +609,7 @@ std::unique_ptr<Widget> Widget::patch_browse_group()
     ->addAttribute(Attribute::build<Bool>("fx_patch", false, false))
     ;
   w->setSize(kPatchBrowseGroupSize);
-  w->fGraphics.fFilter = FilmStrip::bySizeFilter(kPatchBrowseGroupSize);
+  w->fGraphics->fFilter = FilmStrip::bySizeFilter(kPatchBrowseGroupSize);
   return w;
 }
 
@@ -646,7 +640,7 @@ std::unique_ptr<Widget> Widget::placeholder()
 {
   auto w = std::make_unique<Widget>(WidgetType::kPlaceholder);
   w->setSize(kPlaceholderSize);
-  w->fGraphics.fFilter = FilmStrip::bySizeFilter(kPlaceholderSize);
+  w->fGraphics->fFilter = FilmStrip::bySizeFilter(kPlaceholderSize);
   return w;
 }
 
@@ -668,7 +662,7 @@ std::unique_ptr<Widget> Widget::popup_button()
     ->show_automation_rect()
     ;
   // 2 or 4 frames
-  w->fGraphics.fFilter = [](FilmStrip const &iFilmStrip) { return iFilmStrip.numFrames() == 2 || iFilmStrip.numFrames() == 4; };
+  w->fGraphics->fFilter = [](FilmStrip const &iFilmStrip) { return iFilmStrip.numFrames() == 2 || iFilmStrip.numFrames() == 4; };
   return w;
 }
 
@@ -742,7 +736,7 @@ std::unique_ptr<Widget> Widget::step_button()
     ->show_automation_rect()
     ;
   // 2 frames
-  w->fGraphics.fFilter = [](FilmStrip const &iFilmStrip) { return iFilmStrip.numFrames() == 2; };
+  w->fGraphics->fFilter = [](FilmStrip const &iFilmStrip) { return iFilmStrip.numFrames() == 2; };
   return w;
 }
 
@@ -763,7 +757,7 @@ std::unique_ptr<Widget> Widget::toggle_button()
     ->show_automation_rect()
     ;
   // 2 or 4 frames
-  w->fGraphics.fFilter = [](FilmStrip const &iFilmStrip) { return iFilmStrip.numFrames() == 2 || iFilmStrip.numFrames() == 4; };
+  w->fGraphics->fFilter = [](FilmStrip const &iFilmStrip) { return iFilmStrip.numFrames() == 2 || iFilmStrip.numFrames() == 4; };
   return w;
 }
 
@@ -783,7 +777,7 @@ std::unique_ptr<Widget> Widget::up_down_button()
     ->show_automation_rect()
     ;
   // 3 frames
-  w->fGraphics.fFilter = [](FilmStrip const &iFilmStrip) { return iFilmStrip.numFrames() == 3; };
+  w->fGraphics->fFilter = [](FilmStrip const &iFilmStrip) { return iFilmStrip.numFrames() == 3; };
   return w;
 }
 
@@ -820,7 +814,7 @@ std::unique_ptr<Widget> Widget::value_display()
 std::unique_ptr<Widget> Widget::panel_decal()
 {
   auto w = std::make_unique<Widget>(WidgetType::kPanelDecal);
-  w->fGraphics.fFilter = [](FilmStrip const &iFilmStrip) { return iFilmStrip.numFrames() == 1; };
+  w->fGraphics->fFilter = [](FilmStrip const &iFilmStrip) { return iFilmStrip.numFrames() == 1; };
   return w;
 }
 

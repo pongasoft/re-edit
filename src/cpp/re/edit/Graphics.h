@@ -73,16 +73,18 @@ public:
 
   void reset() override;
 
+  void editPositionView(EditContext &iCtx);
   void editView(EditContext &iCtx) override;
   void editHitBoundariesView(EditContext &iCtx);
 
   void editView(EditContext &iCtx,
                 FilmStrip::Filter const &iFilter,
-                const std::function<void()>& iOnReset,
                 std::function<void(std::string const &)> const &iOnTextureUpdate,
-                std::function<void(ImVec2 const &)> const &iOnSizeUpdate) const;
+                std::function<void(ImVec2 const &)> const &iOnSizeUpdate);
 
-  void draw(DrawContext &iCtx, int iFrameNumber, const ImVec4& iBorderCol) const;
+  error_t checkForErrors(EditContext &iCtx) const override;
+
+  void draw(DrawContext &iCtx, const ImVec4& iBorderCol) const;
   void drawBorder(DrawContext &iCtx, const ImVec4& iBorderCol) const;
   void drawHitBoundaries(DrawContext &iCtx, const ImVec4& iColor) const;
 
@@ -95,6 +97,7 @@ public:
   std::shared_ptr<Texture> fTexture{};
   ImVec2 fSize{100, 100};
   FilmStrip::Filter fFilter{};
+  int fFrameNumber{};
 };
 
 class Background : public String

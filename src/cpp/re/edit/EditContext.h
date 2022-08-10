@@ -52,6 +52,8 @@ public:
 public:
   EditContext() = default;
 
+  ImVec2 getPanelSize() const;
+
   inline std::vector<Object const *> findObjects(Object::Filter const &iFilter) const { return fPropertyManager->findObjects(iFilter); }
 
   inline std::vector<Property const *> findProperties(Property::Filter const &iFilter) const { return fPropertyManager->findProperties(iFilter); };

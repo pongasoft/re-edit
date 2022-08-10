@@ -302,6 +302,25 @@ std::string Value::toString() const
 }
 
 //------------------------------------------------------------------------
+// Value::checkForErrors
+//------------------------------------------------------------------------
+Attribute::error_t Value::checkForErrors(EditContext &iCtx) const
+{
+  if(fUseSwitch)
+  {
+    if(!fValueSwitch.fProvided)
+      return "Either value or value_switch required";
+  }
+  else
+  {
+    if(!fValue.fProvided)
+      return "Either value or value_switch required";
+  }
+
+  return kNoError;
+}
+
+//------------------------------------------------------------------------
 // Visibility::hdgui2D
 //------------------------------------------------------------------------
 void Visibility::hdgui2D(attribute_list_t &oAttributes) const
@@ -733,6 +752,18 @@ void StaticStringList::editView(EditContext &iCtx)
     }
     ImGui::EndCombo();
   }
+}
+
+//------------------------------------------------------------------------
+// Values::checkForErrors
+//------------------------------------------------------------------------
+Attribute::error_t Values::checkForErrors(EditContext &iCtx) const
+{
+  static const std::string kEmptyListError = "The list must contain at least one entry";
+  if(fValue.empty())
+    return kEmptyListError;
+  else
+    return kNoError;
 }
 
 //------------------------------------------------------------------------

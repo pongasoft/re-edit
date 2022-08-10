@@ -38,5 +38,13 @@ void EditContext::renderAddWidgetMenuView(ImVec2 const &iPosition)
   }
 }
 
+//------------------------------------------------------------------------
+// EditContext::getPanelSize
+//------------------------------------------------------------------------
+ImVec2 EditContext::getPanelSize() const
+{
+  return fPanelState->fPanel.getSize();
+}
+
 
 }

@@ -76,6 +76,7 @@ public:
 
   char const *getName() const;
   constexpr std::string const &getNodeName() const { return fNodeName; };
+  constexpr ImVec2 getSize() const { return fGraphics.getSize(); }
 
   void setDeviceHeightRU(int iDeviceHeightRU);
 
@@ -117,8 +118,8 @@ private:
   std::shared_ptr<Widget> findWidgetOnTopAt(ImVec2 const &iPosition) const;
   void moveWidgets(ImVec2 const &iPosition);
   void endMoveWidgets(ImVec2 const &iPosition);
-  void checkWidgetForError(Widget &iWidget);
   void computeIsHidden(DrawContext &iCtx);
+  void checkForWidgetErrors(EditContext &iCtx);
   void renderAddWidgetMenu(EditContext &iCtx, ImVec2 const &iPosition = {});
   bool renderSelectedWidgetsMenu(std::vector<std::shared_ptr<Widget>> const &iSelectedWidgets,
                                  std::optional<ImVec2> iPosition = std::nullopt);
