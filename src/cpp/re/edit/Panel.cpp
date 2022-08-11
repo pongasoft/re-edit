@@ -587,7 +587,7 @@ void Panel::editView(EditContext &iCtx)
         {
           auto windowSize = ImGui::GetWindowSize();
           ImGui::PushTextWrapPos(windowSize.x);
-          ImGui::TextUnformatted(hdgui2D().c_str());
+          ImGui::TextUnformatted(hdgui2D(iCtx).c_str());
           ImGui::PopTextWrapPos();
           ImGui::TreePop();
         }
@@ -751,7 +751,7 @@ char const *Panel::getName() const
 //------------------------------------------------------------------------
 // Panel::hdgui2D
 //------------------------------------------------------------------------
-std::string Panel::hdgui2D() const
+std::string Panel::hdgui2D(EditContext &iCtx) const
 {
   auto panelName = toString(fType);
 
@@ -765,7 +765,7 @@ std::string Panel::hdgui2D() const
   {
     auto const &w = fWidgets.at(id);
     s << re::mock::fmt::printf("-- %s\n", w->getName());
-    s << re::mock::fmt::printf("%s[#%s + 1] = %s\n", arrayName, arrayName, w->hdgui2D());
+    s << re::mock::fmt::printf("%s[#%s + 1] = %s\n", arrayName, arrayName, w->hdgui2D(iCtx));
   }
 
   if(fCableOrigin)

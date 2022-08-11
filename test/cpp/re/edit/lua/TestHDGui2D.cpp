@@ -291,24 +291,29 @@ inline constexpr auto HasValues = [](const std::vector<char const *>& iExpectedV
   return AttributeToString<PropertyPathList>("values", R"(values={%s,true})", toString(iExpectedValues));
 };
 
-//! HasBoolValue | bool value
-inline constexpr auto HasBoolValue = [](char const *iName, std::optional<bool> iExpectedValue = std::nullopt) {
+//! HasBool | bool value
+inline constexpr auto HasBool = [](char const *iName, std::optional<bool> iExpectedValue = std::nullopt) {
   if(iExpectedValue)
     return AttributeToString<Bool>(iName, R"(%s={%s,true})", iName, *iExpectedValue ? "true" : "false");
   else
     return AttributeToString<Bool>(iName, R"(%s={false,false})", iName);
 };
 
-//! HasIntegerValue | integer value
-inline constexpr auto HasIntegerValue = [](char const *iName, std::optional<int> iExpectedValue = std::nullopt) {
+//! HasInteger | integer value
+inline constexpr auto HasInteger = [](char const *iName, std::optional<int> iExpectedValue = std::nullopt) {
   if(iExpectedValue)
     return AttributeToString<Integer>(iName, R"(%s={%d,true})", iName, *iExpectedValue);
   else
     return AttributeToString<Integer>(iName, R"(%s={0,false})", iName);
 };
 
-//! HasStringValue | string value
-inline constexpr auto HasStringValue = [](char const *iName, char const * iExpectedValue = nullptr) {
+//! HasIndex | index value
+inline constexpr auto HasIndex = [](int iExpectedValue) {
+  return AttributeToString<Index>("index", R"(index={%d,true})", iExpectedValue);
+};
+
+//! HasString | string value
+inline constexpr auto HasString = [](char const *iName, char const * iExpectedValue = nullptr) {
   if(iExpectedValue)
     return AttributeToString<String>(iName, R"(%s={"%s",true})", iName, iExpectedValue);
   else
@@ -342,7 +347,7 @@ TEST(HDGui2D, All)
   auto hdg = HDGui2D::fromFile(getResourceFile("all-hdgui_2D.lua"));
 
   auto front = hdg->front();
-  ASSERT_EQ(27, front->fWidgets.size());
+  ASSERT_EQ(29, front->fWidgets.size());
   ASSERT_EQ("Panel_front_bg", front->fGraphicsNode);
   ASSERT_EQ(std::nullopt, front->fCableOrigin);
 
@@ -408,12 +413,12 @@ TEST(HDGui2D, All)
     auto w = front->fWidgets[id++];
     ASSERT_EQ(WidgetType::kCustomDisplay, w->fWidget->getType());
     ASSERT_EQ("cd1_node", w->fGraphics.fNode);
-    ASSERT_THAT(w, HasIntegerValue("display_width_pixels", 30));
-    ASSERT_THAT(w, HasIntegerValue("display_height_pixels", 10));
+    ASSERT_THAT(w, HasInteger("display_width_pixels", 30));
+    ASSERT_THAT(w, HasInteger("display_height_pixels", 10));
     ASSERT_THAT(w, HasValues({"/cd1"}));
-    ASSERT_THAT(w, HasStringValue("invalidate_function"));
-    ASSERT_THAT(w, HasStringValue("draw_function", "draw_cd1"));
-    ASSERT_THAT(w, HasStringValue("gesture_function"));
+    ASSERT_THAT(w, HasString("invalidate_function"));
+    ASSERT_THAT(w, HasString("draw_function", "draw_cd1"));
+    ASSERT_THAT(w, HasString("gesture_function"));
     ASSERT_THAT(w, HasShowRemoteBox());
     ASSERT_THAT(w, HasShowAutomationRect());
     ASSERT_THAT(w, HasNoVisibility());
@@ -426,11 +431,11 @@ TEST(HDGui2D, All)
     ASSERT_EQ(WidgetType::kCustomDisplay, w->fWidget->getType());
     ASSERT_EQ("cd2_node", w->fGraphics.fNode);
     ASSERT_THAT(w, HasValues({"/cd2_1", "/cd2_2"}));
-    ASSERT_THAT(w, HasIntegerValue("display_width_pixels", 35));
-    ASSERT_THAT(w, HasIntegerValue("display_height_pixels", 40));
-    ASSERT_THAT(w, HasStringValue("invalidate_function", "invalidate_cd2"));
-    ASSERT_THAT(w, HasStringValue("draw_function", "draw_cd2"));
-    ASSERT_THAT(w, HasStringValue("gesture_function", "gesture_cd2"));
+    ASSERT_THAT(w, HasInteger("display_width_pixels", 35));
+    ASSERT_THAT(w, HasInteger("display_height_pixels", 40));
+    ASSERT_THAT(w, HasString("invalidate_function", "invalidate_cd2"));
+    ASSERT_THAT(w, HasString("draw_function", "draw_cd2"));
+    ASSERT_THAT(w, HasString("gesture_function", "gesture_cd2"));
     ASSERT_THAT(w, HasShowRemoteBox(false));
     ASSERT_THAT(w, HasShowAutomationRect(false));
     ASSERT_THAT(w, HasVisibility("/cd2_switch", {8, 1}));
@@ -445,10 +450,10 @@ TEST(HDGui2D, All)
     ASSERT_EQ(std::nullopt, w->fGraphics.fHitBoundaries);
     ASSERT_THAT(w, HasValueNoSwitch("/sf1"));
     ASSERT_THAT(w, HasOrientation());
-    ASSERT_THAT(w, HasBoolValue("inverted"));
-    ASSERT_THAT(w, HasIntegerValue("inset1"));
-    ASSERT_THAT(w, HasIntegerValue("inset2"));
-    ASSERT_THAT(w, HasIntegerValue("handle_size"));
+    ASSERT_THAT(w, HasBool("inverted"));
+    ASSERT_THAT(w, HasInteger("inset1"));
+    ASSERT_THAT(w, HasInteger("inset2"));
+    ASSERT_THAT(w, HasInteger("handle_size"));
     ASSERT_THAT(w, HasNoVisibility());
     ASSERT_THAT(w, HasTooltipPosition());
     ASSERT_THAT(w, HasShowRemoteBox());
@@ -464,10 +469,10 @@ TEST(HDGui2D, All)
     ASSERT_EQ(std::nullopt, w->fGraphics.fHitBoundaries);
     ASSERT_THAT(w, HasValueSwitch("/sf2_switch", {"/sf2_v1"}));
     ASSERT_THAT(w, HasOrientation("horizontal"));
-    ASSERT_THAT(w, HasBoolValue("inverted", true));
-    ASSERT_THAT(w, HasIntegerValue("inset1", 10));
-    ASSERT_THAT(w, HasIntegerValue("inset2", 20));
-    ASSERT_THAT(w, HasIntegerValue("handle_size", 30));
+    ASSERT_THAT(w, HasBool("inverted", true));
+    ASSERT_THAT(w, HasInteger("inset1", 10));
+    ASSERT_THAT(w, HasInteger("inset2", 20));
+    ASSERT_THAT(w, HasInteger("handle_size", 30));
     ASSERT_THAT(w, HasVisibility("/sf2_switch", {3, 1}));
     ASSERT_THAT(w, HasTooltipPosition("top"));
     ASSERT_THAT(w, HasTooltipTemplate("sf2_tooltip_template"));
@@ -563,7 +568,7 @@ TEST(HDGui2D, All)
     ASSERT_THAT(w, HasValue("/udb1"));
     ASSERT_THAT(w, HasNoVisibility());
     ASSERT_THAT(w, HasTooltipPosition());
-    ASSERT_THAT(w, HasBoolValue("inverted"));
+    ASSERT_THAT(w, HasBool("inverted"));
     ASSERT_THAT(w, HasShowRemoteBox());
     ASSERT_THAT(w, HasShowAutomationRect());
     ASSERT_THAT(w, HasTooltipTemplate());
@@ -577,7 +582,7 @@ TEST(HDGui2D, All)
     ASSERT_THAT(w, HasValue("/udb2"));
     ASSERT_THAT(w, HasVisibility("/udb2_switch", {0, 9}));
     ASSERT_THAT(w, HasTooltipPosition("top"));
-    ASSERT_THAT(w, HasBoolValue("inverted", true));
+    ASSERT_THAT(w, HasBool("inverted", true));
     ASSERT_THAT(w, HasShowRemoteBox(false));
     ASSERT_THAT(w, HasShowAutomationRect(false));
     ASSERT_THAT(w, HasTooltipTemplate("udb2_tooltip_template"));
@@ -606,7 +611,7 @@ TEST(HDGui2D, All)
     auto w = front->fWidgets[id++];
     ASSERT_EQ(WidgetType::kPatchBrowseGroup, w->fWidget->getType());
     ASSERT_EQ("pbg1_node", w->fGraphics.fNode);
-    ASSERT_THAT(w, HasBoolValue("fx_patch"));
+    ASSERT_THAT(w, HasBool("fx_patch"));
     ASSERT_THAT(w, HasTooltipPosition());
   }
 
@@ -615,7 +620,7 @@ TEST(HDGui2D, All)
     auto w = front->fWidgets[id++];
     ASSERT_EQ(WidgetType::kPatchBrowseGroup, w->fWidget->getType());
     ASSERT_EQ("pbg2_node", w->fGraphics.fNode);
-    ASSERT_THAT(w, HasBoolValue("fx_patch", true));
+    ASSERT_THAT(w, HasBool("fx_patch", true));
     ASSERT_THAT(w, HasTooltipPosition("top"));
   }
 
@@ -681,7 +686,7 @@ TEST(HDGui2D, All)
     ASSERT_THAT(w, HasTextStyle("Small LCD font"));
     ASSERT_THAT(w, HasTextColor({11, 21, 31}));
     ASSERT_THAT(w, HasHorizontalJustification());
-    ASSERT_THAT(w, HasBoolValue("read_only"));
+    ASSERT_THAT(w, HasBool("read_only"));
     ASSERT_THAT(w, HasNoVisibility());
     ASSERT_THAT(w, HasTooltipPosition());
     ASSERT_THAT(w, HasShowRemoteBox());
@@ -700,13 +705,42 @@ TEST(HDGui2D, All)
     ASSERT_THAT(w, HasTextStyle("Arial medium font"));
     ASSERT_THAT(w, HasTextColor({101, 201, 41}));
     ASSERT_THAT(w, HasHorizontalJustification("right"));
-    ASSERT_THAT(w, HasBoolValue("read_only", true));
+    ASSERT_THAT(w, HasBool("read_only", true));
     ASSERT_THAT(w, HasVisibility("/vd2_visibility_switch", {9}));
     ASSERT_THAT(w, HasTooltipPosition("left"));
     ASSERT_THAT(w, HasShowRemoteBox(false));
     ASSERT_THAT(w, HasShowAutomationRect(false));
     ASSERT_THAT(w, HasTooltipTemplate("vd2_tooltip_template"));
   }
+
+  // rb1
+  {
+    auto w = front->fWidgets[id++];
+    ASSERT_EQ(WidgetType::kRadioButton, w->fWidget->getType());
+    ASSERT_EQ("rb1_node", w->fGraphics.fNode);
+    ASSERT_THAT(w, HasValue("/rb1"));
+    ASSERT_THAT(w, HasIndex(3));
+    ASSERT_THAT(w, HasNoVisibility());
+    ASSERT_THAT(w, HasTooltipPosition());
+    ASSERT_THAT(w, HasShowRemoteBox());
+    ASSERT_THAT(w, HasShowAutomationRect());
+    ASSERT_THAT(w, HasTooltipTemplate());
+  }
+
+  // pw2
+  {
+    auto w = front->fWidgets[id++];
+    ASSERT_EQ(WidgetType::kRadioButton, w->fWidget->getType());
+    ASSERT_EQ("rb2_node", w->fGraphics.fNode);
+    ASSERT_THAT(w, HasValue("/rb2"));
+    ASSERT_THAT(w, HasIndex(5));
+    ASSERT_THAT(w, HasVisibility("/rb2_switch", {6}));
+    ASSERT_THAT(w, HasTooltipPosition("right"));
+    ASSERT_THAT(w, HasShowRemoteBox(false));
+    ASSERT_THAT(w, HasShowAutomationRect(false));
+    ASSERT_THAT(w, HasTooltipTemplate("rb2_tooltip_template"));
+  }
+
 
   //------------------------------------------------------------------------
   // Back

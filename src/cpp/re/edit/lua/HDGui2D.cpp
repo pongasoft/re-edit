@@ -45,7 +45,7 @@ static int lua_patch_name(lua_State *L) { RE_MOCK_LOG_WARNING("patch_name not im
 static int lua_pitch_wheel(lua_State *L) { return HDGui2D::loadFromRegistry(L)->luaPitchWheel(); }
 static int lua_placeholder(lua_State *L) { return HDGui2D::loadFromRegistry(L)->luaPlaceholder(); }
 static int lua_popup_button(lua_State *L) { return HDGui2D::loadFromRegistry(L)->luaPopupButton(); }
-static int lua_radio_button(lua_State *L) { RE_MOCK_LOG_WARNING("radio_button not implemented yet"); return HDGui2D::loadFromRegistry(L)->luaIgnored(); }
+static int lua_radio_button(lua_State *L) { return HDGui2D::loadFromRegistry(L)->luaRadioButton(); }
 static int lua_sample_browse_group(lua_State *L) { RE_MOCK_LOG_WARNING("sample_browse_group not implemented yet"); return HDGui2D::loadFromRegistry(L)->luaIgnored(); }
 static int lua_sample_drop_zone(lua_State *L) { RE_MOCK_LOG_WARNING("sample_drop_zone not implemented yet"); return HDGui2D::loadFromRegistry(L)->luaIgnored(); }
 static int lua_sequence_fader(lua_State *L) { return HDGui2D::loadFromRegistry(L)->luaSequenceFader(); }
@@ -498,6 +498,26 @@ int HDGui2D::luaStepButton()
   return addObjectOnTopOfStack(std::move(p));
 }
 
+//------------------------------------------------------------------------
+// HDGui2D::luaRadioButton
+//------------------------------------------------------------------------
+int HDGui2D::luaRadioButton()
+{
+  auto p = makeWidget(Widget::radio_button());
+  if(checkTableArg())
+  {
+    populateGraphics(p);
+    populate<PropertyPath>(p, "value");
+    populate<Index>(p, "index");
+    populate<Visibility>(p, "visibility");
+    populate<StaticStringList>(p, "tooltip_position");
+    populate<UIText>(p, "tooltip_template");
+    populate<Bool>(p, "show_remote_box");
+    populate<Bool>(p, "show_automation_rect");
+  }
+  return addObjectOnTopOfStack(std::move(p));
+}
+
 
 //------------------------------------------------------------------------
 // HDGui2D::luaToggleButton
@@ -617,7 +637,7 @@ void HDGui2D::populate(Value *oValue)
 void HDGui2D::populate(Bool *oValue)
 {
   if(oValue)
-    impl::setValue(*oValue, L.getTableValueAsOptionalBoolean(oValue->fName.c_str()));
+    impl::setValue(*oValue, L.getTableValueAsOptionalBoolean(oValue->fName));
 }
 
 //------------------------------------------------------------------------
@@ -626,7 +646,7 @@ void HDGui2D::populate(Bool *oValue)
 void HDGui2D::populate(String *oValue)
 {
   if(oValue)
-    impl::setValue(*oValue, L.getTableValueAsOptionalString(oValue->fName.c_str()));
+    impl::setValue(*oValue, L.getTableValueAsOptionalString(oValue->fName));
 }
 
 //------------------------------------------------------------------------
@@ -635,7 +655,7 @@ void HDGui2D::populate(String *oValue)
 void HDGui2D::populate(Integer *oValue)
 {
   if(oValue)
-    impl::setValue(*oValue, L.getTableValueAsOptionalInteger(oValue->fName.c_str()));
+    impl::setValue(*oValue, L.getTableValueAsOptionalInteger(oValue->fName));
 }
 
 //------------------------------------------------------------------------
@@ -646,7 +666,7 @@ void HDGui2D::populate(Color3 *oValue)
   if(oValue)
   {
     oValue->reset();
-    withField(-1, oValue->fName.c_str(), LUA_TTABLE, [this, oValue]() {
+    withField(-1, oValue->fName, LUA_TTABLE, [this, oValue]() {
       oValue->fValue.fRed = static_cast<int>(L.getArrayValueAsInteger(1));
       oValue->fValue.fGreen = static_cast<int>(L.getArrayValueAsInteger(2));
       oValue->fValue.fBlue = static_cast<int>(L.getArrayValueAsInteger(3));
@@ -708,7 +728,7 @@ void HDGui2D::populate(UIText *oValue)
 {
   if(oValue)
   {
-    auto uiText = getTableValueAsOptionalUIText(oValue->fName.c_str());
+    auto uiText = getTableValueAsOptionalUIText(oValue->fName);
     if(uiText)
       impl::setValue(*oValue, std::optional<std::string>(uiText->fText));
   }
@@ -721,7 +741,7 @@ void HDGui2D::populate(Background *oValue)
 {
   if(oValue)
   {
-    auto image = getTableValueAsOptionalImage(oValue->fName.c_str());
+    auto image = getTableValueAsOptionalImage(oValue->fName);
     if(image)
       impl::setValue(*oValue, std::optional<std::string>(image->fPath));
   }
@@ -741,7 +761,7 @@ void HDGui2D::populate(StaticStringList *oValue)
 void HDGui2D::populate(PropertyPath *oPath)
 {
   if(oPath)
-    impl::setValue(*oPath, L.getTableValueAsOptionalString(oPath->fName.c_str()));
+    impl::setValue(*oPath, L.getTableValueAsOptionalString(oPath->fName));
 }
 
 //------------------------------------------------------------------------
@@ -752,7 +772,7 @@ void HDGui2D::populate(PropertyPathList *oList)
   if(oList)
   {
     oList->fValue.clear();
-    withField(-1, oList->fName.c_str(), LUA_TTABLE, [this, oList]() {
+    withField(-1, oList->fName, LUA_TTABLE, [this, oList]() {
       iterateLuaArray([this, values = &oList->fValue](auto i) {
         if(lua_type(L, -1) == LUA_TSTRING)
           values->emplace_back(lua_tostring(L, -1));
@@ -782,7 +802,7 @@ void HDGui2D::populate(DiscretePropertyValueList *oList)
   if(oList)
   {
     oList->fValue.clear();
-    withField(-1, oList->fName.c_str(), LUA_TTABLE, [this, oList]() {
+    withField(-1, oList->fName, LUA_TTABLE, [this, oList]() {
       iterateLuaArray([this, values = &oList->fValue](auto i) {
         if(lua_type(L, -1) == LUA_TNUMBER)
           values->emplace_back(lua_tonumber(L, -1));
@@ -800,7 +820,7 @@ void HDGui2D::populate(ValueTemplates *oList)
   if(oList)
   {
     oList->fValue.clear();
-    withField(-1, oList->fName.c_str(), LUA_TTABLE, [this, oList]() {
+    withField(-1, oList->fName, LUA_TTABLE, [this, oList]() {
       iterateLuaArray([this, values = &oList->fValue](auto i) {
         auto ui_text = toOptional<impl::jbox_ui_text>(getObjectOnTopOfStack());
         if(ui_text)

@@ -43,7 +43,9 @@ class Graphics : public Attribute
 public:
   Graphics() : Attribute("graphics") {}
 
+  void hdgui2D(EditContext &iCtx, attribute_list_t &oAttributes) const override;
   void hdgui2D(std::string const &iNodeName, attribute_list_t &oAttributes) const;
+
   std::string device2D() const;
 
   inline bool contains(ImVec2 const &iPosition) const {
@@ -59,17 +61,17 @@ public:
   constexpr ImVec2 getTopLeft() const { return fPosition; }
   constexpr ImVec2 getBottomRight() const { return fPosition + getSize(); }
 
-  constexpr void setPosition(ImVec2 const &iPosition) { fPosition = iPosition; }
+  constexpr void setPosition(ImVec2 const &iPosition) { fPosition = iPosition; fEdited = true; }
 
-  constexpr void setHitBoundaries(HitBoundaries const &iHitBoundaries) { fHitBoundaries = iHitBoundaries; }
+  constexpr void setHitBoundaries(HitBoundaries const &iHitBoundaries) { fHitBoundaries = iHitBoundaries; fEdited = true; }
   constexpr bool hasHitBoundaries() const { return fHitBoundaries.fLeftInset > 0 || fHitBoundaries.fTopInset > 0 || fHitBoundaries.fRightInset > 0 || fHitBoundaries.fBottomInset > 0; }
 
-  constexpr void move(ImVec2 const &iDelta) { fPosition = fPosition + iDelta; }
+  constexpr void move(ImVec2 const &iDelta) { fPosition = fPosition + iDelta; fEdited = true; }
 
   constexpr bool hasTexture() const { return getTexture() != nullptr; }
   constexpr Texture const *getTexture() const { return fTexture.get(); }
-  void setTexture(std::shared_ptr<Texture> iTexture) { fTexture = std::move(iTexture); }
-  void setSize(ImVec2 const &iSize) { fSize = iSize; }
+  void setTexture(std::shared_ptr<Texture> iTexture) { fTexture = std::move(iTexture); fEdited = true; }
+  void setSize(ImVec2 const &iSize) { fSize = iSize; fEdited = true; }
 
   void reset() override;
 
@@ -103,7 +105,7 @@ public:
 class Background : public String
 {
 public:
-  explicit Background(std::string iName) : String(std::move(iName)) {}
+  explicit Background(char const *iName) : String(iName) {}
 
   std::string getValueAsLua() const override;
 

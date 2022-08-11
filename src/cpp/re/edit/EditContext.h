@@ -77,7 +77,7 @@ public:
   inline std::shared_ptr<Texture> findTexture(std::string const &iKey) const { return fTextureManager->findTexture(iKey); }
   inline std::shared_ptr<Texture> findHDTexture(std::string const &iKey) const { return fTextureManager->findHDTexture(iKey); }
 
-  inline Widget *getCurrentWidget() const { return fCurrentWidget; }
+  inline Widget const *getCurrentWidget() const { return fCurrentWidget; }
 
   friend class PanelState;
   friend class Widget;
@@ -87,7 +87,7 @@ public:
   ShowCustomDisplay fShowCustomDisplay{ShowCustomDisplay::kMain};
 
 protected:
-  inline void setCurrentWidget(Widget *iWidget) { fCurrentWidget = iWidget; }
+  inline void setCurrentWidget(Widget const *iWidget) { fCurrentWidget = iWidget; }
 
 protected:
   PanelState *fPanelState{};
@@ -95,7 +95,7 @@ protected:
   std::shared_ptr<UserPreferences> fUserPreferences{};
   std::shared_ptr<PropertyManager> fPropertyManager{};
   bool fShowProperties{};
-  Widget *fCurrentWidget{};
+  Widget const *fCurrentWidget{};
 };
 
 }

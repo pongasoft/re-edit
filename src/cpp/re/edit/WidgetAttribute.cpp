@@ -121,7 +121,7 @@ void DiscretePropertyValueList::editView(int iMin,
     iOnAdd();
 
   ImGui::SameLine();
-  ImGui::LabelText(fName.c_str(), "Click + to add");
+  ImGui::LabelText(fName, "Click + to add");
 
   ImGui::PopID();
 }
@@ -137,16 +137,16 @@ bool DiscretePropertyValueList::contains(int iValue) const
 //------------------------------------------------------------------------
 // Value::hdgui2D
 //------------------------------------------------------------------------
-void Value::hdgui2D(attribute_list_t &oAttributes) const
+void Value::hdgui2D(EditContext &iCtx, attribute_list_t &oAttributes) const
 {
   if(fUseSwitch)
   {
-    fValueSwitch.hdgui2D(oAttributes);
-    fValues.hdgui2D(oAttributes);
+    fValueSwitch.hdgui2D(iCtx, oAttributes);
+    fValues.hdgui2D(iCtx, oAttributes);
   }
   else
   {
-    fValue.hdgui2D(oAttributes);
+    fValue.hdgui2D(iCtx, oAttributes);
   }
 }
 
@@ -164,8 +164,10 @@ void Value::editView(EditContext &iCtx)
                           [this](const Property *p) {
                             fValueSwitch.fValue = p->path();
                             fValueSwitch.fProvided = true;
+                            fValueSwitch.fEdited = true;
                             fValues.fValue.clear();
                             fValues.fValue.resize(p->stepCount());
+                            fValues.fEdited = true;
                           },
                           [this](auto &iCtx) { editValueView(iCtx); },
                           [this](auto &iCtx) { tooltipView(iCtx); });
@@ -173,7 +175,10 @@ void Value::editView(EditContext &iCtx)
     {
       ImGui::Separator();
       if(ImGui::MenuItem("Use value"))
+      {
         fUseSwitch = false;
+        fEdited = true;
+      }
       ImGui::EndPopup();
     }
     ImGui::Indent();
@@ -182,6 +187,7 @@ void Value::editView(EditContext &iCtx)
                                [this](int iIndex, const Property *p) { // onSelect
                                  fValues.fValue[iIndex] = p->path();
                                  fValues.fProvided = true;
+                                 fValues.fEdited = true;
                                });
     ImGui::Unindent();
   }
@@ -192,6 +198,7 @@ void Value::editView(EditContext &iCtx)
                     [this](const Property *p) {
                       fValue.fValue = p->path();
                       fValue.fProvided = true;
+                      fValue.fEdited = true;
                     },
                     [this](auto &iCtx) { fValue.editPropertyView(iCtx); },
                     [this](auto &iCtx) { fValue.tooltipPropertyView(iCtx); });
@@ -199,10 +206,15 @@ void Value::editView(EditContext &iCtx)
     {
       ImGui::Separator();
       if(ImGui::MenuItem("Use value_switch"))
+      {
         fUseSwitch = true;
+        fEdited = true;
+      }
       ImGui::EndPopup();
     }
   }
+
+  fEdited |= fValue.fEdited || fValueSwitch.fEdited || fValues.fEdited;
 
   ImGui::EndGroup();
 }
@@ -216,6 +228,7 @@ void Value::reset()
   fValueSwitch.reset();
   fValues.reset();
   fUseSwitch = false;
+  fEdited = true;
 }
 
 //------------------------------------------------------------------------
@@ -321,14 +334,25 @@ Attribute::error_t Value::checkForErrors(EditContext &iCtx) const
 }
 
 //------------------------------------------------------------------------
+// Value::resetEdited
+//------------------------------------------------------------------------
+void Value::resetEdited()
+{
+  fEdited = false;
+  fValue.resetEdited();
+  fValueSwitch.resetEdited();
+  fValues.resetEdited();
+}
+
+//------------------------------------------------------------------------
 // Visibility::hdgui2D
 //------------------------------------------------------------------------
-void Visibility::hdgui2D(attribute_list_t &oAttributes) const
+void Visibility::hdgui2D(EditContext &iCtx, attribute_list_t &oAttributes) const
 {
   if(!fSwitch.fValue.empty())
   {
-    fSwitch.hdgui2D(oAttributes);
-    fValues.hdgui2D(oAttributes);
+    fSwitch.hdgui2D(iCtx, oAttributes);
+    fValues.hdgui2D(iCtx, oAttributes);
   }
 }
 
@@ -337,8 +361,6 @@ void Visibility::hdgui2D(attribute_list_t &oAttributes) const
 //------------------------------------------------------------------------
 void Visibility::editView(EditContext &iCtx)
 {
-  static const Attribute::error_t EMPTY_LIST_ERROR = "You must provide at least 1 value";
-
   ImGui::PushID(this);
 
   fSwitch.editView(iCtx,
@@ -346,8 +368,10 @@ void Visibility::editView(EditContext &iCtx)
                    [this] (const Property *p) { // onSelect
                      fSwitch.fValue = p->path();
                      fSwitch.fProvided = true;
+                     fSwitch.fEdited = true;
                      fValues.fValue = {0};
                      fValues.fProvided = true;
+                     fValues.fEdited = true;
                    },
                    [this](auto &iCtx) { fSwitch.editPropertyView(iCtx); },
                    [this](auto &iCtx) { fSwitch.tooltipPropertyView(iCtx); });
@@ -362,24 +386,58 @@ void Visibility::editView(EditContext &iCtx)
       fValues.editView(0, stepCount - 1,
                        [this]() { // onAdd
                          fValues.fValue.emplace_back(0);
-                         clearError();
                          fValues.fProvided = true;
+                         fValues.fEdited = true;
                        },
                        [this](int iIndex, int iValue) { // onUpdate
                          fValues.fValue[iIndex] = iValue;
+                         fValues.fEdited = true;
                        },
                        [this](int iIndex) { // onDelete
                          fValues.fValue.erase(fValues.fValue.begin() + iIndex);
-                         if(fValues.fValue.empty())
-                           fError = EMPTY_LIST_ERROR;
                          fValues.fProvided = false;
+                         fValues.fEdited = true;
                        }
       );
       ImGui::Unindent();
     }
   }
   ImGui::PopID();
+
+  fEdited |= fSwitch.fEdited || fValues.fEdited;
 }
+
+//------------------------------------------------------------------------
+// Visibility::checkForErrors
+//------------------------------------------------------------------------
+Attribute::error_t Visibility::checkForErrors(EditContext &iCtx) const
+{
+  static const Attribute::error_t kNotADiscretePropertyError = "The property must be a discrete property";
+  static const Attribute::error_t kEmptyList = "You must provide at least 1 value";
+
+  auto property = iCtx.findProperty(fSwitch.fValue);
+  if(property)
+  {
+    if(property->stepCount() == 0)
+      return kNotADiscretePropertyError;
+
+    if(fValues.fValue.empty())
+      return kEmptyList;
+  }
+
+  return kNoError;
+}
+
+//------------------------------------------------------------------------
+// Visibility::resetEdited
+//------------------------------------------------------------------------
+void Visibility::resetEdited()
+{
+  fEdited = false;
+  fSwitch.resetEdited();
+  fValues.resetEdited();
+}
+
 
 //------------------------------------------------------------------------
 // Visibility::reset
@@ -388,6 +446,7 @@ void Visibility::reset()
 {
   fSwitch.reset();
   fValues.reset();
+  fEdited = true;
 }
 
 //------------------------------------------------------------------------
@@ -418,7 +477,7 @@ static constexpr auto kIsDiscreteFilter = [](const Property &p) { return p.isDis
 //------------------------------------------------------------------------
 // Visibility::Visibility
 //------------------------------------------------------------------------
-Visibility::Visibility() : Attribute("visibility"), fSwitch{"visibility_switch", kIsDiscreteFilter} {}
+Visibility::Visibility() : CompositeAttribute("visibility"), fSwitch{"visibility_switch", kIsDiscreteFilter} {}
 
 //------------------------------------------------------------------------
 // String::editView
@@ -427,8 +486,11 @@ void String::editView(EditContext &iCtx)
 {
   resetView();
   ImGui::SameLine();
-  if(ImGui::InputText(fName.c_str(), &fValue))
+  if(ImGui::InputText(fName, &fValue))
+  {
     fProvided = true;
+    fEdited = true;
+  }
 }
 
 //------------------------------------------------------------------------
@@ -438,8 +500,11 @@ void Bool::editView(EditContext &iCtx)
 {
   resetView();
   ImGui::SameLine();
-  if(ImGui::Checkbox(fName.c_str(), &fValue))
+  if(ImGui::Checkbox(fName, &fValue))
+  {
     fProvided = true;
+    fEdited = true;
+  }
 }
 
 //------------------------------------------------------------------------
@@ -449,8 +514,11 @@ void Integer::editView(EditContext &iCtx)
 {
   resetView();
   ImGui::SameLine();
-  if(ImGui::InputInt(fName.c_str(), &fValue))
+  if(ImGui::InputInt(fName, &fValue))
+  {
     fProvided = true;
+    fEdited = true;
+  }
 }
 
 //------------------------------------------------------------------------
@@ -463,6 +531,7 @@ void PropertyPath::editView(EditContext &iCtx)
            [this](const Property *p) {
              fValue = p->path();
              fProvided = true;
+             fEdited = true;
            },
            [this](auto &iCtx) { editPropertyView(iCtx); },
            [this](auto &iCtx) { tooltipPropertyView(iCtx); });
@@ -481,7 +550,7 @@ void PropertyPath::editView(EditContext &iCtx,
 
   ImGui::SameLine();
 
-  if(ImGui::BeginCombo(fName.c_str(), fValue.c_str()))
+  if(ImGui::BeginCombo(fName, fValue.c_str()))
   {
     auto properties = iCtx.findProperties(fFilter);
     for(auto &p: properties)
@@ -584,7 +653,7 @@ void ObjectPath::editView(EditContext &iCtx)
 
   ImGui::SameLine();
 
-  if(ImGui::BeginCombo(fName.c_str(), fValue.c_str()))
+  if(ImGui::BeginCombo(fName, fValue.c_str()))
   {
     auto objects = iCtx.findObjects(fFilter);
     for(auto &o: objects)
@@ -594,6 +663,7 @@ void ObjectPath::editView(EditContext &iCtx)
       {
         fValue = o->path();
         fProvided = true;
+        fEdited = true;
       }
       if(isSelected)
         ImGui::SetItemDefaultFocus();
@@ -698,7 +768,7 @@ void PropertyPathList::editView(EditContext &iCtx)
                                                 false);
   }
   ImGui::SameLine(0, ImGui::GetStyle().ItemInnerSpacing.x);
-  ImGui::Text("%s", fName.c_str());
+  ImGui::Text("%s", fName);
 
   if(fStringListEditView)
   {
@@ -715,6 +785,7 @@ void PropertyPathList::editView(EditContext &iCtx)
         fValue = std::move(fStringListEditView->destination());
         fStringListEditView = std::nullopt;
         fProvided = true;
+        fEdited = true;
         ImGui::CloseCurrentPopup();
       }
       ImGui::SetItemDefaultFocus();
@@ -737,7 +808,7 @@ void StaticStringList::editView(EditContext &iCtx)
 {
   resetView();
   ImGui::SameLine();
-  if(ImGui::BeginCombo(fName.c_str(), fValue.c_str()))
+  if(ImGui::BeginCombo(fName, fValue.c_str()))
   {
     for(auto &p: fSelectionList)
     {
@@ -746,6 +817,7 @@ void StaticStringList::editView(EditContext &iCtx)
       {
         fValue = p;
         fProvided = true;
+        fEdited = true;
       }
       if(isSelected)
         ImGui::SetItemDefaultFocus();
@@ -755,11 +827,55 @@ void StaticStringList::editView(EditContext &iCtx)
 }
 
 //------------------------------------------------------------------------
+// Index::editView
+//------------------------------------------------------------------------
+void Index::editView(EditContext &iCtx)
+{
+  auto valueAtt = iCtx.getCurrentWidget()->findAttributeByIdAndType<PropertyPath>(fValueAttributeId);
+
+  auto property = iCtx.findProperty(valueAtt->fValue);
+  if(property)
+  {
+    resetView();
+    ImGui::SameLine();
+    if(ImGui::SliderInt(fName, &fValue, 0, property->stepCount() - 1))
+    {
+      fProvided = true;
+      fEdited = true;
+    }
+  }
+  else
+  {
+    // no property => use "normal" input
+    Integer::editView(iCtx);
+  }
+
+  // sanity check as the following line will have no effect unless valueAtt is processed first
+  RE_EDIT_INTERNAL_ASSERT(valueAtt->fId < fId);
+  fEdited |= valueAtt->fEdited;
+}
+
+//------------------------------------------------------------------------
+// Index::checkForErrors
+//------------------------------------------------------------------------
+Attribute::error_t Index::checkForErrors(EditContext &iCtx) const
+{
+  static constexpr auto kIndexNotInRangeError = "Must be in range [0, stepCount - 1]";
+
+  auto valueAtt = iCtx.getCurrentWidget()->findAttributeByIdAndType<PropertyPath>(fValueAttributeId);
+  auto property = iCtx.findProperty(valueAtt->fValue);
+  if(property && (fValue < 0 || fValue >= property->stepCount()))
+    return kIndexNotInRangeError;
+  else
+    return kNoError;
+}
+
+//------------------------------------------------------------------------
 // Values::checkForErrors
 //------------------------------------------------------------------------
 Attribute::error_t Values::checkForErrors(EditContext &iCtx) const
 {
-  static const Attribute::error_t kEmptyListError = "The list must contain at least one entry";
+  static constexpr Attribute::error_t kEmptyListError = "The list must contain at least one entry";
   if(fValue.empty())
     return kEmptyListError;
   else
@@ -783,8 +899,6 @@ std::string ValueTemplates::getValueAsLua() const
 //------------------------------------------------------------------------
 void ValueTemplates::editView(EditContext &iCtx)
 {
-  static const Attribute::error_t kInvalidSize = "May contain one entry, or the same number of entries as the number of entries in values";
-
   resetView();
 
   ImGui::SameLine();
@@ -799,27 +913,48 @@ void ValueTemplates::editView(EditContext &iCtx)
     ImGui::SameLine();
     auto value = fValue[i];
     if(ImGui::InputText(re::mock::fmt::printf("%s [%d]", fName, i).c_str(), &fValue[i]))
+    {
       fProvided = true;
+      fEdited = true;
+    }
     ImGui::PopID();
   }
 
   if(deleteItemIdx >= 0)
+  {
     fValue.erase(fValue.begin() + deleteItemIdx);
+    fEdited = true;
+  }
 
   ImGui::PushID(static_cast<int>(fValue.size()));
 
   if(ImGui::Button("+"))
   {
     fValue.resize(fValue.size() + 1);
+    fEdited = true;
   }
 
   ImGui::SameLine();
-  ImGui::LabelText(fName.c_str(), "Click + to add");
+  ImGui::LabelText(fName, "Click + to add");
 
   ImGui::PopID();
   ImGui::EndGroup();
 
-  clearError();
+  auto valueAtt = iCtx.getCurrentWidget()->findAttributeByIdAndType<Value>(fValueAttributeId);
+
+  // sanity check as the following line will have no effect unless valueAtt is processed first
+  RE_EDIT_INTERNAL_ASSERT(valueAtt->fId < fId);
+  fEdited |= valueAtt->fEdited;
+}
+
+//------------------------------------------------------------------------
+// ValueTemplates::checkForErrors
+//------------------------------------------------------------------------
+Attribute::error_t ValueTemplates::checkForErrors(EditContext &iCtx) const
+{
+  static const Attribute::error_t kInvalidSizeError =
+    "May contain one entry, or the same number of entries as the number of entries in values";
+  static const Attribute::error_t kOneEntryMaxError = "Only 1 value max allowed";
 
   if(fValue.size() > 1)
   {
@@ -828,11 +963,13 @@ void ValueTemplates::editView(EditContext &iCtx)
     {
       auto property = iCtx.findProperty(valueAtt->fValueSwitch.fValue);
       if(property && property->stepCount() != fValue.size())
-        fError = kInvalidSize;
+        return kInvalidSizeError;
     }
     else
-      fError = "Only 1 value max allowed";
+      return kOneEntryMaxError;
   }
+
+  return kNoError;
 }
 
 //------------------------------------------------------------------------

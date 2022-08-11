@@ -247,6 +247,25 @@ front_widgets[#front_widgets + 1] = jbox.value_display {
   show_automation_rect = false,
 }
 
+front_widgets[#front_widgets + 1] = jbox.radio_button {
+  graphics = { node = "rb1_node", },
+  value = "/rb1",
+  index = 3
+}
+
+front_widgets[#front_widgets + 1] = jbox.radio_button {
+  graphics = { node = "rb2_node", },
+  value = "/rb2",
+  index = 5,
+  visibility_switch = "/rb2_switch",
+  visibility_values = { 6 },
+  tooltip_position = "right",
+  tooltip_template = jbox.ui_text("rb2_tooltip_template"),
+  show_remote_box = false,
+  show_automation_rect = false,
+}
+
+
 front = jbox.panel{
   graphics = {
     node = "Panel_front_bg",

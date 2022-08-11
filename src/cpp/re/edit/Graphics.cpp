@@ -17,6 +17,7 @@
  */
 
 #include "Graphics.h"
+#include "Widget.h"
 #include "Errors.h"
 
 namespace re::edit {
@@ -94,7 +95,7 @@ void Graphics::editView(EditContext &iCtx,
   ImGui::BeginGroup();
   auto const *texture = getTexture();
   auto key = texture ? texture->key() : "";
-  if(ImGui::BeginCombo(fName.c_str(), key.c_str()))
+  if(ImGui::BeginCombo(fName, key.c_str()))
   {
     auto textureKeys = iFilter ? iCtx.findTextureKeys(iFilter) : iCtx.getTextureKeys();
     for(auto &p: textureKeys)
@@ -128,8 +129,11 @@ void Graphics::editView(EditContext &iCtx,
 //------------------------------------------------------------------------
 void Graphics::editPositionView(EditContext &iCtx)
 {
-  ReGui::InputInt("x", &fPosition.x, 1, 5);
-  ReGui::InputInt("y", &fPosition.y, 1, 5);
+  if(ReGui::InputInt("x", &fPosition.x, 1, 5))
+    fEdited = true;
+
+  if(ReGui::InputInt("y", &fPosition.y, 1, 5))
+    fEdited = true;
 
   if(hasTexture())
   {
@@ -149,11 +153,13 @@ void Graphics::editView(EditContext &iCtx)
            [this, &iCtx](auto &k) {
              fTexture = iCtx.getTexture(k);
              fFrameNumber = 0;
+             fEdited = true;
            },
            [this](auto &s) {
              fSize = s;
              fTexture = nullptr;
              fFrameNumber = 0;
+             fEdited = true;
            }
   );
   ImGui::Indent();
@@ -169,10 +175,12 @@ void Graphics::editHitBoundariesView(EditContext &iCtx)
   if(fHitBoundariesEnabled && iCtx.fShowBorder == EditContext::ShowBorder::kHitBoundaries)
   {
     float *tb[] = { &fHitBoundaries.fTopInset, &fHitBoundaries.fBottomInset };
-    ReGui::SliderInt2("hit_boundaries - Top | Bottom", tb, 0, static_cast<int>(getSize().y), "inset: %d", ImGuiSliderFlags_AlwaysClamp);
+    if(ReGui::SliderInt2("hit_boundaries - Top | Bottom", tb, 0, static_cast<int>(getSize().y), "inset: %d", ImGuiSliderFlags_AlwaysClamp))
+      fEdited = true;
 
     float *lr[] = { &fHitBoundaries.fLeftInset, &fHitBoundaries.fRightInset };
-    ReGui::SliderInt2("hit_boundaries - Left | Right", lr, 0, static_cast<int>(getSize().x), "inset: %d", ImGuiSliderFlags_AlwaysClamp);
+    if(ReGui::SliderInt2("hit_boundaries - Left | Right", lr, 0, static_cast<int>(getSize().x), "inset: %d", ImGuiSliderFlags_AlwaysClamp))
+      fEdited = true;
   }
 }
 
@@ -184,6 +192,7 @@ void Graphics::reset()
   fSize = fTexture ? fTexture->frameSize() : ImVec2{100, 100};
   fTexture = nullptr;
   fHitBoundaries = {};
+  fEdited = true;
 }
 
 //------------------------------------------------------------------------
@@ -207,6 +216,13 @@ Attribute::error_t Graphics::checkForErrors(EditContext &iCtx) const
   return Attribute::kNoError;
 }
 
+//------------------------------------------------------------------------
+// Graphics::hdgui2D
+//------------------------------------------------------------------------
+void Graphics::hdgui2D(EditContext &iCtx, attribute_list_t &oAttributes) const
+{
+  hdgui2D(iCtx.getCurrentWidget()->getName(), oAttributes);
+}
 
 //------------------------------------------------------------------------
 // Graphics::hdgui2D
@@ -318,7 +334,7 @@ void Background::editView(EditContext &iCtx)
     reset();
   ImGui::SameLine();
 
-  if(ImGui::BeginCombo(fName.c_str(), fValue.c_str()))
+  if(ImGui::BeginCombo(fName, fValue.c_str()))
   {
     auto textureKeys = iCtx.findTextureKeys(kBackgroundFilter);
     for(auto const &p: textureKeys)
@@ -337,6 +353,7 @@ void Background::editView(EditContext &iCtx)
       {
         fValue = key;
         fProvided = true;
+        fEdited = true;
       }
       if(isSelected)
         ImGui::SetItemDefaultFocus();

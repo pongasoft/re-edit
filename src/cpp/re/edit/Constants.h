@@ -67,6 +67,7 @@ enum class WidgetType : int
   kPitchWheel,
   kPlaceholder,
   kPopupButton,
+  kRadioButton,
   kSequenceFader,
   kSequenceMeter,
   kStaticDecoration,

@@ -80,6 +80,7 @@ void PanelState::initPanel(std::shared_ptr<lua::panel_nodes> const &iPanelNodes,
     auto widget = w->fWidget->clone();
 
     widget->init(fDrawContext);
+    widget->checkForErrors(fDrawContext, true);
 
     auto node = iPanelNodes->findNodeByName(w->fGraphics.fNode);
     if(node)

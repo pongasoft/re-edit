@@ -80,10 +80,10 @@ public:
   void init(EditContext &iCtx);
   void draw(DrawContext &iCtx);
   void editView(EditContext &iCtx);
-  bool checkForErrors(EditContext &iCtx);
+  bool checkForErrors(EditContext &iCtx, bool iForceCheck = false);
   bool errorView(EditContext &iCtx);
 
-  std::string hdgui2D() const;
+  std::string hdgui2D(EditContext &iCtx) const;
   std::string device2D() const { return fGraphics->device2D(); }
 
   std::unique_ptr<Widget> copy() const;
@@ -103,6 +103,7 @@ public:
   static std::unique_ptr<Widget> pitch_wheel();
   static std::unique_ptr<Widget> placeholder();
   static std::unique_ptr<Widget> popup_button();
+  static std::unique_ptr<Widget> radio_button();
   static std::unique_ptr<Widget> sequence_fader();
   static std::unique_ptr<Widget> sequence_meter();
   static std::unique_ptr<Widget> static_decoration();

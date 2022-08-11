@@ -53,9 +53,9 @@ public:
   inline static error_t kNoError{};
 
 public:
-  explicit Attribute(std::string iName) : fName{std::move(iName)} {}
+  explicit Attribute(char const *iName) : fName{iName} {}
   virtual ~Attribute() = default;
-  virtual void hdgui2D(attribute_list_t &oAttributes) const {}
+  virtual void hdgui2D(EditContext &iCtx, attribute_list_t &oAttributes) const {}
 //  virtual Kind getKind() const = 0;
 
   virtual void reset() {}
@@ -64,9 +64,10 @@ public:
   virtual std::string toString() const;
   void clearError() { fError = kNoError; };
   virtual error_t checkForErrors(EditContext &iCtx) const { return kNoError; }
+  virtual void resetEdited() { fEdited = false; }
 
   template<typename T, typename... ConstructorArgs>
-  static std::unique_ptr<T> build(std::string const &iName, bool iRequired, typename T::value_t const &iDefaultValue, ConstructorArgs&& ...iArgs);
+  static std::unique_ptr<T> build(char const *iName, bool iRequired, typename T::value_t const &iDefaultValue, ConstructorArgs&& ...iArgs);
 
   virtual std::unique_ptr<Attribute> clone() const = 0;
 
@@ -80,8 +81,9 @@ protected:
 
 public:
   int fId{-1};
-  std::string fName;
+  char const *fName;
   bool fRequired{};
+  bool fEdited{};
   error_t fError{};
 };
 
@@ -94,8 +96,8 @@ public:
   using value_t = T;
 
 public:
-  explicit SingleAttribute(std::string iName) : Attribute{std::move(iName)} {}
-  void hdgui2D(attribute_list_t &oAttributes) const override;
+  explicit SingleAttribute(char const *iName) : Attribute{iName} {}
+  void hdgui2D(EditContext &iCtx, attribute_list_t &oAttributes) const override;
   void resetView();
   void resetView(const std::function<void()>& iOnReset) const;
   virtual std::string getValueAsLua() const = 0;
@@ -109,10 +111,17 @@ public:
   bool fProvided{};
 };
 
+class CompositeAttribute : public Attribute
+{
+public:
+  explicit CompositeAttribute(char const *iName) : Attribute{iName} {}
+  void resetEdited() override = 0;
+};
+
 class Bool : public SingleAttribute<bool>
 {
 public:
-  explicit Bool(std::string iName) : SingleAttribute<bool>{std::move(iName)} {}
+  explicit Bool(char const *iName) : SingleAttribute<bool>{iName} {}
   std::string getValueAsLua() const override { return fValue ? "true" : "false"; }
   void editView(EditContext &iCtx) override;
 
@@ -123,7 +132,7 @@ public:
 class Integer : public SingleAttribute<int>
 {
 public:
-  explicit Integer(std::string iName) : SingleAttribute<int>{std::move(iName)} {}
+  explicit Integer(char const *iName) : SingleAttribute<int>{iName} {}
   std::string getValueAsLua() const override { return std::to_string(fValue); }
   void editView(EditContext &iCtx) override;
 
@@ -134,7 +143,7 @@ class String : public SingleAttribute<std::string>
 {
 public:
 //  Kind getKind() const override { return Kind::kString; }
-  explicit String(std::string iName) : SingleAttribute<std::string>{std::move(iName)} {}
+  explicit String(char const *iName) : SingleAttribute<std::string>{iName} {}
   std::string getValueAsLua() const override;
   void editView(EditContext &iCtx) override;
 
@@ -144,7 +153,7 @@ public:
 class PropertyPath : public String
 {
 public:
-  explicit PropertyPath(std::string iName, Property::Filter iFilter = {}) : String{std::move(iName)}, fFilter{std::move(iFilter)} {}
+  explicit PropertyPath(char const *iName, Property::Filter iFilter = {}) : String{iName}, fFilter{std::move(iFilter)} {}
   void editView(EditContext &iCtx) override;
 
   std::unique_ptr<Attribute> clone() const override { return Attribute::clone<PropertyPath>(*this); }
@@ -179,7 +188,7 @@ class UIText : public String
 {
 public:
 //  Kind getKind() const override { return Kind::kUIText; }
-  explicit UIText(std::string iName) : String{std::move(iName)} {}
+  explicit UIText(char const *iName) : String{iName} {}
   std::string getValueAsLua() const override;
 
   std::unique_ptr<Attribute> clone() const override { return Attribute::clone<UIText>(*this); }
@@ -189,8 +198,8 @@ class PropertyPathList : public SingleAttribute<std::vector<std::string>>
 {
 public:
 //  Kind getKind() const override { return Kind::kPropertyPathList; }
-  explicit PropertyPathList(std::string iName, Property::Filter iFilter = {}) :
-    SingleAttribute<std::vector<std::string>>{std::move(iName)},
+  explicit PropertyPathList(char const *iName, Property::Filter iFilter = {}) :
+    SingleAttribute<std::vector<std::string>>{iName},
     fFilter{std::move(iFilter)}
     {}
   std::string getValueAsLua() const override;
@@ -209,7 +218,7 @@ public:
 class DiscretePropertyValueList : public SingleAttribute<std::vector<int>>
 {
 public:
-  explicit DiscretePropertyValueList(std::string iName) : SingleAttribute<std::vector<int>>{std::move(iName)} {}
+  explicit DiscretePropertyValueList(char const *iName) : SingleAttribute<std::vector<int>>{iName} {}
   std::string getValueAsLua() const override;
 
   bool contains(int iValue) const;
@@ -223,23 +232,24 @@ public:
   std::unique_ptr<Attribute> clone() const override { return Attribute::clone<DiscretePropertyValueList>(*this); }
 };
 
-class Value : public Attribute
+class Value : public CompositeAttribute
 {
 public:
   Value(Property::Filter iValueFilter, Property::Filter iValueSwitchFilter) :
-    Attribute("value"),
+    CompositeAttribute("value"),
     fValue{"value", std::move(iValueFilter)},
     fValueSwitch{"value_switch", std::move(iValueSwitchFilter)}
   {
     fRequired = true;
   }
-  void hdgui2D(attribute_list_t &oAttributes) const override;
+  void hdgui2D(EditContext &iCtx, attribute_list_t &oAttributes) const override;
   void editView(EditContext &iCtx) override;
 
   void editValueView(EditContext &iCtx);
   void tooltipView(EditContext &iCtx);
 
   error_t checkForErrors(EditContext &iCtx) const override;
+  void resetEdited() override;
 //  std::string getPropertyInfo(EditContext &iCtx);
 
   std::string toString() const override;
@@ -258,12 +268,16 @@ public:
   PropertyPathList fValues{"values"};
 };
 
-class Visibility : public Attribute
+class Visibility : public CompositeAttribute
 {
 public:
   Visibility();
-  void hdgui2D(attribute_list_t &oAttributes) const override;
+  void hdgui2D(EditContext &iCtx, attribute_list_t &oAttributes) const override;
   void editView(EditContext &iCtx) override;
+
+  error_t checkForErrors(EditContext &iCtx) const override;
+
+  void resetEdited() override;
 
   void reset() override;
 
@@ -281,7 +295,7 @@ public:
 class StaticStringList : public String
 {
 public:
-  explicit StaticStringList(std::string iName, std::vector<std::string> const &iSelectionList) : String{std::move(iName)}, fSelectionList(iSelectionList) {}
+  explicit StaticStringList(char const *iName, std::vector<std::string> const &iSelectionList) : String{iName}, fSelectionList(iSelectionList) {}
 //  Kind getKind() const override { return Kind::kStaticStringList; }
   void editView(EditContext &iCtx) override;
 
@@ -294,8 +308,8 @@ public:
 class ObjectPath : public String
 {
 public:
-  explicit ObjectPath(std::string iName, re::mock::JboxObjectType iObjectType, Object::Filter iFilter = {}) :
-    String{std::move(iName)},
+  explicit ObjectPath(char const *iName, re::mock::JboxObjectType iObjectType, Object::Filter iFilter = {}) :
+    String{iName},
     fObjectType{iObjectType},
     fFilter{std::move(iFilter)} {}
   void editView(EditContext &iCtx) override;
@@ -319,7 +333,7 @@ public:
 class Color3 : public SingleAttribute<JboxColor3>
 {
 public:
-  explicit Color3(std::string iName) : SingleAttribute<JboxColor3>{std::move(iName)} {}
+  explicit Color3(char const *iName) : SingleAttribute<JboxColor3>{iName} {}
   std::string getValueAsLua() const override;
   void editView(EditContext &iCtx) override;
 
@@ -329,20 +343,25 @@ public:
 class Values : public PropertyPathList
 {
 public:
-  explicit Values(std::string iName, Property::Filter iFilter = {}) :
-    PropertyPathList{std::move(iName), std::move(iFilter)}
+  explicit Values(char const *iName, Property::Filter iFilter = {}) :
+    PropertyPathList{iName, std::move(iFilter)}
   {}
 
   error_t checkForErrors(EditContext &iCtx) const override;
+
+  std::unique_ptr<Attribute> clone() const override { return Attribute::clone<Values>(*this); }
 };
 
 class ValueTemplates : public SingleAttribute<std::vector<std::string>>
 {
 public:
-  ValueTemplates(std::string iName, int iValueAttributeId) :
-    SingleAttribute<std::vector<std::string>>{std::move(iName)}, fValueAttributeId{iValueAttributeId} {}
+  ValueTemplates(char const *iName, int iValueAttributeId) :
+    SingleAttribute<std::vector<std::string>>{iName}, fValueAttributeId{iValueAttributeId} {}
   std::string getValueAsLua() const override;
   void editView(EditContext &iCtx) override;
+
+  error_t checkForErrors(EditContext &iCtx) const override;
+
   std::unique_ptr<Attribute> clone() const override { return Attribute::clone<ValueTemplates>(*this); }
 
 protected:
@@ -352,8 +371,8 @@ protected:
 class ReadOnly : public Bool
 {
 public:
-  explicit ReadOnly(std::string iName, int iValueAttributeId) :
-    Bool{std::move(iName)}, fValueAttributeId{iValueAttributeId} {}
+  explicit ReadOnly(char const *iName, int iValueAttributeId) :
+    Bool{iName}, fValueAttributeId{iValueAttributeId} {}
   void editView(EditContext &iCtx) override;
 
   void init(EditContext &iCtx) override { onChanged(iCtx); }
@@ -367,6 +386,23 @@ protected:
   int fValueAttributeId;
 };
 
+class Index : public Integer
+{
+public:
+  Index(char const *iName, int iValueAttributeId) :
+    Integer{iName},
+    fValueAttributeId{iValueAttributeId} {}
+
+  void editView(EditContext &iCtx) override;
+
+  error_t checkForErrors(EditContext &iCtx) const override;
+
+  std::unique_ptr<Attribute> clone() const override { return Attribute::clone<Index>(*this); }
+
+protected:
+  int fValueAttributeId;
+};
+
 //------------------------------------------------------------------------
 // SingleAttribute<T>::reset
 //------------------------------------------------------------------------
@@ -375,6 +411,7 @@ void SingleAttribute<T>::reset()
 {
   fValue = fDefaultValue;
   fProvided = false;
+  fEdited = true;
 }
 
 //------------------------------------------------------------------------
@@ -401,7 +438,7 @@ void SingleAttribute<T>::resetView(const std::function<void()>& iOnReset) const
 // SingleAttribute<T>::hdgui2D
 //------------------------------------------------------------------------
 template<typename T>
-void SingleAttribute<T>::hdgui2D(attribute_list_t &oAttributes) const
+void SingleAttribute<T>::hdgui2D(EditContext &iCtx, attribute_list_t &oAttributes) const
 {
   if(fRequired || fProvided)
     oAttributes.emplace_back(attribute_t{fName, getValueAsLua()});
@@ -422,7 +459,7 @@ std::string SingleAttribute<T>::toString() const
 // Attribute::build
 //------------------------------------------------------------------------
 template<typename T, typename... ConstructorArgs>
-std::unique_ptr<T> Attribute::build(std::string const &iName, bool iRequired, typename T::value_t const &iDefaultValue, ConstructorArgs&& ...iArgs)
+std::unique_ptr<T> Attribute::build(char const *iName, bool iRequired, typename T::value_t const &iDefaultValue, ConstructorArgs&& ...iArgs)
 {
   auto attribute = std::make_unique<T>(iName, std::forward<ConstructorArgs>(iArgs)...);
   attribute->fName = iName;

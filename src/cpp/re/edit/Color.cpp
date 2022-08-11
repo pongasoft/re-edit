@@ -37,9 +37,10 @@ void Color3::editView(EditContext &iCtx)
 {
   resetView();
   ImGui::SameLine();
-  if(ReGui::ColorEdit(fName.c_str(), &fValue))
+  if(ReGui::ColorEdit(fName, &fValue))
   {
     fProvided = true;
+    fEdited = true;
   }
 }
 

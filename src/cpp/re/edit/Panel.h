@@ -56,13 +56,14 @@ static constexpr WidgetDef kAllWidgetDefs[] {
   { WidgetType::kPitchWheel,        "pitch_wheel",         Widget::pitch_wheel,         kPanelTypeAny },
   { WidgetType::kPlaceholder,       "placeholder",         Widget::placeholder,         PanelType::kBack },
   { WidgetType::kPopupButton,       "popup_button",        Widget::popup_button,        kPanelTypeAny },
+  { WidgetType::kRadioButton,       "radio_button",        Widget::radio_button,        kPanelTypeAny },
   { WidgetType::kSequenceFader,     "sequence_fader",      Widget::sequence_fader,      kPanelTypeAny },
   { WidgetType::kSequenceMeter,     "sequence_meter",      Widget::sequence_meter,      kPanelTypeAny },
   { WidgetType::kStaticDecoration,  "static_decoration",   Widget::static_decoration,   kPanelTypeAny },
   { WidgetType::kStepButton,        "step_button",         Widget::step_button,         kPanelTypeAny },
   { WidgetType::kToggleButton,      "toggle_button",       Widget::toggle_button,       kPanelTypeAny },
   { WidgetType::kUpDownButton,      "up_down_button",      Widget::up_down_button,      kPanelTypeAny },
-  { WidgetType::kValueDisplay,      "value_display",       Widget::value_display,      kPanelTypeAny },
+  { WidgetType::kValueDisplay,      "value_display",       Widget::value_display,       kPanelTypeAny },
   { WidgetType::kPanelDecal,        "panel_decal",         Widget::panel_decal,         kPanelTypeAny },
 };
 
@@ -103,7 +104,7 @@ public:
   void swapWidgets(int iIndex1, int iIndex2);
   void swapDecals(int iIndex1, int iIndex2);
 
-  std::string hdgui2D() const;
+  std::string hdgui2D(EditContext &iCtx) const;
   std::string device2D() const;
 
   friend class PanelState;

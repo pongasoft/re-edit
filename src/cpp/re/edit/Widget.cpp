@@ -177,16 +177,20 @@ void Widget::init(EditContext &iCtx)
 //------------------------------------------------------------------------
 // Widget::checkForErrors
 //------------------------------------------------------------------------
-bool Widget::checkForErrors(EditContext &iCtx)
+bool Widget::checkForErrors(EditContext &iCtx, bool iForceCheck)
 {
   fError = false;
 
   iCtx.setCurrentWidget(this);
   for(auto &att: fAttributes)
   {
-    auto error = att->checkForErrors(iCtx);
-    fError |= error != widget::Attribute::kNoError;
-    att->fError = error;
+    if(iForceCheck || att->fEdited)
+    {
+      auto error = att->checkForErrors(iCtx);
+      fError |= error != widget::Attribute::kNoError;
+      att->fError = error;
+    }
+    att->resetEdited();
   }
   iCtx.setCurrentWidget(nullptr);
   return fError;
@@ -207,7 +211,7 @@ bool Widget::errorView(EditContext &iCtx)
       for(auto &att: fAttributes)
       {
         if(att->fError)
-          ImGui::Text("%s | %s", att->fName.c_str(), att->fError);
+          ImGui::Text("%s | %s", att->fName, att->fError);
       }
       ImGui::PopTextWrapPos();
       ImGui::EndTooltip();
@@ -235,7 +239,7 @@ void Widget::editView(EditContext &iCtx)
   {
     for(auto &att: fAttributes)
     {
-      ImGui::PushID(att->fName.c_str());
+      ImGui::PushID(att->fName);
       att->editView(iCtx);
       if(att->fError)
       {
@@ -261,7 +265,7 @@ void Widget::editView(EditContext &iCtx)
     {
       auto size = ImGui::GetWindowSize();
       ImGui::PushTextWrapPos(size.x);
-      ImGui::TextUnformatted(hdgui2D().c_str());
+      ImGui::TextUnformatted(hdgui2D(iCtx).c_str());
       ImGui::PopTextWrapPos();
       ImGui::TreePop();
     }
@@ -284,21 +288,25 @@ void Widget::editView(EditContext &iCtx)
 //------------------------------------------------------------------------
 // Widget::hdgui2D
 //------------------------------------------------------------------------
-std::string Widget::hdgui2D() const
+std::string Widget::hdgui2D(EditContext &iCtx) const
 {
+  iCtx.setCurrentWidget(this);
+
   if(isPanelDecal())
     return "";
 
   attribute_list_t atts{};
 
   for(auto &att: fAttributes)
-    att->hdgui2D(atts);
+    att->hdgui2D(iCtx, atts);
 
   std::vector<std::string> l{};
   std::transform(atts.begin(), atts.end(), std::back_inserter(l), [](auto &att) {
     return re::mock::fmt::printf("  %s = %s", att.fName, att.fValue);
   });
   return re::mock::fmt::printf("jbox.%s {\n%s\n}", toString(fType), re::mock::stl::join_to_string(l, ",\n"));
+
+  iCtx.setCurrentWidget(nullptr);
 }
 
 //------------------------------------------------------------------------
@@ -663,6 +671,28 @@ std::unique_ptr<Widget> Widget::popup_button()
     ;
   // 2 or 4 frames
   w->fGraphics->fFilter = [](FilmStrip const &iFilmStrip) { return iFilmStrip.numFrames() == 2 || iFilmStrip.numFrames() == 4; };
+  return w;
+}
+
+//------------------------------------------------------------------------
+// Widget::radio_button
+//------------------------------------------------------------------------
+std::unique_ptr<Widget> Widget::radio_button()
+{
+  static const auto kValueFilter = [](const Property &p) {
+    return (p.type() == kJBox_Boolean || p.isDiscrete()) && kDocGuiOwnerFilter(p);
+  };
+  auto w = std::make_unique<Widget>(WidgetType::kRadioButton);
+  w ->value(kValueFilter)
+    ->visibility()
+    ->addAttribute(Attribute::build<Index>("index", true, 0, 1))
+    ->tooltip_position()
+    ->tooltip_template()
+    ->show_remote_box()
+    ->show_automation_rect()
+    ;
+  // 2 frames
+  w->fGraphics->fFilter = [](FilmStrip const &iFilmStrip) { return iFilmStrip.numFrames() == 2; };
   return w;
 }
 

@@ -86,6 +86,7 @@ public:
   int luaSequenceMeter();
   int luaStaticDecoration();
   int luaStepButton();
+  int luaRadioButton();
   int luaToggleButton();
   int luaUpDownButton();
   int luaValueDisplay();
