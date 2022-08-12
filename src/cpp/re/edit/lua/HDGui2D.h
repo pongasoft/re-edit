@@ -79,6 +79,7 @@ public:
   int luaImage();
   int luaMomentaryButton();
   int luaPatchBrowseGroup();
+  int luaPatchName();
   int luaPitchWheel();
   int luaPlaceholder();
   int luaPopupButton();

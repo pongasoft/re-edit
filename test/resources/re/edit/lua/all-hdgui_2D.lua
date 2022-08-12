@@ -265,6 +265,20 @@ front_widgets[#front_widgets + 1] = jbox.radio_button {
   show_automation_rect = false,
 }
 
+front_widgets[#front_widgets + 1] = jbox.patch_name {
+  graphics = { node = "pn1_node", },
+  text_style = "Small LCD font",
+  fg_color = {100, 98, 45},
+  loader_alt_color = {76, 23, 12},
+}
+
+front_widgets[#front_widgets + 1] = jbox.patch_name {
+  graphics = { node = "pn2_node", },
+  text_style = "Huge bold LCD font",
+  fg_color = {101, 97, 44},
+  loader_alt_color = {70, 11, 7},
+  center = true
+}
 
 front = jbox.panel{
   graphics = {

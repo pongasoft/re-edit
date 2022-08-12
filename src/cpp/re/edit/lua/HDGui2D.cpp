@@ -41,7 +41,7 @@ static int lua_device_name(lua_State *L) { return HDGui2D::loadFromRegistry(L)->
 static int lua_image(lua_State *L) { return HDGui2D::loadFromRegistry(L)->luaImage(); }
 static int lua_momentary_button(lua_State *L) { return HDGui2D::loadFromRegistry(L)->luaMomentaryButton(); }
 static int lua_patch_browse_group(lua_State *L) { return HDGui2D::loadFromRegistry(L)->luaPatchBrowseGroup(); }
-static int lua_patch_name(lua_State *L) { RE_MOCK_LOG_WARNING("patch_name not implemented yet"); return HDGui2D::loadFromRegistry(L)->luaIgnored(); }
+static int lua_patch_name(lua_State *L) { return HDGui2D::loadFromRegistry(L)->luaPatchName(); }
 static int lua_pitch_wheel(lua_State *L) { return HDGui2D::loadFromRegistry(L)->luaPitchWheel(); }
 static int lua_placeholder(lua_State *L) { return HDGui2D::loadFromRegistry(L)->luaPlaceholder(); }
 static int lua_popup_button(lua_State *L) { return HDGui2D::loadFromRegistry(L)->luaPopupButton(); }
@@ -359,7 +359,7 @@ int HDGui2D::luaMomentaryButton()
 }
 
 //------------------------------------------------------------------------
-// HDGui2D::luaPlaceholder
+// HDGui2D::luaPatchBrowseGroup
 //------------------------------------------------------------------------
 int HDGui2D::luaPatchBrowseGroup()
 {
@@ -369,6 +369,23 @@ int HDGui2D::luaPatchBrowseGroup()
     populateGraphics(p);
     populate<Bool>(p, "fx_patch");
     populate<StaticStringList>(p, "tooltip_position");
+  }
+  return addObjectOnTopOfStack(std::move(p));
+}
+
+//------------------------------------------------------------------------
+// HDGui2D::luaPatchName
+//------------------------------------------------------------------------
+int HDGui2D::luaPatchName()
+{
+  auto p = makeWidget(Widget::patch_name());
+  if(checkTableArg())
+  {
+    populateGraphics(p);
+    populate<StaticStringList>(p, "text_style");
+    populate<Color3>(p, "fg_color");
+    populate<Color3>(p, "loader_alt_color");
+    populate<Bool>(p, "center");
   }
   return addObjectOnTopOfStack(std::move(p));
 }

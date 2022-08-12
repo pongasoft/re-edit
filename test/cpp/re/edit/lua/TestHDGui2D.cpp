@@ -224,10 +224,16 @@ inline constexpr auto HasTextStyle = [](char const *iExpectedTextStyle) {
   return AttributeToString<StaticStringList>("text_style", R"(text_style={"%s",true})", iExpectedTextStyle);
 };
 
+//! HasColor
+inline constexpr auto HasColor = [](char const *iName, JboxColor3 const &iColor) {
+  return AttributeToString<Color3>(iName, R"(%s={{%d,%d,%d},true})", iName, iColor.fRed, iColor.fGreen, iColor.fBlue);
+};
+
 //! HasTextColor | text_color
 inline constexpr auto HasTextColor = [](JboxColor3 const &iColor) {
-  return AttributeToString<Color3>("text_color", R"(text_color={{%d,%d,%d},true})", iColor.fRed, iColor.fGreen, iColor.fBlue);
+  return HasColor("text_color", iColor);
 };
+
 
 //! HasShowRemoteBox | show_remote_box
 inline constexpr auto HasShowRemoteBox = [](std::optional<bool> iExpected = std::nullopt) {
@@ -347,7 +353,7 @@ TEST(HDGui2D, All)
   auto hdg = HDGui2D::fromFile(getResourceFile("all-hdgui_2D.lua"));
 
   auto front = hdg->front();
-  ASSERT_EQ(29, front->fWidgets.size());
+  ASSERT_EQ(31, front->fWidgets.size());
   ASSERT_EQ("Panel_front_bg", front->fGraphicsNode);
   ASSERT_EQ(std::nullopt, front->fCableOrigin);
 
@@ -739,6 +745,28 @@ TEST(HDGui2D, All)
     ASSERT_THAT(w, HasShowRemoteBox(false));
     ASSERT_THAT(w, HasShowAutomationRect(false));
     ASSERT_THAT(w, HasTooltipTemplate("rb2_tooltip_template"));
+  }
+
+  // pn1
+  {
+    auto w = front->fWidgets[id++];
+    ASSERT_EQ(WidgetType::kPatchName, w->fWidget->getType());
+    ASSERT_EQ("pn1_node", w->fGraphics.fNode);
+    ASSERT_THAT(w, HasTextStyle("Small LCD font"));
+    ASSERT_THAT(w, HasColor("fg_color", {100, 98, 45}));
+    ASSERT_THAT(w, HasColor("loader_alt_color", {76, 23, 12}));
+    ASSERT_THAT(w, HasBool("center"));
+  }
+
+  // pn2
+  {
+    auto w = front->fWidgets[id++];
+    ASSERT_EQ(WidgetType::kPatchName, w->fWidget->getType());
+    ASSERT_EQ("pn2_node", w->fGraphics.fNode);
+    ASSERT_THAT(w, HasTextStyle("Huge bold LCD font"));
+    ASSERT_THAT(w, HasColor("fg_color", {101, 97, 44}));
+    ASSERT_THAT(w, HasColor("loader_alt_color", {70, 11, 7}));
+    ASSERT_THAT(w, HasBool("center", true));
   }
 
 

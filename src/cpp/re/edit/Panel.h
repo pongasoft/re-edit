@@ -53,6 +53,7 @@ static constexpr WidgetDef kAllWidgetDefs[] {
   { WidgetType::kDeviceName,        "device_name",         Widget::device_name,         kPanelTypeAny },
   { WidgetType::kMomentaryButton,   "momentary_button",    Widget::momentary_button,    kPanelTypeAny },
   { WidgetType::kPatchBrowseGroup,  "patch_browse_group",  Widget::patch_browse_group,  kPanelTypeAny },
+  { WidgetType::kPatchName,         "patch_name",          Widget::patch_name,          kPanelTypeAny },
   { WidgetType::kPitchWheel,        "pitch_wheel",         Widget::pitch_wheel,         kPanelTypeAny },
   { WidgetType::kPlaceholder,       "placeholder",         Widget::placeholder,         PanelType::kBack },
   { WidgetType::kPopupButton,       "popup_button",        Widget::popup_button,        kPanelTypeAny },

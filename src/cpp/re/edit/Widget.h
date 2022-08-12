@@ -100,6 +100,7 @@ public:
   static std::unique_ptr<Widget> device_name();
   static std::unique_ptr<Widget> momentary_button();
   static std::unique_ptr<Widget> patch_browse_group();
+  static std::unique_ptr<Widget> patch_name();
   static std::unique_ptr<Widget> pitch_wheel();
   static std::unique_ptr<Widget> placeholder();
   static std::unique_ptr<Widget> popup_button();

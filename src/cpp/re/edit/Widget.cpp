@@ -627,6 +627,20 @@ std::unique_ptr<Widget> Widget::patch_browse_group()
 }
 
 //------------------------------------------------------------------------
+// Widget::patch_name
+//------------------------------------------------------------------------
+std::unique_ptr<Widget> Widget::patch_name()
+{
+  auto w = std::make_unique<Widget>(WidgetType::kPatchName);
+  w ->text_style()
+    ->addAttribute(Attribute::build<Color3>("fg_color", true, JboxColor3{}))
+    ->addAttribute(Attribute::build<Color3>("loader_alt_color", true, JboxColor3{}))
+    ->addAttribute(Attribute::build<Bool>("center", false, false))
+    ;
+  return w;
+}
+
+//------------------------------------------------------------------------
 // Widget::pitch_wheel
 //------------------------------------------------------------------------
 std::unique_ptr<Widget> Widget::pitch_wheel()
