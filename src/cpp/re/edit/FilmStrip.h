@@ -82,6 +82,18 @@ public:
     };
   }
 
+  static Filter orFilter(Filter iFilter1, Filter iFilter2) {
+    if(!iFilter1)
+      return iFilter2;
+
+    if(!iFilter2)
+      return iFilter1;
+
+    return [f1 = std::move(iFilter1), f2 = std::move(iFilter2)](FilmStrip const &iFilmStrip) {
+      return f1(iFilmStrip) || f2(iFilmStrip);
+    };
+  }
+
 private:
   FilmStrip(std::shared_ptr<File> iFile, char const *iErrorMessage);
   FilmStrip(std::shared_ptr<File> iFile, int iWidth, int iHeight, std::shared_ptr<Data> iData);

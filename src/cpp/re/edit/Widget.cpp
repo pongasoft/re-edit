@@ -583,7 +583,12 @@ std::unique_ptr<Widget> Widget::cv_trim_knob()
 //------------------------------------------------------------------------
 std::unique_ptr<Widget> Widget::device_name()
 {
-  return std::make_unique<Widget>(WidgetType::kDeviceName);
+  static const auto kGraphicsFilter = FilmStrip::orFilter(FilmStrip::bySizeFilter(kDeviceNameHorizontal),
+                                                          FilmStrip::bySizeFilter(kDeviceNameVertical));
+  auto w = std::make_unique<Widget>(WidgetType::kDeviceName);
+  w->setSize(kDeviceNameHorizontal);
+  w->fGraphics->fFilter = kGraphicsFilter;
+  return w;
 }
 
 //------------------------------------------------------------------------
