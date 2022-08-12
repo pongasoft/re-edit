@@ -109,6 +109,17 @@ void Graphics::editView(EditContext &iCtx,
     ImGui::EndCombo();
   }
 
+  if(texture && ImGui::IsItemHovered())
+  {
+    ImGui::BeginTooltip();
+    ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
+    ImGui::TextUnformatted(re::mock::fmt::printf("%dx%d | %d frames",
+                                                 static_cast<int>(texture->frameWidth()),
+                                                 static_cast<int>(texture->frameHeight()),
+                                                 texture->numFrames()).c_str());
+    ImGui::PopTextWrapPos();
+    ImGui::EndTooltip();
+  }
 
   if(!texture)
   {
