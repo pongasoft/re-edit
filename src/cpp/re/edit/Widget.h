@@ -112,6 +112,7 @@ public:
   static std::unique_ptr<Widget> toggle_button();
   static std::unique_ptr<Widget> up_down_button();
   static std::unique_ptr<Widget> value_display();
+  static std::unique_ptr<Widget> zero_snap_knob();
 
   template<typename T>
   T *findAttributeByNameAndType(std::string const &iAttributeName) const;

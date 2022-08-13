@@ -858,6 +858,26 @@ std::unique_ptr<Widget> Widget::value_display()
 }
 
 //------------------------------------------------------------------------
+// Widget::zero_snap_knob
+//------------------------------------------------------------------------
+std::unique_ptr<Widget> Widget::zero_snap_knob()
+{
+  static const auto kValueFilter = [](const Property &p) {
+    return (p.type() == kJBox_Boolean || p.type() == kJBox_Number) && kDocGuiOwnerFilter(p);
+  };
+  static const auto kValueSwitchFilter = [](const Property &p) { return p.isDiscrete() && kDocGuiOwnerFilter(p); };
+  auto w = std::make_unique<Widget>(WidgetType::kZeroSnapKnob);
+  w ->value(kValueFilter, kValueSwitchFilter)
+    ->visibility()
+    ->tooltip_position()
+    ->tooltip_template()
+    ->show_remote_box()
+    ->show_automation_rect()
+    ;
+  return w;
+}
+
+//------------------------------------------------------------------------
 // Widget::panel_decal
 //------------------------------------------------------------------------
 std::unique_ptr<Widget> Widget::panel_decal()

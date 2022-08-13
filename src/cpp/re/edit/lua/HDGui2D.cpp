@@ -55,7 +55,7 @@ static int lua_step_button(lua_State *L) { return HDGui2D::loadFromRegistry(L)->
 static int lua_toggle_button(lua_State *L) { return HDGui2D::loadFromRegistry(L)->luaToggleButton(); }
 static int lua_up_down_button(lua_State *L) { return HDGui2D::loadFromRegistry(L)->luaUpDownButton(); }
 static int lua_value_display(lua_State *L) { return HDGui2D::loadFromRegistry(L)->luaValueDisplay(); }
-static int lua_zero_snap_knob(lua_State *L) { RE_MOCK_LOG_WARNING("zero_snap_knob not implemented yet"); return HDGui2D::loadFromRegistry(L)->luaIgnored(); }
+static int lua_zero_snap_knob(lua_State *L) { return HDGui2D::loadFromRegistry(L)->luaZeroSnapKnob(); }
 static int lua_ui_text(lua_State *L) { return HDGui2D::loadFromRegistry(L)->luaUIText(); }
 
 }
@@ -593,6 +593,25 @@ int HDGui2D::luaValueDisplay()
     populate<StaticStringList>(p, "text_style");
     populate<UIText>(p, "tooltip_template");
     populate<Bool>(p, "read_only");
+    populate<Bool>(p, "show_remote_box");
+    populate<Bool>(p, "show_automation_rect");
+  }
+  return addObjectOnTopOfStack(std::move(p));
+}
+
+//------------------------------------------------------------------------
+// HDGui2D::luaZeroSnapKnob
+//------------------------------------------------------------------------
+int HDGui2D::luaZeroSnapKnob()
+{
+  auto p = makeWidget(Widget::zero_snap_knob());
+  if(checkTableArg())
+  {
+    populateGraphics(p);
+    populate<Value>(p, "value");
+    populate<Visibility>(p, "visibility");
+    populate<StaticStringList>(p, "tooltip_position");
+    populate<UIText>(p, "tooltip_template");
     populate<Bool>(p, "show_remote_box");
     populate<Bool>(p, "show_automation_rect");
   }

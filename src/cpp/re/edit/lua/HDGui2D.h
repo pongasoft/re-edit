@@ -91,6 +91,7 @@ public:
   int luaToggleButton();
   int luaUpDownButton();
   int luaValueDisplay();
+  int luaZeroSnapKnob();
   int luaUIText();
 
   int luaIgnored();

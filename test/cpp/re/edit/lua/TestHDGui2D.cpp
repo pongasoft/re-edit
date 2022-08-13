@@ -353,7 +353,7 @@ TEST(HDGui2D, All)
   auto hdg = HDGui2D::fromFile(getResourceFile("all-hdgui_2D.lua"));
 
   auto front = hdg->front();
-  ASSERT_EQ(31, front->fWidgets.size());
+  ASSERT_EQ(33, front->fWidgets.size());
   ASSERT_EQ("Panel_front_bg", front->fGraphicsNode);
   ASSERT_EQ(std::nullopt, front->fCableOrigin);
 
@@ -767,6 +767,32 @@ TEST(HDGui2D, All)
     ASSERT_THAT(w, HasColor("fg_color", {101, 97, 44}));
     ASSERT_THAT(w, HasColor("loader_alt_color", {70, 11, 7}));
     ASSERT_THAT(w, HasBool("center", true));
+  }
+
+  // zsk1
+  {
+    auto w = front->fWidgets[id++];
+    ASSERT_EQ(WidgetType::kZeroSnapKnob, w->fWidget->getType());
+    ASSERT_EQ("zsk1_node", w->fGraphics.fNode);
+    ASSERT_THAT(w, HasValueNoSwitch("/zsk1"));
+    ASSERT_THAT(w, HasNoVisibility());
+    ASSERT_THAT(w, HasTooltipPosition());
+    ASSERT_THAT(w, HasShowRemoteBox());
+    ASSERT_THAT(w, HasShowAutomationRect());
+    ASSERT_THAT(w, HasTooltipTemplate());
+  }
+
+  // ak2
+  {
+    auto w = front->fWidgets[id++];
+    ASSERT_EQ(WidgetType::kZeroSnapKnob, w->fWidget->getType());
+    ASSERT_EQ("zsk2_node", w->fGraphics.fNode);
+    ASSERT_THAT(w, HasValueSwitch("/zsk2_switch", {"/zsk2_v1"}));
+    ASSERT_THAT(w, HasNoVisibility());
+    ASSERT_THAT(w, HasTooltipPosition("top"));
+    ASSERT_THAT(w, HasShowRemoteBox(false));
+    ASSERT_THAT(w, HasShowAutomationRect(false));
+    ASSERT_THAT(w, HasTooltipTemplate("zsk2_tooltip_template"));
   }
 
 

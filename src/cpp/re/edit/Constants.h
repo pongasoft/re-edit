@@ -76,6 +76,7 @@ enum class WidgetType : int
   kToggleButton,
   kUpDownButton,
   kValueDisplay,
+  kZeroSnapKnob,
 
   kPanelDecal // re-edit widget
 };

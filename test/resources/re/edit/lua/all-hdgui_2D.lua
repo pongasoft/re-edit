@@ -280,6 +280,21 @@ front_widgets[#front_widgets + 1] = jbox.patch_name {
   center = true
 }
 
+front_widgets[#front_widgets + 1] = jbox.zero_snap_knob {
+  graphics = { node = "zsk1_node", },
+  value = "/zsk1",
+}
+
+front_widgets[#front_widgets + 1] = jbox.zero_snap_knob {
+  graphics = { node = "zsk2_node", },
+  value_switch = "/zsk2_switch",
+  values = { "/zsk2_v1" },
+  tooltip_position = "top",
+  tooltip_template = jbox.ui_text("zsk2_tooltip_template"),
+  show_remote_box = false,
+  show_automation_rect = false,
+}
+
 front = jbox.panel{
   graphics = {
     node = "Panel_front_bg",
