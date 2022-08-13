@@ -49,7 +49,8 @@ char const *toString(WidgetType iWidgetType)
 Panel::Panel(PanelType iType) :
   fType{iType},
   fNodeName{re::mock::fmt::printf("Panel_%s_bg", toString(iType))},
-  fCableOrigin{fType == PanelType::kFoldedBack ? std::optional<ImVec2>({kDevicePixelWidth / 2.0f, kFoldedDevicePixelHeight / 2.0f}) : std::nullopt }
+  fCableOrigin{fType == PanelType::kFoldedBack ? std::optional<ImVec2>({kDevicePixelWidth / 2.0f, kFoldedDevicePixelHeight / 2.0f}) : std::nullopt },
+  fDisableSampleDropOnPanel{ fType == PanelType::kFront ? std::optional<bool>(false) : std::nullopt}
 {
   setDeviceHeightRU(1);
 }
@@ -583,6 +584,19 @@ void Panel::editView(EditContext &iCtx)
             fShowCableOrigin = false;
         }
 
+        if(fDisableSampleDropOnPanel)
+        {
+          if(ImGui::TreeNode("Options"))
+          {
+            bool b = *fDisableSampleDropOnPanel;
+            if(ImGui::Checkbox("disable_sample_drop_on_panel", &b))
+            {
+              fDisableSampleDropOnPanel = b;
+            }
+            ImGui::TreePop();
+          }
+        }
+
         if(ImGui::TreeNode("hdgui2D"))
         {
           auto windowSize = ImGui::GetWindowSize();
@@ -768,10 +782,15 @@ std::string Panel::hdgui2D(EditContext &iCtx) const
     s << re::mock::fmt::printf("%s[#%s + 1] = %s\n", arrayName, arrayName, w->hdgui2D(iCtx));
   }
 
+  char const *options = "";
+  if(fDisableSampleDropOnPanel && *fDisableSampleDropOnPanel)
+    options = R"( options = { "disable_sample_drop_on_panel" },)";
+
+  char const *cableOrigin = "";
   if(fCableOrigin)
-    s << re::mock::fmt::printf("%s = jbox.panel{ graphics = { node = \"%s\" }, cable_origin = { node = \"CableOrigin\" }, widgets = %s }\n", panelName, fNodeName, arrayName);
-  else
-    s << re::mock::fmt::printf("%s = jbox.panel{ graphics = { node = \"%s\" }, widgets = %s }\n", panelName, fNodeName, arrayName);
+    cableOrigin = R"( cable_origin = { node = "CableOrigin" },)";
+
+  s << re::mock::fmt::printf("%s = jbox.panel{ graphics = { node = \"%s\" },%s%s widgets = %s }\n", panelName, fNodeName, options, cableOrigin, arrayName);
 
   return s.str();
 }
@@ -840,7 +859,7 @@ void Panel::editOrderView(std::vector<int> const &iOrder, F iOnSwap)
 }
 
 //------------------------------------------------------------------------
-// Panel::setSize
+// Panel::setDeviceHeightRU
 //------------------------------------------------------------------------
 void Panel::setDeviceHeightRU(int iDeviceHeightRU)
 {
@@ -849,6 +868,29 @@ void Panel::setDeviceHeightRU(int iDeviceHeightRU)
   fGraphics.fFilter = [h](FilmStrip const &f) {
     return f.width() == kDevicePixelWidth && f.height() == h;
   };
+}
+
+//------------------------------------------------------------------------
+// Panel::setOptions
+//------------------------------------------------------------------------
+void Panel::setOptions(std::vector<std::string> const &iOptions)
+{
+  if(iOptions.empty())
+    return;
+
+  if(fType != PanelType::kFront)
+  {
+    RE_EDIT_LOG_WARNING("'options' allowed only on front panel");
+    return;
+  }
+
+  if(iOptions.size() != 1 || iOptions[0] != "disable_sample_drop_on_panel")
+  {
+    RE_EDIT_LOG_WARNING("only option possible is 'disable_sample_drop_on_panel'");
+    return;
+  }
+
+  fDisableSampleDropOnPanel = true;
 }
 
 }

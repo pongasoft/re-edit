@@ -41,6 +41,7 @@ struct jbox_widget
 struct jbox_panel {
   std::string fGraphicsNode;
   std::optional<std::string> fCableOrigin;
+  std::vector<std::string> fOptions{};
   std::vector<std::shared_ptr<jbox_widget>> fWidgets{};
 };
 

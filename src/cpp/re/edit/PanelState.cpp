@@ -72,7 +72,12 @@ void PanelState::initPanel(std::shared_ptr<lua::panel_nodes> const &iPanelNodes,
         RE_EDIT_LOG_WARNING ("Could not locate cable origin for panel [%s]", *iPanel->fCableOrigin,
                              fPanel.getName());
     }
+  }
 
+  // Options
+  {
+    if(!iPanel->fOptions.empty())
+      fPanel.setOptions(iPanel->fOptions);
   }
 
   for(auto const &w: iPanel->fWidgets)

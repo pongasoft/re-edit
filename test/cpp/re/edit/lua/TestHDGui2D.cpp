@@ -356,6 +356,7 @@ TEST(HDGui2D, All)
   ASSERT_EQ(35, front->fWidgets.size());
   ASSERT_EQ("Panel_front_bg", front->fGraphicsNode);
   ASSERT_EQ(std::nullopt, front->fCableOrigin);
+  ASSERT_EQ(std::vector<std::string>{"disable_sample_drop_on_panel"}, front->fOptions);
 
   int id = 0;
 

@@ -310,6 +310,7 @@ front = jbox.panel{
   graphics = {
     node = "Panel_front_bg",
   },
+	options = { "disable_sample_drop_on_panel" },
   widgets = front_widgets
 }
 

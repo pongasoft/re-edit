@@ -90,6 +90,7 @@ public:
 
   inline void setBackground(std::shared_ptr<Texture> iBackground) { fGraphics.setTexture(std::move(iBackground)); }
   inline void setCableOrigin(ImVec2 const &iPosition) { fCableOrigin = iPosition; }
+  void setOptions(std::vector<std::string> const &iOptions);
   int addWidget(std::shared_ptr<Widget> iWidget);
   std::vector<std::shared_ptr<Widget>> getSelectedWidgets() const;
   std::vector<int> getWidgetsOrder() const { return fWidgetsOrder; }
@@ -137,6 +138,7 @@ private:
   std::string fNodeName;
   widget::attribute::Graphics fGraphics{};
   std::optional<ImVec2> fCableOrigin;
+  std::optional<bool> fDisableSampleDropOnPanel{};
   bool fShowCableOrigin{};
   std::map<int, std::shared_ptr<Widget>> fWidgets{};
   std::vector<int> fWidgetsOrder{};
