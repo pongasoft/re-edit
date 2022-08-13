@@ -716,6 +716,20 @@ std::unique_ptr<Widget> Widget::radio_button()
 }
 
 //------------------------------------------------------------------------
+// Widget::sample_browse_group
+//------------------------------------------------------------------------
+std::unique_ptr<Widget> Widget::sample_browse_group()
+{
+  auto w = std::make_unique<Widget>(WidgetType::kSampleBrowseGroup);
+  w ->visibility()
+    ->tooltip_position()
+    ;
+  w->setSize(kPatchBrowseGroupSize);
+  w->fGraphics->fFilter = FilmStrip::bySizeFilter(kSampleBrowseGroupSize);
+  return w;
+}
+
+//------------------------------------------------------------------------
 // Widget::sequence_fader
 //------------------------------------------------------------------------
 std::unique_ptr<Widget> Widget::sequence_fader()

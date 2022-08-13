@@ -353,7 +353,7 @@ TEST(HDGui2D, All)
   auto hdg = HDGui2D::fromFile(getResourceFile("all-hdgui_2D.lua"));
 
   auto front = hdg->front();
-  ASSERT_EQ(33, front->fWidgets.size());
+  ASSERT_EQ(35, front->fWidgets.size());
   ASSERT_EQ("Panel_front_bg", front->fGraphicsNode);
   ASSERT_EQ(std::nullopt, front->fCableOrigin);
 
@@ -793,6 +793,24 @@ TEST(HDGui2D, All)
     ASSERT_THAT(w, HasShowRemoteBox(false));
     ASSERT_THAT(w, HasShowAutomationRect(false));
     ASSERT_THAT(w, HasTooltipTemplate("zsk2_tooltip_template"));
+  }
+
+  // sbg1
+  {
+    auto w = front->fWidgets[id++];
+    ASSERT_EQ(WidgetType::kSampleBrowseGroup, w->fWidget->getType());
+    ASSERT_EQ("sbg1_node", w->fGraphics.fNode);
+    ASSERT_THAT(w, HasNoVisibility());
+    ASSERT_THAT(w, HasTooltipPosition());
+  }
+
+  // sbg2
+  {
+    auto w = front->fWidgets[id++];
+    ASSERT_EQ(WidgetType::kSampleBrowseGroup, w->fWidget->getType());
+    ASSERT_EQ("sbg2_node", w->fGraphics.fNode);
+    ASSERT_THAT(w, HasVisibility("/sbg2_switch", {12}));
+    ASSERT_THAT(w, HasTooltipPosition("left"));
   }
 
 

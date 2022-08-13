@@ -295,6 +295,17 @@ front_widgets[#front_widgets + 1] = jbox.zero_snap_knob {
   show_automation_rect = false,
 }
 
+front_widgets[#front_widgets + 1] = jbox.sample_browse_group {
+  graphics = { node = "sbg1_node", },
+}
+
+front_widgets[#front_widgets + 1] = jbox.sample_browse_group {
+  graphics = { node = "sbg2_node", },
+  visibility_switch = "/sbg2_switch",
+  visibility_values = { 12 },
+  tooltip_position = "left"
+}
+
 front = jbox.panel{
   graphics = {
     node = "Panel_front_bg",

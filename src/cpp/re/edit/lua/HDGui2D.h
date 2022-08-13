@@ -83,6 +83,7 @@ public:
   int luaPitchWheel();
   int luaPlaceholder();
   int luaPopupButton();
+  int luaSampleBrowseGroup();
   int luaSequenceFader();
   int luaSequenceMeter();
   int luaStaticDecoration();

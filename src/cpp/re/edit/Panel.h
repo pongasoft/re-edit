@@ -58,6 +58,7 @@ static constexpr WidgetDef kAllWidgetDefs[] {
   { WidgetType::kPlaceholder,       "placeholder",         Widget::placeholder,         PanelType::kBack },
   { WidgetType::kPopupButton,       "popup_button",        Widget::popup_button,        kPanelTypeAny },
   { WidgetType::kRadioButton,       "radio_button",        Widget::radio_button,        kPanelTypeAny },
+  { WidgetType::kSampleBrowseGroup, "sample_browse_group", Widget::sample_browse_group,  kPanelTypeAny },
   { WidgetType::kSequenceFader,     "sequence_fader",      Widget::sequence_fader,      kPanelTypeAny },
   { WidgetType::kSequenceMeter,     "sequence_meter",      Widget::sequence_meter,      kPanelTypeAny },
   { WidgetType::kStaticDecoration,  "static_decoration",   Widget::static_decoration,   kPanelTypeAny },
