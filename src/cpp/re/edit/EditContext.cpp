@@ -33,7 +33,8 @@ void EditContext::renderAddWidgetMenuView(ImVec2 const &iPosition)
     {
       auto widget = def.fFactory();
       widget->setPosition(iPosition);
-      fPanelState->fPanel.addWidget(std::move(widget));
+      widget->setSelected(true);
+      fPanelState->fPanel.addWidget(*this, std::move(widget));
     }
   }
 }

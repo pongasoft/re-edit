@@ -48,6 +48,8 @@ public:
   int getIntValue(std::string const &iPropertyPath) const;
   void setIntValue(std::string const &iPropertyPath, int iValue);
 
+  constexpr int getUserSamplesCount() const { return fUserSamplesCount; }
+
   void addToWatchlist(std::string const &iPropertyPath);
   void removeFromWatchlist(std::string const &iPropertyPath);
   void clearWatchList() { fPropertyWatchlist.clear(); }
@@ -71,6 +73,7 @@ private:
   std::map<std::string, Property> fProperties{};
   std::set<std::string> fPropertyWatchlist{};
   std::map<std::string, Object> fObjects{};
+  int fUserSamplesCount{};
 };
 
 }

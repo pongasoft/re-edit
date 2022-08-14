@@ -70,6 +70,7 @@ enum class WidgetType : int
   kPopupButton,
   kRadioButton,
   kSampleBrowseGroup,
+  kSampleDropZone,
   kSequenceFader,
   kSequenceMeter,
   kStaticDecoration,

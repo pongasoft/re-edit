@@ -403,6 +403,18 @@ protected:
   int fValueAttributeId;
 };
 
+class UserSampleIndex : public Integer
+{
+public:
+  UserSampleIndex(char const *iName) : Integer{iName} {}
+
+  void editView(EditContext &iCtx) override;
+
+  error_t checkForErrors(EditContext &iCtx) const override;
+
+  std::unique_ptr<Attribute> clone() const override { return Attribute::clone<UserSampleIndex>(*this); }
+};
+
 //------------------------------------------------------------------------
 // SingleAttribute<T>::reset
 //------------------------------------------------------------------------

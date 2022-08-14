@@ -47,7 +47,7 @@ static int lua_placeholder(lua_State *L) { return HDGui2D::loadFromRegistry(L)->
 static int lua_popup_button(lua_State *L) { return HDGui2D::loadFromRegistry(L)->luaPopupButton(); }
 static int lua_radio_button(lua_State *L) { return HDGui2D::loadFromRegistry(L)->luaRadioButton(); }
 static int lua_sample_browse_group(lua_State *L) { return HDGui2D::loadFromRegistry(L)->luaSampleBrowseGroup(); }
-static int lua_sample_drop_zone(lua_State *L) { RE_MOCK_LOG_WARNING("sample_drop_zone not implemented yet"); return HDGui2D::loadFromRegistry(L)->luaIgnored(); }
+static int lua_sample_drop_zone(lua_State *L) { return HDGui2D::loadFromRegistry(L)->luaSampleDropZone(); }
 static int lua_sequence_fader(lua_State *L) { return HDGui2D::loadFromRegistry(L)->luaSequenceFader(); }
 static int lua_sequence_meter(lua_State *L) { return HDGui2D::loadFromRegistry(L)->luaSequenceMeter(); }
 static int lua_static_decoration(lua_State *L) { return HDGui2D::loadFromRegistry(L)->luaStaticDecoration(); }
@@ -452,6 +452,21 @@ int HDGui2D::luaSampleBrowseGroup()
     populateGraphics(p);
     populate<Visibility>(p, "visibility");
     populate<StaticStringList>(p, "tooltip_position");
+  }
+  return addObjectOnTopOfStack(std::move(p));
+}
+
+//------------------------------------------------------------------------
+// HDGui2D::luaSampleDropZone
+//------------------------------------------------------------------------
+int HDGui2D::luaSampleDropZone()
+{
+  auto p = makeWidget(Widget::sample_drop_zone());
+  if(checkTableArg())
+  {
+    populateGraphics(p);
+    populate<Visibility>(p, "visibility");
+    populate<UserSampleIndex>(p, "user_sample_index");
   }
   return addObjectOnTopOfStack(std::move(p));
 }

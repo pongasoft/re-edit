@@ -318,6 +318,11 @@ inline constexpr auto HasIndex = [](int iExpectedValue) {
   return AttributeToString<Index>("index", R"(index={%d,true})", iExpectedValue);
 };
 
+//! HasUserSampleIndex | user_sample_index value
+inline constexpr auto HasUserSampleIndex = [](int iExpectedValue) {
+  return AttributeToString<UserSampleIndex>("user_sample_index", R"(user_sample_index={%d,true})", iExpectedValue);
+};
+
 //! HasString | string value
 inline constexpr auto HasString = [](char const *iName, char const * iExpectedValue = nullptr) {
   if(iExpectedValue)
@@ -353,7 +358,7 @@ TEST(HDGui2D, All)
   auto hdg = HDGui2D::fromFile(getResourceFile("all-hdgui_2D.lua"));
 
   auto front = hdg->front();
-  ASSERT_EQ(35, front->fWidgets.size());
+  ASSERT_EQ(37, front->fWidgets.size());
   ASSERT_EQ("Panel_front_bg", front->fGraphicsNode);
   ASSERT_EQ(std::nullopt, front->fCableOrigin);
   ASSERT_EQ(std::vector<std::string>{"disable_sample_drop_on_panel"}, front->fOptions);
@@ -812,6 +817,24 @@ TEST(HDGui2D, All)
     ASSERT_EQ("sbg2_node", w->fGraphics.fNode);
     ASSERT_THAT(w, HasVisibility("/sbg2_switch", {12}));
     ASSERT_THAT(w, HasTooltipPosition("left"));
+  }
+
+  // sdz1
+  {
+    auto w = front->fWidgets[id++];
+    ASSERT_EQ(WidgetType::kSampleDropZone, w->fWidget->getType());
+    ASSERT_EQ("sdz1_node", w->fGraphics.fNode);
+    ASSERT_THAT(w, HasUserSampleIndex(3));
+    ASSERT_THAT(w, HasNoVisibility());
+  }
+
+  // sbg2
+  {
+    auto w = front->fWidgets[id++];
+    ASSERT_EQ(WidgetType::kSampleDropZone, w->fWidget->getType());
+    ASSERT_EQ("sdz2_node", w->fGraphics.fNode);
+    ASSERT_THAT(w, HasUserSampleIndex(2));
+    ASSERT_THAT(w, HasVisibility("/sdz2_switch", {5, 15}));
   }
 
 

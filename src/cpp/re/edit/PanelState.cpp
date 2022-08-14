@@ -85,7 +85,6 @@ void PanelState::initPanel(std::shared_ptr<lua::panel_nodes> const &iPanelNodes,
     auto widget = w->fWidget->clone();
 
     widget->init(fDrawContext);
-    widget->checkForErrors(fDrawContext, true);
 
     auto node = iPanelNodes->findNodeByName(w->fGraphics.fNode);
     if(node)
@@ -112,7 +111,7 @@ void PanelState::initPanel(std::shared_ptr<lua::panel_nodes> const &iPanelNodes,
     }
 
 
-    fPanel.addWidget(std::move(widget));
+    fPanel.addWidget(fDrawContext, std::move(widget));
   }
 }
 
@@ -156,6 +155,15 @@ void PanelState::render()
     ReGui::RadioButton("HD Bg", &fDrawContext.fShowCustomDisplay, EditContext::ShowCustomDisplay::kBackgroundHD);
     ImGui::PopID();
 
+    ImGui::PushID("Sample Drop Zone");
+    ImGui::AlignTextToFramePadding();
+    ImGui::Text("Sample Drop Zone");
+    ImGui::SameLine();
+    ReGui::RadioButton("None", &fDrawContext.fShowSampleDropZone, EditContext::ShowSampleDropZone::kNone);
+    ImGui::SameLine();
+    ReGui::RadioButton("Fill", &fDrawContext.fShowSampleDropZone, EditContext::ShowSampleDropZone::kFill);
+    ImGui::PopID();
+
     ReGui::ToggleButton("Show Panel", "Hide Panel", &fShowPanel);
     ImGui::SameLine();
     ReGui::ToggleButton("Show Panel Widgets", "Hide Panel Widgets", &fShowPanelWidgets);
@@ -197,7 +205,7 @@ void PanelState::renderWidgets()
         for(auto const &def: fWidgetDefs)
         {
           if(ImGui::MenuItem(def.fName))
-            fPanel.addWidget(def.fFactory());
+            fPanel.addWidget(fDrawContext, def.fFactory());
         }
         ImGui::EndPopup();
       }
@@ -212,7 +220,7 @@ void PanelState::renderWidgets()
       if(ImGui::Button("Dup"))
       {
         for(auto const &w: selectedWidgets)
-          fPanel.addWidget(w->copy());
+          fPanel.addWidget(fDrawContext, w->copy());
       }
 
       ImGui::SameLine();

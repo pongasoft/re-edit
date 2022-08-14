@@ -106,6 +106,7 @@ public:
   static std::unique_ptr<Widget> popup_button();
   static std::unique_ptr<Widget> radio_button();
   static std::unique_ptr<Widget> sample_browse_group();
+  static std::unique_ptr<Widget> sample_drop_zone();
   static std::unique_ptr<Widget> sequence_fader();
   static std::unique_ptr<Widget> sequence_meter();
   static std::unique_ptr<Widget> static_decoration();

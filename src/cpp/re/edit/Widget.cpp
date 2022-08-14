@@ -121,30 +121,46 @@ void Widget::draw(DrawContext &iCtx)
       borderColor = iCtx.getUserPreferences().fWidgetBorderColor;
   }
 
-  if(fType == WidgetType::kCustomDisplay)
+  switch(fType)
   {
-    switch(iCtx.fShowCustomDisplay)
-    {
-      case EditContext::ShowCustomDisplay::kNone:
-        fGraphics->drawBorder(iCtx, borderColor);
-        break;
-      case EditContext::ShowCustomDisplay::kMain:
-        fGraphics->draw(iCtx, borderColor);
-        break;
-      case EditContext::ShowCustomDisplay::kBackgroundSD:
-      case EditContext::ShowCustomDisplay::kBackgroundHD:
+    case WidgetType::kCustomDisplay:
+      switch(iCtx.fShowCustomDisplay)
       {
-        auto bgAttribute = findAttributeByNameAndType<Background>("background");
-        bgAttribute->draw(iCtx, fGraphics);
-        fGraphics->drawBorder(iCtx, borderColor);
-        break;
+        case EditContext::ShowCustomDisplay::kNone:
+          fGraphics->drawBorder(iCtx, borderColor);
+          break;
+        case EditContext::ShowCustomDisplay::kMain:
+          fGraphics->draw(iCtx, borderColor);
+          break;
+        case EditContext::ShowCustomDisplay::kBackgroundSD:
+        case EditContext::ShowCustomDisplay::kBackgroundHD:
+        {
+          auto bgAttribute = findAttributeByNameAndType<Background>("background");
+          bgAttribute->draw(iCtx, fGraphics);
+          fGraphics->drawBorder(iCtx, borderColor);
+          break;
+        }
+        default:
+          RE_EDIT_FAIL("not reached");
       }
-      default:
-        RE_EDIT_FAIL("not reached");
-    }
+      break;
+
+    case WidgetType::kSampleDropZone:
+      switch(iCtx.fShowSampleDropZone)
+      {
+        case EditContext::ShowSampleDropZone::kNone:
+          fGraphics->drawBorder(iCtx, borderColor);
+          break;
+        case EditContext::ShowSampleDropZone::kFill:
+          fGraphics->draw(iCtx, borderColor);
+          break;
+      }
+      break;
+
+    default:
+      fGraphics->draw(iCtx, borderColor);
+      break;
   }
-  else
-    fGraphics->draw(iCtx, borderColor);
 
   if(fError)
     iCtx.drawRectFilled(fGraphics->fPosition, fGraphics->getSize(), iCtx.getUserPreferences().fWidgetErrorColor);
@@ -189,8 +205,10 @@ bool Widget::checkForErrors(EditContext &iCtx, bool iForceCheck)
       auto error = att->checkForErrors(iCtx);
       fError |= error != widget::Attribute::kNoError;
       att->fError = error;
+      att->resetEdited();
     }
-    att->resetEdited();
+    else
+      fError |= att->fError != widget::Attribute::kNoError;
   }
   iCtx.setCurrentWidget(nullptr);
   return fError;
@@ -726,6 +744,18 @@ std::unique_ptr<Widget> Widget::sample_browse_group()
     ;
   w->setSize(kPatchBrowseGroupSize);
   w->fGraphics->fFilter = FilmStrip::bySizeFilter(kSampleBrowseGroupSize);
+  return w;
+}
+
+//------------------------------------------------------------------------
+// Widget::sample_drop_zone
+//------------------------------------------------------------------------
+std::unique_ptr<Widget> Widget::sample_drop_zone()
+{
+  auto w = std::make_unique<Widget>(WidgetType::kSampleDropZone);
+  w ->visibility()
+    ->addAttribute(Attribute::build<UserSampleIndex>("user_sample_index", true, 0))
+    ;
   return w;
 }
 

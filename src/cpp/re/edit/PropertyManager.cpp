@@ -62,7 +62,12 @@ int PropertyManager::init(std::string const &iDirectory)
   auto propertyInfos = fDevice->getPropertyInfos();
 
   for(auto const &info: propertyInfos)
-    fProperties[info.fPropertyPath] = Property{info, objectsByRef.at(info.fPropertyRef.fObject)};
+  {
+    auto const parent = objectsByRef.at(info.fPropertyRef.fObject);
+    fProperties[info.fPropertyPath] = Property{info, parent};
+    if(info.fValueType == kJBox_Sample && parent.fInfo.fType == mock::JboxObjectType::kUserSamples)
+      fUserSamplesCount++;
+  }
 
   // we run the first batch which initialize the device
   fRack.nextBatch();

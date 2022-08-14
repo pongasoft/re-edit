@@ -58,7 +58,8 @@ static constexpr WidgetDef kAllWidgetDefs[] {
   { WidgetType::kPlaceholder,       "placeholder",         Widget::placeholder,         PanelType::kBack },
   { WidgetType::kPopupButton,       "popup_button",        Widget::popup_button,        kPanelTypeAny },
   { WidgetType::kRadioButton,       "radio_button",        Widget::radio_button,        kPanelTypeAny },
-  { WidgetType::kSampleBrowseGroup, "sample_browse_group", Widget::sample_browse_group,  kPanelTypeAny },
+  { WidgetType::kSampleBrowseGroup, "sample_browse_group", Widget::sample_browse_group, kPanelTypeAny },
+  { WidgetType::kSampleDropZone,    "sample_drop_zone",    Widget::sample_drop_zone,    kPanelTypeAny },
   { WidgetType::kSequenceFader,     "sequence_fader",      Widget::sequence_fader,      kPanelTypeAny },
   { WidgetType::kSequenceMeter,     "sequence_meter",      Widget::sequence_meter,      kPanelTypeAny },
   { WidgetType::kStaticDecoration,  "static_decoration",   Widget::static_decoration,   kPanelTypeAny },
@@ -91,7 +92,7 @@ public:
   inline void setBackground(std::shared_ptr<Texture> iBackground) { fGraphics.setTexture(std::move(iBackground)); }
   inline void setCableOrigin(ImVec2 const &iPosition) { fCableOrigin = iPosition; }
   void setOptions(std::vector<std::string> const &iOptions);
-  int addWidget(std::shared_ptr<Widget> iWidget);
+  int addWidget(EditContext &iCtx, std::shared_ptr<Widget> iWidget);
   std::vector<std::shared_ptr<Widget>> getSelectedWidgets() const;
   std::vector<int> getWidgetsOrder() const { return fWidgetsOrder; }
   std::vector<int> getDecalsOrder() const { return fDecalsOrder; }
@@ -126,9 +127,10 @@ private:
   void computeIsHidden(DrawContext &iCtx);
   void checkForWidgetErrors(EditContext &iCtx);
   void renderAddWidgetMenu(EditContext &iCtx, ImVec2 const &iPosition = {});
-  bool renderSelectedWidgetsMenu(std::vector<std::shared_ptr<Widget>> const &iSelectedWidgets,
+  bool renderSelectedWidgetsMenu(EditContext &iCtx,
+                                 std::vector<std::shared_ptr<Widget>> const &iSelectedWidgets,
                                  std::optional<ImVec2> iPosition = std::nullopt);
-  void renderWidgetMenu(std::shared_ptr<Widget> const &iWidget);
+  void renderWidgetMenu(EditContext &iCtx, std::shared_ptr<Widget> const &iWidget);
   void drawWidgets(DrawContext &iCtx, std::vector<int> const &iOrder);
   void drawCableOrigin(DrawContext &iCtx);
 

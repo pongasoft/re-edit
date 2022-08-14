@@ -49,6 +49,12 @@ public:
     kBackgroundHD
   };
 
+  enum class ShowSampleDropZone
+  {
+    kNone,
+    kFill
+  };
+
 public:
   EditContext() = default;
 
@@ -68,6 +74,7 @@ public:
     fShowProperties = iShowProperties;
   }
   void removePropertyFromWatchlist(std::string const &iPropertyPath) { fPropertyManager->removeFromWatchlist(iPropertyPath); }
+  constexpr int getUserSamplesCount() const { return fPropertyManager->getUserSamplesCount(); }
 
   void renderAddWidgetMenuView(ImVec2 const &iPosition = {});
 
@@ -85,6 +92,7 @@ public:
 public:
   ShowBorder fShowBorder{ShowBorder::kNone};
   ShowCustomDisplay fShowCustomDisplay{ShowCustomDisplay::kMain};
+  ShowSampleDropZone fShowSampleDropZone{ShowSampleDropZone::kFill};
 
 protected:
   inline void setCurrentWidget(Widget const *iWidget) { fCurrentWidget = iWidget; }

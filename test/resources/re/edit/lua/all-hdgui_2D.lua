@@ -306,6 +306,18 @@ front_widgets[#front_widgets + 1] = jbox.sample_browse_group {
   tooltip_position = "left"
 }
 
+front_widgets[#front_widgets + 1] = jbox.sample_drop_zone {
+  graphics = { node = "sdz1_node", },
+  user_sample_index = 3
+}
+
+front_widgets[#front_widgets + 1] = jbox.sample_drop_zone {
+  graphics = { node = "sdz2_node", },
+  user_sample_index = 2,
+  visibility_switch = "/sdz2_switch",
+  visibility_values = { 5, 15 },
+}
+
 front = jbox.panel{
   graphics = {
     node = "Panel_front_bg",

@@ -871,6 +871,49 @@ Attribute::error_t Index::checkForErrors(EditContext &iCtx) const
 }
 
 //------------------------------------------------------------------------
+// UserSampleIndex::editView
+//------------------------------------------------------------------------
+void UserSampleIndex::editView(EditContext &iCtx)
+{
+  auto count = iCtx.getUserSamplesCount();
+  if(count < 1)
+  {
+    Integer::editView(iCtx);
+  }
+  else
+  {
+    resetView();
+    ImGui::SameLine();
+    if(ImGui::SliderInt(fName, &fValue, 0, count - 1))
+    {
+      fProvided = true;
+      fEdited = true;
+    }
+  }
+}
+
+//------------------------------------------------------------------------
+// UserSampleIndex::checkForErrors
+//------------------------------------------------------------------------
+Attribute::error_t UserSampleIndex::checkForErrors(EditContext &iCtx) const
+{
+  static constexpr auto kNoUserSamplesError = "No user sample defined";
+  static constexpr auto kInvalidUserSampleIndex = "Must be an integer in the range [0,  user_sample-count - 1] "
+                                                  "where user_sample-count is the number of user samples in "
+                                                  "motherboard_def.lua";
+
+  auto count = iCtx.getUserSamplesCount();
+
+  if(count < 1)
+    return kNoUserSamplesError;
+
+  if(fValue >= count)
+    return kInvalidUserSampleIndex;
+
+  return kNoError;
+}
+
+//------------------------------------------------------------------------
 // Values::checkForErrors
 //------------------------------------------------------------------------
 Attribute::error_t Values::checkForErrors(EditContext &iCtx) const

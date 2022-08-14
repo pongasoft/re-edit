@@ -150,7 +150,7 @@ void Panel::draw(DrawContext &iCtx)
   if(ImGui::BeginPopupContextItem())
   {
     auto widgetLocation = (ImGui::GetItemRectMin() - cp) / iCtx.fZoom;
-    if(renderSelectedWidgetsMenu(selectedWidgets, widgetLocation))
+    if(renderSelectedWidgetsMenu(iCtx, selectedWidgets, widgetLocation))
       ImGui::Separator();
     renderAddWidgetMenu(iCtx, widgetLocation);
     ImGui::EndPopup();
@@ -241,14 +241,15 @@ void Panel::renderAddWidgetMenu(EditContext &iCtx, ImVec2 const &iPosition)
   {
     auto widget = Widget::panel_decal();
     widget->setPosition(iPosition);
-    addWidget(std::move(widget));
+    widget->setSelected(true);
+    addWidget(iCtx, std::move(widget));
   }
 }
 
 //------------------------------------------------------------------------
 // Panel::renderWidgetMenu
 //------------------------------------------------------------------------
-void Panel::renderWidgetMenu(std::shared_ptr<Widget> const &iWidget)
+void Panel::renderWidgetMenu(EditContext &iCtx, std::shared_ptr<Widget> const &iWidget)
 {
   if(ImGui::MenuItem(re::mock::fmt::printf("%s %s",
                                            iWidget->isSelected() ? "Unselect" : "Select",
@@ -256,7 +257,7 @@ void Panel::renderWidgetMenu(std::shared_ptr<Widget> const &iWidget)
     iWidget->toggleSelection();
   if(ImGui::MenuItem(re::mock::fmt::printf("Duplicate %s",
                                            iWidget->getName()).c_str()))
-    addWidget(iWidget->copy());
+    addWidget(iCtx, iWidget->copy());
   if(ImGui::MenuItem(re::mock::fmt::printf("Delete %s",
                                            iWidget->getName()).c_str()))
     deleteWidget(iWidget->getId());
@@ -265,7 +266,8 @@ void Panel::renderWidgetMenu(std::shared_ptr<Widget> const &iWidget)
 //------------------------------------------------------------------------
 // Panel::renderSelectedWidgetsMenu
 //------------------------------------------------------------------------
-bool Panel::renderSelectedWidgetsMenu(std::vector<std::shared_ptr<Widget>> const &iSelectedWidgets,
+bool Panel::renderSelectedWidgetsMenu(EditContext &iCtx,
+                                      std::vector<std::shared_ptr<Widget>> const &iSelectedWidgets,
                                       std::optional<ImVec2> iPosition)
 {
   bool needSeparator = false;
@@ -277,7 +279,7 @@ bool Panel::renderSelectedWidgetsMenu(std::vector<std::shared_ptr<Widget>> const
     widget = findWidgetOnTopAt(*iPosition);
     if(widget)
     {
-      renderWidgetMenu(widget);
+      renderWidgetMenu(iCtx, widget);
       needSeparator = true;
     }
   }
@@ -290,7 +292,7 @@ bool Panel::renderSelectedWidgetsMenu(std::vector<std::shared_ptr<Widget>> const
         if(needSeparator)
           ImGui::Separator();
 
-        renderWidgetMenu(iSelectedWidgets[0]);
+        renderWidgetMenu(iCtx, iSelectedWidgets[0]);
       }
     }
     else
@@ -303,7 +305,7 @@ bool Panel::renderSelectedWidgetsMenu(std::vector<std::shared_ptr<Widget>> const
       if(ImGui::MenuItem("Duplicate Widgets"))
       {
         for(auto const &w: iSelectedWidgets)
-          addWidget(w->copy());
+          addWidget(iCtx, w->copy());
       }
       if(ImGui::MenuItem("Delete Widgets"))
       {
@@ -319,7 +321,7 @@ bool Panel::renderSelectedWidgetsMenu(std::vector<std::shared_ptr<Widget>> const
 //------------------------------------------------------------------------
 // Panel::addWidget
 //------------------------------------------------------------------------
-int Panel::addWidget(std::shared_ptr<Widget> iWidget)
+int Panel::addWidget(EditContext &iCtx, std::shared_ptr<Widget> iWidget)
 {
   RE_EDIT_INTERNAL_ASSERT(iWidget != nullptr);
 
@@ -331,6 +333,8 @@ int Panel::addWidget(std::shared_ptr<Widget> iWidget)
     fDecalsOrder.emplace_back(id);
   else
     fWidgetsOrder.emplace_back(id);
+
+  iWidget->checkForErrors(iCtx, true);
 
   fWidgets[id] = std::move(iWidget);
 
@@ -626,7 +630,7 @@ void Panel::editView(EditContext &iCtx)
 
         if(ImGui::BeginPopup("Menu"))
         {
-          renderSelectedWidgetsMenu(selectedWidgets);
+          renderSelectedWidgetsMenu(iCtx, selectedWidgets);
           ImGui::EndPopup();
         }
 
@@ -648,7 +652,7 @@ void Panel::editView(EditContext &iCtx)
 
         if(ImGui::BeginPopup("Menu"))
         {
-          renderSelectedWidgetsMenu(selectedWidgets);
+          renderSelectedWidgetsMenu(iCtx, selectedWidgets);
           ImGui::EndPopup();
         }
 
