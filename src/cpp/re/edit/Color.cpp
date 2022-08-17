@@ -33,7 +33,7 @@ std::string Color3::getValueAsLua() const
 //------------------------------------------------------------------------
 // Color3::editView
 //------------------------------------------------------------------------
-void Color3::editView(EditContext &iCtx)
+void Color3::editView(AppContext &iCtx)
 {
   resetView();
   ImGui::SameLine();

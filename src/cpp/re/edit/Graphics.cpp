@@ -47,14 +47,14 @@ namespace re::edit::widget::attribute {
 //------------------------------------------------------------------------
 // Graphics::draw
 //------------------------------------------------------------------------
-void Graphics::draw(DrawContext &iCtx, ImVec4 const &iBorderCol) const
+void Graphics::draw(AppContext &iCtx, ImVec4 const &iBorderCol) const
 {
   if(hasTexture())
     iCtx.drawTexture(getTexture(), fPosition, fFrameNumber);
   else
     iCtx.drawRectFilled(fPosition, getSize(), ImVec4{1, 0, 0, 1});
 
-  if(fHitBoundariesEnabled && iCtx.fShowBorder == EditContext::ShowBorder::kHitBoundaries)
+  if(fHitBoundariesEnabled && iCtx.fShowBorder == AppContext::ShowBorder::kHitBoundaries)
     drawHitBoundaries(iCtx, kHitBoundariesColor);
 
   if(iBorderCol.w > 0.0f)
@@ -64,7 +64,7 @@ void Graphics::draw(DrawContext &iCtx, ImVec4 const &iBorderCol) const
 //------------------------------------------------------------------------
 // Graphics::drawBorder
 //------------------------------------------------------------------------
-void Graphics::drawBorder(DrawContext &iCtx, ImVec4 const &iBorderCol) const
+void Graphics::drawBorder(AppContext &iCtx, ImVec4 const &iBorderCol) const
 {
   iCtx.drawRect(fPosition, getSize(), iBorderCol);
 }
@@ -72,7 +72,7 @@ void Graphics::drawBorder(DrawContext &iCtx, ImVec4 const &iBorderCol) const
 //------------------------------------------------------------------------
 // Graphics::drawHitBoundaries
 //------------------------------------------------------------------------
-void Graphics::drawHitBoundaries(DrawContext &iCtx, ImVec4 const &iColor) const
+void Graphics::drawHitBoundaries(AppContext &iCtx, ImVec4 const &iColor) const
 {
   iCtx.drawRect(fPosition + ImVec2{fHitBoundaries.fLeftInset, fHitBoundaries.fTopInset},
                 getSize() - ImVec2{fHitBoundaries.fLeftInset + fHitBoundaries.fRightInset,
@@ -83,7 +83,7 @@ void Graphics::drawHitBoundaries(DrawContext &iCtx, ImVec4 const &iColor) const
 //------------------------------------------------------------------------
 // Graphics::editView
 //------------------------------------------------------------------------
-void Graphics::editView(EditContext &iCtx,
+void Graphics::editView(AppContext &iCtx,
                         FilmStrip::Filter const &iFilter,
                         std::function<void(std::string const &)> const &iOnTextureUpdate,
                         std::function<void(ImVec2 const &)> const &iOnSizeUpdate)
@@ -138,7 +138,7 @@ void Graphics::editView(EditContext &iCtx,
 //------------------------------------------------------------------------
 // Graphics::editPositionView
 //------------------------------------------------------------------------
-void Graphics::editPositionView(EditContext &iCtx)
+void Graphics::editPositionView(AppContext &iCtx)
 {
   if(ReGui::InputInt("x", &fPosition.x, 1, 5))
     fEdited = true;
@@ -157,7 +157,7 @@ void Graphics::editPositionView(EditContext &iCtx)
 //------------------------------------------------------------------------
 // Graphics::editView
 //------------------------------------------------------------------------
-void Graphics::editView(EditContext &iCtx)
+void Graphics::editView(AppContext &iCtx)
 {
   editView(iCtx,
            fFilter,
@@ -181,9 +181,9 @@ void Graphics::editView(EditContext &iCtx)
 //------------------------------------------------------------------------
 // Graphics::editHitBoundariesView
 //------------------------------------------------------------------------
-void Graphics::editHitBoundariesView(EditContext &iCtx)
+void Graphics::editHitBoundariesView(AppContext &iCtx)
 {
-  if(fHitBoundariesEnabled && iCtx.fShowBorder == EditContext::ShowBorder::kHitBoundaries)
+  if(fHitBoundariesEnabled && iCtx.fShowBorder == AppContext::ShowBorder::kHitBoundaries)
   {
     float *tb[] = { &fHitBoundaries.fTopInset, &fHitBoundaries.fBottomInset };
     if(ReGui::SliderInt2("hit_boundaries - Top | Bottom", tb, 0, static_cast<int>(getSize().y), "inset: %d", ImGuiSliderFlags_AlwaysClamp))
@@ -209,7 +209,7 @@ void Graphics::reset()
 //------------------------------------------------------------------------
 // Graphics::checkForErrors
 //------------------------------------------------------------------------
-Attribute::error_t Graphics::checkForErrors(EditContext &iCtx) const
+Attribute::error_t Graphics::checkForErrors(AppContext &iCtx) const
 {
   static const Attribute::error_t kOutOfBoundError = "Out of bound";
 
@@ -230,7 +230,7 @@ Attribute::error_t Graphics::checkForErrors(EditContext &iCtx) const
 //------------------------------------------------------------------------
 // Graphics::hdgui2D
 //------------------------------------------------------------------------
-void Graphics::hdgui2D(EditContext &iCtx, attribute_list_t &oAttributes) const
+void Graphics::hdgui2D(AppContext &iCtx, attribute_list_t &oAttributes) const
 {
   hdgui2D(iCtx.getCurrentWidget()->getName(), oAttributes);
 }
@@ -287,13 +287,13 @@ std::string Graphics::device2D() const
 //------------------------------------------------------------------------
 // Background::draw
 //------------------------------------------------------------------------
-bool Background::draw(DrawContext &iCtx, Graphics const *iParent) const
+bool Background::draw(AppContext &iCtx, Graphics const *iParent) const
 {
   if(fProvided)
   {
     switch(iCtx.fShowCustomDisplay)
     {
-      case EditContext::ShowCustomDisplay::kBackgroundSD:
+      case AppContext::ShowCustomDisplay::kBackgroundSD:
       {
         auto texture = iCtx.findTexture(fValue);
         if(texture)
@@ -305,7 +305,7 @@ bool Background::draw(DrawContext &iCtx, Graphics const *iParent) const
         break;
       }
 
-      case EditContext::ShowCustomDisplay::kBackgroundHD:
+      case AppContext::ShowCustomDisplay::kBackgroundHD:
       {
         auto texture = iCtx.findHDTexture(fValue);
         if(texture)
@@ -337,7 +337,7 @@ inline bool ends_with(std::string const &s, std::string const &iSuffix)
 //------------------------------------------------------------------------
 // Background::editView
 //------------------------------------------------------------------------
-void Background::editView(EditContext &iCtx)
+void Background::editView(AppContext &iCtx)
 {
   static const auto kBackgroundFilter = [](FilmStrip const &f) { return f.numFrames() == 1; };
 

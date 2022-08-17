@@ -137,7 +137,7 @@ bool DiscretePropertyValueList::contains(int iValue) const
 //------------------------------------------------------------------------
 // Value::hdgui2D
 //------------------------------------------------------------------------
-void Value::hdgui2D(EditContext &iCtx, attribute_list_t &oAttributes) const
+void Value::hdgui2D(AppContext &iCtx, attribute_list_t &oAttributes) const
 {
   if(fUseSwitch)
   {
@@ -153,7 +153,7 @@ void Value::hdgui2D(EditContext &iCtx, attribute_list_t &oAttributes) const
 //------------------------------------------------------------------------
 // Value::editView
 //------------------------------------------------------------------------
-void Value::editView(EditContext &iCtx)
+void Value::editView(AppContext &iCtx)
 {
   ImGui::BeginGroup();
 
@@ -234,7 +234,7 @@ void Value::reset()
 //------------------------------------------------------------------------
 // Value::editValueView
 //------------------------------------------------------------------------
-void Value::editValueView(EditContext &iCtx)
+void Value::editValueView(AppContext &iCtx)
 {
   if(fUseSwitch)
   {
@@ -259,7 +259,7 @@ void Value::editValueView(EditContext &iCtx)
 //------------------------------------------------------------------------
 // Value::tooltipView
 //------------------------------------------------------------------------
-void Value::tooltipView(EditContext &iCtx)
+void Value::tooltipView(AppContext &iCtx)
 {
   if(fUseSwitch)
   {
@@ -280,7 +280,7 @@ void Value::tooltipView(EditContext &iCtx)
 //------------------------------------------------------------------------
 // Value::findActualPropertyPath
 //------------------------------------------------------------------------
-std::string const &Value::findActualPropertyPath(EditContext &iCtx) const
+std::string const &Value::findActualPropertyPath(AppContext &iCtx) const
 {
   static const std::string kNoProperty{};
 
@@ -317,7 +317,7 @@ std::string Value::toString() const
 //------------------------------------------------------------------------
 // Value::checkForErrors
 //------------------------------------------------------------------------
-Attribute::error_t Value::checkForErrors(EditContext &iCtx) const
+Attribute::error_t Value::checkForErrors(AppContext &iCtx) const
 {
   if(fUseSwitch)
   {
@@ -347,7 +347,7 @@ void Value::resetEdited()
 //------------------------------------------------------------------------
 // Visibility::hdgui2D
 //------------------------------------------------------------------------
-void Visibility::hdgui2D(EditContext &iCtx, attribute_list_t &oAttributes) const
+void Visibility::hdgui2D(AppContext &iCtx, attribute_list_t &oAttributes) const
 {
   if(!fSwitch.fValue.empty())
   {
@@ -359,7 +359,7 @@ void Visibility::hdgui2D(EditContext &iCtx, attribute_list_t &oAttributes) const
 //------------------------------------------------------------------------
 // Visibility::editView
 //------------------------------------------------------------------------
-void Visibility::editView(EditContext &iCtx)
+void Visibility::editView(AppContext &iCtx)
 {
   ImGui::PushID(this);
 
@@ -410,7 +410,7 @@ void Visibility::editView(EditContext &iCtx)
 //------------------------------------------------------------------------
 // Visibility::checkForErrors
 //------------------------------------------------------------------------
-Attribute::error_t Visibility::checkForErrors(EditContext &iCtx) const
+Attribute::error_t Visibility::checkForErrors(AppContext &iCtx) const
 {
   static const Attribute::error_t kNotADiscretePropertyError = "The property must be a discrete property";
   static const Attribute::error_t kEmptyList = "You must provide at least 1 value";
@@ -452,7 +452,7 @@ void Visibility::reset()
 //------------------------------------------------------------------------
 // Visibility::isHidden
 //------------------------------------------------------------------------
-bool Visibility::isHidden(DrawContext const &iCtx) const
+bool Visibility::isHidden(AppContext const &iCtx) const
 {
   auto switchPropertyPath = fSwitch.fValue;
   if(switchPropertyPath.empty())
@@ -482,7 +482,7 @@ Visibility::Visibility() : CompositeAttribute("visibility"), fSwitch{"visibility
 //------------------------------------------------------------------------
 // String::editView
 //------------------------------------------------------------------------
-void String::editView(EditContext &iCtx)
+void String::editView(AppContext &iCtx)
 {
   resetView();
   ImGui::SameLine();
@@ -496,7 +496,7 @@ void String::editView(EditContext &iCtx)
 //------------------------------------------------------------------------
 // Bool::editView
 //------------------------------------------------------------------------
-void Bool::editView(EditContext &iCtx)
+void Bool::editView(AppContext &iCtx)
 {
   resetView();
   ImGui::SameLine();
@@ -510,7 +510,7 @@ void Bool::editView(EditContext &iCtx)
 //------------------------------------------------------------------------
 // Integer::editView
 //------------------------------------------------------------------------
-void Integer::editView(EditContext &iCtx)
+void Integer::editView(AppContext &iCtx)
 {
   resetView();
   ImGui::SameLine();
@@ -524,7 +524,7 @@ void Integer::editView(EditContext &iCtx)
 //------------------------------------------------------------------------
 // PropertyPath::editView
 //------------------------------------------------------------------------
-void PropertyPath::editView(EditContext &iCtx)
+void PropertyPath::editView(AppContext &iCtx)
 {
   editView(iCtx,
            [this] { reset(); },
@@ -540,11 +540,11 @@ void PropertyPath::editView(EditContext &iCtx)
 //------------------------------------------------------------------------
 // PropertyPath::editView
 //------------------------------------------------------------------------
-void PropertyPath::editView(EditContext &iCtx,
+void PropertyPath::editView(AppContext &iCtx,
                             std::function<void()> const &iOnReset,
                             std::function<void(const Property *)> const &iOnSelect,
-                            std::function<void(EditContext &iCtx)> const &iEditPropertyView,
-                            std::function<void(EditContext &iCtx)> const &iTooltipPropertyView)
+                            std::function<void(AppContext &iCtx)> const &iEditPropertyView,
+                            std::function<void(AppContext &iCtx)> const &iTooltipPropertyView)
 {
   menuView(iCtx, iOnReset, iEditPropertyView);
 
@@ -580,10 +580,10 @@ void PropertyPath::editView(EditContext &iCtx,
 //------------------------------------------------------------------------
 // PropertyPath::menuView
 //------------------------------------------------------------------------
-void PropertyPath::menuView(EditContext &iCtx,
+void PropertyPath::menuView(AppContext &iCtx,
                             std::string const &iPropertyPath,
                             std::function<void()> const &iOnReset,
-                            std::function<void(EditContext &iCtx)> const &iEditPropertyView)
+                            std::function<void(AppContext &iCtx)> const &iEditPropertyView)
 {
   if(ImGui::Button("."))
     ImGui::OpenPopup("Menu");
@@ -620,7 +620,7 @@ void PropertyPath::menuView(EditContext &iCtx,
 //------------------------------------------------------------------------
 // PropertyPath::editPropertyView
 //------------------------------------------------------------------------
-void PropertyPath::editPropertyView(EditContext &iCtx, std::string const &iPropertyPath)
+void PropertyPath::editPropertyView(AppContext &iCtx, std::string const &iPropertyPath)
 {
   ImGui::Text("%s", iPropertyPath.c_str());
   iCtx.propertyEditView(iPropertyPath);
@@ -629,7 +629,7 @@ void PropertyPath::editPropertyView(EditContext &iCtx, std::string const &iPrope
 //------------------------------------------------------------------------
 // PropertyPath::tooltipPropertyView
 //------------------------------------------------------------------------
-void PropertyPath::tooltipPropertyView(EditContext &iCtx, std::string const &iPropertyPath)
+void PropertyPath::tooltipPropertyView(AppContext &iCtx, std::string const &iPropertyPath)
 {
   ImGui::TextUnformatted(iCtx.getPropertyInfo(iPropertyPath).c_str());
 }
@@ -637,9 +637,9 @@ void PropertyPath::tooltipPropertyView(EditContext &iCtx, std::string const &iPr
 //------------------------------------------------------------------------
 // PropertyPath::menuView
 //------------------------------------------------------------------------
-void PropertyPath::menuView(EditContext &iCtx,
+void PropertyPath::menuView(AppContext &iCtx,
                             std::function<void()> const &iOnReset,
-                            std::function<void(EditContext &iCtx)> const &iEditPropertyView)
+                            std::function<void(AppContext &iCtx)> const &iEditPropertyView)
 {
   menuView(iCtx, fValue, iOnReset, iEditPropertyView);
 }
@@ -647,7 +647,7 @@ void PropertyPath::menuView(EditContext &iCtx,
 //------------------------------------------------------------------------
 // ObjectPath::editView
 //------------------------------------------------------------------------
-void ObjectPath::editView(EditContext &iCtx)
+void ObjectPath::editView(AppContext &iCtx)
 {
   resetView();
 
@@ -675,7 +675,7 @@ void ObjectPath::editView(EditContext &iCtx)
 //------------------------------------------------------------------------
 // ObjectPath::editView
 //------------------------------------------------------------------------
-void Socket::editView(EditContext &iCtx)
+void Socket::editView(AppContext &iCtx)
 {
   ObjectPath::editView(iCtx);
 
@@ -705,7 +705,7 @@ void Socket::editView(EditContext &iCtx)
 //------------------------------------------------------------------------
 // PropertyPathList::editStaticListView
 //------------------------------------------------------------------------
-void PropertyPathList::editStaticListView(EditContext &iCtx,
+void PropertyPathList::editStaticListView(AppContext &iCtx,
                                           Property::Filter const &iFilter,
                                           std::function<void(int iIndex, const Property *)> const &iOnSelect) const
 {
@@ -749,7 +749,7 @@ void PropertyPathList::editStaticListView(EditContext &iCtx,
 //------------------------------------------------------------------------
 // PropertyPathList::editView
 //------------------------------------------------------------------------
-void PropertyPathList::editView(EditContext &iCtx)
+void PropertyPathList::editView(AppContext &iCtx)
 {
   resetView();
 
@@ -804,7 +804,7 @@ void PropertyPathList::editView(EditContext &iCtx)
 //------------------------------------------------------------------------
 // StaticStringList::editView
 //------------------------------------------------------------------------
-void StaticStringList::editView(EditContext &iCtx)
+void StaticStringList::editView(AppContext &iCtx)
 {
   resetView();
   ImGui::SameLine();
@@ -829,7 +829,7 @@ void StaticStringList::editView(EditContext &iCtx)
 //------------------------------------------------------------------------
 // Index::editView
 //------------------------------------------------------------------------
-void Index::editView(EditContext &iCtx)
+void Index::editView(AppContext &iCtx)
 {
   auto valueAtt = iCtx.getCurrentWidget()->findAttributeByIdAndType<PropertyPath>(fValueAttributeId);
 
@@ -858,7 +858,7 @@ void Index::editView(EditContext &iCtx)
 //------------------------------------------------------------------------
 // Index::checkForErrors
 //------------------------------------------------------------------------
-Attribute::error_t Index::checkForErrors(EditContext &iCtx) const
+Attribute::error_t Index::checkForErrors(AppContext &iCtx) const
 {
   static constexpr auto kIndexNotInRangeError = "Must be in range [0, stepCount - 1]";
 
@@ -873,7 +873,7 @@ Attribute::error_t Index::checkForErrors(EditContext &iCtx) const
 //------------------------------------------------------------------------
 // UserSampleIndex::editView
 //------------------------------------------------------------------------
-void UserSampleIndex::editView(EditContext &iCtx)
+void UserSampleIndex::editView(AppContext &iCtx)
 {
   auto count = iCtx.getUserSamplesCount();
   if(count < 1)
@@ -895,7 +895,7 @@ void UserSampleIndex::editView(EditContext &iCtx)
 //------------------------------------------------------------------------
 // UserSampleIndex::checkForErrors
 //------------------------------------------------------------------------
-Attribute::error_t UserSampleIndex::checkForErrors(EditContext &iCtx) const
+Attribute::error_t UserSampleIndex::checkForErrors(AppContext &iCtx) const
 {
   static constexpr auto kNoUserSamplesError = "No user sample defined";
   static constexpr auto kInvalidUserSampleIndex = "Must be an integer in the range [0,  user_sample-count - 1] "
@@ -916,7 +916,7 @@ Attribute::error_t UserSampleIndex::checkForErrors(EditContext &iCtx) const
 //------------------------------------------------------------------------
 // Values::checkForErrors
 //------------------------------------------------------------------------
-Attribute::error_t Values::checkForErrors(EditContext &iCtx) const
+Attribute::error_t Values::checkForErrors(AppContext &iCtx) const
 {
   static constexpr Attribute::error_t kEmptyListError = "The list must contain at least one entry";
   if(fValue.empty())
@@ -940,7 +940,7 @@ std::string ValueTemplates::getValueAsLua() const
 //------------------------------------------------------------------------
 // ValueTemplates::editView
 //------------------------------------------------------------------------
-void ValueTemplates::editView(EditContext &iCtx)
+void ValueTemplates::editView(AppContext &iCtx)
 {
   resetView();
 
@@ -993,7 +993,7 @@ void ValueTemplates::editView(EditContext &iCtx)
 //------------------------------------------------------------------------
 // ValueTemplates::checkForErrors
 //------------------------------------------------------------------------
-Attribute::error_t ValueTemplates::checkForErrors(EditContext &iCtx) const
+Attribute::error_t ValueTemplates::checkForErrors(AppContext &iCtx) const
 {
   static const Attribute::error_t kInvalidSizeError =
     "May contain one entry, or the same number of entries as the number of entries in values";
@@ -1018,7 +1018,7 @@ Attribute::error_t ValueTemplates::checkForErrors(EditContext &iCtx) const
 //------------------------------------------------------------------------
 // ReadOnly::editView
 //------------------------------------------------------------------------
-void ReadOnly::editView(EditContext &iCtx)
+void ReadOnly::editView(AppContext &iCtx)
 {
   auto previousValue = fValue;
   Bool::editView(iCtx);
@@ -1029,7 +1029,7 @@ void ReadOnly::editView(EditContext &iCtx)
 //------------------------------------------------------------------------
 // ReadOnly::onChanged
 //------------------------------------------------------------------------
-void ReadOnly::onChanged(EditContext &iCtx)
+void ReadOnly::onChanged(AppContext &iCtx)
 {
   static const auto kReadWriteValueFilter = [](const Property &p) {
     return (p.type() == kJBox_Boolean || p.type() == kJBox_Number) && kDocGuiOwnerFilter(p);

@@ -85,14 +85,14 @@ public:
 
   void setDeviceHeightRU(int iDeviceHeightRU);
 
-  void draw(DrawContext &iCtx);
-  void editView(EditContext &iCtx);
-  void editOrderView(EditContext &iCtx);
+  void draw(AppContext &iCtx);
+  void editView(AppContext &iCtx);
+  void editOrderView(AppContext &iCtx);
 
   inline void setBackground(std::shared_ptr<Texture> iBackground) { fGraphics.setTexture(std::move(iBackground)); }
   inline void setCableOrigin(ImVec2 const &iPosition) { fCableOrigin = iPosition; }
   void setOptions(std::vector<std::string> const &iOptions);
-  int addWidget(EditContext &iCtx, std::shared_ptr<Widget> iWidget);
+  int addWidget(AppContext &iCtx, std::shared_ptr<Widget> iWidget);
   std::vector<std::shared_ptr<Widget>> getSelectedWidgets() const;
   std::vector<int> getWidgetsOrder() const { return fWidgetsOrder; }
   std::vector<int> getDecalsOrder() const { return fDecalsOrder; }
@@ -109,7 +109,7 @@ public:
   void swapWidgets(int iIndex1, int iIndex2);
   void swapDecals(int iIndex1, int iIndex2);
 
-  std::string hdgui2D(EditContext &iCtx) const;
+  std::string hdgui2D(AppContext &iCtx) const;
   std::string device2D() const;
 
   friend class PanelState;
@@ -119,20 +119,20 @@ protected:
   void editOrderView(std::vector<int> const &iOrder, F iOnSwap);
 
 private:
-  void selectWidget(DrawContext &iCtx, ImVec2 const &iPosition, bool iMultiple);
+  void selectWidget(AppContext &iCtx, ImVec2 const &iPosition, bool iMultiple);
   std::shared_ptr<Widget> findWidgetOnTopAt(std::vector<int> const &iOrder, ImVec2 const &iPosition) const;
   std::shared_ptr<Widget> findWidgetOnTopAt(ImVec2 const &iPosition) const;
   void moveWidgets(ImVec2 const &iPosition);
   void endMoveWidgets(ImVec2 const &iPosition);
-  void computeIsHidden(DrawContext &iCtx);
-  void checkForWidgetErrors(EditContext &iCtx);
-  void renderAddWidgetMenu(EditContext &iCtx, ImVec2 const &iPosition = {});
-  bool renderSelectedWidgetsMenu(EditContext &iCtx,
+  void computeIsHidden(AppContext &iCtx);
+  void checkForWidgetErrors(AppContext &iCtx);
+  void renderAddWidgetMenu(AppContext &iCtx, ImVec2 const &iPosition = {});
+  bool renderSelectedWidgetsMenu(AppContext &iCtx,
                                  std::vector<std::shared_ptr<Widget>> const &iSelectedWidgets,
                                  std::optional<ImVec2> iPosition = std::nullopt);
-  void renderWidgetMenu(EditContext &iCtx, std::shared_ptr<Widget> const &iWidget);
-  void drawWidgets(DrawContext &iCtx, std::vector<int> const &iOrder);
-  void drawCableOrigin(DrawContext &iCtx);
+  void renderWidgetMenu(AppContext &iCtx, std::shared_ptr<Widget> const &iWidget);
+  void drawWidgets(AppContext &iCtx, std::vector<int> const &iOrder);
+  void drawCableOrigin(AppContext &iCtx);
 
 private:
   PanelType fType;

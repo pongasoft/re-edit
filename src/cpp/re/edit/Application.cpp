@@ -29,15 +29,15 @@ namespace re::edit {
 //------------------------------------------------------------------------
 // Application::Application
 //------------------------------------------------------------------------
-Application::Application(std::shared_ptr<TextureManager> const &iTextureManager) :
-  fTextureManager{iTextureManager},
-  fUserPreferences{std::make_shared<UserPreferences>()},
-  fPropertyManager{std::make_shared<PropertyManager>()},
-  fFrontPanel(PanelType::kFront, iTextureManager, fUserPreferences, fPropertyManager),
-  fFoldedFrontPanel(PanelType::kFoldedFront, iTextureManager, fUserPreferences, fPropertyManager),
-  fBackPanel(PanelType::kBack, iTextureManager, fUserPreferences, fPropertyManager),
-  fFoldedBackPanel(PanelType::kFoldedBack, iTextureManager, fUserPreferences, fPropertyManager)
+Application::Application(std::shared_ptr<TextureManager> iTextureManager) :
+  fFrontPanel(PanelType::kFront),
+  fFoldedFrontPanel(PanelType::kFoldedFront),
+  fBackPanel(PanelType::kBack),
+  fFoldedBackPanel(PanelType::kFoldedBack)
 {
+  fAppContext.fTextureManager = std::move(iTextureManager);
+  fAppContext.fUserPreferences = std::make_shared<UserPreferences>();
+  fAppContext.fPropertyManager = std::make_shared<PropertyManager>();
 }
 
 //------------------------------------------------------------------------
@@ -56,11 +56,11 @@ bool Application::init(std::vector<std::string> iArgs)
 
   auto root = iArgs[0];
 
-  setDeviceHeightRU(fPropertyManager->init(root));
+  setDeviceHeightRU(fAppContext.fPropertyManager->init(root));
 
-  fTextureManager->init(re::mock::fmt::path(root, "GUI2D"));
-  fTextureManager->scanDirectory();
-  fTextureManager->findTextureKeys([](auto const &) { return true; }); // forces preloading the textures to get their sizes
+  fAppContext.fTextureManager->init(re::mock::fmt::path(root, "GUI2D"));
+  fAppContext.fTextureManager->scanDirectory();
+  fAppContext.fTextureManager->findTextureKeys([](auto const &) { return true; }); // forces preloading the textures to get their sizes
 
   initPanels(re::mock::fmt::path(root, "GUI2D", "device_2D.lua"),
              re::mock::fmt::path(root, "GUI2D", "hdgui_2D.lua"));
@@ -75,10 +75,10 @@ void Application::initPanels(std::string const &iDevice2DFile, std::string const
 {
   auto d2d = lua::Device2D::fromFile(iDevice2DFile);
   auto hdg = lua::HDGui2D::fromFile(iHDGui2DFile);
-  fFrontPanel.initPanel(d2d->front(), hdg->front());
-  fFoldedFrontPanel.initPanel(d2d->folded_front(), hdg->folded_front());
-  fBackPanel.initPanel(d2d->back(), hdg->back());
-  fFoldedBackPanel.initPanel(d2d->folded_back(), hdg->folded_back());
+  fFrontPanel.initPanel(fAppContext, d2d->front(), hdg->front());
+  fFoldedFrontPanel.initPanel(fAppContext, d2d->folded_front(), hdg->folded_front());
+  fBackPanel.initPanel(fAppContext, d2d->back(), hdg->back());
+  fFoldedBackPanel.initPanel(fAppContext, d2d->folded_back(), hdg->folded_back());
 }
 
 //------------------------------------------------------------------------
@@ -88,16 +88,16 @@ void Application::render()
 {
   auto loggingManager = LoggingManager::instance();
 
-  fPropertyManager->beforeRenderFrame();
+  fAppContext.fPropertyManager->beforeRenderFrame();
 
   ImGui::Begin("re-edit");
 
   if(ImGui::BeginTabBar("Panels", ImGuiTabBarFlags_None))
   {
-    fFrontPanel.render();
-    fBackPanel.render();
-    fFoldedFrontPanel.render();
-    fFoldedBackPanel.render();
+    fFrontPanel.render(fAppContext);
+    fBackPanel.render(fAppContext);
+    fFoldedFrontPanel.render(fAppContext);
+    fFoldedBackPanel.render(fAppContext);
     ImGui::EndTabBar();
   }
 
@@ -125,7 +125,7 @@ void Application::render()
 
   ImGui::End();
 
-  fPropertyManager->afterRenderFrame();
+  fAppContext.fPropertyManager->afterRenderFrame();
 }
 
 //------------------------------------------------------------------------

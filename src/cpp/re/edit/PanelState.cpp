@@ -24,16 +24,9 @@ namespace re::edit {
 //------------------------------------------------------------------------
 // PanelState::PanelState
 //------------------------------------------------------------------------
-PanelState::PanelState(PanelType iPanelType,
-                       std::shared_ptr<TextureManager> iTextureManager,
-                       std::shared_ptr<UserPreferences> iUserPreferences,
-                       std::shared_ptr<PropertyManager> iPropertyManager) :
+PanelState::PanelState(PanelType iPanelType) :
   fPanel(iPanelType)
 {
-  fDrawContext.fPanelState = this;
-  fDrawContext.fTextureManager = std::move(iTextureManager);
-  fDrawContext.fUserPreferences = std::move(iUserPreferences);
-  fDrawContext.fPropertyManager = std::move(iPropertyManager);
   std::copy_if(std::begin(kAllWidgetDefs), std::end(kAllWidgetDefs), std::back_inserter(fWidgetDefs),
                [iPanelType](auto const &def) { return isPanelOfType(iPanelType, def.fAllowedPanels); });
 }
@@ -41,18 +34,21 @@ PanelState::PanelState(PanelType iPanelType,
 //------------------------------------------------------------------------
 // PanelState::initPanel
 //------------------------------------------------------------------------
-void PanelState::initPanel(std::shared_ptr<lua::panel_nodes> const &iPanelNodes,
+void PanelState::initPanel(AppContext &iCtx,
+                           std::shared_ptr<lua::panel_nodes> const &iPanelNodes,
                            std::shared_ptr<lua::jbox_panel> const &iPanel)
 {
   if(iPanelNodes == nullptr || iPanel == nullptr)
     return;
+
+  iCtx.fCurrentPanelState = this;
 
   // handle background
   {
     auto node = iPanelNodes->findNodeByName(iPanel->fGraphicsNode);
     if(node && node->hasKey())
     {
-      auto background = fDrawContext.fTextureManager->findTexture(node->getKey());
+      auto background = iCtx.fTextureManager->findTexture(node->getKey());
       if(background)
         fPanel.setBackground(std::move(background));
       else
@@ -84,14 +80,14 @@ void PanelState::initPanel(std::shared_ptr<lua::panel_nodes> const &iPanelNodes,
   {
     auto widget = w->fWidget->clone();
 
-    widget->init(fDrawContext);
+    widget->init(iCtx);
 
     auto node = iPanelNodes->findNodeByName(w->fGraphics.fNode);
     if(node)
     {
       if(node->hasKey())
       {
-        auto graphics = fDrawContext.fTextureManager->findTexture(node->getKey());
+        auto graphics = iCtx.fTextureManager->findTexture(node->getKey());
         if(graphics)
         {
           if(graphics->numFrames() != node->fNumFrames)
@@ -111,89 +107,97 @@ void PanelState::initPanel(std::shared_ptr<lua::panel_nodes> const &iPanelNodes,
     }
 
 
-    fPanel.addWidget(fDrawContext, std::move(widget));
+    fPanel.addWidget(iCtx, std::move(widget));
   }
+
+  iCtx.fCurrentPanelState = nullptr;
 }
 
 //------------------------------------------------------------------------
 // PanelState::render
 //------------------------------------------------------------------------
-void PanelState::render()
+void PanelState::render(AppContext &iCtx)
 {
   if(ImGui::BeginTabItem(fPanel.getName()))
   {
-    fPanel.computeIsHidden(fDrawContext);
-    fPanel.checkForWidgetErrors(fDrawContext);
+    iCtx.fCurrentPanelState = this;
+    iCtx.fZoom = fZoom;
 
-    int zoom = static_cast<int>(fDrawContext.fZoom * 5);
+    fPanel.computeIsHidden(iCtx);
+    fPanel.checkForWidgetErrors(iCtx);
+
+    int zoom = static_cast<int>(iCtx.fZoom * 5);
     if(ImGui::SliderInt("zoom", &zoom, 1, 10))
-      fDrawContext.fZoom = static_cast<float>(zoom) / 5.0f;
+      iCtx.fZoom = static_cast<float>(zoom) / 5.0f;
     ImGui::SameLine();
-    ImGui::Text("%d%%", static_cast<int>(fDrawContext.fZoom * 100));
+    ImGui::Text("%d%%", static_cast<int>(iCtx.fZoom * 100));
 
     ImGui::PushID("Border");
     ImGui::AlignTextToFramePadding();
     ImGui::Text("Border");
     ImGui::SameLine();
-    ReGui::RadioButton("None", &fDrawContext.fShowBorder, EditContext::ShowBorder::kNone);
+    ReGui::RadioButton("None", &iCtx.fShowBorder, AppContext::ShowBorder::kNone);
     ImGui::SameLine();
-    ReGui::RadioButton("Widget", &fDrawContext.fShowBorder, EditContext::ShowBorder::kWidget);
+    ReGui::RadioButton("Widget", &iCtx.fShowBorder, AppContext::ShowBorder::kWidget);
     ImGui::SameLine();
-    ReGui::RadioButton("Hit Boundaries", &fDrawContext.fShowBorder, EditContext::ShowBorder::kHitBoundaries);
+    ReGui::RadioButton("Hit Boundaries", &iCtx.fShowBorder, AppContext::ShowBorder::kHitBoundaries);
     ImGui::PopID();
 
     ImGui::PushID("Custom Display");
     ImGui::AlignTextToFramePadding();
     ImGui::Text("Custom Display");
     ImGui::SameLine();
-    ReGui::RadioButton("None", &fDrawContext.fShowCustomDisplay, EditContext::ShowCustomDisplay::kNone);
+    ReGui::RadioButton("None", &iCtx.fShowCustomDisplay, AppContext::ShowCustomDisplay::kNone);
     ImGui::SameLine();
-    ReGui::RadioButton("Main", &fDrawContext.fShowCustomDisplay, EditContext::ShowCustomDisplay::kMain);
+    ReGui::RadioButton("Main", &iCtx.fShowCustomDisplay, AppContext::ShowCustomDisplay::kMain);
     ImGui::SameLine();
-    ReGui::RadioButton("SD Bg", &fDrawContext.fShowCustomDisplay, EditContext::ShowCustomDisplay::kBackgroundSD);
+    ReGui::RadioButton("SD Bg", &iCtx.fShowCustomDisplay, AppContext::ShowCustomDisplay::kBackgroundSD);
     ImGui::SameLine();
-    ReGui::RadioButton("HD Bg", &fDrawContext.fShowCustomDisplay, EditContext::ShowCustomDisplay::kBackgroundHD);
+    ReGui::RadioButton("HD Bg", &iCtx.fShowCustomDisplay, AppContext::ShowCustomDisplay::kBackgroundHD);
     ImGui::PopID();
 
     ImGui::PushID("Sample Drop Zone");
     ImGui::AlignTextToFramePadding();
     ImGui::Text("Sample Drop Zone");
     ImGui::SameLine();
-    ReGui::RadioButton("None", &fDrawContext.fShowSampleDropZone, EditContext::ShowSampleDropZone::kNone);
+    ReGui::RadioButton("None", &iCtx.fShowSampleDropZone, AppContext::ShowSampleDropZone::kNone);
     ImGui::SameLine();
-    ReGui::RadioButton("Fill", &fDrawContext.fShowSampleDropZone, EditContext::ShowSampleDropZone::kFill);
+    ReGui::RadioButton("Fill", &iCtx.fShowSampleDropZone, AppContext::ShowSampleDropZone::kFill);
     ImGui::PopID();
 
-    ReGui::ToggleButton("Show Panel", "Hide Panel", &fShowPanel);
+    ReGui::ToggleButton("Show Panel", "Hide Panel", &iCtx.fShowPanel);
     ImGui::SameLine();
-    ReGui::ToggleButton("Show Panel Widgets", "Hide Panel Widgets", &fShowPanelWidgets);
+    ReGui::ToggleButton("Show Panel Widgets", "Hide Panel Widgets", &iCtx.fShowPanelWidgets);
     ImGui::SameLine();
-    ReGui::ToggleButton("Show Widgets", "Hide Widgets", &fShowWidgets);
+    ReGui::ToggleButton("Show Widgets", "Hide Widgets", &iCtx.fShowWidgets);
     ImGui::SameLine();
-    ReGui::ToggleButton("Show Properties", "Hide Properties", &fDrawContext.fShowProperties);
+    ReGui::ToggleButton("Show Properties", "Hide Properties", &iCtx.fShowProperties);
 
-    if(fShowPanel)
-      renderPanel();
+    if(iCtx.fShowPanel)
+      renderPanel(iCtx);
 
-    if(fShowPanelWidgets)
-      renderPanelWidgets();
+    if(iCtx.fShowPanelWidgets)
+      renderPanelWidgets(iCtx);
 
-    if(fShowWidgets)
-      renderWidgets();
+    if(iCtx.fShowWidgets)
+      renderWidgets(iCtx);
 
-    if(fDrawContext.fShowProperties)
-      renderProperties();
+    if(iCtx.fShowProperties)
+      renderProperties(iCtx);
 
     ImGui::EndTabItem();
+
+    fZoom = iCtx.fZoom;
+    iCtx.fCurrentPanelState = nullptr;
   }
 }
 
 //------------------------------------------------------------------------
 // PanelState::renderWidgets
 //------------------------------------------------------------------------
-void PanelState::renderWidgets()
+void PanelState::renderWidgets(AppContext &iCtx)
 {
-  if(ImGui::Begin("Widgets", &fShowWidgets))
+  if(ImGui::Begin("Widgets", &iCtx.fShowWidgets))
   {
     // Add widget Button + Popup
     {
@@ -205,7 +209,7 @@ void PanelState::renderWidgets()
         for(auto const &def: fWidgetDefs)
         {
           if(ImGui::MenuItem(def.fName))
-            fPanel.addWidget(fDrawContext, def.fFactory());
+            fPanel.addWidget(iCtx, def.fFactory());
         }
         ImGui::EndPopup();
       }
@@ -220,7 +224,7 @@ void PanelState::renderWidgets()
       if(ImGui::Button("Dup"))
       {
         for(auto const &w: selectedWidgets)
-          fPanel.addWidget(fDrawContext, w->copy());
+          fPanel.addWidget(iCtx, w->copy());
       }
 
       ImGui::SameLine();
@@ -243,7 +247,7 @@ void PanelState::renderWidgets()
     // Show list of widgets
     if(ImGui::BeginTabBar("Widgets & Decals", ImGuiTabBarFlags_None))
     {
-      fPanel.editOrderView(fDrawContext);
+      fPanel.editOrderView(iCtx);
       ImGui::EndTabBar();
     }
   }
@@ -253,21 +257,21 @@ void PanelState::renderWidgets()
 //------------------------------------------------------------------------
 // PanelState::renderPanel
 //------------------------------------------------------------------------
-void PanelState::renderPanel()
+void PanelState::renderPanel(AppContext &iCtx)
 {
-  if(ImGui::Begin("Panel", &fShowPanel, ImGuiWindowFlags_HorizontalScrollbar))
-    fPanel.draw(fDrawContext);
+  if(ImGui::Begin("Panel", &iCtx.fShowPanel, ImGuiWindowFlags_HorizontalScrollbar))
+    fPanel.draw(iCtx);
   ImGui::End();
 }
 
 //------------------------------------------------------------------------
 // PanelState::renderPanelWidgets
 //------------------------------------------------------------------------
-void PanelState::renderPanelWidgets()
+void PanelState::renderPanelWidgets(AppContext &iCtx)
 {
-  if(ImGui::Begin("Panel Widgets", &fShowPanelWidgets, ImGuiWindowFlags_HorizontalScrollbar))
+  if(ImGui::Begin("Panel Widgets", &iCtx.fShowPanelWidgets, ImGuiWindowFlags_HorizontalScrollbar))
   {
-    fPanel.editView(fDrawContext);
+    fPanel.editView(iCtx);
   }
   ImGui::End();
 }
@@ -275,9 +279,9 @@ void PanelState::renderPanelWidgets()
 //------------------------------------------------------------------------
 // PanelState::renderProperties
 //------------------------------------------------------------------------
-void PanelState::renderProperties()
+void PanelState::renderProperties(AppContext &iCtx)
 {
-  if(ImGui::Begin("Properties", &fDrawContext.fShowProperties, ImGuiWindowFlags_HorizontalScrollbar))
+  if(ImGui::Begin("Properties", &iCtx.fShowProperties, ImGuiWindowFlags_HorizontalScrollbar))
   {
     {
       if(ImGui::Button("Add"))
@@ -285,12 +289,12 @@ void PanelState::renderProperties()
 
       if(ImGui::BeginPopup("add_property"))
       {
-        auto properties = fDrawContext.fPropertyManager->getNotWatchList();
+        auto properties = iCtx.fPropertyManager->getNotWatchList();
 
         for(auto const &path: properties)
         {
           if(ImGui::Selectable(path.c_str()))
-            fDrawContext.fPropertyManager->addToWatchlist(path);
+            iCtx.fPropertyManager->addToWatchlist(path);
         }
         ImGui::EndPopup();
       }
@@ -298,13 +302,13 @@ void PanelState::renderProperties()
 
     ImGui::SameLine();
     if(ImGui::Button("Clr"))
-      fDrawContext.fPropertyManager->clearWatchList();
+      iCtx.fPropertyManager->clearWatchList();
 
     ImGui::Separator();
 
     if(ImGui::BeginChild("Content"))
     {
-      auto properties = fDrawContext.fPropertyManager->getWatchList();
+      auto properties = iCtx.fPropertyManager->getWatchList();
 
       if(!properties.empty())
       {
@@ -312,19 +316,19 @@ void PanelState::renderProperties()
         {
           ImGui::PushID(path.c_str());
           if(ImGui::Button("X"))
-            fDrawContext.fPropertyManager->removeFromWatchlist(path);
+            iCtx.fPropertyManager->removeFromWatchlist(path);
           ImGui::SameLine();
           ImGui::TextWrapped("%s", path.c_str());
           if(ImGui::IsItemHovered())
           {
             ImGui::BeginTooltip();
             ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
-            ImGui::TextUnformatted(fDrawContext.getPropertyInfo(path).c_str());
+            ImGui::TextUnformatted(iCtx.getPropertyInfo(path).c_str());
             ImGui::PopTextWrapPos();
             ImGui::EndTooltip();
           }
           ImGui::Indent();
-          fDrawContext.fPropertyManager->editView(path);
+          iCtx.fPropertyManager->editView(path);
           ImGui::Unindent();
           ImGui::PopID();
         }

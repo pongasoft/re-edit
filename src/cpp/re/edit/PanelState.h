@@ -28,33 +28,28 @@ namespace re::edit {
 class PanelState
 {
 public:
-  PanelState(PanelType iPanelType,
-             std::shared_ptr<TextureManager> iTextureManager,
-             std::shared_ptr<UserPreferences> iUserPreferences,
-             std::shared_ptr<PropertyManager> iPropertyManager);
+  PanelState(PanelType iPanelType);
 
-  void initPanel(std::shared_ptr<lua::panel_nodes> const &iPanelNodes,
+  void initPanel(AppContext &iCtx,
+                 std::shared_ptr<lua::panel_nodes> const &iPanelNodes,
                  std::shared_ptr<lua::jbox_panel> const &iPanel);
 
-  void render();
+  void render(AppContext &iCtx);
 
-  friend class EditContext;
+  friend class AppContext;
 
 protected:
-  void renderWidgets();
-  void renderPanel();
-  void renderPanelWidgets();
-  void renderProperties();
+  void renderWidgets(AppContext &iCtx);
+  void renderPanel(AppContext &iCtx);
+  void renderPanelWidgets(AppContext &iCtx);
+  void renderProperties(AppContext &iCtx);
 
 public:
   Panel fPanel;
 
 private:
-  DrawContext fDrawContext;
   std::vector<WidgetDef> fWidgetDefs{};
-  bool fShowPanel{true};
-  bool fShowPanelWidgets{true};
-  bool fShowWidgets{};
+  float fZoom{0.20f};
 };
 
 }

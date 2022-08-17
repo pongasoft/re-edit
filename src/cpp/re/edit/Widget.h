@@ -21,8 +21,7 @@
 
 #include "Constants.h"
 #include "Texture.h"
-#include "EditContext.h"
-#include "DrawContext.h"
+#include "AppContext.h"
 #include "WidgetAttribute.h"
 #include "Graphics.h"
 #include "Errors.h"
@@ -77,13 +76,13 @@ public:
 
   inline bool contains(ImVec2 const &iPosition) const { return fGraphics->contains(iPosition); }
 
-  void init(EditContext &iCtx);
-  void draw(DrawContext &iCtx);
-  void editView(EditContext &iCtx);
-  bool checkForErrors(EditContext &iCtx, bool iForceCheck = false);
-  bool errorView(EditContext &iCtx);
+  void init(AppContext &iCtx);
+  void draw(AppContext &iCtx);
+  void editView(AppContext &iCtx);
+  bool checkForErrors(AppContext &iCtx, bool iForceCheck = false);
+  bool errorView(AppContext &iCtx);
 
-  std::string hdgui2D(EditContext &iCtx) const;
+  std::string hdgui2D(AppContext &iCtx) const;
   std::string device2D() const { return fGraphics->device2D(); }
 
   std::unique_ptr<Widget> copy() const;
@@ -135,7 +134,7 @@ public:
   friend class Panel;
 
 protected:
-  void computeIsHidden(DrawContext &iCtx);
+  void computeIsHidden(AppContext &iCtx);
   bool isPanelDecal() const { return fType == WidgetType::kPanelDecal; }
 
 protected:

@@ -85,7 +85,7 @@ std::shared_ptr<Widget> Panel::getWidget(int id) const
 //------------------------------------------------------------------------
 // Panel::draw
 //------------------------------------------------------------------------
-void Panel::draw(DrawContext &iCtx)
+void Panel::draw(AppContext &iCtx)
 {
   std::string dragState{"N/A"};
 
@@ -200,7 +200,7 @@ void Panel::draw(DrawContext &iCtx)
 //------------------------------------------------------------------------
 // Panel::drawWidgets
 //------------------------------------------------------------------------
-void Panel::drawWidgets(DrawContext &iCtx, std::vector<int> const &iOrder)
+void Panel::drawWidgets(AppContext &iCtx, std::vector<int> const &iOrder)
 {
   for(auto id: iOrder)
   {
@@ -212,7 +212,7 @@ void Panel::drawWidgets(DrawContext &iCtx, std::vector<int> const &iOrder)
 //------------------------------------------------------------------------
 // Panel::drawCableOrigin
 //------------------------------------------------------------------------
-void Panel::drawCableOrigin(DrawContext &iCtx)
+void Panel::drawCableOrigin(AppContext &iCtx)
 {
   static constexpr auto kCableOriginSize = 10.0f;
   if(fShowCableOrigin && fCableOrigin)
@@ -230,7 +230,7 @@ void Panel::drawCableOrigin(DrawContext &iCtx)
 //------------------------------------------------------------------------
 // Panel::renderAddWidgetMenu
 //------------------------------------------------------------------------
-void Panel::renderAddWidgetMenu(EditContext &iCtx, ImVec2 const &iPosition)
+void Panel::renderAddWidgetMenu(AppContext &iCtx, ImVec2 const &iPosition)
 {
   if(ImGui::BeginMenu("Add Widget"))
   {
@@ -249,7 +249,7 @@ void Panel::renderAddWidgetMenu(EditContext &iCtx, ImVec2 const &iPosition)
 //------------------------------------------------------------------------
 // Panel::renderWidgetMenu
 //------------------------------------------------------------------------
-void Panel::renderWidgetMenu(EditContext &iCtx, std::shared_ptr<Widget> const &iWidget)
+void Panel::renderWidgetMenu(AppContext &iCtx, std::shared_ptr<Widget> const &iWidget)
 {
   if(ImGui::MenuItem(re::mock::fmt::printf("%s %s",
                                            iWidget->isSelected() ? "Unselect" : "Select",
@@ -266,7 +266,7 @@ void Panel::renderWidgetMenu(EditContext &iCtx, std::shared_ptr<Widget> const &i
 //------------------------------------------------------------------------
 // Panel::renderSelectedWidgetsMenu
 //------------------------------------------------------------------------
-bool Panel::renderSelectedWidgetsMenu(EditContext &iCtx,
+bool Panel::renderSelectedWidgetsMenu(AppContext &iCtx,
                                       std::vector<std::shared_ptr<Widget>> const &iSelectedWidgets,
                                       std::optional<ImVec2> iPosition)
 {
@@ -321,7 +321,7 @@ bool Panel::renderSelectedWidgetsMenu(EditContext &iCtx,
 //------------------------------------------------------------------------
 // Panel::addWidget
 //------------------------------------------------------------------------
-int Panel::addWidget(EditContext &iCtx, std::shared_ptr<Widget> iWidget)
+int Panel::addWidget(AppContext &iCtx, std::shared_ptr<Widget> iWidget)
 {
   RE_EDIT_INTERNAL_ASSERT(iWidget != nullptr);
 
@@ -398,7 +398,7 @@ std::shared_ptr<Widget> Panel::findWidgetOnTopAt(ImVec2 const &iPosition) const
 //------------------------------------------------------------------------
 // Panel::selectWidget
 //------------------------------------------------------------------------
-void Panel::selectWidget(DrawContext &iCtx, ImVec2 const &iPosition, bool iMultiple)
+void Panel::selectWidget(AppContext &iCtx, ImVec2 const &iPosition, bool iMultiple)
 {
   auto widget = findWidgetOnTopAt(iPosition);
   if(!widget)
@@ -524,7 +524,7 @@ std::vector<std::shared_ptr<Widget>> Panel::getSelectedWidgets() const
 //------------------------------------------------------------------------
 // PanelState::checkForWidgetErrors
 //------------------------------------------------------------------------
-void Panel::checkForWidgetErrors(EditContext &iCtx)
+void Panel::checkForWidgetErrors(AppContext &iCtx)
 {
   for(auto &[n, widget]: fWidgets)
     widget->checkForErrors(iCtx);
@@ -533,7 +533,7 @@ void Panel::checkForWidgetErrors(EditContext &iCtx)
 //------------------------------------------------------------------------
 // PanelState::computeIsHidden
 //------------------------------------------------------------------------
-void Panel::computeIsHidden(DrawContext &iCtx)
+void Panel::computeIsHidden(AppContext &iCtx)
 {
   for(auto &[n, widget]: fWidgets)
     widget->computeIsHidden(iCtx);
@@ -542,7 +542,7 @@ void Panel::computeIsHidden(DrawContext &iCtx)
 //------------------------------------------------------------------------
 // Panel::editView
 //------------------------------------------------------------------------
-void Panel::editView(EditContext &iCtx)
+void Panel::editView(AppContext &iCtx)
 {
   auto selectedWidgets = getSelectedWidgets(); // TODO duplicate call... optimize!!!
 
@@ -714,7 +714,7 @@ void Panel::editView(EditContext &iCtx)
 //------------------------------------------------------------------------
 // Panel::editOrderView
 //------------------------------------------------------------------------
-void Panel::editOrderView(EditContext &iCtx)
+void Panel::editOrderView(AppContext &iCtx)
 {
   if(ImGui::BeginTabItem("Widgets"))
   {
@@ -769,7 +769,7 @@ char const *Panel::getName() const
 //------------------------------------------------------------------------
 // Panel::hdgui2D
 //------------------------------------------------------------------------
-std::string Panel::hdgui2D(EditContext &iCtx) const
+std::string Panel::hdgui2D(AppContext &iCtx) const
 {
   auto panelName = toString(fType);
 

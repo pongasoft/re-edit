@@ -21,9 +21,8 @@
 
 #include "TextureManager.h"
 #include "imgui.h"
-#include "DrawContext.h"
 #include "Panel.h"
-#include "EditContext.h"
+#include "AppContext.h"
 #include "PropertyManager.h"
 #include "lua/HDGui2D.h"
 #include "lua/Device2D.h"
@@ -34,7 +33,7 @@ namespace re::edit {
 class Application
 {
 public:
-  explicit Application(std::shared_ptr<TextureManager> const &iTextureManager);
+  explicit Application(std::shared_ptr<TextureManager> iTextureManager);
 
   bool init(std::vector<std::string> iArgs);
   void setDeviceHeightRU(int iDeviceHeightRU);
@@ -48,10 +47,8 @@ protected:
   void initPanels(std::string const &iDevice2DFile, std::string const &iHDGui2DFile);
 
 private:
-  std::shared_ptr<TextureManager> fTextureManager;
-  std::shared_ptr<UserPreferences> fUserPreferences;
-  std::shared_ptr<PropertyManager> fPropertyManager{};
   int fDeviceHeightRU{1};
+  AppContext fAppContext;
   PanelState fFrontPanel;
   PanelState fFoldedFrontPanel;
   PanelState fBackPanel;

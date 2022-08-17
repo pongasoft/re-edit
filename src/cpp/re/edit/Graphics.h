@@ -43,7 +43,7 @@ class Graphics : public Attribute
 public:
   Graphics() : Attribute("graphics") {}
 
-  void hdgui2D(EditContext &iCtx, attribute_list_t &oAttributes) const override;
+  void hdgui2D(AppContext &iCtx, attribute_list_t &oAttributes) const override;
   void hdgui2D(std::string const &iNodeName, attribute_list_t &oAttributes) const;
 
   std::string device2D() const;
@@ -75,20 +75,20 @@ public:
 
   void reset() override;
 
-  void editPositionView(EditContext &iCtx);
-  void editView(EditContext &iCtx) override;
-  void editHitBoundariesView(EditContext &iCtx);
+  void editPositionView(AppContext &iCtx);
+  void editView(AppContext &iCtx) override;
+  void editHitBoundariesView(AppContext &iCtx);
 
-  void editView(EditContext &iCtx,
+  void editView(AppContext &iCtx,
                 FilmStrip::Filter const &iFilter,
                 std::function<void(std::string const &)> const &iOnTextureUpdate,
                 std::function<void(ImVec2 const &)> const &iOnSizeUpdate);
 
-  error_t checkForErrors(EditContext &iCtx) const override;
+  error_t checkForErrors(AppContext &iCtx) const override;
 
-  void draw(DrawContext &iCtx, const ImVec4& iBorderCol) const;
-  void drawBorder(DrawContext &iCtx, const ImVec4& iBorderCol) const;
-  void drawHitBoundaries(DrawContext &iCtx, const ImVec4& iColor) const;
+  void draw(AppContext &iCtx, const ImVec4& iBorderCol) const;
+  void drawBorder(AppContext &iCtx, const ImVec4& iBorderCol) const;
+  void drawHitBoundaries(AppContext &iCtx, const ImVec4& iColor) const;
 
   std::unique_ptr<Attribute> clone() const override { return Attribute::clone<Graphics>(*this); }
 
@@ -109,8 +109,8 @@ public:
 
   std::string getValueAsLua() const override;
 
-  void editView(EditContext &iCtx) override;
-  bool draw(DrawContext &iCtx, Graphics const *iParent) const;
+  void editView(AppContext &iCtx) override;
+  bool draw(AppContext &iCtx, Graphics const *iParent) const;
 
   std::unique_ptr<Attribute> clone() const override { return Attribute::clone<Background>(*this); }
 };

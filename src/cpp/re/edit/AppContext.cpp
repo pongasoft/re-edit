@@ -16,32 +16,57 @@
  * @author Yan Pujante
  */
 
-#include "DrawContext.h"
-#include "ReGui.h"
-#include "imgui_internal.h"
+#include "AppContext.h"
+#include "Widget.h"
+#include "PanelState.h"
 
 namespace re::edit {
 
 //------------------------------------------------------------------------
-// DrawContext::TextureItem
+// AppContext::renderAddWidgetMenuView
 //------------------------------------------------------------------------
-void DrawContext::TextureItem(Texture const *iTexture, ImVec2 const &iPosition, int iFrameNumber, const ImVec4& iBorderCol) const
+void AppContext::renderAddWidgetMenuView(ImVec2 const &iPosition)
+{
+  for(auto const &def: fCurrentPanelState->fWidgetDefs)
+  {
+    if(ImGui::MenuItem(def.fName))
+    {
+      auto widget = def.fFactory();
+      widget->setPosition(iPosition);
+      widget->setSelected(true);
+      fCurrentPanelState->fPanel.addWidget(*this, std::move(widget));
+    }
+  }
+}
+
+//------------------------------------------------------------------------
+// AppContext::getPanelSize
+//------------------------------------------------------------------------
+ImVec2 AppContext::getPanelSize() const
+{
+  return fCurrentPanelState->fPanel.getSize();
+}
+
+//------------------------------------------------------------------------
+// AppContext::TextureItem
+//------------------------------------------------------------------------
+void AppContext::TextureItem(Texture const *iTexture, ImVec2 const &iPosition, int iFrameNumber, const ImVec4& iBorderCol) const
 {
   iTexture->Item(iPosition, fZoom, iFrameNumber, iBorderCol);
 }
 
 //------------------------------------------------------------------------
-// DrawContext::drawTexture
+// AppContext::drawTexture
 //------------------------------------------------------------------------
-void DrawContext::drawTexture(Texture const *iTexture, ImVec2 const &iPosition, int iFrameNumber, const ImVec4& iBorderCol) const
+void AppContext::drawTexture(Texture const *iTexture, ImVec2 const &iPosition, int iFrameNumber, const ImVec4& iBorderCol) const
 {
   iTexture->draw(iPosition, fZoom, iFrameNumber, iBorderCol);
 }
 
 //------------------------------------------------------------------------
-// DrawContext::drawRect
+// AppContext::drawRect
 //------------------------------------------------------------------------
-void DrawContext::drawRect(ImVec2 const &iPosition, ImVec2 const &iSize, ImU32 iColor) const
+void AppContext::drawRect(ImVec2 const &iPosition, ImVec2 const &iSize, ImU32 iColor) const
 {
   auto const cp = ImGui::GetCursorScreenPos();
   ImVec2 pos(cp + iPosition * fZoom);
@@ -50,9 +75,9 @@ void DrawContext::drawRect(ImVec2 const &iPosition, ImVec2 const &iSize, ImU32 i
 }
 
 //------------------------------------------------------------------------
-// DrawContext::drawRectFilled
+// AppContext::drawRectFilled
 //------------------------------------------------------------------------
-void DrawContext::drawRectFilled(ImVec2 const &iPosition,
+void AppContext::drawRectFilled(ImVec2 const &iPosition,
                                  ImVec2 const &iSize,
                                  ImU32 iColor,
                                  float iRounding,
@@ -65,13 +90,14 @@ void DrawContext::drawRectFilled(ImVec2 const &iPosition,
 }
 
 //------------------------------------------------------------------------
-// DrawContext::drawLine
+// AppContext::drawLine
 //------------------------------------------------------------------------
-void DrawContext::drawLine(const ImVec2& iP1, const ImVec2& iP2, ImU32 iColor, float iThickness) const
+void AppContext::drawLine(const ImVec2& iP1, const ImVec2& iP2, ImU32 iColor, float iThickness) const
 {
   auto const cp = ImGui::GetCursorScreenPos();
   auto drawList = ImGui::GetWindowDrawList();
   drawList->AddLine(cp + iP1 * fZoom, cp + iP2 * fZoom, iColor, iThickness);
 }
+
 
 }

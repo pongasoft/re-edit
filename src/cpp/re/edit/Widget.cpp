@@ -107,7 +107,7 @@ Widget::Widget(Widget const &iOther, std::string iName) :
 //------------------------------------------------------------------------
 // Widget::draw
 //------------------------------------------------------------------------
-void Widget::draw(DrawContext &iCtx)
+void Widget::draw(AppContext &iCtx)
 {
   if(isHidden())
     return;
@@ -117,7 +117,7 @@ void Widget::draw(DrawContext &iCtx)
     borderColor = iCtx.getUserPreferences().fSelectedWidgetColor;
   else
   {
-    if(iCtx.fShowBorder == DrawContext::ShowBorder::kWidget)
+    if(iCtx.fShowBorder == AppContext::ShowBorder::kWidget)
       borderColor = iCtx.getUserPreferences().fWidgetBorderColor;
   }
 
@@ -126,14 +126,14 @@ void Widget::draw(DrawContext &iCtx)
     case WidgetType::kCustomDisplay:
       switch(iCtx.fShowCustomDisplay)
       {
-        case EditContext::ShowCustomDisplay::kNone:
+        case AppContext::ShowCustomDisplay::kNone:
           fGraphics->drawBorder(iCtx, borderColor);
           break;
-        case EditContext::ShowCustomDisplay::kMain:
+        case AppContext::ShowCustomDisplay::kMain:
           fGraphics->draw(iCtx, borderColor);
           break;
-        case EditContext::ShowCustomDisplay::kBackgroundSD:
-        case EditContext::ShowCustomDisplay::kBackgroundHD:
+        case AppContext::ShowCustomDisplay::kBackgroundSD:
+        case AppContext::ShowCustomDisplay::kBackgroundHD:
         {
           auto bgAttribute = findAttributeByNameAndType<Background>("background");
           bgAttribute->draw(iCtx, fGraphics);
@@ -148,10 +148,10 @@ void Widget::draw(DrawContext &iCtx)
     case WidgetType::kSampleDropZone:
       switch(iCtx.fShowSampleDropZone)
       {
-        case EditContext::ShowSampleDropZone::kNone:
+        case AppContext::ShowSampleDropZone::kNone:
           fGraphics->drawBorder(iCtx, borderColor);
           break;
-        case EditContext::ShowSampleDropZone::kFill:
+        case AppContext::ShowSampleDropZone::kFill:
           fGraphics->draw(iCtx, borderColor);
           break;
       }
@@ -182,7 +182,7 @@ bool Widget::hasAttributeErrors() const
 //------------------------------------------------------------------------
 // Widget::init
 //------------------------------------------------------------------------
-void Widget::init(EditContext &iCtx)
+void Widget::init(AppContext &iCtx)
 {
   iCtx.setCurrentWidget(this);
   for(auto &att: fAttributes)
@@ -193,7 +193,7 @@ void Widget::init(EditContext &iCtx)
 //------------------------------------------------------------------------
 // Widget::checkForErrors
 //------------------------------------------------------------------------
-bool Widget::checkForErrors(EditContext &iCtx, bool iForceCheck)
+bool Widget::checkForErrors(AppContext &iCtx, bool iForceCheck)
 {
   fError = false;
 
@@ -217,7 +217,7 @@ bool Widget::checkForErrors(EditContext &iCtx, bool iForceCheck)
 //------------------------------------------------------------------------
 // Widget::errorView
 //------------------------------------------------------------------------
-bool Widget::errorView(EditContext &iCtx)
+bool Widget::errorView(AppContext &iCtx)
 {
   if(fError)
   {
@@ -243,7 +243,7 @@ bool Widget::errorView(EditContext &iCtx)
 //------------------------------------------------------------------------
 // Widget::editView
 //------------------------------------------------------------------------
-void Widget::editView(EditContext &iCtx)
+void Widget::editView(AppContext &iCtx)
 {
   iCtx.setCurrentWidget(this);
 
@@ -306,7 +306,7 @@ void Widget::editView(EditContext &iCtx)
 //------------------------------------------------------------------------
 // Widget::hdgui2D
 //------------------------------------------------------------------------
-std::string Widget::hdgui2D(EditContext &iCtx) const
+std::string Widget::hdgui2D(AppContext &iCtx) const
 {
   iCtx.setCurrentWidget(this);
 
@@ -950,7 +950,7 @@ std::unique_ptr<Widget> Widget::clone() const
 //------------------------------------------------------------------------
 // Widget::computeIsHidden
 //------------------------------------------------------------------------
-void Widget::computeIsHidden(DrawContext &iCtx)
+void Widget::computeIsHidden(AppContext &iCtx)
 {
   fHidden = fVisibility != nullptr && fVisibility->isHidden(iCtx);
 }
