@@ -120,6 +120,8 @@ void PanelState::render(AppContext &iCtx)
 {
   if(ImGui::BeginTabItem(fPanel.getName()))
   {
+    bool switchedTab = iCtx.fCurrentPanelState != this;
+
     iCtx.fCurrentPanelState = this;
     iCtx.fZoom = fZoom;
 
@@ -132,49 +134,8 @@ void PanelState::render(AppContext &iCtx)
     ImGui::SameLine();
     ImGui::Text("%d%%", static_cast<int>(iCtx.fZoom * 100));
 
-    ImGui::PushID("Border");
-    ImGui::AlignTextToFramePadding();
-    ImGui::Text("Border");
-    ImGui::SameLine();
-    ReGui::RadioButton("None", &iCtx.fShowBorder, AppContext::ShowBorder::kNone);
-    ImGui::SameLine();
-    ReGui::RadioButton("Widget", &iCtx.fShowBorder, AppContext::ShowBorder::kWidget);
-    ImGui::SameLine();
-    ReGui::RadioButton("Hit Boundaries", &iCtx.fShowBorder, AppContext::ShowBorder::kHitBoundaries);
-    ImGui::PopID();
-
-    ImGui::PushID("Custom Display");
-    ImGui::AlignTextToFramePadding();
-    ImGui::Text("Custom Display");
-    ImGui::SameLine();
-    ReGui::RadioButton("None", &iCtx.fShowCustomDisplay, AppContext::ShowCustomDisplay::kNone);
-    ImGui::SameLine();
-    ReGui::RadioButton("Main", &iCtx.fShowCustomDisplay, AppContext::ShowCustomDisplay::kMain);
-    ImGui::SameLine();
-    ReGui::RadioButton("SD Bg", &iCtx.fShowCustomDisplay, AppContext::ShowCustomDisplay::kBackgroundSD);
-    ImGui::SameLine();
-    ReGui::RadioButton("HD Bg", &iCtx.fShowCustomDisplay, AppContext::ShowCustomDisplay::kBackgroundHD);
-    ImGui::PopID();
-
-    ImGui::PushID("Sample Drop Zone");
-    ImGui::AlignTextToFramePadding();
-    ImGui::Text("Sample Drop Zone");
-    ImGui::SameLine();
-    ReGui::RadioButton("None", &iCtx.fShowSampleDropZone, AppContext::ShowSampleDropZone::kNone);
-    ImGui::SameLine();
-    ReGui::RadioButton("Fill", &iCtx.fShowSampleDropZone, AppContext::ShowSampleDropZone::kFill);
-    ImGui::PopID();
-
-    ReGui::ToggleButton("Show Panel", "Hide Panel", &iCtx.fShowPanel);
-    ImGui::SameLine();
-    ReGui::ToggleButton("Show Panel Widgets", "Hide Panel Widgets", &iCtx.fShowPanelWidgets);
-    ImGui::SameLine();
-    ReGui::ToggleButton("Show Widgets", "Hide Widgets", &iCtx.fShowWidgets);
-    ImGui::SameLine();
-    ReGui::ToggleButton("Show Properties", "Hide Properties", &iCtx.fShowProperties);
-
     if(iCtx.fShowPanel)
-      renderPanel(iCtx);
+      renderPanel(iCtx, switchedTab);
 
     if(iCtx.fShowPanelWidgets)
       renderPanelWidgets(iCtx);
@@ -188,7 +149,6 @@ void PanelState::render(AppContext &iCtx)
     ImGui::EndTabItem();
 
     fZoom = iCtx.fZoom;
-    iCtx.fCurrentPanelState = nullptr;
   }
 }
 
@@ -257,10 +217,19 @@ void PanelState::renderWidgets(AppContext &iCtx)
 //------------------------------------------------------------------------
 // PanelState::renderPanel
 //------------------------------------------------------------------------
-void PanelState::renderPanel(AppContext &iCtx)
+void PanelState::renderPanel(AppContext &iCtx, bool iSetScroll)
 {
   if(ImGui::Begin("Panel", &iCtx.fShowPanel, ImGuiWindowFlags_HorizontalScrollbar))
+  {
     fPanel.draw(iCtx);
+    if(iSetScroll)
+    {
+      ImGui::SetScrollX(fScroll.x);
+      ImGui::SetScrollY(fScroll.y);
+    }
+    else
+      fScroll = {ImGui::GetScrollX(), ImGui::GetScrollY()};
+  }
   ImGui::End();
 }
 

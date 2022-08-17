@@ -16,8 +16,8 @@
  * @author Yan Pujante
  */
 
-#ifndef RE_EDIT_EDIT_CONTEXT_H
-#define RE_EDIT_EDIT_CONTEXT_H
+#ifndef RE_EDIT_APP_CONTEXT_H
+#define RE_EDIT_APP_CONTEXT_H
 
 #include <vector>
 #include <string>
@@ -59,10 +59,13 @@ public:
   AppContext() = default;
 
   ImVec2 getPanelSize() const;
+  void renderAddWidgetMenuView(ImVec2 const &iPosition = {});
 
+public: // UserPreferences
   constexpr UserPreferences const &getUserPreferences() const { return *fUserPreferences; }
   constexpr UserPreferences &getUserPreferences() { return *fUserPreferences; }
 
+public: // Properties
   inline std::vector<Object const *> findObjects(Object::Filter const &iFilter) const { return fPropertyManager->findObjects(iFilter); }
 
   inline std::vector<Property const *> findProperties(Property::Filter const &iFilter) const { return fPropertyManager->findProperties(iFilter); };
@@ -79,15 +82,13 @@ public:
   void removePropertyFromWatchlist(std::string const &iPropertyPath) { fPropertyManager->removeFromWatchlist(iPropertyPath); }
   constexpr int getUserSamplesCount() const { return fPropertyManager->getUserSamplesCount(); }
 
-  void renderAddWidgetMenuView(ImVec2 const &iPosition = {});
-
+public: // Texture
   inline std::vector<std::string> const &getTextureKeys() const { return fTextureManager->getTextureKeys(); };
   inline std::vector<std::string> findTextureKeys(FilmStrip::Filter const &iFilter) const { return fTextureManager->findTextureKeys(iFilter); }
   inline std::shared_ptr<Texture> getTexture(std::string const &iKey) const { return fTextureManager->getTexture(iKey); };
   inline std::shared_ptr<Texture> findTexture(std::string const &iKey) const { return fTextureManager->findTexture(iKey); }
   inline std::shared_ptr<Texture> findHDTexture(std::string const &iKey) const { return fTextureManager->findHDTexture(iKey); }
 
-public: // Texture
   void TextureItem(Texture const *iTexture, ImVec2 const &iPosition = {0,0}, int iFrameNumber = 0, const ImVec4& iBorderCol = ImVec4(0,0,0,0)) const;
 
   void drawTexture(Texture const *iTexture, ImVec2 const &iPosition = {0,0}, int iFrameNumber = 0, const ImVec4& iBorderCol = ImVec4(0,0,0,0)) const;
@@ -128,4 +129,4 @@ protected:
 };
 
 }
-#endif //RE_EDIT_EDIT_CONTEXT_H
+#endif //RE_EDIT_APP_CONTEXT_H

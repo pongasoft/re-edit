@@ -28,7 +28,7 @@ namespace re::edit {
 class PanelState
 {
 public:
-  PanelState(PanelType iPanelType);
+  explicit PanelState(PanelType iPanelType);
 
   void initPanel(AppContext &iCtx,
                  std::shared_ptr<lua::panel_nodes> const &iPanelNodes,
@@ -40,7 +40,7 @@ public:
 
 protected:
   void renderWidgets(AppContext &iCtx);
-  void renderPanel(AppContext &iCtx);
+  void renderPanel(AppContext &iCtx, bool iSetScroll);
   void renderPanelWidgets(AppContext &iCtx);
   void renderProperties(AppContext &iCtx);
 
@@ -50,6 +50,7 @@ public:
 private:
   std::vector<WidgetDef> fWidgetDefs{};
   float fZoom{0.20f};
+  ImVec2 fScroll{};
 };
 
 }

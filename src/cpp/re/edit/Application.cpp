@@ -101,6 +101,47 @@ void Application::render()
     ImGui::EndTabBar();
   }
 
+  ImGui::PushID("Border");
+  ImGui::AlignTextToFramePadding();
+  ImGui::Text("Border");
+  ImGui::SameLine();
+  ReGui::RadioButton("None", &fAppContext.fShowBorder, AppContext::ShowBorder::kNone);
+  ImGui::SameLine();
+  ReGui::RadioButton("Widget", &fAppContext.fShowBorder, AppContext::ShowBorder::kWidget);
+  ImGui::SameLine();
+  ReGui::RadioButton("Hit Boundaries", &fAppContext.fShowBorder, AppContext::ShowBorder::kHitBoundaries);
+  ImGui::PopID();
+
+  ImGui::PushID("Custom Display");
+  ImGui::AlignTextToFramePadding();
+  ImGui::Text("Custom Display");
+  ImGui::SameLine();
+  ReGui::RadioButton("None", &fAppContext.fShowCustomDisplay, AppContext::ShowCustomDisplay::kNone);
+  ImGui::SameLine();
+  ReGui::RadioButton("Main", &fAppContext.fShowCustomDisplay, AppContext::ShowCustomDisplay::kMain);
+  ImGui::SameLine();
+  ReGui::RadioButton("SD Bg", &fAppContext.fShowCustomDisplay, AppContext::ShowCustomDisplay::kBackgroundSD);
+  ImGui::SameLine();
+  ReGui::RadioButton("HD Bg", &fAppContext.fShowCustomDisplay, AppContext::ShowCustomDisplay::kBackgroundHD);
+  ImGui::PopID();
+
+  ImGui::PushID("Sample Drop Zone");
+  ImGui::AlignTextToFramePadding();
+  ImGui::Text("Sample Drop Zone");
+  ImGui::SameLine();
+  ReGui::RadioButton("None", &fAppContext.fShowSampleDropZone, AppContext::ShowSampleDropZone::kNone);
+  ImGui::SameLine();
+  ReGui::RadioButton("Fill", &fAppContext.fShowSampleDropZone, AppContext::ShowSampleDropZone::kFill);
+  ImGui::PopID();
+
+  ReGui::ToggleButton("Show Panel", "Hide Panel", &fAppContext.fShowPanel);
+  ImGui::SameLine();
+  ReGui::ToggleButton("Show Panel Widgets", "Hide Panel Widgets", &fAppContext.fShowPanelWidgets);
+  ImGui::SameLine();
+  ReGui::ToggleButton("Show Widgets", "Hide Widgets", &fAppContext.fShowWidgets);
+  ImGui::SameLine();
+  ReGui::ToggleButton("Show Properties", "Hide Properties", &fAppContext.fShowProperties);
+
   ImGui::Separator();
 
   ImGui::Checkbox("Demo Window", &show_demo_window);
