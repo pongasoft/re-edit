@@ -242,7 +242,7 @@ void Graphics::hdgui2D(std::string const &iNodeName, attribute_list_t &oAttribut
 {
   if(hasHitBoundaries())
   {
-    oAttributes.emplace_back(attribute_t{fName, re::mock::fmt::printf("{ node = { \"%s\" }, hit_boundaries = { left = %d, top = %d, right = %d, bottom = %d }}",
+    oAttributes.emplace_back(attribute_t{fName, re::mock::fmt::printf("{ node = \"%s\", hit_boundaries = { left = %d, top = %d, right = %d, bottom = %d }}",
                                                                       iNodeName,
                                                                       static_cast<int>(fHitBoundaries.fLeftInset),
                                                                       static_cast<int>(fHitBoundaries.fTopInset),
@@ -251,7 +251,7 @@ void Graphics::hdgui2D(std::string const &iNodeName, attribute_list_t &oAttribut
                                                                       )});
   }
   else
-    oAttributes.emplace_back(attribute_t{fName, re::mock::fmt::printf("{ node = { \"%s\" } }", iNodeName)});
+    oAttributes.emplace_back(attribute_t{fName, re::mock::fmt::printf("{ node = \"%s\" }", iNodeName)});
 }
 
 //------------------------------------------------------------------------

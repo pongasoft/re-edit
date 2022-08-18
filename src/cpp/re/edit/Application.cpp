@@ -22,6 +22,7 @@
 #include "Errors.h"
 #include "lua/Device2D.h"
 #include "LoggingManager.h"
+#include <fstream>
 #include <imgui.h>
 
 namespace re::edit {
@@ -54,16 +55,16 @@ bool Application::init(std::vector<std::string> iArgs)
     return false;
   }
 
-  auto root = iArgs[0];
+  fRoot = iArgs[0];
 
-  setDeviceHeightRU(fAppContext.fPropertyManager->init(root));
+  setDeviceHeightRU(fAppContext.fPropertyManager->init(fRoot));
 
-  fAppContext.fTextureManager->init(re::mock::fmt::path(root, "GUI2D"));
+  fAppContext.fTextureManager->init(re::mock::fmt::path(fRoot, "GUI2D"));
   fAppContext.fTextureManager->scanDirectory();
   fAppContext.fTextureManager->findTextureKeys([](auto const &) { return true; }); // forces preloading the textures to get their sizes
 
-  initPanels(re::mock::fmt::path(root, "GUI2D", "device_2D.lua"),
-             re::mock::fmt::path(root, "GUI2D", "hdgui_2D.lua"));
+  initPanels(re::mock::fmt::path(fRoot, "GUI2D", "device_2D.lua"),
+             re::mock::fmt::path(fRoot, "GUI2D", "hdgui_2D.lua"));
 
   return true;
 }
@@ -90,67 +91,69 @@ void Application::render()
 
   fAppContext.fPropertyManager->beforeRenderFrame();
 
-  ImGui::Begin("re-edit");
+  renderMainMenu();
 
-  if(ImGui::BeginTabBar("Panels", ImGuiTabBarFlags_None))
+  if(ImGui::Begin("re-edit"))
   {
-    fFrontPanel.render(fAppContext);
-    fBackPanel.render(fAppContext);
-    fFoldedFrontPanel.render(fAppContext);
-    fFoldedBackPanel.render(fAppContext);
-    ImGui::EndTabBar();
-  }
+    if(ImGui::BeginTabBar("Panels", ImGuiTabBarFlags_None))
+    {
+      fFrontPanel.render(fAppContext);
+      fBackPanel.render(fAppContext);
+      fFoldedFrontPanel.render(fAppContext);
+      fFoldedBackPanel.render(fAppContext);
+      ImGui::EndTabBar();
+    }
 
-  ImGui::PushID("Border");
-  ImGui::AlignTextToFramePadding();
-  ImGui::Text("Border");
-  ImGui::SameLine();
-  ReGui::RadioButton("None", &fAppContext.fShowBorder, AppContext::ShowBorder::kNone);
-  ImGui::SameLine();
-  ReGui::RadioButton("Widget", &fAppContext.fShowBorder, AppContext::ShowBorder::kWidget);
-  ImGui::SameLine();
-  ReGui::RadioButton("Hit Boundaries", &fAppContext.fShowBorder, AppContext::ShowBorder::kHitBoundaries);
-  ImGui::PopID();
+    ImGui::PushID("Border");
+    ImGui::AlignTextToFramePadding();
+    ImGui::Text("Border");
+    ImGui::SameLine();
+    ReGui::RadioButton("None", &fAppContext.fShowBorder, AppContext::ShowBorder::kNone);
+    ImGui::SameLine();
+    ReGui::RadioButton("Widget", &fAppContext.fShowBorder, AppContext::ShowBorder::kWidget);
+    ImGui::SameLine();
+    ReGui::RadioButton("Hit Boundaries", &fAppContext.fShowBorder, AppContext::ShowBorder::kHitBoundaries);
+    ImGui::PopID();
 
-  ImGui::PushID("Custom Display");
-  ImGui::AlignTextToFramePadding();
-  ImGui::Text("Custom Display");
-  ImGui::SameLine();
-  ReGui::RadioButton("None", &fAppContext.fShowCustomDisplay, AppContext::ShowCustomDisplay::kNone);
-  ImGui::SameLine();
-  ReGui::RadioButton("Main", &fAppContext.fShowCustomDisplay, AppContext::ShowCustomDisplay::kMain);
-  ImGui::SameLine();
-  ReGui::RadioButton("SD Bg", &fAppContext.fShowCustomDisplay, AppContext::ShowCustomDisplay::kBackgroundSD);
-  ImGui::SameLine();
-  ReGui::RadioButton("HD Bg", &fAppContext.fShowCustomDisplay, AppContext::ShowCustomDisplay::kBackgroundHD);
-  ImGui::PopID();
+    ImGui::PushID("Custom Display");
+    ImGui::AlignTextToFramePadding();
+    ImGui::Text("Custom Display");
+    ImGui::SameLine();
+    ReGui::RadioButton("None", &fAppContext.fShowCustomDisplay, AppContext::ShowCustomDisplay::kNone);
+    ImGui::SameLine();
+    ReGui::RadioButton("Main", &fAppContext.fShowCustomDisplay, AppContext::ShowCustomDisplay::kMain);
+    ImGui::SameLine();
+    ReGui::RadioButton("SD Bg", &fAppContext.fShowCustomDisplay, AppContext::ShowCustomDisplay::kBackgroundSD);
+    ImGui::SameLine();
+    ReGui::RadioButton("HD Bg", &fAppContext.fShowCustomDisplay, AppContext::ShowCustomDisplay::kBackgroundHD);
+    ImGui::PopID();
 
-  ImGui::PushID("Sample Drop Zone");
-  ImGui::AlignTextToFramePadding();
-  ImGui::Text("Sample Drop Zone");
-  ImGui::SameLine();
-  ReGui::RadioButton("None", &fAppContext.fShowSampleDropZone, AppContext::ShowSampleDropZone::kNone);
-  ImGui::SameLine();
-  ReGui::RadioButton("Fill", &fAppContext.fShowSampleDropZone, AppContext::ShowSampleDropZone::kFill);
-  ImGui::PopID();
+    ImGui::PushID("Sample Drop Zone");
+    ImGui::AlignTextToFramePadding();
+    ImGui::Text("Sample Drop Zone");
+    ImGui::SameLine();
+    ReGui::RadioButton("None", &fAppContext.fShowSampleDropZone, AppContext::ShowSampleDropZone::kNone);
+    ImGui::SameLine();
+    ReGui::RadioButton("Fill", &fAppContext.fShowSampleDropZone, AppContext::ShowSampleDropZone::kFill);
+    ImGui::PopID();
 
-  ReGui::ToggleButton("Show Panel", "Hide Panel", &fAppContext.fShowPanel);
-  ImGui::SameLine();
-  ReGui::ToggleButton("Show Panel Widgets", "Hide Panel Widgets", &fAppContext.fShowPanelWidgets);
-  ImGui::SameLine();
-  ReGui::ToggleButton("Show Widgets", "Hide Widgets", &fAppContext.fShowWidgets);
-  ImGui::SameLine();
-  ReGui::ToggleButton("Show Properties", "Hide Properties", &fAppContext.fShowProperties);
+    ReGui::ToggleButton("Show Panel", "Hide Panel", &fAppContext.fShowPanel);
+    ImGui::SameLine();
+    ReGui::ToggleButton("Show Panel Widgets", "Hide Panel Widgets", &fAppContext.fShowPanelWidgets);
+    ImGui::SameLine();
+    ReGui::ToggleButton("Show Widgets", "Hide Widgets", &fAppContext.fShowWidgets);
+    ImGui::SameLine();
+    ReGui::ToggleButton("Show Properties", "Hide Properties", &fAppContext.fShowProperties);
 
-  ImGui::Separator();
+    ImGui::Separator();
 
-  ImGui::Checkbox("Demo Window", &show_demo_window);
-  if(show_demo_window)
-    ImGui::ShowDemoWindow(&show_demo_window);
+    ImGui::Checkbox("Demo Window", &show_demo_window);
+    if(show_demo_window)
+      ImGui::ShowDemoWindow(&show_demo_window);
 
-  ImGui::Checkbox(re::mock::fmt::printf("Log [%d]##Log", loggingManager->getLogCount()).c_str(), &loggingManager->getShowLog());
-  ImGui::SameLine();
-  ImGui::Checkbox("Debug", &loggingManager->getShowDebug());
+    ImGui::Checkbox(re::mock::fmt::printf("Log [%d]##Log", loggingManager->getLogCount()).c_str(), &loggingManager->getShowLog());
+    ImGui::SameLine();
+    ImGui::Checkbox("Debug", &loggingManager->getShowDebug());
 
 //  if(ImGui::Button("Fake log"))
 //  {
@@ -159,12 +162,16 @@ void Application::render()
 //    loggingManager->logError("This is a long error message... %d", 89);
 //  }
 
-  ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate,
-              ImGui::GetIO().Framerate);
+    ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate,
+                ImGui::GetIO().Framerate);
 
-  loggingManager->render();
+    loggingManager->render();
+  }
 
   ImGui::End();
+
+  if(fSavingRequested)
+    renderSavePopup();
 
   fAppContext.fPropertyManager->afterRenderFrame();
 }
@@ -179,6 +186,118 @@ void Application::setDeviceHeightRU(int iDeviceHeightRU)
   fFoldedFrontPanel.fPanel.setDeviceHeightRU(iDeviceHeightRU);
   fBackPanel.fPanel.setDeviceHeightRU(iDeviceHeightRU);
   fFoldedBackPanel.fPanel.setDeviceHeightRU(iDeviceHeightRU);
+}
+
+static constexpr auto kSavePopupWindow = "Save | Warning";
+
+//------------------------------------------------------------------------
+// Application::renderMainMenu
+//------------------------------------------------------------------------
+void Application::renderMainMenu()
+{
+  auto savePopupId = ImGui::GetID(kSavePopupWindow);
+
+  if(ImGui::BeginMainMenuBar())
+  {
+    if(ImGui::BeginMenu("File"))
+    {
+      if(ImGui::MenuItem("Save"))
+      {
+        ImGui::OpenPopup(savePopupId);
+        fSavingRequested = true;
+      }
+      ImGui::EndMenu();
+    }
+
+    if(ImGui::BeginMenu("Window"))
+    {
+      ImGui::MenuItem("Panel", nullptr, &fAppContext.fShowPanel);
+      ImGui::MenuItem("Panel Widgets", nullptr, &fAppContext.fShowPanelWidgets);
+      ImGui::MenuItem("Widgets", nullptr, &fAppContext.fShowWidgets);
+      ImGui::MenuItem("Properties", nullptr, &fAppContext.fShowProperties);
+      ImGui::EndMenu();
+    }
+    ImGui::EndMainMenuBar();
+  }
+}
+
+//------------------------------------------------------------------------
+// Application::renderSavePopup
+//------------------------------------------------------------------------
+void Application::renderSavePopup()
+{
+  if(ImGui::BeginPopupModal(kSavePopupWindow, nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+  {
+    ImGui::Text("!!! Warning !!!");
+    ImGui::Text("This is an experimental build. Saving will override hdgui_2d.lua and device_2d.lua");
+    ImGui::Text("Are you sure you want to proceed?");
+    if(ImGui::Button("OK", ImVec2(120, 0)))
+    {
+      save();
+      fSavingRequested = false;
+      ImGui::CloseCurrentPopup();
+    }
+    ImGui::SameLine();
+    if(ImGui::Button("Cancel", ImVec2(120, 0)))
+    {
+      fSavingRequested = false;
+      ImGui::CloseCurrentPopup();
+    }
+    ImGui::SetItemDefaultFocus();
+    ImGui::EndPopup();
+  }
+}
+
+//------------------------------------------------------------------------
+// Application::save
+//------------------------------------------------------------------------
+void Application::save()
+{
+  saveFile(re::mock::fmt::path(fRoot, "GUI2D", "device_2D.lua"), device2D());
+  saveFile(re::mock::fmt::path(fRoot, "GUI2D", "hdgui_2D.lua"), hdgui2D());
+}
+
+//------------------------------------------------------------------------
+// Application::saveFile
+//------------------------------------------------------------------------
+void Application::saveFile(std::string const &iFile, std::string const &iContent) const
+{
+  std::ofstream f{iFile};
+  f << iContent;
+}
+
+//------------------------------------------------------------------------
+// Application::hdgui2D
+//------------------------------------------------------------------------
+std::string Application::hdgui2D()
+{
+  std::stringstream s{};
+  s << "format_version = \"2.0\"\n\n";
+  s << fFrontPanel.fPanel.hdgui2D(fAppContext);
+  s << "\n";
+  s << fBackPanel.fPanel.hdgui2D(fAppContext);
+  s << "\n";
+  s << fFoldedFrontPanel.fPanel.hdgui2D(fAppContext);
+  s << "\n";
+  s << fFoldedBackPanel.fPanel.hdgui2D(fAppContext);
+  return s.str();
+}
+
+//------------------------------------------------------------------------
+// Application::device2D
+//------------------------------------------------------------------------
+std::string Application::device2D() const
+{
+  std::stringstream s{};
+  s << "format_version = \"2.0\"\n\n";
+  s << fFrontPanel.fPanel.device2D();
+  s << "\n";
+  s << fBackPanel.fPanel.device2D();
+  s << "\n";
+  s << fFoldedFrontPanel.fPanel.device2D();
+  s << "\n";
+  s << fFoldedBackPanel.fPanel.device2D();
+  return s.str();
 }
 
 ////------------------------------------------------------------------------

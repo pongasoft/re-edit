@@ -65,7 +65,7 @@ char const *Panel::toString(PanelType iType)
     case PanelType::kFront: return "front";
     case PanelType::kFoldedFront: return "folded_front";
     case PanelType::kBack: return "back";
-    case PanelType::kFoldedBack: return "folded_Back";
+    case PanelType::kFoldedBack: return "folded_back";
     default:
       RE_EDIT_FAIL("Not reached");
   }
