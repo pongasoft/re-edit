@@ -30,15 +30,12 @@ namespace re::edit {
 //------------------------------------------------------------------------
 // Application::Application
 //------------------------------------------------------------------------
-Application::Application(std::shared_ptr<TextureManager> iTextureManager) :
-  fFrontPanel(PanelType::kFront),
-  fFoldedFrontPanel(PanelType::kFoldedFront),
-  fBackPanel(PanelType::kBack),
-  fFoldedBackPanel(PanelType::kFoldedBack)
+Application::Application(std::shared_ptr<TextureManager> iTextureManager)
 {
   fAppContext.fTextureManager = std::move(iTextureManager);
   fAppContext.fUserPreferences = std::make_shared<UserPreferences>();
   fAppContext.fPropertyManager = std::make_shared<PropertyManager>();
+  fAppContext.fUndoManager = std::make_shared<UndoManager>();
 }
 
 //------------------------------------------------------------------------
@@ -63,23 +60,10 @@ bool Application::init(std::vector<std::string> iArgs)
   fAppContext.fTextureManager->scanDirectory();
   fAppContext.fTextureManager->findTextureKeys([](auto const &) { return true; }); // forces preloading the textures to get their sizes
 
-  initPanels(re::mock::fmt::path(fRoot, "GUI2D", "device_2D.lua"),
-             re::mock::fmt::path(fRoot, "GUI2D", "hdgui_2D.lua"));
+  fAppContext.initPanels(re::mock::fmt::path(fRoot, "GUI2D", "device_2D.lua"),
+                         re::mock::fmt::path(fRoot, "GUI2D", "hdgui_2D.lua"));
 
   return true;
-}
-
-//------------------------------------------------------------------------
-// Application::initPanels
-//------------------------------------------------------------------------
-void Application::initPanels(std::string const &iDevice2DFile, std::string const &iHDGui2DFile)
-{
-  auto d2d = lua::Device2D::fromFile(iDevice2DFile);
-  auto hdg = lua::HDGui2D::fromFile(iHDGui2DFile);
-  fFrontPanel.initPanel(fAppContext, d2d->front(), hdg->front());
-  fFoldedFrontPanel.initPanel(fAppContext, d2d->folded_front(), hdg->folded_front());
-  fBackPanel.initPanel(fAppContext, d2d->back(), hdg->back());
-  fFoldedBackPanel.initPanel(fAppContext, d2d->folded_back(), hdg->folded_back());
 }
 
 //------------------------------------------------------------------------
@@ -89,20 +73,14 @@ void Application::render()
 {
   auto loggingManager = LoggingManager::instance();
 
+  fAppContext.fCurrentFrame++;
   fAppContext.fPropertyManager->beforeRenderFrame();
 
   renderMainMenu();
 
   if(ImGui::Begin("re-edit"))
   {
-    if(ImGui::BeginTabBar("Panels", ImGuiTabBarFlags_None))
-    {
-      fFrontPanel.render(fAppContext);
-      fBackPanel.render(fAppContext);
-      fFoldedFrontPanel.render(fAppContext);
-      fFoldedBackPanel.render(fAppContext);
-      ImGui::EndTabBar();
-    }
+    fAppContext.render();
 
     ImGui::PushID("Border");
     ImGui::AlignTextToFramePadding();
@@ -165,6 +143,12 @@ void Application::render()
     ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate,
                 ImGui::GetIO().Framerate);
 
+    if(loggingManager->getShowDebug())
+    {
+      loggingManager->debug("Undo", "History[%d]", fAppContext.fUndoManager->getUndoHistory().size());
+      loggingManager->debug("Redo", "History[%d]", fAppContext.fUndoManager->getRedoHistory().size());
+    }
+
     loggingManager->render();
   }
 
@@ -182,10 +166,10 @@ void Application::render()
 void Application::setDeviceHeightRU(int iDeviceHeightRU)
 {
   fDeviceHeightRU = iDeviceHeightRU;
-  fFrontPanel.fPanel.setDeviceHeightRU(iDeviceHeightRU);
-  fFoldedFrontPanel.fPanel.setDeviceHeightRU(iDeviceHeightRU);
-  fBackPanel.fPanel.setDeviceHeightRU(iDeviceHeightRU);
-  fFoldedBackPanel.fPanel.setDeviceHeightRU(iDeviceHeightRU);
+  fAppContext.fFrontPanel->fPanel.setDeviceHeightRU(iDeviceHeightRU);
+  fAppContext.fFoldedFrontPanel->fPanel.setDeviceHeightRU(iDeviceHeightRU);
+  fAppContext.fBackPanel->fPanel.setDeviceHeightRU(iDeviceHeightRU);
+  fAppContext.fFoldedBackPanel->fPanel.setDeviceHeightRU(iDeviceHeightRU);
 }
 
 static constexpr auto kSavePopupWindow = "Save | Warning";
@@ -206,6 +190,41 @@ void Application::renderMainMenu()
         ImGui::OpenPopup(savePopupId);
         fSavingRequested = true;
       }
+      ImGui::EndMenu();
+    }
+
+    if(ImGui::BeginMenu("Edit"))
+    {
+      auto const undoAction = fAppContext.fUndoManager->getLastUndoAction();
+      if(undoAction)
+      {
+        if(ImGui::MenuItem(re::mock::fmt::printf("Undo %s", undoAction->fDescription).c_str()))
+        {
+          fAppContext.undoLastAction();
+        }
+      }
+      else
+      {
+        ImGui::BeginDisabled();
+        ImGui::MenuItem("Undo");
+        ImGui::EndDisabled();
+      }
+
+      auto const redoAction = fAppContext.fUndoManager->getLastRedoAction();
+      if(redoAction)
+      {
+        if(ImGui::MenuItem(re::mock::fmt::printf("Redo %s", redoAction->fUndoAction->fDescription).c_str()))
+        {
+          fAppContext.redoLastAction();
+        }
+      }
+      else
+      {
+        ImGui::BeginDisabled();
+        ImGui::MenuItem("Redo");
+        ImGui::EndDisabled();
+      }
+
       ImGui::EndMenu();
     }
 
@@ -273,13 +292,13 @@ std::string Application::hdgui2D()
 {
   std::stringstream s{};
   s << "format_version = \"2.0\"\n\n";
-  s << fFrontPanel.fPanel.hdgui2D(fAppContext);
+  s << fAppContext.fFrontPanel->fPanel.hdgui2D(fAppContext);
   s << "\n";
-  s << fBackPanel.fPanel.hdgui2D(fAppContext);
+  s << fAppContext.fBackPanel->fPanel.hdgui2D(fAppContext);
   s << "\n";
-  s << fFoldedFrontPanel.fPanel.hdgui2D(fAppContext);
+  s << fAppContext.fFoldedFrontPanel->fPanel.hdgui2D(fAppContext);
   s << "\n";
-  s << fFoldedBackPanel.fPanel.hdgui2D(fAppContext);
+  s << fAppContext.fFoldedBackPanel->fPanel.hdgui2D(fAppContext);
   return s.str();
 }
 
@@ -290,13 +309,13 @@ std::string Application::device2D() const
 {
   std::stringstream s{};
   s << "format_version = \"2.0\"\n\n";
-  s << fFrontPanel.fPanel.device2D();
+  s << fAppContext.fFrontPanel->fPanel.device2D();
   s << "\n";
-  s << fBackPanel.fPanel.device2D();
+  s << fAppContext.fBackPanel->fPanel.device2D();
   s << "\n";
-  s << fFoldedFrontPanel.fPanel.device2D();
+  s << fAppContext.fFoldedFrontPanel->fPanel.device2D();
   s << "\n";
-  s << fFoldedBackPanel.fPanel.device2D();
+  s << fAppContext.fFoldedBackPanel->fPanel.device2D();
   return s.str();
 }
 

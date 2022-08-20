@@ -30,6 +30,8 @@ class PanelState
 public:
   explicit PanelState(PanelType iPanelType);
 
+  constexpr PanelType getType() const { return fPanel.getType(); }
+
   void initPanel(AppContext &iCtx,
                  std::shared_ptr<lua::panel_nodes> const &iPanelNodes,
                  std::shared_ptr<lua::jbox_panel> const &iPanel);

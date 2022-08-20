@@ -69,6 +69,7 @@ public:
   static std::unique_ptr<T> build(char const *iName, bool iRequired, typename T::value_t const &iDefaultValue, ConstructorArgs&& ...iArgs);
 
   virtual std::unique_ptr<Attribute> clone() const = 0;
+  virtual bool copyFrom(Attribute const *iFromAttribute) = 0;
 
   friend class re::edit::Widget;
 
@@ -102,6 +103,8 @@ public:
   virtual std::string getValueAsLua() const = 0;
   void reset() override;
 
+  bool copyFrom(Attribute const *iFromAttribute) override;
+
   std::string toString() const override;
 
 public:
@@ -125,7 +128,6 @@ public:
   void editView(AppContext &iCtx) override;
 
   std::unique_ptr<Attribute> clone() const override { return Attribute::clone<Bool>(*this); }
-
 };
 
 class Integer : public SingleAttribute<int>
@@ -256,6 +258,7 @@ public:
   void reset() override;
 
   std::unique_ptr<Attribute> clone() const override { return Attribute::clone<Value>(*this); }
+  bool copyFrom(Attribute const *iAttribute) override;
 
 protected:
   std::string const &findActualPropertyPath(AppContext &iCtx) const;
@@ -285,6 +288,8 @@ public:
   bool isHidden(AppContext const &iCtx) const;
 
   std::unique_ptr<Attribute> clone() const override { return Attribute::clone<Visibility>(*this); }
+
+  bool copyFrom(Attribute const *iAttribute) override;
 
 public:
   PropertyPath fSwitch;
@@ -405,7 +410,7 @@ protected:
 class UserSampleIndex : public Integer
 {
 public:
-  UserSampleIndex(char const *iName) : Integer{iName} {}
+  explicit UserSampleIndex(char const *iName) : Integer{iName} {}
 
   void editView(AppContext &iCtx) override;
 
@@ -462,6 +467,24 @@ template<typename T>
 std::string SingleAttribute<T>::toString() const
 {
   return re::mock::fmt::printf("%s={%s,%s}", fName, getValueAsLua(), fProvided ? "true" : "false");
+}
+
+//------------------------------------------------------------------------
+// SingleAttribute<T>::copyFrom
+//------------------------------------------------------------------------
+template<typename T>
+bool SingleAttribute<T>::copyFrom(Attribute const *iFromAttribute)
+{
+  auto fromAttribute = dynamic_cast<SingleAttribute<T> const *>(iFromAttribute);
+  if(fromAttribute && strcmp(fName, iFromAttribute->fName) == 0)
+  {
+    fValue = fromAttribute->fValue;
+    fProvided = fromAttribute->fProvided;
+    fEdited = true;
+    return true;
+  }
+  else
+    return false;
 }
 
 } // namespace attribute

@@ -83,6 +83,8 @@ set(re-edit_BUILD_SOURCES
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/ReGui.h"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/TextureManager.h"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/TextureManager.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/UndoManager.h"
+    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/UndoManager.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/UserPreferences.h"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/Views.h"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/Views.cpp"

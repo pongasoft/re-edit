@@ -92,6 +92,8 @@ public:
 
   std::unique_ptr<Attribute> clone() const override { return Attribute::clone<Graphics>(*this); }
 
+  bool copyFrom(Attribute const *iFromAttribute) override;
+
 public:
   ImVec2 fPosition{};
   HitBoundaries fHitBoundaries{};

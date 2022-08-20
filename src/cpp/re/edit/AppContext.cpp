@@ -23,6 +23,44 @@
 namespace re::edit {
 
 //------------------------------------------------------------------------
+// AppContext::AppContext
+//------------------------------------------------------------------------
+AppContext::AppContext() :
+  fFrontPanel(std::make_unique<PanelState>(PanelType::kFront)),
+  fFoldedFrontPanel(std::make_unique<PanelState>(PanelType::kFoldedFront)),
+  fBackPanel(std::make_unique<PanelState>(PanelType::kBack)),
+  fFoldedBackPanel(std::make_unique<PanelState>(PanelType::kFoldedBack))
+{}
+
+//------------------------------------------------------------------------
+// AppContext::initPanels
+//------------------------------------------------------------------------
+void AppContext::initPanels(std::string const &iDevice2DFile, std::string const &iHDGui2DFile)
+{
+  auto d2d = lua::Device2D::fromFile(iDevice2DFile);
+  auto hdg = lua::HDGui2D::fromFile(iHDGui2DFile);
+  fFrontPanel->initPanel(*this, d2d->front(), hdg->front());
+  fFoldedFrontPanel->initPanel(*this, d2d->folded_front(), hdg->folded_front());
+  fBackPanel->initPanel(*this, d2d->back(), hdg->back());
+  fFoldedBackPanel->initPanel(*this, d2d->folded_back(), hdg->folded_back());
+}
+
+//------------------------------------------------------------------------
+// AppContext::render
+//------------------------------------------------------------------------
+void AppContext::render()
+{
+  if(ImGui::BeginTabBar("Panels", ImGuiTabBarFlags_None))
+  {
+    fFrontPanel->render(*this);
+    fBackPanel->render(*this);
+    fFoldedFrontPanel->render(*this);
+    fFoldedBackPanel->render(*this);
+    ImGui::EndTabBar();
+  }
+}
+
+//------------------------------------------------------------------------
 // AppContext::renderAddWidgetMenuView
 //------------------------------------------------------------------------
 void AppContext::renderAddWidgetMenuView(ImVec2 const &iPosition)
@@ -37,6 +75,35 @@ void AppContext::renderAddWidgetMenuView(ImVec2 const &iPosition)
       fCurrentPanelState->fPanel.addWidget(*this, std::move(widget));
     }
   }
+}
+
+//------------------------------------------------------------------------
+// AppContext::getPanelState
+//------------------------------------------------------------------------
+PanelState *AppContext::getPanelState(PanelType iType) const
+{
+  switch(iType)
+  {
+    case PanelType::kFront:
+      return fFrontPanel.get();
+    case PanelType::kBack:
+      return fBackPanel.get();
+    case PanelType::kFoldedFront:
+      return fFoldedFrontPanel.get();
+    case PanelType::kFoldedBack:
+      return fFoldedBackPanel.get();
+
+    default:
+      RE_EDIT_FAIL("should not be here");
+  }
+}
+
+//------------------------------------------------------------------------
+// AppContext::getPanel
+//------------------------------------------------------------------------
+Panel *AppContext::getPanel(PanelType iType) const
+{
+  return &getPanelState(iType)->fPanel;
 }
 
 //------------------------------------------------------------------------
@@ -99,5 +166,30 @@ void AppContext::drawLine(const ImVec2& iP1, const ImVec2& iP2, ImU32 iColor, fl
   drawList->AddLine(cp + iP1 * fZoom, cp + iP2 * fZoom, iColor, iThickness);
 }
 
+//------------------------------------------------------------------------
+// AppContext::addUndoAttributeChange
+//------------------------------------------------------------------------
+void AppContext::addUndoAttributeChange(widget::Attribute *iAttribute)
+{
+  RE_EDIT_INTERNAL_ASSERT(fCurrentWidget != nullptr);
+  RE_EDIT_INTERNAL_ASSERT(fCurrentPanelState != nullptr);
+
+  auto panelType = fCurrentPanelState->getType();
+  auto widgetId = fCurrentWidget->getId();
+  std::shared_ptr<Widget> w = fCurrentWidget->clone();
+  auto action = std::make_shared<WidgetUndoAction>();
+  action->fFrame = fCurrentFrame;
+  action->fDescription = re::mock::fmt::printf("%s.%s updated", fCurrentWidget->getName(), iAttribute->fName);
+  action->fWidgetId = widgetId;
+  action->fAttributeId = iAttribute->fId;
+  action->fLambda = [panelType, widgetId, widget = std::move(w)](AppContext &iCtx) {
+    auto w = iCtx.getPanel(panelType)->replaceWidget(widgetId, widget);
+    return std::make_shared<LambdaRedoAction>([panelType, widgetId, w2 = std::move(w)](AppContext &iCtx) {
+      iCtx.getPanel(panelType)->replaceWidget(widgetId, w2);
+    });
+  };
+
+  fUndoManager->addUndoAction(std::move(action));
+}
 
 }

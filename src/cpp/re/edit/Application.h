@@ -46,9 +46,6 @@ public:
 public:
   float clear_color[4] = {0.45f, 0.55f, 0.60f, 1.00f};
 
-protected:
-  void initPanels(std::string const &iDevice2DFile, std::string const &iHDGui2DFile);
-
 private:
   std::string hdgui2D();
   std::string device2D() const;
@@ -57,10 +54,6 @@ private:
 private:
   int fDeviceHeightRU{1};
   AppContext fAppContext;
-  PanelState fFrontPanel;
-  PanelState fFoldedFrontPanel;
-  PanelState fBackPanel;
-  PanelState fFoldedBackPanel;
   bool show_demo_window{false};
 
   std::string fRoot{};

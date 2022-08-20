@@ -82,6 +82,7 @@ public:
   char const *getName() const;
   constexpr std::string const &getNodeName() const { return fNodeName; };
   constexpr ImVec2 getSize() const { return fGraphics.getSize(); }
+  constexpr PanelType getType() const { return fType; }
 
   void setDeviceHeightRU(int iDeviceHeightRU);
 
@@ -93,6 +94,7 @@ public:
   inline void setCableOrigin(ImVec2 const &iPosition) { fCableOrigin = iPosition; }
   void setOptions(std::vector<std::string> const &iOptions);
   int addWidget(AppContext &iCtx, std::shared_ptr<Widget> iWidget);
+  std::shared_ptr<Widget> replaceWidget(int iWidgetId, std::shared_ptr<Widget> iWidget);
   std::vector<std::shared_ptr<Widget>> getSelectedWidgets() const;
   std::vector<int> getWidgetsOrder() const { return fWidgetsOrder; }
   std::vector<int> getDecalsOrder() const { return fDecalsOrder; }

@@ -345,6 +345,25 @@ void Value::resetEdited()
 }
 
 //------------------------------------------------------------------------
+// Value::copyFrom
+//------------------------------------------------------------------------
+bool Value::copyFrom(Attribute const *iAttribute)
+{
+  auto fromAttribute = dynamic_cast<Value const *>(iAttribute);
+  if(fromAttribute)
+  {
+    fUseSwitch = fromAttribute->fUseSwitch;
+    fValue.copyFrom(&fromAttribute->fValue);
+    fValueSwitch.copyFrom(&fromAttribute->fValueSwitch);
+    fValues.copyFrom(&fromAttribute->fValues);
+    fEdited = true;
+    return true;
+  }
+  else
+    return false;
+}
+
+//------------------------------------------------------------------------
 // Visibility::hdgui2D
 //------------------------------------------------------------------------
 void Visibility::hdgui2D(AppContext &iCtx, attribute_list_t &oAttributes) const
@@ -480,6 +499,23 @@ static constexpr auto kIsDiscreteFilter = [](const Property &p) { return p.isDis
 Visibility::Visibility() : CompositeAttribute("visibility"), fSwitch{"visibility_switch", kIsDiscreteFilter} {}
 
 //------------------------------------------------------------------------
+// Visibility::copyFrom
+//------------------------------------------------------------------------
+bool Visibility::copyFrom(Attribute const *iAttribute)
+{
+  auto fromAttribute = dynamic_cast<Visibility const *>(iAttribute);
+  if(fromAttribute)
+  {
+    fSwitch.copyFrom(&fromAttribute->fSwitch);
+    fValues.copyFrom(&fromAttribute->fValues);
+    fEdited = true;
+    return true;
+  }
+  else
+    return false;
+}
+
+//------------------------------------------------------------------------
 // String::editView
 //------------------------------------------------------------------------
 void String::editView(AppContext &iCtx)
@@ -498,10 +534,25 @@ void String::editView(AppContext &iCtx)
 //------------------------------------------------------------------------
 void Bool::editView(AppContext &iCtx)
 {
+//  resetView();
+//  ImGui::SameLine();
+//  if(ImGui::Checkbox(fName, &fValue))
+//  {
+//    fProvided = true;
+//    fEdited = true;
+//  }
+
   resetView();
   ImGui::SameLine();
-  if(ImGui::Checkbox(fName, &fValue))
+  bool value = fValue;
+  if(ImGui::Checkbox(fName, &value))
   {
+    iCtx.addUndoAttributeChange(this);
+//    auto action = [value = fValue, provided = fProvided](auto *iAtt) {
+//      iAtt->fValue = value;
+//      iAtt->fProvided = provided;
+//    };
+    fValue = value;
     fProvided = true;
     fEdited = true;
   }

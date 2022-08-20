@@ -342,6 +342,20 @@ int Panel::addWidget(AppContext &iCtx, std::shared_ptr<Widget> iWidget)
 }
 
 //------------------------------------------------------------------------
+// Panel::replaceWidget
+//------------------------------------------------------------------------
+std::shared_ptr<Widget> Panel::replaceWidget(int iWidgetId, std::shared_ptr<Widget> iWidget)
+{
+  RE_EDIT_INTERNAL_ASSERT(iWidget != nullptr);
+  RE_EDIT_INTERNAL_ASSERT(fWidgets.find(iWidgetId) != fWidgets.end());
+
+  iWidget->init(iWidgetId);
+  iWidget->setSelected(fWidgets[iWidgetId]->isSelected());
+  std::swap(fWidgets[iWidgetId], iWidget);
+  return iWidget;
+}
+
+//------------------------------------------------------------------------
 // Panel::deleteWidget
 //------------------------------------------------------------------------
 std::pair<std::shared_ptr<Widget>, int> Panel::deleteWidget(int id)

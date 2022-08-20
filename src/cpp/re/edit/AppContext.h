@@ -25,11 +25,18 @@
 #include "TextureManager.h"
 #include "UserPreferences.h"
 #include "PropertyManager.h"
+#include "UndoManager.h"
+#include "Constants.h"
 
 namespace re::edit {
 
+class Panel;
 class PanelState;
 class Widget;
+
+namespace widget {
+class Attribute;
+}
 
 class AppContext
 {
@@ -56,10 +63,12 @@ public:
   };
 
 public:
-  AppContext() = default;
+  AppContext();
 
   ImVec2 getPanelSize() const;
   void renderAddWidgetMenuView(ImVec2 const &iPosition = {});
+  PanelState *getPanelState(PanelType iType) const;
+  Panel *getPanel(PanelType iType) const;
 
 public: // UserPreferences
   constexpr UserPreferences const &getUserPreferences() const { return *fUserPreferences; }
@@ -101,6 +110,13 @@ public: // Texture
   void drawLine(const ImVec2& iP1, const ImVec2& iP2, ImU32 iColor, float iThickness = 1.0f) const;
   inline void drawLine(const ImVec2& iP1, const ImVec2& iP2, const ImVec4& iColor, float iThickness = 1.0f) const { drawLine(iP1, iP2, ImGui::GetColorU32(iColor), iThickness); }
 
+public: // Undo
+//  void addUndoAction();
+//  void addRedoAction(std::shared_ptr<UndoAction> iRedoAction);
+  void addUndoAttributeChange(widget::Attribute *iAttribute);
+  void undoLastAction() { fUndoManager->undoLastAction(*this); }
+  void redoLastAction() { fUndoManager->redoLastAction(*this); }
+
   inline Widget const *getCurrentWidget() const { return fCurrentWidget; }
 
   friend class PanelState;
@@ -114,16 +130,24 @@ public:
   float fZoom{0.20f};
 
 protected:
+  void initPanels(std::string const &iDevice2DFile, std::string const &iHDGui2DFile);
   inline void setCurrentWidget(Widget const *iWidget) { fCurrentWidget = iWidget; }
+  void render();
 
 protected:
   std::shared_ptr<TextureManager> fTextureManager{};
   std::shared_ptr<UserPreferences> fUserPreferences{};
   std::shared_ptr<PropertyManager> fPropertyManager{};
+  std::shared_ptr<UndoManager> fUndoManager{};
+  std::unique_ptr<PanelState> fFrontPanel;
+  std::unique_ptr<PanelState> fFoldedFrontPanel;
+  std::unique_ptr<PanelState> fBackPanel;
+  std::unique_ptr<PanelState> fFoldedBackPanel;
   bool fShowProperties{};
   bool fShowPanel{true};
   bool fShowPanelWidgets{true};
   bool fShowWidgets{};
+  long fCurrentFrame{};
   PanelState *fCurrentPanelState{};
   Widget const *fCurrentWidget{};
 };

@@ -285,6 +285,24 @@ std::string Graphics::device2D() const
 }
 
 //------------------------------------------------------------------------
+// Graphics::copyFrom
+//------------------------------------------------------------------------
+bool Graphics::copyFrom(Attribute const *iFromAttribute)
+{
+  auto fromAttribute = dynamic_cast<Graphics const *>(iFromAttribute);
+  if(fromAttribute)
+  {
+    fHitBoundaries = fromAttribute->fHitBoundaries;
+    fTexture = fromAttribute->fTexture;
+    fSize = fromAttribute->fSize;
+    fEdited = true;
+    return true;
+  }
+  else
+    return false;
+}
+
+//------------------------------------------------------------------------
 // Background::draw
 //------------------------------------------------------------------------
 bool Background::draw(AppContext &iCtx, Graphics const *iParent) const
