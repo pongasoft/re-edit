@@ -124,8 +124,8 @@ private:
   void selectWidget(AppContext &iCtx, ImVec2 const &iPosition, bool iMultiple);
   std::shared_ptr<Widget> findWidgetOnTopAt(std::vector<int> const &iOrder, ImVec2 const &iPosition) const;
   std::shared_ptr<Widget> findWidgetOnTopAt(ImVec2 const &iPosition) const;
-  void moveWidgets(ImVec2 const &iPosition);
-  void endMoveWidgets(ImVec2 const &iPosition);
+  void moveWidgets(AppContext &iCtx, ImVec2 const &iPosition);
+  void endMoveWidgets(AppContext &iCtx, ImVec2 const &iPosition);
   void computeIsHidden(AppContext &iCtx);
   void checkForWidgetErrors(AppContext &iCtx);
   void renderAddWidgetMenu(AppContext &iCtx, ImVec2 const &iPosition = {});
@@ -149,6 +149,7 @@ private:
   std::vector<int> fDecalsOrder{};
   std::optional<ImVec2> fLastMovePosition{};
   std::optional<MouseDrag> fMouseDrag{};
+  std::shared_ptr<CompositeUndoAction> fMoveUndoAction{};
   int fWidgetCounter{1}; // used for unique id
 };
 

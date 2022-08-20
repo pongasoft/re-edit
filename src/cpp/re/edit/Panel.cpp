@@ -112,7 +112,7 @@ void Panel::draw(AppContext &iCtx)
       {
         fMouseDrag = std::nullopt;
         dragState = "onRelease";
-        endMoveWidgets(mousePos / iCtx.fZoom);
+        endMoveWidgets(iCtx, mousePos / iCtx.fZoom);
       }
       else
       {
@@ -121,7 +121,7 @@ void Panel::draw(AppContext &iCtx)
            fMouseDrag->fInitialPosition.y != fMouseDrag->fCurrentPosition.y)
         {
           dragState = "onDrag";
-          moveWidgets(mousePos / iCtx.fZoom);
+          moveWidgets(iCtx, mousePos / iCtx.fZoom);
         }
         else
           dragState = "waiting for drag";
@@ -483,17 +483,26 @@ void Panel::clearSelection()
 //------------------------------------------------------------------------
 // Panel::moveWidgets
 //------------------------------------------------------------------------
-void Panel::moveWidgets(ImVec2 const &iPosition)
+void Panel::moveWidgets(AppContext &iCtx, ImVec2 const &iPosition)
 {
   if(fLastMovePosition)
   {
     auto delta = iPosition - fLastMovePosition.value();
     if(delta.x != 0 || delta.y != 0)
     {
-      std::for_each(fWidgets.begin(), fWidgets.end(), [&delta](auto const &p) {
+      bool createUndo = fMoveUndoAction == nullptr;
+      if(createUndo)
+      {
+        fMoveUndoAction = std::make_shared<CompositeUndoAction>();
+        fMoveUndoAction->fDescription = "Move widget(s)";
+      }
+
+      std::for_each(fWidgets.begin(), fWidgets.end(), [&iCtx, &delta, createUndo, this](auto const &p) {
         auto &widget = p.second;
         if(widget->isSelected())
         {
+          if(createUndo)
+            fMoveUndoAction->fActions.emplace_back(iCtx.createWidgetUndoAction(widget.get()));
           widget->move(delta);
         }
       });
@@ -505,7 +514,7 @@ void Panel::moveWidgets(ImVec2 const &iPosition)
 //------------------------------------------------------------------------
 // Panel::endMoveWidgets
 //------------------------------------------------------------------------
-void Panel::endMoveWidgets(ImVec2 const &iPosition)
+void Panel::endMoveWidgets(AppContext &iCtx, ImVec2 const &iPosition)
 {
   std::for_each(fWidgets.begin(), fWidgets.end(), [](auto const &p) {
     auto &widget = p.second;
@@ -517,6 +526,9 @@ void Panel::endMoveWidgets(ImVec2 const &iPosition)
       widget->setPosition(position);
     }
   });
+
+  if(fMoveUndoAction)
+    iCtx.addUndoAction(std::move(fMoveUndoAction));
 
   fLastMovePosition = std::nullopt;
 }

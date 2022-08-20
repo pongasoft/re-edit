@@ -32,23 +32,20 @@ class RedoAction;
 class UndoAction
 {
 public:
-  long fFrame{};
-  std::string fDescription{};
+  virtual std::shared_ptr<RedoAction> execute(AppContext &iCtx) = 0;
 
 public:
-  friend class UndoManager;
-
-protected:
-  virtual std::shared_ptr<RedoAction> execute(AppContext &iCtx) = 0;
+  long fFrame{};
+  std::string fDescription{};
 };
 
 class LambdaUndoAction : public UndoAction
 {
 public:
-  std::function<std::shared_ptr<RedoAction>(AppContext &)> fLambda{};
-
-protected:
   std::shared_ptr<RedoAction> execute(AppContext &iCtx) override { return fLambda(iCtx); }
+
+public:
+  std::function<std::shared_ptr<RedoAction>(AppContext &)> fLambda{};
 };
 
 class WidgetUndoAction : public LambdaUndoAction
@@ -56,21 +53,24 @@ class WidgetUndoAction : public LambdaUndoAction
 public:
   int fWidgetId{-1};
   int fAttributeId{-1};
+};
+
+class CompositeUndoAction : public UndoAction
+{
+public:
+  std::shared_ptr<RedoAction> execute(AppContext &iCtx) override;
 
 public:
-  friend class UndoManager;
+  std::vector<std::shared_ptr<UndoAction>> fActions{};
 };
 
 class RedoAction
 {
 public:
-  std::shared_ptr<UndoAction> fUndoAction{};
+  virtual void execute(AppContext &iCtx) = 0;
 
 public:
-  friend class UndoManager;
-
-protected:
-  virtual void execute(AppContext &iCtx) = 0;
+  std::shared_ptr<UndoAction> fUndoAction{};
 };
 
 class LambdaRedoAction : public RedoAction
@@ -81,11 +81,19 @@ public:
   LambdaRedoAction() = default;
   explicit LambdaRedoAction(lambda_t iLambda) : fLambda{std::move(iLambda)} {}
 
+  void execute(AppContext &iCtx) override { fLambda(iCtx); }
+
 public:
   lambda_t fLambda{};
+};
 
-protected:
-  void execute(AppContext &iCtx) override { fLambda(iCtx); }
+class CompositeRedoAction : public RedoAction
+{
+public:
+  void execute(AppContext &iCtx) override;
+
+public:
+  std::vector<std::shared_ptr<RedoAction>> fActions{};
 };
 
 class UndoManager

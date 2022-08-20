@@ -111,9 +111,12 @@ public: // Texture
   inline void drawLine(const ImVec2& iP1, const ImVec2& iP2, const ImVec4& iColor, float iThickness = 1.0f) const { drawLine(iP1, iP2, ImGui::GetColorU32(iColor), iThickness); }
 
 public: // Undo
-//  void addUndoAction();
+  void addUndoAction(std::shared_ptr<UndoAction> iAction);
 //  void addRedoAction(std::shared_ptr<UndoAction> iRedoAction);
-  void addUndoAttributeChange(widget::Attribute *iAttribute);
+  std::shared_ptr<WidgetUndoAction> createWidgetUndoAction(Widget const *iWidget,
+                                                           widget::Attribute const *iAttribute = nullptr,
+                                                           std::optional<std::string> const &iDescription = std::nullopt) const;
+  void addUndoAttributeChange(widget::Attribute const *iAttribute);
   void undoLastAction() { fUndoManager->undoLastAction(*this); }
   void redoLastAction() { fUndoManager->redoLastAction(*this); }
 

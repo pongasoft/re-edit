@@ -26,6 +26,7 @@ namespace re::edit {
 void UndoManager::addUndoAction(std::shared_ptr<UndoAction> iAction)
 {
   fUndoHistory.emplace_back(std::move(iAction));
+  fRedoHistory.clear();
 }
 
 //------------------------------------------------------------------------
@@ -84,4 +85,27 @@ std::shared_ptr<RedoAction> UndoManager::getLastRedoAction() const
   return *iter;
 }
 
+//------------------------------------------------------------------------
+// CompositeUndoAction::execute
+//------------------------------------------------------------------------
+std::shared_ptr<RedoAction> CompositeUndoAction::execute(AppContext &iCtx)
+{
+  auto redo = std::make_shared<CompositeRedoAction>();
+
+  for(auto &action: fActions)
+  {
+    redo->fActions.emplace_back(action->execute(iCtx));
+  }
+
+  return redo;
+}
+
+//------------------------------------------------------------------------
+// CompositeUndoAction::execute
+//------------------------------------------------------------------------
+void CompositeRedoAction::execute(AppContext &iCtx)
+{
+  // we undo in reverse order
+  std::for_each(fActions.rbegin(), fActions.rend(), [&iCtx](auto &action) { action->execute(iCtx); });
+}
 }

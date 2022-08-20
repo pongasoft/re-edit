@@ -167,29 +167,56 @@ void AppContext::drawLine(const ImVec2& iP1, const ImVec2& iP2, ImU32 iColor, fl
 }
 
 //------------------------------------------------------------------------
+// AppContext::addUndoAction
+//------------------------------------------------------------------------
+void AppContext::addUndoAction(std::shared_ptr<UndoAction> iAction)
+{
+  iAction->fFrame = fCurrentFrame;
+  fUndoManager->addUndoAction((std::move(iAction)));
+}
+
+//------------------------------------------------------------------------
 // AppContext::addUndoAttributeChange
 //------------------------------------------------------------------------
-void AppContext::addUndoAttributeChange(widget::Attribute *iAttribute)
+void AppContext::addUndoAttributeChange(widget::Attribute const *iAttribute)
 {
   RE_EDIT_INTERNAL_ASSERT(fCurrentWidget != nullptr);
+  addUndoAction(createWidgetUndoAction(fCurrentWidget, iAttribute));
+}
+
+//------------------------------------------------------------------------
+// AppContext::createWidgetUndoAction
+//------------------------------------------------------------------------
+std::shared_ptr<WidgetUndoAction> AppContext::createWidgetUndoAction(Widget const *iWidget,
+                                                                     widget::Attribute const *iAttribute,
+                                                                     std::optional<std::string> const &iDescription) const
+{
   RE_EDIT_INTERNAL_ASSERT(fCurrentPanelState != nullptr);
 
   auto panelType = fCurrentPanelState->getType();
-  auto widgetId = fCurrentWidget->getId();
-  std::shared_ptr<Widget> w = fCurrentWidget->clone();
+  auto widgetId = iWidget->getId();
+  std::shared_ptr<Widget> w = iWidget->clone();
   auto action = std::make_shared<WidgetUndoAction>();
-  action->fFrame = fCurrentFrame;
-  action->fDescription = re::mock::fmt::printf("%s.%s updated", fCurrentWidget->getName(), iAttribute->fName);
+  if(iDescription)
+    action->fDescription = *iDescription;
+  else
+  {
+    if(iAttribute)
+      action->fDescription = re::mock::fmt::printf("%s.%s updated", iWidget->getName(), iAttribute->fName);
+    else
+      action->fDescription = re::mock::fmt::printf("%s updated", iWidget->getName());
+  }
   action->fWidgetId = widgetId;
-  action->fAttributeId = iAttribute->fId;
+  if(iAttribute)
+    action->fAttributeId = iAttribute->fId;
   action->fLambda = [panelType, widgetId, widget = std::move(w)](AppContext &iCtx) {
     auto w = iCtx.getPanel(panelType)->replaceWidget(widgetId, widget);
     return std::make_shared<LambdaRedoAction>([panelType, widgetId, w2 = std::move(w)](AppContext &iCtx) {
       iCtx.getPanel(panelType)->replaceWidget(widgetId, w2);
     });
   };
-
-  fUndoManager->addUndoAction(std::move(action));
+  return action;
 }
+
 
 }
