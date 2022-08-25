@@ -18,7 +18,7 @@
 
 #include <gtest/gtest.h>
 #include <re/edit/lua/Device2D.h>
-#include <re/edit/DrawContext.h>
+#include <re/edit/AppContext.h>
 #include <re/mock/fmt.h>
 
 namespace re::edit::lua::Test {
