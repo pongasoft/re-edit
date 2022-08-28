@@ -98,10 +98,20 @@ public:
 
 class UndoManager
 {
+private:
+  class UndoTransaction : public CompositeUndoAction
+  {
+  public:
+    std::unique_ptr<UndoTransaction> fParent{};
+  };
+
 public:
   void addUndoAction(std::shared_ptr<UndoAction> iAction);
   void undoLastAction(AppContext &iCtx);
   void redoLastAction(AppContext &iCtx);
+  void beginUndoTx(long iFrame, std::string iDescription);
+  void commitUndoTx();
+  void rollbackUndoTx();
   bool hasUndoHistory() const { return !fUndoHistory.empty(); }
   std::shared_ptr<UndoAction> getLastUndoAction() const;
   std::shared_ptr<RedoAction> getLastRedoAction() const;
@@ -111,6 +121,7 @@ public:
 private:
   std::vector<std::shared_ptr<UndoAction>> fUndoHistory{};
   std::vector<std::shared_ptr<RedoAction>> fRedoHistory{};
+  std::unique_ptr<UndoTransaction> fUndoTransaction{};
 };
 
 }

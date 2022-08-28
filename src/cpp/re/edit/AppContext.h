@@ -112,6 +112,9 @@ public: // Texture
 
 public: // Undo
   void addUndoAction(std::shared_ptr<UndoAction> iAction);
+  inline void beginUndoTx(std::string iDescription) { fUndoManager->beginUndoTx(fCurrentFrame, std::move(iDescription)); }
+  inline void commitUndoTx() { fUndoManager->commitUndoTx(); }
+  inline void rollbackUndoTx() { fUndoManager->rollbackUndoTx(); }
 //  void addRedoAction(std::shared_ptr<UndoAction> iRedoAction);
   std::shared_ptr<WidgetUndoAction> createWidgetUndoAction(Widget const *iWidget,
                                                            widget::Attribute const *iAttribute = nullptr,

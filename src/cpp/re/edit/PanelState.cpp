@@ -107,7 +107,7 @@ void PanelState::initPanel(AppContext &iCtx,
     }
 
 
-    fPanel.addWidget(iCtx, std::move(widget));
+    fPanel.addWidget(iCtx, std::move(widget), false);
   }
 
   iCtx.fCurrentPanelState = nullptr;
@@ -149,6 +149,12 @@ void PanelState::render(AppContext &iCtx)
     ImGui::EndTabItem();
 
     fZoom = iCtx.fZoom;
+
+    auto loggingManager = LoggingManager::instance();
+    if(loggingManager->getShowDebug())
+    {
+      loggingManager->debug("Selected", "{%s}", re::mock::stl::join_to_string(fPanel.fSelectedWidgets));
+    }
   }
 }
 

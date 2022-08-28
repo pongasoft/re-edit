@@ -30,6 +30,10 @@ set(CMAKE_CXX_STANDARD 17)
 #
 set(target "re-edit")
 
+# Uncomment to run with sanitizer
+#add_compile_options("-fsanitize=address")
+#add_link_options("-fsanitize=address")
+
 # Including Dear ImGui
 add_subdirectory(external/ocornut/imgui EXCLUDE_FROM_ALL)
 

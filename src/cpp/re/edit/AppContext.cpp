@@ -71,7 +71,6 @@ void AppContext::renderAddWidgetMenuView(ImVec2 const &iPosition)
     {
       auto widget = def.fFactory();
       widget->setPosition(iPosition);
-      widget->setSelected(true);
       fCurrentPanelState->fPanel.addWidget(*this, std::move(widget));
     }
   }

@@ -17,6 +17,7 @@
  */
 
 #include "UndoManager.h"
+#include "Errors.h"
 
 namespace re::edit {
 
@@ -25,8 +26,13 @@ namespace re::edit {
 //------------------------------------------------------------------------
 void UndoManager::addUndoAction(std::shared_ptr<UndoAction> iAction)
 {
-  fUndoHistory.emplace_back(std::move(iAction));
-  fRedoHistory.clear();
+  if(fUndoTransaction)
+    fUndoTransaction->fActions.emplace_back(std::move(iAction));
+  else
+  {
+    fUndoHistory.emplace_back(std::move(iAction));
+    fRedoHistory.clear();
+  }
 }
 
 //------------------------------------------------------------------------
@@ -83,6 +89,53 @@ std::shared_ptr<RedoAction> UndoManager::getLastRedoAction() const
     return nullptr;
   auto iter = fRedoHistory.end() - 1;
   return *iter;
+}
+
+//------------------------------------------------------------------------
+// UndoManager::beginUndoTx
+//------------------------------------------------------------------------
+void UndoManager::beginUndoTx(long iFrame, std::string iDescription)
+{
+  auto tx = std::make_unique<UndoTransaction>();
+  tx->fFrame = iFrame;
+  tx->fDescription = std::move(iDescription);
+  if(fUndoTransaction)
+    tx->fParent = std::move(fUndoTransaction);
+  fUndoTransaction = std::move(tx);
+}
+
+//------------------------------------------------------------------------
+// UndoManager::rollbackUndoTx
+//------------------------------------------------------------------------
+void UndoManager::rollbackUndoTx()
+{
+  RE_EDIT_INTERNAL_ASSERT(fUndoTransaction != nullptr);
+  fUndoTransaction = std::move(fUndoTransaction->fParent);
+}
+
+//------------------------------------------------------------------------
+// UndoManager::commitUndoTx
+//------------------------------------------------------------------------
+void UndoManager::commitUndoTx()
+{
+  RE_EDIT_INTERNAL_ASSERT(fUndoTransaction != nullptr);
+
+  auto tx = std::move(fUndoTransaction);
+  fUndoTransaction = std::move(tx->fParent);
+
+  switch(tx->fActions.size())
+  {
+    case 0:
+      return;
+
+    case 1:
+      addUndoAction(tx->fActions[0]);
+      break;
+
+    default:
+      addUndoAction(std::move(tx));
+      break;
+  }
 }
 
 //------------------------------------------------------------------------

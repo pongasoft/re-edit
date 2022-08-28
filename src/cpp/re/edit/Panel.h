@@ -93,7 +93,7 @@ public:
   inline void setBackground(std::shared_ptr<Texture> iBackground) { fGraphics.setTexture(std::move(iBackground)); }
   inline void setCableOrigin(ImVec2 const &iPosition) { fCableOrigin = iPosition; }
   void setOptions(std::vector<std::string> const &iOptions);
-  int addWidget(AppContext &iCtx, std::shared_ptr<Widget> iWidget);
+  int addWidget(AppContext &iCtx, std::shared_ptr<Widget> iWidget, bool iMakeSelected = true);
   std::shared_ptr<Widget> replaceWidget(int iWidgetId, std::shared_ptr<Widget> iWidget);
   std::vector<std::shared_ptr<Widget>> getSelectedWidgets() const;
   std::vector<int> getWidgetsOrder() const { return fWidgetsOrder; }
@@ -101,6 +101,7 @@ public:
   std::shared_ptr<Widget> getWidget(int id) const;
 
   void selectWidget(int id, bool iMultiple);
+  void toggleWidgetSelection(int id, bool iMultiple);
   void unselectWidget(int id);
   void clearSelection();
 
@@ -119,6 +120,10 @@ public:
 protected:
   template<typename F>
   void editOrderView(std::vector<int> const &iOrder, F iOnSwap);
+
+  void editNoSelectionView(AppContext &iCtx);
+  void editSingleSelectionView(AppContext &iCtx, std::shared_ptr<Widget> const &iWidget);
+  void editMultiSelectionView(AppContext &iCtx, std::vector<std::shared_ptr<Widget>> const &iSelectedWidgets);
 
 private:
   void selectWidget(AppContext &iCtx, ImVec2 const &iPosition, bool iMultiple);
@@ -147,8 +152,10 @@ private:
   std::map<int, std::shared_ptr<Widget>> fWidgets{};
   std::vector<int> fWidgetsOrder{};
   std::vector<int> fDecalsOrder{};
+  std::vector<int> fSelectedWidgets{};
   std::optional<ImVec2> fLastMovePosition{};
   std::optional<MouseDrag> fMouseDrag{};
+  std::optional<ImVec2> fPopupLocation{};
   std::shared_ptr<CompositeUndoAction> fMoveUndoAction{};
   int fWidgetCounter{1}; // used for unique id
 };

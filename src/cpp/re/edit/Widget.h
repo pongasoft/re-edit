@@ -51,8 +51,6 @@ public:
   constexpr void setPosition(ImVec2 const &iPosition) { fGraphics->setPosition(iPosition); }
 
   constexpr bool isSelected() const { return fSelected; }
-  constexpr void setSelected(bool iSelected) { fSelected = iSelected; }
-  constexpr void toggleSelection() { fSelected = !fSelected; }
 
   constexpr bool isHidden() const { return fHidden; }
 

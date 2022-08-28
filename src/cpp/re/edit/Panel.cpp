@@ -53,6 +53,7 @@ Panel::Panel(PanelType iType) :
   fDisableSampleDropOnPanel{ fType == PanelType::kFront ? std::optional<bool>(false) : std::nullopt}
 {
   setDeviceHeightRU(1);
+  fGraphics.fHitBoundariesEnabled = false;
 }
 
 //------------------------------------------------------------------------
@@ -149,12 +150,16 @@ void Panel::draw(AppContext &iCtx)
 
   if(ImGui::BeginPopupContextItem())
   {
-    auto widgetLocation = (ImGui::GetItemRectMin() - cp) / iCtx.fZoom;
+    if(!fPopupLocation)
+      fPopupLocation = ImGui::GetMousePos() - backgroundScreenPosition; // accounts for scrollbars
+    auto widgetLocation = *fPopupLocation / iCtx.fZoom;
     if(renderSelectedWidgetsMenu(iCtx, selectedWidgets, widgetLocation))
       ImGui::Separator();
     renderAddWidgetMenu(iCtx, widgetLocation);
     ImGui::EndPopup();
   }
+  else
+    fPopupLocation = std::nullopt;
 
   if(fMouseDrag && !selectedWidgets.empty())
   {
@@ -241,7 +246,6 @@ void Panel::renderAddWidgetMenu(AppContext &iCtx, ImVec2 const &iPosition)
   {
     auto widget = Widget::panel_decal();
     widget->setPosition(iPosition);
-    widget->setSelected(true);
     addWidget(iCtx, std::move(widget));
   }
 }
@@ -254,7 +258,7 @@ void Panel::renderWidgetMenu(AppContext &iCtx, std::shared_ptr<Widget> const &iW
   if(ImGui::MenuItem(re::mock::fmt::printf("%s %s",
                                            iWidget->isSelected() ? "Unselect" : "Select",
                                            iWidget->getName()).c_str()))
-    iWidget->toggleSelection();
+    toggleWidgetSelection(iWidget->getId(), true);
   if(ImGui::MenuItem(re::mock::fmt::printf("Duplicate %s",
                                            iWidget->getName()).c_str()))
     addWidget(iCtx, iWidget->copy());
@@ -321,7 +325,7 @@ bool Panel::renderSelectedWidgetsMenu(AppContext &iCtx,
 //------------------------------------------------------------------------
 // Panel::addWidget
 //------------------------------------------------------------------------
-int Panel::addWidget(AppContext &iCtx, std::shared_ptr<Widget> iWidget)
+int Panel::addWidget(AppContext &iCtx, std::shared_ptr<Widget> iWidget, bool iMakeSelected)
 {
   RE_EDIT_INTERNAL_ASSERT(iWidget != nullptr);
 
@@ -338,6 +342,9 @@ int Panel::addWidget(AppContext &iCtx, std::shared_ptr<Widget> iWidget)
 
   fWidgets[id] = std::move(iWidget);
 
+  if(iMakeSelected)
+    selectWidget(id, true);
+
   return id;
 }
 
@@ -350,7 +357,7 @@ std::shared_ptr<Widget> Panel::replaceWidget(int iWidgetId, std::shared_ptr<Widg
   RE_EDIT_INTERNAL_ASSERT(fWidgets.find(iWidgetId) != fWidgets.end());
 
   iWidget->init(iWidgetId);
-  iWidget->setSelected(fWidgets[iWidgetId]->isSelected());
+  iWidget->fSelected = fWidgets[iWidgetId]->isSelected();
   std::swap(fWidgets[iWidgetId], iWidget);
   return iWidget;
 }
@@ -361,6 +368,7 @@ std::shared_ptr<Widget> Panel::replaceWidget(int iWidgetId, std::shared_ptr<Widg
 std::pair<std::shared_ptr<Widget>, int> Panel::deleteWidget(int id)
 {
   std::shared_ptr<Widget> widget{};
+  unselectWidget(id);
   // we need to extract the widget from the map before removing it so that we can return it!
   std::swap(fWidgets.at(id), widget);
   fWidgets.erase(id);
@@ -424,20 +432,14 @@ void Panel::selectWidget(AppContext &iCtx, ImVec2 const &iPosition, bool iMultip
     if(iMultiple)
     {
       if(!widget->isSelected())
-      {
         fLastMovePosition = iPosition;
-      }
-      widget->toggleSelection();
+      toggleWidgetSelection(widget->getId(), true);
     }
     else
     {
       fLastMovePosition = iPosition;
       if(!widget->isSelected())
-      {
-        for(auto &p: fWidgets)
-          p.second->setSelected(false);
-        widget->setSelected(true);
-      }
+        selectWidget(widget->getId(), false);
     }
   }
 }
@@ -451,15 +453,29 @@ void Panel::selectWidget(int id, bool iMultiple)
 
   if(!iMultiple)
   {
-    for(auto &p: fWidgets)
-    {
-      auto w = p.second;
-      if(w != widget)
-        w->setSelected(false);
-    }
+    clearSelection();
+    widget->fSelected = true;
+    fSelectedWidgets.emplace_back(id);
   }
+  else
+  {
+    if(widget->fSelected)
+      unselectWidget(id);
+    widget->fSelected = true;
+    fSelectedWidgets.emplace_back(id);
+  }
+}
 
-  widget->toggleSelection();
+//------------------------------------------------------------------------
+// Panel::toggleWidgetSelection
+//------------------------------------------------------------------------
+void Panel::toggleWidgetSelection(int id, bool iMultiple)
+{
+  auto widget = getWidget(id);
+  if(widget->isSelected())
+    unselectWidget(id);
+  else
+    selectWidget(id, iMultiple);
 }
 
 //------------------------------------------------------------------------
@@ -468,7 +484,9 @@ void Panel::selectWidget(int id, bool iMultiple)
 void Panel::unselectWidget(int id)
 {
   auto widget = getWidget(id);
-  widget->setSelected(false);
+  widget->fSelected = false;
+  auto i = std::remove(fSelectedWidgets.begin(), fSelectedWidgets.end(), id);
+  fSelectedWidgets.erase(i, fSelectedWidgets.end());
 }
 
 //------------------------------------------------------------------------
@@ -477,7 +495,9 @@ void Panel::unselectWidget(int id)
 void Panel::clearSelection()
 {
   for(auto &p: fWidgets)
-    p.second->setSelected(false);
+    p.second->fSelected = false;
+
+  fSelectedWidgets.clear();
 }
 
 //------------------------------------------------------------------------
@@ -539,11 +559,9 @@ void Panel::endMoveWidgets(AppContext &iCtx, ImVec2 const &iPosition)
 std::vector<std::shared_ptr<Widget>> Panel::getSelectedWidgets() const
 {
   std::vector<std::shared_ptr<Widget>> c{};
-  for(auto &[n, widget]: fWidgets)
-  {
-    if(widget->isSelected())
-      c.emplace_back(widget);
-  }
+  c.reserve(fSelectedWidgets.size());
+  for(auto id: fSelectedWidgets)
+    c.emplace_back(getWidget(id));
   return c;
 }
 
@@ -585,148 +603,19 @@ void Panel::editView(AppContext &iCtx)
     {
       case 0:
       {
-        ImGui::PushID("Panel");
-
-        if(ImGui::Button("."))
-          ImGui::OpenPopup("Menu");
-
-        if(ImGui::BeginPopup("Menu"))
-        {
-          renderAddWidgetMenu(iCtx);
-          ImGui::EndPopup();
-        }
-
-        ImGui::SameLine();
-        ImGui::Text("%s panel", toString(fType));
-
-        fGraphics.editView(iCtx);
-
-        if(fCableOrigin)
-        {
-          if(ImGui::TreeNode("Cable Origin"))
-          {
-            fShowCableOrigin = true;
-            ReGui::InputInt("x", &fCableOrigin->x, 1, 5);
-            ReGui::InputInt("y", &fCableOrigin->y, 1, 5);
-            ImGui::TreePop();
-          }
-          else
-            fShowCableOrigin = false;
-        }
-
-        if(fDisableSampleDropOnPanel)
-        {
-          if(ImGui::TreeNode("Options"))
-          {
-            bool b = *fDisableSampleDropOnPanel;
-            if(ImGui::Checkbox("disable_sample_drop_on_panel", &b))
-            {
-              fDisableSampleDropOnPanel = b;
-            }
-            ImGui::TreePop();
-          }
-        }
-
-        if(ImGui::TreeNode("hdgui2D"))
-        {
-          auto windowSize = ImGui::GetWindowSize();
-          ImGui::PushTextWrapPos(windowSize.x);
-          ImGui::TextUnformatted(hdgui2D(iCtx).c_str());
-          ImGui::PopTextWrapPos();
-          ImGui::TreePop();
-        }
-        if(ImGui::TreeNode("device2D"))
-        {
-          auto windowSize = ImGui::GetWindowSize();
-          ImGui::PushTextWrapPos(windowSize.x);
-          ImGui::TextUnformatted(device2D().c_str());
-          ImGui::PopTextWrapPos();
-          ImGui::TreePop();
-        }
-        ImGui::PopID();
+        editNoSelectionView(iCtx);
         break;
       }
 
       case 1:
       {
-        auto w = selectedWidgets[0];
-
-        if(ImGui::Button("."))
-          ImGui::OpenPopup("Menu");
-
-        if(ImGui::BeginPopup("Menu"))
-        {
-          renderSelectedWidgetsMenu(iCtx, selectedWidgets);
-          ImGui::EndPopup();
-        }
-
-        ImGui::SameLine();
-        ImGui::Text("%s", re::edit::toString(w->getType()));
-
-        ImGui::SameLine();
-        if(!w->errorView(iCtx))
-          ImGui::NewLine();
-
-        w->editView(iCtx);
+        editSingleSelectionView(iCtx, selectedWidgets[0]);
         break;
       }
 
       default:
       {
-        if(ImGui::Button("."))
-          ImGui::OpenPopup("Menu");
-
-        if(ImGui::BeginPopup("Menu"))
-        {
-          renderSelectedWidgetsMenu(iCtx, selectedWidgets);
-          ImGui::EndPopup();
-        }
-
-        ImGui::SameLine();
-        ImGui::Text("%ld selected", selectedWidgets.size());
-
-        auto min = selectedWidgets[0]->getTopLeft();
-
-        std::for_each(selectedWidgets.begin() + 1, selectedWidgets.end(), [&min](auto c) {
-          auto pos = c->getTopLeft();
-          if(pos.x < min.x)
-            min.x = pos.x;
-          if(pos.y < min.y)
-            min.y = pos.y;
-        });
-
-        auto editedMin = min;
-        ReGui::InputInt("x", &editedMin.x, 1, 5);
-        ImGui::SameLine();
-        ImGui::PushID("x");
-        if(ImGui::Button("="))
-        {
-          for(auto &w: selectedWidgets)
-          {
-            auto position = w->getPosition();
-            w->setPosition({editedMin.x, position.y});
-          }
-        }
-        ImGui::PopID();
-        ReGui::InputInt("y", &editedMin.y, 1, 5);
-        ImGui::SameLine();
-        ImGui::PushID("y");
-        if(ImGui::Button("="))
-        {
-          for(auto &w: selectedWidgets)
-          {
-            auto position = w->getPosition();
-            w->setPosition({position.x, editedMin.y});
-          }
-        }
-        ImGui::PopID();
-        auto delta = editedMin - min;
-        if(delta.x != 0 || delta.y != 0)
-        {
-          for(auto &w: selectedWidgets)
-            w->move(delta);
-        }
-
+        editMultiSelectionView(iCtx, selectedWidgets);
         break;
       }
     }
@@ -735,6 +624,158 @@ void Panel::editView(AppContext &iCtx)
   }
   ImGui::End();
 
+}
+
+//------------------------------------------------------------------------
+// Panel::editNoSelectionView
+//------------------------------------------------------------------------
+void Panel::editNoSelectionView(AppContext &iCtx)
+{
+  ImGui::PushID("Panel");
+
+  if(ImGui::Button("."))
+    ImGui::OpenPopup("Menu");
+
+  if(ImGui::BeginPopup("Menu"))
+  {
+    renderAddWidgetMenu(iCtx);
+    ImGui::EndPopup();
+  }
+
+  ImGui::SameLine();
+  ImGui::Text("%s panel", toString(fType));
+
+  fGraphics.editView(iCtx);
+
+  if(fCableOrigin)
+  {
+    if(ImGui::TreeNode("Cable Origin"))
+    {
+      fShowCableOrigin = true;
+      ReGui::InputInt("x", &fCableOrigin->x, 1, 5);
+      ReGui::InputInt("y", &fCableOrigin->y, 1, 5);
+      ImGui::TreePop();
+    }
+    else
+      fShowCableOrigin = false;
+  }
+
+  if(fDisableSampleDropOnPanel)
+  {
+    if(ImGui::TreeNode("Options"))
+    {
+      bool b = *fDisableSampleDropOnPanel;
+      if(ImGui::Checkbox("disable_sample_drop_on_panel", &b))
+      {
+        fDisableSampleDropOnPanel = b;
+      }
+      ImGui::TreePop();
+    }
+  }
+
+  if(ImGui::TreeNode("hdgui2D"))
+  {
+    auto windowSize = ImGui::GetWindowSize();
+    ImGui::PushTextWrapPos(windowSize.x);
+    ImGui::TextUnformatted(hdgui2D(iCtx).c_str());
+    ImGui::PopTextWrapPos();
+    ImGui::TreePop();
+  }
+  if(ImGui::TreeNode("device2D"))
+  {
+    auto windowSize = ImGui::GetWindowSize();
+    ImGui::PushTextWrapPos(windowSize.x);
+    ImGui::TextUnformatted(device2D().c_str());
+    ImGui::PopTextWrapPos();
+    ImGui::TreePop();
+  }
+  ImGui::PopID();
+}
+
+//------------------------------------------------------------------------
+// Panel::editSingleSelectionView
+//------------------------------------------------------------------------
+void Panel::editSingleSelectionView(AppContext &iCtx, std::shared_ptr<Widget> const &iWidget)
+{
+  if(ImGui::Button("."))
+    ImGui::OpenPopup("Menu");
+
+  if(ImGui::BeginPopup("Menu"))
+  {
+    std::vector<std::shared_ptr<Widget>> selectedWidgets{iWidget};
+    renderSelectedWidgetsMenu(iCtx, selectedWidgets);
+    ImGui::EndPopup();
+  }
+
+  ImGui::SameLine();
+  ImGui::Text("%s", re::edit::toString(iWidget->getType()));
+
+  ImGui::SameLine();
+  if(!iWidget->errorView(iCtx))
+    ImGui::NewLine();
+
+  iWidget->editView(iCtx);
+}
+
+
+//------------------------------------------------------------------------
+// Panel::editMultiSelectionView
+//------------------------------------------------------------------------
+void Panel::editMultiSelectionView(AppContext &iCtx, std::vector<std::shared_ptr<Widget>> const &iSelectedWidgets)
+{
+  if(ImGui::Button("."))
+    ImGui::OpenPopup("Menu");
+
+  if(ImGui::BeginPopup("Menu"))
+  {
+    renderSelectedWidgetsMenu(iCtx, iSelectedWidgets);
+    ImGui::EndPopup();
+  }
+
+  ImGui::SameLine();
+  ImGui::Text("%ld selected", iSelectedWidgets.size());
+
+  auto min = iSelectedWidgets[0]->getTopLeft();
+
+  std::for_each(iSelectedWidgets.begin() + 1, iSelectedWidgets.end(), [&min](auto c) {
+    auto pos = c->getTopLeft();
+    if(pos.x < min.x)
+      min.x = pos.x;
+    if(pos.y < min.y)
+      min.y = pos.y;
+  });
+
+  auto editedMin = min;
+  ReGui::InputInt("x", &editedMin.x, 1, 5);
+  ImGui::SameLine();
+  ImGui::PushID("x");
+  if(ImGui::Button("="))
+  {
+    for(auto &w: iSelectedWidgets)
+    {
+      auto position = w->getPosition();
+      w->setPosition({editedMin.x, position.y});
+    }
+  }
+  ImGui::PopID();
+  ReGui::InputInt("y", &editedMin.y, 1, 5);
+  ImGui::SameLine();
+  ImGui::PushID("y");
+  if(ImGui::Button("="))
+  {
+    for(auto &w: iSelectedWidgets)
+    {
+      auto position = w->getPosition();
+      w->setPosition({position.x, editedMin.y});
+    }
+  }
+  ImGui::PopID();
+  auto delta = editedMin - min;
+  if(delta.x != 0 || delta.y != 0)
+  {
+    for(auto &w: iSelectedWidgets)
+      w->move(delta);
+  }
 }
 
 //------------------------------------------------------------------------
@@ -873,7 +914,7 @@ void Panel::editOrderView(std::vector<int> const &iOrder, F iOnSwap)
     if(ImGui::IsItemClicked(ImGuiMouseButton_Left))
     {
       auto &io = ImGui::GetIO();
-      selectWidget(id, io.KeyShift);
+      toggleWidgetSelection(id, io.KeyShift);
     }
 
     if(ImGui::IsItemActive() && !ImGui::IsItemHovered())
