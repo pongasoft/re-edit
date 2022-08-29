@@ -184,6 +184,15 @@ void AppContext::addUndoAttributeChange(widget::Attribute const *iAttribute)
 }
 
 //------------------------------------------------------------------------
+// AppContext::addUndoAttributeReset
+//------------------------------------------------------------------------
+void AppContext::addUndoAttributeReset(widget::Attribute const *iAttribute)
+{
+  RE_EDIT_INTERNAL_ASSERT(fCurrentWidget != nullptr);
+  addUndoAction(createAttributeUndoAction(fCurrentWidget, iAttribute, re::mock::fmt::printf("Reset %s.%s", fCurrentWidget->getName(), iAttribute->fName)));
+}
+
+//------------------------------------------------------------------------
 // AppContext::createUndoAction
 //------------------------------------------------------------------------
 std::unique_ptr<WidgetUndoAction> AppContext::createAttributeUndoAction(Widget const *iWidget,

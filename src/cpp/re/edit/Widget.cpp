@@ -249,7 +249,21 @@ void Widget::editView(AppContext &iCtx)
 
   ImGui::PushID("Widget");
 
-  ImGui::InputText("name", &fName);
+  auto editedName = fName;
+
+  ImGui::InputText("name", &editedName);
+
+  if(ImGui::IsItemActivated())
+  {
+    fNameTx.begin(iCtx, fName, "Rename widget");
+    fNameTx.add(iCtx, this, "Rename %s widget", fName);
+  }
+
+  if(ImGui::IsItemDeactivated())
+    fNameTx.commit(iCtx, editedName);
+
+  if(fName != editedName)
+    fName = editedName;
 
   fGraphics->editPositionView(iCtx);
 

@@ -746,34 +746,27 @@ void Panel::editMultiSelectionView(AppContext &iCtx, std::vector<std::shared_ptr
       max.y = pos.y;
   });
 
-  static UndoValueTransaction<float> kMoveXTx{};
-  static UndoValueTransaction<float> kMoveYTx{};
-
   auto editedMin = min;
 
   ReGui::InputInt("x", &editedMin.x, 1, 5);
 
-  if(ImGui::IsItemActivated())
-  {
-    kMoveXTx.begin(iCtx, min.x, "Move Widgets Horizontally");
-    for(auto &w: iSelectedWidgets)
-      kMoveXTx.add(iCtx, w.get(), "Move %s Horizontally", w->getName());
-  }
-
-  if(ImGui::IsItemDeactivated())
-    kMoveXTx.commit(iCtx, editedMin.x);
+  auto begin = ImGui::IsItemActivated();
+  auto commit = ImGui::IsItemDeactivated();
 
   ReGui::InputInt("y", &editedMin.y, 1, 5);
 
-  if(ImGui::IsItemActivated())
-  {
-    kMoveYTx.begin(iCtx, min.y, "Move Widgets Vertically");
-    for(auto &w: iSelectedWidgets)
-      kMoveYTx.add(iCtx, w.get(), "Move %s Vertically", w->getName());
-  }
+  begin |= ImGui::IsItemActivated();
+  commit |= ImGui::IsItemDeactivated();
 
-  if(ImGui::IsItemDeactivated())
-    kMoveYTx.commit(iCtx, editedMin.y);
+  if(commit)
+    fMoveTx.commit(iCtx, editedMin);
+
+  if(begin)
+  {
+    fMoveTx.begin(iCtx, min, "Move Widgets");
+    for(auto &w: iSelectedWidgets)
+      fMoveTx.add(iCtx, w.get(), "Move %s", w->getName());
+  }
 
   auto delta = editedMin - min;
   if(delta.x != 0 || delta.y != 0)

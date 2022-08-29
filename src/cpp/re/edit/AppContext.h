@@ -27,6 +27,7 @@
 #include "PropertyManager.h"
 #include "UndoManager.h"
 #include "Constants.h"
+#include "Errors.h"
 
 namespace re::edit {
 
@@ -122,6 +123,12 @@ public: // Undo
     addUndoAction(createWidgetUndoAction(iWidget, iFormat, args...));
   }
 
+  template<typename ... Args>
+  inline void addCurrentWidgetUndoAction(std::string const &iFormat, Args ... args)
+  {
+    addWidgetUndoAction(fCurrentWidget, iFormat, args...);
+  }
+
   inline void addAttributeUndoAction(Widget const *iWidget,
                                      widget::Attribute const *iAttribute,
                                      std::optional<std::string> const &iDescription = std::nullopt)
@@ -153,6 +160,7 @@ public: // Undo
   }
 
   void addUndoAttributeChange(widget::Attribute const *iAttribute);
+  void addUndoAttributeReset(widget::Attribute const *iAttribute);
   void undoLastAction() { fUndoManager->undoLastAction(*this); }
   void redoLastAction() { fUndoManager->redoLastAction(*this); }
 
@@ -195,15 +203,24 @@ template<typename T>
 class UndoValueTransaction
 {
 public:
+  UndoValueTransaction() = default;
+  UndoValueTransaction(UndoValueTransaction<T> const &iOther) : fInitialValue{}, fAction{} {}
+
   inline void add(std::shared_ptr<UndoAction> iAction) {
-    if(fAction)
-      fAction->add(std::move(iAction));
+    RE_EDIT_INTERNAL_ASSERT(fAction != nullptr);
+    fAction->add(std::move(iAction));
   }
 
   template<typename... Args>
   inline void add(AppContext &iCtx, Widget const *iWidget, std::string const &iFormat, Args ... args)
   {
     return add(iCtx.createWidgetUndoAction(iWidget, iFormat, args...));
+  }
+
+  template<typename... Args>
+  inline void addCurrentWidget(AppContext &iCtx, std::string const &iFormat, Args ... args)
+  {
+    return add(iCtx, iCtx.getCurrentWidget(), iFormat, args...);
   }
 
   template<typename... Args>
@@ -237,6 +254,7 @@ template<typename T>
 template<typename... Args>
 void UndoValueTransaction<T>::begin(AppContext &iCtx, T const &iInitialValue, std::string const &iFormat, Args... args)
 {
+  RE_EDIT_INTERNAL_ASSERT(fAction == nullptr);
   fInitialValue = iInitialValue;
   fAction = iCtx.createCompositeUndoAction(iFormat, args...);
 }

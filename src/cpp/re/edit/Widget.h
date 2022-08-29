@@ -172,6 +172,9 @@ private:
   widget::attribute::Graphics *fGraphics{};
   widget::attribute::Visibility *fVisibility{};
 
+  // Undo
+  UndoValueTransaction<std::string> fNameTx{};
+
 private:
   static long fWidgetIota;
 };

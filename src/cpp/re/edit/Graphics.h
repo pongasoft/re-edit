@@ -102,6 +102,11 @@ public:
   ImVec2 fSize{100, 100};
   FilmStrip::Filter fFilter{};
   int fFrameNumber{};
+
+  // undo
+  UndoValueTransaction<ImVec2> fPositionUndoTx{};
+  UndoValueTransaction<HitBoundaries> fHitBoundariesUndoTx{};
+  UndoValueTransaction<ImVec2> fSizeUndoTx{};
 };
 
 class Background : public String

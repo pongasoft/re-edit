@@ -89,7 +89,10 @@ void Graphics::editView(AppContext &iCtx,
                         std::function<void(ImVec2 const &)> const &iOnSizeUpdate)
 {
   if(ImGui::Button("X"))
+  {
+    iCtx.addUndoAttributeReset(this);
     reset();
+  }
   ImGui::SameLine();
 
   ImGui::BeginGroup();
@@ -102,7 +105,10 @@ void Graphics::editView(AppContext &iCtx,
     {
       auto const isSelected = p == key;
       if(ImGui::Selectable(p.c_str(), isSelected))
+      {
+        iCtx.addCurrentWidgetUndoAction("Change %s graphics", iCtx.getCurrentWidget()->getName());
         iOnTextureUpdate(p);
+      }
       if(isSelected)
         ImGui::SetItemDefaultFocus();
     }
@@ -123,12 +129,30 @@ void Graphics::editView(AppContext &iCtx,
 
   if(!texture)
   {
-    auto size = fSize;
+    auto editedSize = fSize;
     ImGui::Indent();
-    auto updated = ReGui::InputInt("w", &size.x, 1, 5);
-    updated |= ReGui::InputInt("h", &size.y, 1, 5);
-    if(updated)
-      iOnSizeUpdate(size);
+    ReGui::InputInt("w", &editedSize.x, 1, 5);
+
+    auto begin = ImGui::IsItemActivated();
+    auto commit = ImGui::IsItemDeactivated();
+
+    ReGui::InputInt("h", &editedSize.y, 1, 5);
+
+    begin |= ImGui::IsItemActivated();
+    commit |= ImGui::IsItemDeactivated();
+
+    if(commit)
+      fSizeUndoTx.commit(iCtx, editedSize);
+
+    if(begin)
+    {
+      fSizeUndoTx.begin(iCtx, fSize, "Change Widget size");
+      fSizeUndoTx.addCurrentWidget(iCtx, "Change %s size", iCtx.getCurrentWidget()->getName());
+    }
+
+    if(fSize != editedSize)
+      iOnSizeUpdate(editedSize);
+
     ImGui::Unindent();
   }
   ImGui::EndGroup();
@@ -140,11 +164,32 @@ void Graphics::editView(AppContext &iCtx,
 //------------------------------------------------------------------------
 void Graphics::editPositionView(AppContext &iCtx)
 {
-  if(ReGui::InputInt("x", &fPosition.x, 1, 5))
-    fEdited = true;
+  auto editedPosition = fPosition;
 
-  if(ReGui::InputInt("y", &fPosition.y, 1, 5))
+  ReGui::InputInt("x", &editedPosition.x, 1, 5);
+
+  auto begin = ImGui::IsItemActivated();
+  auto commit = ImGui::IsItemDeactivated();
+
+  ReGui::InputInt("y", &editedPosition.y, 1, 5);
+
+  begin |= ImGui::IsItemActivated();
+  commit |= ImGui::IsItemDeactivated();
+
+  if(commit)
+    fPositionUndoTx.commit(iCtx, editedPosition);
+
+  if(begin)
+  {
+    fPositionUndoTx.begin(iCtx, fPosition, "Move Widget");
+    fPositionUndoTx.addCurrentWidget(iCtx, "Move %s", iCtx.getCurrentWidget()->getName());
+  }
+
+  if(fPosition != editedPosition)
+  {
+    fPosition = editedPosition;
     fEdited = true;
+  }
 
   if(hasTexture())
   {
@@ -185,13 +230,34 @@ void Graphics::editHitBoundariesView(AppContext &iCtx)
 {
   if(fHitBoundariesEnabled && iCtx.fShowBorder == AppContext::ShowBorder::kHitBoundaries)
   {
-    float *tb[] = { &fHitBoundaries.fTopInset, &fHitBoundaries.fBottomInset };
-    if(ReGui::SliderInt2("hit_boundaries - Top | Bottom", tb, 0, static_cast<int>(getSize().y), "inset: %d", ImGuiSliderFlags_AlwaysClamp))
-      fEdited = true;
+    auto editedHB = fHitBoundaries;
 
-    float *lr[] = { &fHitBoundaries.fLeftInset, &fHitBoundaries.fRightInset };
-    if(ReGui::SliderInt2("hit_boundaries - Left | Right", lr, 0, static_cast<int>(getSize().x), "inset: %d", ImGuiSliderFlags_AlwaysClamp))
+    float *tb[] = { &editedHB.fTopInset, &editedHB.fBottomInset };
+    ReGui::SliderInt2("hit_boundaries - Top | Bottom", tb, 0, static_cast<int>(getSize().y), "inset: %d", ImGuiSliderFlags_AlwaysClamp);
+
+    auto begin = ImGui::IsItemActivated();
+    auto commit = ImGui::IsItemDeactivated();
+
+    float *lr[] = { &editedHB.fLeftInset, &editedHB.fRightInset };
+    ReGui::SliderInt2("hit_boundaries - Left | Right", lr, 0, static_cast<int>(getSize().x), "inset: %d", ImGuiSliderFlags_AlwaysClamp);
+
+    begin |= ImGui::IsItemActivated();
+    commit |= ImGui::IsItemDeactivated();
+
+    if(commit)
+      fHitBoundariesUndoTx.commit(iCtx, editedHB);
+
+    if(begin)
+    {
+      fHitBoundariesUndoTx.begin(iCtx, fHitBoundaries, "Change Hit Boundaries");
+      fHitBoundariesUndoTx.addCurrentWidget(iCtx, "Change %s Hit Boundaries", iCtx.getCurrentWidget()->getName());
+    }
+
+    if(fHitBoundaries != editedHB)
+    {
+      fHitBoundaries = editedHB;
       fEdited = true;
+    }
   }
 }
 
