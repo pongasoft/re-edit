@@ -29,7 +29,7 @@ template<typename ... Args>
 void log_info(char const *iFile, int iLine, const std::string &format, Args ... args)
 {
   re::mock::log_info(iFile, iLine, format, args...);
-  LoggingManager::instance()->logInfo(format, std::forward<Args>(args)...);
+  LoggingManager::instance()->logInfo(format, args...);
 }
 
 //! log_warning
@@ -37,7 +37,7 @@ template<typename ... Args>
 void log_warning(char const *iFile, int iLine, const std::string &format, Args ... args)
 {
   re::mock::log_warning(iFile, iLine, format, args...);
-  LoggingManager::instance()->logWarning(format, std::forward<Args>(args)...);
+  LoggingManager::instance()->logWarning(format, args...);
   LoggingManager::instance()->showLog();
 }
 
@@ -46,7 +46,7 @@ template<typename ... Args>
 void log_error(char const *iFile, int iLine, const std::string &format, Args ... args)
 {
   re::mock::log_error(iFile, iLine, format, args...);
-  LoggingManager::instance()->logError(format, std::forward<Args>(args)...);
+  LoggingManager::instance()->logError(format, args...);
   LoggingManager::instance()->showLog();
 }
 

@@ -180,30 +180,30 @@ void AppContext::addUndoAction(std::shared_ptr<UndoAction> iAction)
 void AppContext::addUndoAttributeChange(widget::Attribute const *iAttribute)
 {
   RE_EDIT_INTERNAL_ASSERT(fCurrentWidget != nullptr);
-  addUndoAction(createWidgetUndoAction(fCurrentWidget, iAttribute));
+  addUndoAction(createAttributeUndoAction(fCurrentWidget, iAttribute));
 }
 
 //------------------------------------------------------------------------
-// AppContext::createWidgetUndoAction
+// AppContext::createUndoAction
 //------------------------------------------------------------------------
-std::shared_ptr<WidgetUndoAction> AppContext::createWidgetUndoAction(Widget const *iWidget,
-                                                                     widget::Attribute const *iAttribute,
-                                                                     std::optional<std::string> const &iDescription) const
+std::unique_ptr<WidgetUndoAction> AppContext::createAttributeUndoAction(Widget const *iWidget,
+                                                                        widget::Attribute const *iAttribute,
+                                                                        std::optional<std::string> const &iDescription) const
 {
   RE_EDIT_INTERNAL_ASSERT(fCurrentPanelState != nullptr);
 
   auto panelType = fCurrentPanelState->getType();
   auto widgetId = iWidget->getId();
   std::shared_ptr<Widget> w = iWidget->clone();
-  auto action = std::make_shared<WidgetUndoAction>();
+  auto action = std::make_unique<WidgetUndoAction>();
   if(iDescription)
     action->fDescription = *iDescription;
   else
   {
     if(iAttribute)
-      action->fDescription = re::mock::fmt::printf("%s.%s updated", iWidget->getName(), iAttribute->fName);
+      action->fDescription = re::mock::fmt::printf("Update %s.%s", iWidget->getName(), iAttribute->fName);
     else
-      action->fDescription = re::mock::fmt::printf("%s updated", iWidget->getName());
+      action->fDescription = re::mock::fmt::printf("Update %s", iWidget->getName());
   }
   action->fWidgetId = widgetId;
   if(iAttribute)
@@ -214,6 +214,16 @@ std::shared_ptr<WidgetUndoAction> AppContext::createWidgetUndoAction(Widget cons
       iCtx.getPanel(panelType)->replaceWidget(widgetId, w2);
     });
   };
+  return action;
+}
+
+//------------------------------------------------------------------------
+// AppContext::CompositeUndoAction
+//------------------------------------------------------------------------
+std::unique_ptr<CompositeUndoAction> AppContext::createCompositeUndoAction(std::string const &iDescription)
+{
+  auto action = std::make_unique<CompositeUndoAction>();
+  action->fDescription = iDescription;
   return action;
 }
 

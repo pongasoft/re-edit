@@ -26,13 +26,31 @@ namespace re::edit {
 //------------------------------------------------------------------------
 void UndoManager::addUndoAction(std::shared_ptr<UndoAction> iAction)
 {
+  auto compositeAction = std::dynamic_pointer_cast<CompositeUndoAction>(iAction);
+
+  if(compositeAction)
+  {
+    switch(compositeAction->fActions.size())
+    {
+      case 0:
+        return;
+
+      case 1:
+        iAction = compositeAction->fActions[0];
+        break;
+
+      default:
+        // do nothing
+        break;
+    }
+  }
+
   if(fUndoTransaction)
     fUndoTransaction->fActions.emplace_back(std::move(iAction));
   else
-  {
     fUndoHistory.emplace_back(std::move(iAction));
-    fRedoHistory.clear();
-  }
+
+  fRedoHistory.clear();
 }
 
 //------------------------------------------------------------------------
@@ -122,20 +140,7 @@ void UndoManager::commitUndoTx()
 
   auto tx = std::move(fUndoTransaction);
   fUndoTransaction = std::move(tx->fParent);
-
-  switch(tx->fActions.size())
-  {
-    case 0:
-      return;
-
-    case 1:
-      addUndoAction(tx->fActions[0]);
-      break;
-
-    default:
-      addUndoAction(std::move(tx));
-      break;
-  }
+  addUndoAction(std::move(tx));
 }
 
 //------------------------------------------------------------------------

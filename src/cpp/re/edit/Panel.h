@@ -153,10 +153,10 @@ private:
   std::vector<int> fWidgetsOrder{};
   std::vector<int> fDecalsOrder{};
   std::vector<int> fSelectedWidgets{};
+  UndoValueTransaction<ImVec2> fMoveTx{};
   std::optional<ImVec2> fLastMovePosition{};
   std::optional<MouseDrag> fMouseDrag{};
   std::optional<ImVec2> fPopupLocation{};
-  std::shared_ptr<CompositeUndoAction> fMoveUndoAction{};
   int fWidgetCounter{1}; // used for unique id
 };
 

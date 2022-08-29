@@ -38,6 +38,9 @@ namespace widget {
 class Attribute;
 }
 
+template<typename T>
+class UndoValueTransaction;
+
 class AppContext
 {
 public:
@@ -112,13 +115,43 @@ public: // Texture
 
 public: // Undo
   void addUndoAction(std::shared_ptr<UndoAction> iAction);
-  inline void beginUndoTx(std::string iDescription) { fUndoManager->beginUndoTx(fCurrentFrame, std::move(iDescription)); }
+
+  template<typename ... Args>
+  inline void addWidgetUndoAction(Widget const *iWidget, std::string const &iFormat, Args ... args)
+  {
+    addUndoAction(createWidgetUndoAction(iWidget, iFormat, args...));
+  }
+
+  inline void addAttributeUndoAction(Widget const *iWidget,
+                                     widget::Attribute const *iAttribute,
+                                     std::optional<std::string> const &iDescription = std::nullopt)
+  {
+    addUndoAction(createAttributeUndoAction(iWidget, iAttribute, iDescription));
+  }
+
+  template<typename... Args>
+  inline void beginUndoTx(std::string const &iFormat, Args ... args) { fUndoManager->beginUndoTx(fCurrentFrame, re::mock::fmt::printf(iFormat, args...)); }
   inline void commitUndoTx() { fUndoManager->commitUndoTx(); }
   inline void rollbackUndoTx() { fUndoManager->rollbackUndoTx(); }
-//  void addRedoAction(std::shared_ptr<UndoAction> iRedoAction);
-  std::shared_ptr<WidgetUndoAction> createWidgetUndoAction(Widget const *iWidget,
-                                                           widget::Attribute const *iAttribute = nullptr,
-                                                           std::optional<std::string> const &iDescription = std::nullopt) const;
+
+  std::unique_ptr<WidgetUndoAction> createAttributeUndoAction(Widget const *iWidget,
+                                                              widget::Attribute const *iAttribute,
+                                                              std::optional<std::string> const &iDescription = std::nullopt) const;
+
+  template<typename ... Args>
+  inline std::unique_ptr<WidgetUndoAction> createWidgetUndoAction(Widget const *iWidget, std::string const &iFormat, Args ... args)
+  {
+    return createAttributeUndoAction(iWidget, nullptr, re::mock::fmt::printf(iFormat, args...));
+  }
+
+  std::unique_ptr<CompositeUndoAction> createCompositeUndoAction(std::string const &iDescription);
+
+  template<typename ... Args>
+  inline std::unique_ptr<CompositeUndoAction> createCompositeUndoAction(std::string const &iFormat, Args ... args)
+  {
+    return createCompositeUndoAction(iFormat, re::mock::fmt::printf(iFormat, args...));
+  }
+
   void addUndoAttributeChange(widget::Attribute const *iAttribute);
   void undoLastAction() { fUndoManager->undoLastAction(*this); }
   void redoLastAction() { fUndoManager->redoLastAction(*this); }
@@ -157,6 +190,57 @@ protected:
   PanelState *fCurrentPanelState{};
   Widget const *fCurrentWidget{};
 };
+
+template<typename T>
+class UndoValueTransaction
+{
+public:
+  inline void add(std::shared_ptr<UndoAction> iAction) {
+    if(fAction)
+      fAction->add(std::move(iAction));
+  }
+
+  template<typename... Args>
+  inline void add(AppContext &iCtx, Widget const *iWidget, std::string const &iFormat, Args ... args)
+  {
+    return add(iCtx.createWidgetUndoAction(iWidget, iFormat, args...));
+  }
+
+  template<typename... Args>
+  void begin(AppContext &iCtx, T const &iInitialValue, std::string const &iFormat, Args... args);
+
+  void commit(AppContext &iCtx, T const &iFinalValue)
+  {
+    if(fAction && iFinalValue != fInitialValue)
+    {
+      iCtx.addUndoAction(std::move(fAction));
+    }
+    fAction = nullptr;
+  }
+
+  void rollback()
+  {
+    fAction = nullptr;
+  }
+
+  explicit operator bool() const { return fAction != nullptr; }
+
+private:
+  T fInitialValue{};
+  std::unique_ptr<CompositeUndoAction> fAction{};
+};
+
+//------------------------------------------------------------------------
+// Panel::begin
+//------------------------------------------------------------------------
+template<typename T>
+template<typename... Args>
+void UndoValueTransaction<T>::begin(AppContext &iCtx, T const &iInitialValue, std::string const &iFormat, Args... args)
+{
+  fInitialValue = iInitialValue;
+  fAction = iCtx.createCompositeUndoAction(iFormat, args...);
+}
+
 
 }
 #endif //RE_EDIT_APP_CONTEXT_H

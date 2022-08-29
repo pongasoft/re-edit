@@ -510,22 +510,21 @@ void Panel::moveWidgets(AppContext &iCtx, ImVec2 const &iPosition)
     auto delta = iPosition - fLastMovePosition.value();
     if(delta.x != 0 || delta.y != 0)
     {
-      bool createUndo = fMoveUndoAction == nullptr;
-      if(createUndo)
+      if(!fMoveTx)
       {
-        fMoveUndoAction = std::make_shared<CompositeUndoAction>();
-        fMoveUndoAction->fDescription = "Move widget(s)";
+        fMoveTx.begin(iCtx, *fLastMovePosition, "Move Widgets");
+        for(auto id: fSelectedWidgets)
+        {
+          auto widget = getWidget(id);
+          fMoveTx.add(iCtx, widget.get(), "Move %s", widget->getName());
+        }
       }
 
-      std::for_each(fWidgets.begin(), fWidgets.end(), [&iCtx, &delta, createUndo, this](auto const &p) {
-        auto &widget = p.second;
-        if(widget->isSelected())
-        {
-          if(createUndo)
-            fMoveUndoAction->fActions.emplace_back(iCtx.createWidgetUndoAction(widget.get()));
-          widget->move(delta);
-        }
-      });
+      for(auto id: fSelectedWidgets)
+      {
+        auto widget = getWidget(id);
+        widget->move(delta);
+      }
     }
     fLastMovePosition = iPosition;
   }
@@ -536,20 +535,16 @@ void Panel::moveWidgets(AppContext &iCtx, ImVec2 const &iPosition)
 //------------------------------------------------------------------------
 void Panel::endMoveWidgets(AppContext &iCtx, ImVec2 const &iPosition)
 {
-  std::for_each(fWidgets.begin(), fWidgets.end(), [](auto const &p) {
-    auto &widget = p.second;
-    if(widget->isSelected())
-    {
-      auto position = widget->getPosition();
-      position.x = std::round(position.x);
-      position.y = std::round(position.y);
-      widget->setPosition(position);
-    }
-  });
+  for(auto id: fSelectedWidgets)
+  {
+    auto widget = getWidget(id);
+    auto position = widget->getPosition();
+    position.x = std::round(position.x);
+    position.y = std::round(position.y);
+    widget->setPosition(position);
+  }
 
-  if(fMoveUndoAction)
-    iCtx.addUndoAction(std::move(fMoveUndoAction));
-
+  fMoveTx.commit(iCtx, *fLastMovePosition);
   fLastMovePosition = std::nullopt;
 }
 
@@ -736,45 +731,114 @@ void Panel::editMultiSelectionView(AppContext &iCtx, std::vector<std::shared_ptr
   ImGui::Text("%ld selected", iSelectedWidgets.size());
 
   auto min = iSelectedWidgets[0]->getTopLeft();
+  auto max = iSelectedWidgets[0]->getBottomRight();
 
-  std::for_each(iSelectedWidgets.begin() + 1, iSelectedWidgets.end(), [&min](auto c) {
+  std::for_each(iSelectedWidgets.begin() + 1, iSelectedWidgets.end(), [&min, &max](auto c) {
     auto pos = c->getTopLeft();
     if(pos.x < min.x)
       min.x = pos.x;
     if(pos.y < min.y)
       min.y = pos.y;
+    pos = c->getBottomRight();
+    if(pos.x > max.x)
+      max.x = pos.x;
+    if(pos.y > max.y)
+      max.y = pos.y;
   });
 
+  static UndoValueTransaction<float> kMoveXTx{};
+  static UndoValueTransaction<float> kMoveYTx{};
+
   auto editedMin = min;
+
   ReGui::InputInt("x", &editedMin.x, 1, 5);
-  ImGui::SameLine();
-  ImGui::PushID("x");
-  if(ImGui::Button("="))
+
+  if(ImGui::IsItemActivated())
   {
+    kMoveXTx.begin(iCtx, min.x, "Move Widgets Horizontally");
     for(auto &w: iSelectedWidgets)
-    {
-      auto position = w->getPosition();
-      w->setPosition({editedMin.x, position.y});
-    }
+      kMoveXTx.add(iCtx, w.get(), "Move %s Horizontally", w->getName());
   }
-  ImGui::PopID();
+
+  if(ImGui::IsItemDeactivated())
+    kMoveXTx.commit(iCtx, editedMin.x);
+
   ReGui::InputInt("y", &editedMin.y, 1, 5);
-  ImGui::SameLine();
-  ImGui::PushID("y");
-  if(ImGui::Button("="))
+
+  if(ImGui::IsItemActivated())
   {
+    kMoveYTx.begin(iCtx, min.y, "Move Widgets Vertically");
     for(auto &w: iSelectedWidgets)
-    {
-      auto position = w->getPosition();
-      w->setPosition({position.x, editedMin.y});
-    }
+      kMoveYTx.add(iCtx, w.get(), "Move %s Vertically", w->getName());
   }
-  ImGui::PopID();
+
+  if(ImGui::IsItemDeactivated())
+    kMoveYTx.commit(iCtx, editedMin.y);
+
   auto delta = editedMin - min;
   if(delta.x != 0 || delta.y != 0)
   {
     for(auto &w: iSelectedWidgets)
       w->move(delta);
+  }
+
+  if(ImGui::TreeNode("Alignment"))
+  {
+    if(ImGui::Button("Left"))
+    {
+      iCtx.beginUndoTx("Align Widgets Left");
+      for(auto &w: iSelectedWidgets)
+      {
+        iCtx.addWidgetUndoAction(w.get(), "Align %s Left", w->getName());
+        auto position = w->getPosition();
+        w->setPosition({min.x, position.y});
+      }
+      iCtx.commitUndoTx();
+    }
+
+    ImGui::SameLine();
+
+    if(ImGui::Button("Top"))
+    {
+      iCtx.beginUndoTx("Align Widgets Top");
+      for(auto &w: iSelectedWidgets)
+      {
+        iCtx.addWidgetUndoAction(w.get(), "Align %s Top", w->getName());
+        auto position = w->getPosition();
+        w->setPosition({position.x, min.y});
+      }
+      iCtx.commitUndoTx();
+    }
+
+    ImGui::SameLine();
+
+    if(ImGui::Button("Right"))
+    {
+      iCtx.beginUndoTx("Align Widgets Right");
+      for(auto &w: iSelectedWidgets)
+      {
+        iCtx.addWidgetUndoAction(w.get(), "Align %s Right", w->getName());
+        auto position = w->getPosition();
+        w->setPosition({max.x - w->getSize().x, position.y});
+      }
+      iCtx.commitUndoTx();
+    }
+
+    ImGui::SameLine();
+
+    if(ImGui::Button("Bottom"))
+    {
+      iCtx.beginUndoTx("Align Widgets Bottom");
+      for(auto &w: iSelectedWidgets)
+      {
+        iCtx.addWidgetUndoAction(w.get(), "Align %s Bottom", w->getName());
+        auto position = w->getPosition();
+        w->setPosition({position.x, max.y - w->getSize().y});
+      }
+      iCtx.commitUndoTx();
+    }
+
+    ImGui::TreePop();
   }
 }
 
