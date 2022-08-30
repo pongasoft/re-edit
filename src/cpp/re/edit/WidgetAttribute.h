@@ -98,7 +98,7 @@ public:
 public:
   explicit SingleAttribute(char const *iName) : Attribute{iName} {}
   void hdgui2D(AppContext &iCtx, attribute_list_t &oAttributes) const override;
-  void resetView();
+  void resetView(AppContext &iCtx);
   void resetView(const std::function<void()>& iOnReset) const;
   virtual std::string getValueAsLua() const = 0;
   void reset() override;
@@ -174,10 +174,10 @@ public:
                 std::function<void()> const &iOnReset,
                 std::function<void(AppContext &iCtx)> const &iEditPropertyView = {});
 
-  static void menuView(AppContext &iCtx,
-                       std::string const &iPropertyPath,
-                       std::function<void()> const &iOnReset,
-                       std::function<void(AppContext &iCtx)> const &iEditPropertyView = {});
+  void menuView(AppContext &iCtx,
+                std::string const &iPropertyPath,
+                std::function<void()> const &iOnReset,
+                std::function<void(AppContext &iCtx)> const &iEditPropertyView = {});
 
   static void editPropertyView(AppContext &iCtx, std::string const &iPropertyPath);
 
@@ -226,13 +226,16 @@ public:
 
   bool contains(int iValue) const;
 
-  void editView(int iMin,
+  void editView(AppContext &iCtx,
+                int iMin,
                 int iMax,
                 std::function<void()>                       const &iOnAdd,
                 std::function<void(int iIndex, int iValue)> const &iOnUpdate,
-                std::function<void(int iIndex)>             const &iOnDelete) const;
+                std::function<void(int iIndex)>             const &iOnDelete);
 
   std::unique_ptr<Attribute> clone() const override { return Attribute::clone<DiscretePropertyValueList>(*this); }
+
+  UndoValueTransaction<int> fValueUndoTx{};
 };
 
 class Value : public CompositeAttribute
@@ -436,10 +439,13 @@ void SingleAttribute<T>::reset()
 // SingleAttribute<T>::resetView
 //------------------------------------------------------------------------
 template<typename T>
-void SingleAttribute<T>::resetView()
+void SingleAttribute<T>::resetView(AppContext &iCtx)
 {
   if(ImGui::Button("X"))
+  {
+    iCtx.addUndoAttributeReset(this);
     reset();
+  }
 }
 
 //------------------------------------------------------------------------

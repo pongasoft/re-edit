@@ -198,7 +198,10 @@ void Application::renderMainMenu()
       auto const undoAction = fAppContext.fUndoManager->getLastUndoAction();
       if(undoAction)
       {
-        if(ImGui::MenuItem(re::mock::fmt::printf("Undo %s", undoAction->fDescription).c_str()))
+        auto desc = re::mock::fmt::printf("Undo %s", undoAction->fDescription);
+        if(fAppContext.fCurrentPanelState && fAppContext.fCurrentPanelState->getType() != undoAction->fPanelType)
+          desc = re::mock::fmt::printf("%s (%s)", desc, Panel::toString(undoAction->fPanelType));
+        if(ImGui::MenuItem(desc.c_str()))
         {
           fAppContext.undoLastAction();
         }
@@ -213,7 +216,10 @@ void Application::renderMainMenu()
       auto const redoAction = fAppContext.fUndoManager->getLastRedoAction();
       if(redoAction)
       {
-        if(ImGui::MenuItem(re::mock::fmt::printf("Redo %s", redoAction->fUndoAction->fDescription).c_str()))
+        auto desc = re::mock::fmt::printf("Redo %s", redoAction->fUndoAction->fDescription);
+        if(fAppContext.fCurrentPanelState && fAppContext.fCurrentPanelState->getType() != redoAction->fUndoAction->fPanelType)
+          desc = re::mock::fmt::printf("%s (%s)", desc, Panel::toString(redoAction->fUndoAction->fPanelType));
+        if(ImGui::MenuItem(desc.c_str()))
         {
           fAppContext.redoLastAction();
         }
