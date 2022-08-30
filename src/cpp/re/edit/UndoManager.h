@@ -22,6 +22,7 @@
 #include <string>
 #include <functional>
 #include <vector>
+#include "Constants.h"
 
 namespace re::edit {
 
@@ -36,6 +37,7 @@ public:
 
 public:
   long fFrame{};
+  PanelType fPanelType{PanelType::kUnknown};
   std::string fDescription{};
 };
 

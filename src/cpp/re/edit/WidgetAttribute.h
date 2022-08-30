@@ -111,6 +111,8 @@ public:
   value_t fDefaultValue{};
   value_t fValue{};
   bool fProvided{};
+
+  UndoValueTransaction<value_t> fValueUndoTx{};
 };
 
 class CompositeAttribute : public Attribute

@@ -28,6 +28,18 @@ struct JboxColor3
   int fBlue{};
 
   inline void reset() { fRed = 0; fGreen = 0; fBlue = 0; }
+
+  friend bool operator==(JboxColor3 const &lhs, JboxColor3 const &rhs)
+  {
+    return lhs.fRed == rhs.fRed &&
+           lhs.fGreen == rhs.fGreen &&
+           lhs.fBlue == rhs.fBlue;
+  }
+
+  friend bool operator!=(JboxColor3 const &lhs, JboxColor3 const &rhs)
+  {
+    return !(rhs == lhs);
+  }
 };
 
 }

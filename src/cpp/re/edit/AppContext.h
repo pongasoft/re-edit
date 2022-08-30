@@ -233,13 +233,20 @@ public:
   }
 
   template<typename... Args>
-  inline void addCurrentWidget(AppContext &iCtx, std::string const &iFormat, Args ... args)
+  void begin(AppContext &iCtx, T const &iInitialValue, std::string const &iFormat, Args... args);
+
+  template<typename... Args>
+  inline void beginCurrentWidget(AppContext &iCtx, T const &iInitialValue, std::string const &iFormat, Args ... args)
   {
+    begin(iCtx, iInitialValue, "Update widget");
     return add(iCtx, iCtx.getCurrentWidget(), iFormat, args...);
   }
 
-  template<typename... Args>
-  void begin(AppContext &iCtx, T const &iInitialValue, std::string const &iFormat, Args... args);
+  inline void beginCurrentWidgetAttribute(AppContext &iCtx, T const &iInitialValue, widget::Attribute const *iAttribute)
+  {
+    begin(iCtx, iInitialValue, "Update attribute");
+    add(iCtx.createAttributeUndoAction(iCtx.getCurrentWidget(), iAttribute));
+  }
 
   void commit(AppContext &iCtx, T const &iFinalValue)
   {

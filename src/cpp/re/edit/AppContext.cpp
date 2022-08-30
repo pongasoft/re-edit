@@ -205,6 +205,7 @@ std::unique_ptr<WidgetUndoAction> AppContext::createAttributeUndoAction(Widget c
   auto widgetId = iWidget->getId();
   std::shared_ptr<Widget> w = iWidget->clone();
   auto action = std::make_unique<WidgetUndoAction>();
+  action->fPanelType = panelType;
   if(iDescription)
     action->fDescription = *iDescription;
   else
@@ -232,6 +233,8 @@ std::unique_ptr<WidgetUndoAction> AppContext::createAttributeUndoAction(Widget c
 std::unique_ptr<CompositeUndoAction> AppContext::createCompositeUndoAction(std::string const &iDescription)
 {
   auto action = std::make_unique<CompositeUndoAction>();
+  if(fCurrentPanelState)
+    action->fPanelType = fCurrentPanelState->getType();
   action->fDescription = iDescription;
   return action;
 }

@@ -145,10 +145,7 @@ void Graphics::editView(AppContext &iCtx,
       fSizeUndoTx.commit(iCtx, editedSize);
 
     if(begin)
-    {
-      fSizeUndoTx.begin(iCtx, fSize, "Change Widget size");
-      fSizeUndoTx.addCurrentWidget(iCtx, "Change %s size", iCtx.getCurrentWidget()->getName());
-    }
+      fSizeUndoTx.beginCurrentWidget(iCtx, fSize, "Change %s size", iCtx.getCurrentWidget()->getName());
 
     if(fSize != editedSize)
       iOnSizeUpdate(editedSize);
@@ -180,10 +177,7 @@ void Graphics::editPositionView(AppContext &iCtx)
     fPositionUndoTx.commit(iCtx, editedPosition);
 
   if(begin)
-  {
-    fPositionUndoTx.begin(iCtx, fPosition, "Move Widget");
-    fPositionUndoTx.addCurrentWidget(iCtx, "Move %s", iCtx.getCurrentWidget()->getName());
-  }
+    fPositionUndoTx.beginCurrentWidget(iCtx, fPosition, "Move %s", iCtx.getCurrentWidget()->getName());
 
   if(fPosition != editedPosition)
   {
@@ -248,10 +242,7 @@ void Graphics::editHitBoundariesView(AppContext &iCtx)
       fHitBoundariesUndoTx.commit(iCtx, editedHB);
 
     if(begin)
-    {
-      fHitBoundariesUndoTx.begin(iCtx, fHitBoundaries, "Change Hit Boundaries");
-      fHitBoundariesUndoTx.addCurrentWidget(iCtx, "Change %s Hit Boundaries", iCtx.getCurrentWidget()->getName());
-    }
+      fHitBoundariesUndoTx.beginCurrentWidget(iCtx, fHitBoundaries, "Change %s Hit Boundaries", iCtx.getCurrentWidget()->getName());
 
     if(fHitBoundaries != editedHB)
     {

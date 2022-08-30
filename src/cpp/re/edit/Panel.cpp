@@ -376,6 +376,7 @@ std::shared_ptr<Widget> Panel::replaceWidget(int iWidgetId, std::shared_ptr<Widg
   iWidget->init(iWidgetId);
   iWidget->fSelected = fWidgets[iWidgetId]->isSelected();
   std::swap(fWidgets[iWidgetId], iWidget);
+  fSelectedWidgets = std::nullopt;
   return iWidget;
 }
 
