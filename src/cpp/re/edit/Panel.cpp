@@ -25,6 +25,8 @@
 
 namespace re::edit {
 
+using namespace re::mock;
+
 //------------------------------------------------------------------------
 // kWidgetTypeToNames
 //------------------------------------------------------------------------
@@ -48,7 +50,7 @@ char const *toString(WidgetType iWidgetType)
 //------------------------------------------------------------------------
 Panel::Panel(PanelType iType) :
   fType{iType},
-  fNodeName{re::mock::fmt::printf("Panel_%s_bg", toString(iType))},
+  fNodeName{fmt::printf("Panel_%s_bg", toString(iType))},
   fCableOrigin{fType == PanelType::kFoldedBack ? std::optional<ImVec2>({kDevicePixelWidth / 2.0f, kFoldedDevicePixelHeight / 2.0f}) : std::nullopt },
   fDisableSampleDropOnPanel{ fType == PanelType::kFront ? std::optional<bool>(false) : std::nullopt}
 {
@@ -255,16 +257,16 @@ void Panel::renderAddWidgetMenu(AppContext &iCtx, ImVec2 const &iPosition)
 //------------------------------------------------------------------------
 void Panel::renderWidgetMenu(AppContext &iCtx, std::shared_ptr<Widget> const &iWidget)
 {
-  if(ImGui::MenuItem(re::mock::fmt::printf("%s %s",
-                                           iWidget->isSelected() ? "Unselect" : "Select",
-                                           iWidget->getName()).c_str()))
+  if(ImGui::MenuItem(fmt::printf("%s %s",
+                                 iWidget->isSelected() ? "Unselect" : "Select",
+                                 iWidget->getName()).c_str()))
     toggleWidgetSelection(iWidget->getId(), true);
-  if(ImGui::MenuItem(re::mock::fmt::printf("Duplicate %s",
-                                           iWidget->getName()).c_str()))
+  if(ImGui::MenuItem(fmt::printf("Duplicate %s",
+                                 iWidget->getName()).c_str()))
     addWidget(iCtx, iWidget->copy());
-  if(ImGui::MenuItem(re::mock::fmt::printf("Delete %s",
-                                           iWidget->getName()).c_str()))
-    deleteWidget(iWidget->getId());
+  if(ImGui::MenuItem(fmt::printf("Delete %s",
+                                 iWidget->getName()).c_str()))
+    deleteWidget(iCtx, iWidget->getId());
 }
 
 //------------------------------------------------------------------------
@@ -308,13 +310,11 @@ bool Panel::renderSelectedWidgetsMenu(AppContext &iCtx,
         clearSelection();
       if(ImGui::MenuItem("Duplicate Widgets"))
       {
-        for(auto const &w: iSelectedWidgets)
-          addWidget(iCtx, w->copy());
+        duplicateWidgets(iCtx, iSelectedWidgets);
       }
       if(ImGui::MenuItem("Delete Widgets"))
       {
-        for(auto const &w: iSelectedWidgets)
-          deleteWidget(w->getId());
+        deleteWidgets(iCtx, iSelectedWidgets);
       }
     }
     needSeparator = true;
@@ -328,6 +328,9 @@ bool Panel::renderSelectedWidgetsMenu(AppContext &iCtx,
 int Panel::addWidget(AppContext &iCtx, std::shared_ptr<Widget> iWidget, bool iMakeSelected)
 {
   RE_EDIT_INTERNAL_ASSERT(iWidget != nullptr);
+
+  if(iCtx.isUndoEnabled())
+    iCtx.addUndoAction(createWidgetsUndoAction(iCtx, fmt::printf("Add %s", re::edit::toString(iWidget->fType))));
 
   auto const id = fWidgetCounter++;
 
@@ -349,6 +352,20 @@ int Panel::addWidget(AppContext &iCtx, std::shared_ptr<Widget> iWidget, bool iMa
 }
 
 //------------------------------------------------------------------------
+// Panel::duplicateWidgets
+//------------------------------------------------------------------------
+void Panel::duplicateWidgets(AppContext &iCtx, std::vector<std::shared_ptr<Widget>> const &iWidgets)
+{
+  if(iCtx.isUndoEnabled())
+    iCtx.addUndoAction(createWidgetsUndoAction(iCtx, fmt::printf("Duplicate %d widgets", iWidgets.size())));
+
+  iCtx.withUndoDisabled([this, &iCtx, &iWidgets](){
+    for(auto const &w: iWidgets)
+      addWidget(iCtx, w->copy());
+  });
+}
+
+//------------------------------------------------------------------------
 // Panel::replaceWidget
 //------------------------------------------------------------------------
 std::shared_ptr<Widget> Panel::replaceWidget(int iWidgetId, std::shared_ptr<Widget> iWidget)
@@ -365,8 +382,11 @@ std::shared_ptr<Widget> Panel::replaceWidget(int iWidgetId, std::shared_ptr<Widg
 //------------------------------------------------------------------------
 // Panel::deleteWidget
 //------------------------------------------------------------------------
-std::pair<std::shared_ptr<Widget>, int> Panel::deleteWidget(int id)
+std::pair<std::shared_ptr<Widget>, int> Panel::deleteWidget(AppContext &iCtx, int id)
 {
+  if(iCtx.isUndoEnabled())
+    iCtx.addUndoAction(createWidgetsUndoAction(iCtx, fmt::printf("Delete %s", getWidget(id)->getName())));
+
   std::shared_ptr<Widget> widget{};
   unselectWidget(id);
   // we need to extract the widget from the map before removing it so that we can return it!
@@ -389,6 +409,21 @@ std::pair<std::shared_ptr<Widget>, int> Panel::deleteWidget(int id)
     return {std::move(widget), order};
   }
 }
+
+//------------------------------------------------------------------------
+// Panel::deleteWidgets
+//------------------------------------------------------------------------
+void Panel::deleteWidgets(AppContext &iCtx, std::vector<std::shared_ptr<Widget>> const &iWidgets)
+{
+  if(iCtx.isUndoEnabled())
+    iCtx.addUndoAction(createWidgetsUndoAction(iCtx, fmt::printf("Delete %d widgets", iWidgets.size())));
+
+  iCtx.withUndoDisabled([this, &iCtx, &iWidgets](){
+    for(auto const &w: iWidgets)
+      deleteWidget(iCtx, w->getId());
+  });
+}
+
 
 //------------------------------------------------------------------------
 // Panel::findWidgetOnTopAt
@@ -455,14 +490,14 @@ void Panel::selectWidget(int id, bool iMultiple)
   {
     clearSelection();
     widget->fSelected = true;
-    fSelectedWidgets.emplace_back(id);
+    fSelectedWidgets = std::nullopt;
   }
   else
   {
     if(widget->fSelected)
       unselectWidget(id);
     widget->fSelected = true;
-    fSelectedWidgets.emplace_back(id);
+    fSelectedWidgets = std::nullopt;
   }
 }
 
@@ -485,8 +520,7 @@ void Panel::unselectWidget(int id)
 {
   auto widget = getWidget(id);
   widget->fSelected = false;
-  auto i = std::remove(fSelectedWidgets.begin(), fSelectedWidgets.end(), id);
-  fSelectedWidgets.erase(i, fSelectedWidgets.end());
+  fSelectedWidgets = std::nullopt;
 }
 
 //------------------------------------------------------------------------
@@ -496,8 +530,7 @@ void Panel::clearSelection()
 {
   for(auto &p: fWidgets)
     p.second->fSelected = false;
-
-  fSelectedWidgets.clear();
+  fSelectedWidgets = std::nullopt;
 }
 
 //------------------------------------------------------------------------
@@ -513,16 +546,14 @@ void Panel::moveWidgets(AppContext &iCtx, ImVec2 const &iPosition)
       if(!fMoveTx)
       {
         fMoveTx.begin(iCtx, *fLastMovePosition, "Move Widgets");
-        for(auto id: fSelectedWidgets)
+        for(auto &widget: getSelectedWidgets())
         {
-          auto widget = getWidget(id);
           fMoveTx.add(iCtx, widget.get(), "Move %s", widget->getName());
         }
       }
 
-      for(auto id: fSelectedWidgets)
+      for(auto &widget: getSelectedWidgets())
       {
-        auto widget = getWidget(id);
         widget->move(delta);
       }
     }
@@ -535,9 +566,8 @@ void Panel::moveWidgets(AppContext &iCtx, ImVec2 const &iPosition)
 //------------------------------------------------------------------------
 void Panel::endMoveWidgets(AppContext &iCtx, ImVec2 const &iPosition)
 {
-  for(auto id: fSelectedWidgets)
+  for(auto &widget: getSelectedWidgets())
   {
-    auto widget = getWidget(id);
     auto position = widget->getPosition();
     position.x = std::round(position.x);
     position.y = std::round(position.y);
@@ -553,10 +583,15 @@ void Panel::endMoveWidgets(AppContext &iCtx, ImVec2 const &iPosition)
 //------------------------------------------------------------------------
 std::vector<std::shared_ptr<Widget>> Panel::getSelectedWidgets() const
 {
+  if(fSelectedWidgets)
+    return *fSelectedWidgets;
   std::vector<std::shared_ptr<Widget>> c{};
-  c.reserve(fSelectedWidgets.size());
-  for(auto id: fSelectedWidgets)
-    c.emplace_back(getWidget(id));
+  for(auto &[id, w]: fWidgets)
+  {
+    if(w->isSelected())
+      c.emplace_back(w);
+  }
+  fSelectedWidgets = c;
   return c;
 }
 
@@ -583,7 +618,7 @@ void Panel::computeIsHidden(AppContext &iCtx)
 //------------------------------------------------------------------------
 void Panel::editView(AppContext &iCtx)
 {
-  auto selectedWidgets = getSelectedWidgets(); // TODO duplicate call... optimize!!!
+  auto selectedWidgets = getSelectedWidgets();
 
   if(ImGui::Begin("Panel Widgets"))
   {
@@ -899,15 +934,15 @@ std::string Panel::hdgui2D(AppContext &iCtx) const
 
   std::stringstream s{};
   s << "--------------------------------------------------------------------------\n";
-  s << re::mock::fmt::printf("-- %s\n", panelName);
+  s << fmt::printf("-- %s\n", panelName);
   s << "--------------------------------------------------------------------------\n";
-  auto arrayName = re::mock::fmt::printf("%s_widgets", panelName);
-  s << re::mock::fmt::printf("%s = {}\n", arrayName);
+  auto arrayName = fmt::printf("%s_widgets", panelName);
+  s << fmt::printf("%s = {}\n", arrayName);
   for(auto id: fWidgetsOrder)
   {
     auto const &w = fWidgets.at(id);
-    s << re::mock::fmt::printf("-- %s\n", w->getName());
-    s << re::mock::fmt::printf("%s[#%s + 1] = %s\n", arrayName, arrayName, w->hdgui2D(iCtx));
+    s << fmt::printf("-- %s\n", w->getName());
+    s << fmt::printf("%s[#%s + 1] = %s\n", arrayName, arrayName, w->hdgui2D(iCtx));
   }
 
   char const *options = "";
@@ -918,7 +953,7 @@ std::string Panel::hdgui2D(AppContext &iCtx) const
   if(fCableOrigin)
     cableOrigin = R"( cable_origin = { node = "CableOrigin" },)";
 
-  s << re::mock::fmt::printf("%s = jbox.panel{ graphics = { node = \"%s\" },%s%s widgets = %s }\n", panelName, fNodeName, options, cableOrigin, arrayName);
+  s << fmt::printf("%s = jbox.panel{ graphics = { node = \"%s\" },%s%s widgets = %s }\n", panelName, fNodeName, options, cableOrigin, arrayName);
 
   return s.str();
 }
@@ -932,25 +967,25 @@ std::string Panel::device2D() const
 
   std::stringstream s{};
   s << "--------------------------------------------------------------------------\n";
-  s << re::mock::fmt::printf("-- %s\n", panelName);
+  s << fmt::printf("-- %s\n", panelName);
   s << "--------------------------------------------------------------------------\n";
-  s << re::mock::fmt::printf("%s = {}\n", panelName);
+  s << fmt::printf("%s = {}\n", panelName);
   int index = 1;
   for(auto id: fDecalsOrder)
   {
     auto const &w = fWidgets.at(id);
-    s << re::mock::fmt::printf("%s[%d] = %s -- %s\n", panelName, index, w->device2D(), w->fName);
+    s << fmt::printf("%s[%d] = %s -- %s\n", panelName, index, w->device2D(), w->fName);
     index++;
   }
-  s << re::mock::fmt::printf("%s[\"%s\"] = %s\n", panelName, fNodeName, fGraphics.device2D());
+  s << fmt::printf("%s[\"%s\"] = %s\n", panelName, fNodeName, fGraphics.device2D());
   for(auto id: fWidgetsOrder)
   {
     auto const &w = fWidgets.at(id);
-    s << re::mock::fmt::printf("%s[\"%s\"] = %s\n", panelName, w->fName, w->device2D());
+    s << fmt::printf("%s[\"%s\"] = %s\n", panelName, w->fName, w->device2D());
   }
   if(fCableOrigin)
-    s << re::mock::fmt::printf("%s[\"CableOrigin\"] = {offset = {%d, %d}}\n", panelName,
-                               static_cast<int>(fCableOrigin->x), static_cast<int>(fCableOrigin->y));
+    s << fmt::printf("%s[\"CableOrigin\"] = {offset = {%d, %d}}\n", panelName,
+                     static_cast<int>(fCableOrigin->x), static_cast<int>(fCableOrigin->y));
 
   return s.str();
 }
@@ -1019,6 +1054,52 @@ void Panel::setOptions(std::vector<std::string> const &iOptions)
   }
 
   fDisableSampleDropOnPanel = true;
+}
+
+//------------------------------------------------------------------------
+// Panel::freezeWidgets
+//------------------------------------------------------------------------
+std::shared_ptr<Panel::PanelWidgets> Panel::freezeWidgets() const
+{
+  std::unique_ptr<Panel::PanelWidgets> ws{new Panel::PanelWidgets()};
+  ws->fWidgets = fWidgets;
+  ws->fWidgetsOrder = fWidgetsOrder;
+  ws->fDecalsOrder = fDecalsOrder;
+  return ws;
+}
+
+//------------------------------------------------------------------------
+// Panel::thawWidgets
+//------------------------------------------------------------------------
+std::shared_ptr<Panel::PanelWidgets> Panel::thawWidgets(std::shared_ptr<PanelWidgets> const &iPanelWidgets)
+{
+  std::unique_ptr<Panel::PanelWidgets> ws{new Panel::PanelWidgets()};
+  ws->fWidgets = std::move(fWidgets);
+  ws->fWidgetsOrder = std::move(fWidgetsOrder);
+  ws->fDecalsOrder = std::move(fDecalsOrder);
+  fWidgets = iPanelWidgets->fWidgets;
+  fWidgetsOrder = iPanelWidgets->fWidgetsOrder;
+  fDecalsOrder = iPanelWidgets->fDecalsOrder;
+  fSelectedWidgets = std::nullopt;
+  return ws;
+}
+
+//------------------------------------------------------------------------
+// Panel::createWidgetsUndoAction
+//------------------------------------------------------------------------
+std::shared_ptr<UndoAction> Panel::createWidgetsUndoAction(AppContext &iCtx, std::string const &iDescription) const
+{
+  auto action = std::make_unique<LambdaUndoAction>();
+  action->fDescription = iDescription;
+  auto pw = freezeWidgets();
+  action->fLambda = [panelType = this->fType, pw = std::move(pw)](AppContext &iCtx) {
+    auto w = iCtx.getPanel(panelType)->thawWidgets(pw);
+    return std::make_shared<LambdaRedoAction>([panelType, w2 = std::move(w)](AppContext &iCtx) {
+      iCtx.getPanel(panelType)->thawWidgets(w2);
+    });
+  };
+  return action;
+
 }
 
 }

@@ -115,6 +115,21 @@ public: // Texture
   inline void drawLine(const ImVec2& iP1, const ImVec2& iP2, const ImVec4& iColor, float iThickness = 1.0f) const { drawLine(iP1, iP2, ImGui::GetColorU32(iColor), iThickness); }
 
 public: // Undo
+  constexpr bool isUndoEnabled() const { return fUndoManager->isEnabled(); }
+  constexpr void enableUndo() { fUndoManager->enable(); }
+  constexpr void disableUndo() { fUndoManager->disable(); }
+
+  template<typename F>
+  inline void withUndoDisabled(F &&f)
+  {
+    auto undoEnabled = isUndoEnabled();
+    if(undoEnabled)
+      disableUndo();
+    f();
+    if(undoEnabled)
+      enableUndo();
+  }
+
   void addUndoAction(std::shared_ptr<UndoAction> iAction);
 
   template<typename ... Args>

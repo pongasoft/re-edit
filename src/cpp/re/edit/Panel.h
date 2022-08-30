@@ -94,6 +94,7 @@ public:
   inline void setCableOrigin(ImVec2 const &iPosition) { fCableOrigin = iPosition; }
   void setOptions(std::vector<std::string> const &iOptions);
   int addWidget(AppContext &iCtx, std::shared_ptr<Widget> iWidget, bool iMakeSelected = true);
+  void duplicateWidgets(AppContext &iCtx, std::vector<std::shared_ptr<Widget>> const &iWidgets);
   std::shared_ptr<Widget> replaceWidget(int iWidgetId, std::shared_ptr<Widget> iWidget);
   std::vector<std::shared_ptr<Widget>> getSelectedWidgets() const;
   std::vector<int> getWidgetsOrder() const { return fWidgetsOrder; }
@@ -107,7 +108,8 @@ public:
 
   /**
    * @return the deleted widget and its order */
-  std::pair<std::shared_ptr<Widget>, int> deleteWidget(int id);
+  std::pair<std::shared_ptr<Widget>, int> deleteWidget(AppContext &iCtx, int id);
+  void deleteWidgets(AppContext &iCtx, std::vector<std::shared_ptr<Widget>> const &iWidgets);
 
   void swapWidgets(int iIndex1, int iIndex2);
   void swapDecals(int iIndex1, int iIndex2);
@@ -117,6 +119,14 @@ public:
 
   friend class PanelState;
 
+private:
+  struct PanelWidgets
+  {
+    std::map<int, std::shared_ptr<Widget>> fWidgets{};
+    std::vector<int> fWidgetsOrder{};
+    std::vector<int> fDecalsOrder{};
+  };
+
 protected:
   template<typename F>
   void editOrderView(std::vector<int> const &iOrder, F iOnSwap);
@@ -124,6 +134,11 @@ protected:
   void editNoSelectionView(AppContext &iCtx);
   void editSingleSelectionView(AppContext &iCtx, std::shared_ptr<Widget> const &iWidget);
   void editMultiSelectionView(AppContext &iCtx, std::vector<std::shared_ptr<Widget>> const &iSelectedWidgets);
+
+  std::shared_ptr<PanelWidgets> freezeWidgets() const;
+  std::shared_ptr<PanelWidgets> thawWidgets(std::shared_ptr<PanelWidgets> const &iPanelWidgets);
+
+  std::shared_ptr<UndoAction> createWidgetsUndoAction(AppContext &iCtx, std::string const &iDescription) const;
 
 private:
   void selectWidget(AppContext &iCtx, ImVec2 const &iPosition, bool iMultiple);
@@ -152,12 +167,12 @@ private:
   std::map<int, std::shared_ptr<Widget>> fWidgets{};
   std::vector<int> fWidgetsOrder{};
   std::vector<int> fDecalsOrder{};
-  std::vector<int> fSelectedWidgets{};
   UndoValueTransaction<ImVec2> fMoveTx{};
   std::optional<ImVec2> fLastMovePosition{};
   std::optional<MouseDrag> fMouseDrag{};
   std::optional<ImVec2> fPopupLocation{};
   int fWidgetCounter{1}; // used for unique id
+  mutable std::optional<std::vector<std::shared_ptr<Widget>>> fSelectedWidgets{};
 };
 
 }

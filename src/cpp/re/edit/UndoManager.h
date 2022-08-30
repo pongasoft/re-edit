@@ -107,6 +107,9 @@ private:
   };
 
 public:
+  constexpr bool isEnabled() const { return fEnabled; }
+  constexpr void enable() { fEnabled = true; }
+  constexpr void disable() { fEnabled = false; }
   void addUndoAction(std::shared_ptr<UndoAction> iAction);
   void undoLastAction(AppContext &iCtx);
   void redoLastAction(AppContext &iCtx);
@@ -120,6 +123,7 @@ public:
   std::vector<std::shared_ptr<RedoAction>> const &getRedoHistory() const { return fRedoHistory; }
 
 private:
+  bool fEnabled{true};
   std::vector<std::shared_ptr<UndoAction>> fUndoHistory{};
   std::vector<std::shared_ptr<RedoAction>> fRedoHistory{};
   std::unique_ptr<UndoTransaction> fUndoTransaction{};

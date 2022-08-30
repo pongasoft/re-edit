@@ -26,6 +26,9 @@ namespace re::edit {
 //------------------------------------------------------------------------
 void UndoManager::addUndoAction(std::shared_ptr<UndoAction> iAction)
 {
+  if(!isEnabled())
+    return;
+
   auto compositeAction = std::dynamic_pointer_cast<CompositeUndoAction>(iAction);
 
   if(compositeAction)

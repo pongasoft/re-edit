@@ -41,6 +41,8 @@ void PanelState::initPanel(AppContext &iCtx,
   if(iPanelNodes == nullptr || iPanel == nullptr)
     return;
 
+  iCtx.disableUndo();
+
   iCtx.fCurrentPanelState = this;
 
   // handle background
@@ -110,6 +112,8 @@ void PanelState::initPanel(AppContext &iCtx,
     fPanel.addWidget(iCtx, std::move(widget), false);
   }
 
+  iCtx.enableUndo();
+
   iCtx.fCurrentPanelState = nullptr;
 }
 
@@ -149,12 +153,6 @@ void PanelState::render(AppContext &iCtx)
     ImGui::EndTabItem();
 
     fZoom = iCtx.fZoom;
-
-    auto loggingManager = LoggingManager::instance();
-    if(loggingManager->getShowDebug())
-    {
-      loggingManager->debug("Selected", "{%s}", re::mock::stl::join_to_string(fPanel.fSelectedWidgets));
-    }
   }
 }
 
@@ -189,8 +187,7 @@ void PanelState::renderWidgets(AppContext &iCtx)
       ImGui::SameLine();
       if(ImGui::Button("Dup"))
       {
-        for(auto const &w: selectedWidgets)
-          fPanel.addWidget(iCtx, w->copy());
+        fPanel.duplicateWidgets(iCtx, selectedWidgets);
       }
 
       ImGui::SameLine();
@@ -200,10 +197,7 @@ void PanelState::renderWidgets(AppContext &iCtx)
       ImGui::SameLine();
       if(ImGui::Button("Del"))
       {
-        for(auto const &w: selectedWidgets)
-        {
-          fPanel.deleteWidget(w->getId());
-        }
+        fPanel.deleteWidgets(iCtx, selectedWidgets);
       }
     }
     ImGui::EndDisabled();
