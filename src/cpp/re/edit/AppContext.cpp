@@ -171,72 +171,89 @@ void AppContext::drawLine(const ImVec2& iP1, const ImVec2& iP2, ImU32 iColor, fl
 void AppContext::addUndoAction(std::shared_ptr<UndoAction> iAction)
 {
   iAction->fFrame = fCurrentFrame;
+  if(fCurrentPanelState)
+    iAction->fPanelType = fCurrentPanelState->getType();
   fUndoManager->addUndoAction((std::move(iAction)));
 }
 
 //------------------------------------------------------------------------
-// AppContext::addUndoAttributeChange
+// AppContext::populateLambdaUndoAction
 //------------------------------------------------------------------------
-void AppContext::addUndoAttributeChange(widget::Attribute const *iAttribute)
-{
-  RE_EDIT_INTERNAL_ASSERT(fCurrentWidget != nullptr);
-  addUndoAction(createAttributeUndoAction(fCurrentWidget, iAttribute));
-}
-
-//------------------------------------------------------------------------
-// AppContext::addUndoAttributeReset
-//------------------------------------------------------------------------
-void AppContext::addUndoAttributeReset(widget::Attribute const *iAttribute)
-{
-  RE_EDIT_INTERNAL_ASSERT(fCurrentWidget != nullptr);
-  addUndoAction(createAttributeUndoAction(fCurrentWidget, iAttribute, re::mock::fmt::printf("Reset %s.%s", fCurrentWidget->getName(), iAttribute->fName)));
-}
-
-//------------------------------------------------------------------------
-// AppContext::createUndoAction
-//------------------------------------------------------------------------
-std::unique_ptr<WidgetUndoAction> AppContext::createAttributeUndoAction(Widget const *iWidget,
-                                                                        widget::Attribute const *iAttribute,
-                                                                        std::optional<std::string> const &iDescription) const
+void AppContext::populateWidgetUndoAction(WidgetUndoAction *iAction, Widget const *iWidget)
 {
   RE_EDIT_INTERNAL_ASSERT(fCurrentPanelState != nullptr);
+  RE_EDIT_INTERNAL_ASSERT(iWidget != nullptr);
 
-  auto panelType = fCurrentPanelState->getType();
-  auto widgetId = iWidget->getId();
-  std::shared_ptr<Widget> w = iWidget->clone();
-  auto action = std::make_unique<WidgetUndoAction>();
-  action->fPanelType = panelType;
-  if(iDescription)
-    action->fDescription = *iDescription;
-  else
-  {
-    if(iAttribute)
-      action->fDescription = re::mock::fmt::printf("Update %s.%s", iWidget->getName(), iAttribute->fName);
-    else
-      action->fDescription = re::mock::fmt::printf("Update %s", iWidget->getName());
-  }
-  action->fWidgetId = widgetId;
-  if(iAttribute)
-    action->fAttributeId = iAttribute->fId;
-  action->fLambda = [panelType, widgetId, widget = std::move(w)](AppContext &iCtx) {
-    auto w = iCtx.getPanel(panelType)->replaceWidget(widgetId, widget);
-    return std::make_shared<LambdaRedoAction>([panelType, widgetId, w2 = std::move(w)](AppContext &iCtx) {
-      iCtx.getPanel(panelType)->replaceWidget(widgetId, w2);
-    });
-  };
-  return action;
+  iAction->fWidget = iWidget->clone();
 }
 
 //------------------------------------------------------------------------
-// AppContext::CompositeUndoAction
+// AppContext::computeUpdateDescription
 //------------------------------------------------------------------------
-std::unique_ptr<CompositeUndoAction> AppContext::createCompositeUndoAction(std::string const &iDescription)
+std::string AppContext::computeUpdateDescription(Widget const *iWidget, widget::Attribute const *iAttribute)
 {
-  auto action = std::make_unique<CompositeUndoAction>();
-  if(fCurrentPanelState)
-    action->fPanelType = fCurrentPanelState->getType();
-  action->fDescription = iDescription;
-  return action;
+  RE_EDIT_INTERNAL_ASSERT(iWidget != nullptr);
+
+  if(iAttribute)
+    return fmt::printf("Update %s.%s", iWidget->getName(), iAttribute->fName);
+  else
+    return fmt::printf("Update %s", iWidget->getName());
+}
+
+//------------------------------------------------------------------------
+// AppContext::computeResetDescription
+//------------------------------------------------------------------------
+std::string AppContext::computeResetDescription(Widget const *iWidget, widget::Attribute const *iAttribute)
+{
+  RE_EDIT_INTERNAL_ASSERT(iWidget != nullptr);
+
+  if(iAttribute)
+    return fmt::printf("Reset %s.%s", iWidget->getName(), iAttribute->fName);
+  else
+    return fmt::printf("Reset %s", iWidget->getName());
+}
+
+//------------------------------------------------------------------------
+// AppContext::addUndoWidgetChange
+//------------------------------------------------------------------------
+void AppContext::addUndoWidgetChange(Widget const *iWidget, std::string iDescription)
+{
+  auto action = std::make_unique<WidgetUndoAction>();
+  action->fWidgetId = iWidget->getId();
+  action->fDescription = std::move(iDescription);
+  populateWidgetUndoAction(action.get(), iWidget);
+  addUndoAction(std::move(action));
+}
+
+//------------------------------------------------------------------------
+// AppContext::beginUndoTx
+//------------------------------------------------------------------------
+bool AppContext::beginUndoTx(std::string const &iDescription, void *iMergeKey)
+{
+  auto last = fUndoManager->getLastUndoActionOrTransaction();
+
+  if(iMergeKey != nullptr && last && last->getMergeKey() == iMergeKey)
+  {
+    return false;
+  }
+  else
+  {
+    fUndoManager->beginUndoTx(fCurrentFrame,
+                              fCurrentPanelState ? fCurrentPanelState->getType() : PanelType::kUnknown,
+                              iDescription,
+                              iMergeKey);
+    return true;
+  }
+}
+
+//------------------------------------------------------------------------
+// AppContext::resetUndoMergeKey
+//------------------------------------------------------------------------
+void AppContext::resetUndoMergeKey()
+{
+  auto last = fUndoManager->getLastUndoActionOrTransaction();
+  if(last)
+    last->resetMergeKey();
 }
 
 

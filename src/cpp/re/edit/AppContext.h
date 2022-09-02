@@ -39,9 +39,6 @@ namespace widget {
 class Attribute;
 }
 
-template<typename T>
-class UndoValueTransaction;
-
 class AppContext
 {
 public:
@@ -132,50 +129,55 @@ public: // Undo
 
   void addUndoAction(std::shared_ptr<UndoAction> iAction);
 
-  template<typename ... Args>
-  inline void addWidgetUndoAction(Widget const *iWidget, std::string const &iFormat, Args ... args)
+  void addUndoWidgetChange(Widget const *iWidget, std::string iDescription);
+  inline void addUndoCurrentWidgetChange(std::string iDescription) { addUndoWidgetChange(fCurrentWidget, std::move(iDescription)); }
+
+  template<typename T>
+  void addOrMergeUndoWidgetChange(Widget const *iWidget, void *iMergeKey, T const &iOldValue, T const &iNewValue, std::string const &iDescription)
   {
-    addUndoAction(createWidgetUndoAction(iWidget, iFormat, args...));
+    auto ua = maybeCreateMergeableUndoAction<MergeableWidgetUndoAction<T>>(iMergeKey, iOldValue, iNewValue, iDescription);
+    if(ua)
+    {
+      populateWidgetUndoAction(ua.get(), iWidget);
+      addUndoAction(std::move(ua));
+    }
   }
 
-  template<typename ... Args>
-  inline void addCurrentWidgetUndoAction(std::string const &iFormat, Args ... args)
+  template<typename T>
+  inline void addOrMergeUndoCurrentWidgetChange(void *iMergeKey, T const &iOldValue, T const &iNewValue, std::string const &iDescription)
   {
-    addWidgetUndoAction(fCurrentWidget, iFormat, args...);
+    addOrMergeUndoWidgetChange(fCurrentWidget, iMergeKey, iOldValue, iNewValue, iDescription);
   }
 
-  inline void addAttributeUndoAction(Widget const *iWidget,
-                                     widget::Attribute const *iAttribute,
-                                     std::optional<std::string> const &iDescription = std::nullopt)
+  inline void addUndoAttributeChange(widget::Attribute const *iAttribute)
   {
-    addUndoAction(createAttributeUndoAction(iWidget, iAttribute, iDescription));
+    RE_EDIT_INTERNAL_ASSERT(fCurrentWidget != nullptr);
+    return addUndoCurrentWidgetChange(std::move(computeUpdateDescription(fCurrentWidget, iAttribute)));
   }
 
-  template<typename... Args>
-  inline void beginUndoTx(std::string const &iFormat, Args ... args) { fUndoManager->beginUndoTx(fCurrentFrame, re::mock::fmt::printf(iFormat, args...)); }
-  inline void commitUndoTx() { fUndoManager->commitUndoTx(); }
-  inline void rollbackUndoTx() { fUndoManager->rollbackUndoTx(); }
-
-  std::unique_ptr<WidgetUndoAction> createAttributeUndoAction(Widget const *iWidget,
-                                                              widget::Attribute const *iAttribute,
-                                                              std::optional<std::string> const &iDescription = std::nullopt) const;
-
-  template<typename ... Args>
-  inline std::unique_ptr<WidgetUndoAction> createWidgetUndoAction(Widget const *iWidget, std::string const &iFormat, Args ... args)
+  inline void addUndoAttributeReset(widget::Attribute const *iAttribute)
   {
-    return createAttributeUndoAction(iWidget, nullptr, re::mock::fmt::printf(iFormat, args...));
+    RE_EDIT_INTERNAL_ASSERT(fCurrentWidget != nullptr);
+    return addUndoCurrentWidgetChange(std::move(computeResetDescription(fCurrentWidget, iAttribute)));
   }
 
-  std::unique_ptr<CompositeUndoAction> createCompositeUndoAction(std::string const &iDescription);
-
-  template<typename ... Args>
-  inline std::unique_ptr<CompositeUndoAction> createCompositeUndoAction(std::string const &iFormat, Args ... args)
+  template<typename T>
+  inline void addOrMergeUndoAttributeChange(widget::Attribute const *iAttribute,
+                                            T const &iOldValue,
+                                            T const &iNewValue)
   {
-    return createCompositeUndoAction(iFormat, re::mock::fmt::printf(iFormat, args...));
+    RE_EDIT_INTERNAL_ASSERT(fCurrentWidget != nullptr);
+    addOrMergeUndoCurrentWidgetChange(const_cast<widget::Attribute *>(iAttribute),
+                                      iOldValue,
+                                      iNewValue,
+                                      computeUpdateDescription(fCurrentWidget, iAttribute));
   }
 
-  void addUndoAttributeChange(widget::Attribute const *iAttribute);
-  void addUndoAttributeReset(widget::Attribute const *iAttribute);
+  bool beginUndoTx(std::string const &iDescription, void *iMergeKey = nullptr);
+  inline void commitUndoTx(bool iResetUndoMergeKey = false) { fUndoManager->commitUndoTx(); if(iResetUndoMergeKey) resetUndoMergeKey(); }
+
+  void resetUndoMergeKey();
+
   void undoLastAction() { fUndoManager->undoLastAction(*this); }
   void redoLastAction() { fUndoManager->redoLastAction(*this); }
 
@@ -195,6 +197,16 @@ protected:
   void initPanels(std::string const &iDevice2DFile, std::string const &iHDGui2DFile);
   inline void setCurrentWidget(Widget const *iWidget) { fCurrentWidget = iWidget; }
   void render();
+  void populateWidgetUndoAction(WidgetUndoAction *iAction, Widget const *iWidget);
+
+  template<typename U, typename T>
+  std::unique_ptr<U> maybeCreateMergeableUndoAction(void *iMergeKey,
+                                                    T const &iOldValue,
+                                                    T const &iNewValue,
+                                                    std::string const &iDescription);
+
+  static std::string computeUpdateDescription(Widget const *iWidget, widget::Attribute const *iAttribute);
+  static std::string computeResetDescription(Widget const *iWidget, widget::Attribute const *iAttribute);
 
 protected:
   std::shared_ptr<TextureManager> fTextureManager{};
@@ -214,72 +226,42 @@ protected:
   Widget const *fCurrentWidget{};
 };
 
-template<typename T>
-class UndoValueTransaction
+//------------------------------------------------------------------------
+// AppContext::maybeCreateMergeableUndoAction
+//------------------------------------------------------------------------
+template<typename U, typename T>
+std::unique_ptr<U> AppContext::maybeCreateMergeableUndoAction(void *iMergeKey,
+                                                              T const &iOldValue,
+                                                              T const &iNewValue,
+                                                              std::string const &iDescription)
 {
-public:
-  UndoValueTransaction() = default;
-  UndoValueTransaction(UndoValueTransaction<T> const &iOther) : fInitialValue{}, fAction{} {}
+  auto lastUndoAction = fUndoManager->getLastUndoAction();
 
-  inline void add(std::shared_ptr<UndoAction> iAction) {
-    RE_EDIT_INTERNAL_ASSERT(fAction != nullptr);
-    fAction->add(std::move(iAction));
-  }
-
-  template<typename... Args>
-  inline void add(AppContext &iCtx, Widget const *iWidget, std::string const &iFormat, Args ... args)
+  if(iMergeKey != nullptr && lastUndoAction && lastUndoAction->getMergeKey() == iMergeKey)
   {
-    return add(iCtx.createWidgetUndoAction(iWidget, iFormat, args...));
-  }
+    // at the minimum it is a merge => we won't add a new action
+    auto mua = dynamic_cast<MergeableUndoValue<T> *>(lastUndoAction.get());
 
-  template<typename... Args>
-  void begin(AppContext &iCtx, T const &iInitialValue, std::string const &iFormat, Args... args);
-
-  template<typename... Args>
-  inline void beginCurrentWidget(AppContext &iCtx, T const &iInitialValue, std::string const &iFormat, Args ... args)
-  {
-    begin(iCtx, iInitialValue, "Update widget");
-    return add(iCtx, iCtx.getCurrentWidget(), iFormat, args...);
-  }
-
-  inline void beginCurrentWidgetAttribute(AppContext &iCtx, T const &iInitialValue, widget::Attribute const *iAttribute)
-  {
-    begin(iCtx, iInitialValue, "Update attribute");
-    add(iCtx.createAttributeUndoAction(iCtx.getCurrentWidget(), iAttribute));
-  }
-
-  void commit(AppContext &iCtx, T const &iFinalValue)
-  {
-    if(fAction && iFinalValue != fInitialValue)
+    if(mua && mua->fOldValue == iNewValue)
     {
-      iCtx.addUndoAction(std::move(fAction));
+      // it's a cancel since the old value matches the new value
+      fUndoManager->popLastUndoAction();
     }
-    fAction = nullptr;
-  }
 
-  void rollback()
+    return nullptr;
+  }
+  else
   {
-    fAction = nullptr;
+    auto action = std::make_unique<U>();
+    action->fDescription = iDescription;
+    action->fMergeKey = iMergeKey;
+    action->fOldValue = iOldValue;
+//    action->fNewValue = iNewValue; // not needed right now
+    return action;
   }
 
-  explicit operator bool() const { return fAction != nullptr; }
-
-private:
-  T fInitialValue{};
-  std::unique_ptr<CompositeUndoAction> fAction{};
-};
-
-//------------------------------------------------------------------------
-// Panel::begin
-//------------------------------------------------------------------------
-template<typename T>
-template<typename... Args>
-void UndoValueTransaction<T>::begin(AppContext &iCtx, T const &iInitialValue, std::string const &iFormat, Args... args)
-{
-  RE_EDIT_INTERNAL_ASSERT(fAction == nullptr);
-  fInitialValue = iInitialValue;
-  fAction = iCtx.createCompositeUndoAction(iFormat, args...);
 }
+
 
 
 }

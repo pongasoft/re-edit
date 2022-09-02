@@ -22,6 +22,7 @@
 #include <string>
 #include <imgui.h>
 #include <bitmask_operators.hpp>
+#include <re/mock/fmt.h>
 
 namespace re::edit {
 
@@ -107,6 +108,15 @@ constexpr int toPixelHeight(int iDeviceHeightRU)
 
 constexpr float toFloatColor(int iColor) { return static_cast<float>(iColor) / 255.0f; }
 constexpr int toIntColor(float iColor) { return static_cast<int>(iColor * 255.0f); }
+
+namespace fmt {
+template<typename ... Args>
+inline std::string printf(const std::string& format, Args ... args)
+{
+  return re::mock::fmt::printf(format, args...);
+}
+
+}
 
 }
 

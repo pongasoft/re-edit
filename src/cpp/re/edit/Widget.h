@@ -86,6 +86,7 @@ public:
 
   std::unique_ptr<Widget> copy() const;
   std::unique_ptr<Widget> clone() const;
+  bool eq(Widget *iWidget) const;
 
   static std::unique_ptr<Widget> panel_decal();
   static std::unique_ptr<Widget> analog_knob();
@@ -121,6 +122,8 @@ public:
   T *findAttributeByIdAndType(int id) const;
 
   widget::Attribute *findAttributeByName(std::string const &iAttributeName) const;
+
+  widget::Attribute *findAttributeById(int id) const { return fAttributes[id].get(); }
 
 //
 //  template<typename T>
@@ -171,9 +174,6 @@ private:
   // denormalized access to attributes
   widget::attribute::Graphics *fGraphics{};
   widget::attribute::Visibility *fVisibility{};
-
-  // Undo
-  UndoValueTransaction<std::string> fNameTx{};
 
 private:
   static long fWidgetIota;

@@ -92,6 +92,16 @@ public:
 
   std::unique_ptr<Attribute> clone() const override { return Attribute::clone<Graphics>(*this); }
 
+  bool eq(Attribute const *iAttribute) const override
+  {
+    return Attribute::eq(this, iAttribute, [](auto *l, auto *r) {
+      return l->fPosition == r->fPosition &&
+             l->fHitBoundaries == r->fHitBoundaries &&
+             l->fTexture == r->fTexture &&
+             l->fSize == r->fSize;
+    });
+  }
+
   bool copyFrom(Attribute const *iFromAttribute) override;
 
 public:
@@ -102,11 +112,6 @@ public:
   ImVec2 fSize{100, 100};
   FilmStrip::Filter fFilter{};
   int fFrameNumber{};
-
-  // undo
-  UndoValueTransaction<ImVec2> fPositionUndoTx{};
-  UndoValueTransaction<HitBoundaries> fHitBoundariesUndoTx{};
-  UndoValueTransaction<ImVec2> fSizeUndoTx{};
 };
 
 class Background : public String
@@ -120,6 +125,12 @@ public:
   bool draw(AppContext &iCtx, Graphics const *iParent) const;
 
   std::unique_ptr<Attribute> clone() const override { return Attribute::clone<Background>(*this); }
+
+  bool eq(Attribute const *iAttribute) const override
+  {
+    return Attribute::eq(this, iAttribute, [](auto *l, auto *r) { return l->fValue == r->fValue;});
+  }
+
 };
 
 }

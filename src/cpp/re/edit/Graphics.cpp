@@ -106,7 +106,6 @@ void Graphics::editView(AppContext &iCtx,
       auto const isSelected = p == key;
       if(ImGui::Selectable(p.c_str(), isSelected))
       {
-        iCtx.addCurrentWidgetUndoAction("Change %s graphics", iCtx.getCurrentWidget()->getName());
         iOnTextureUpdate(p);
       }
       if(isSelected)
@@ -131,29 +130,19 @@ void Graphics::editView(AppContext &iCtx,
   {
     auto editedSize = fSize;
     ImGui::Indent();
-    ReGui::InputInt("w", &editedSize.x, 1, 5);
-
-    auto begin = ImGui::IsItemActivated();
-    auto commit = ImGui::IsItemDeactivated();
-
-    ReGui::InputInt("h", &editedSize.y, 1, 5);
-
-    begin |= ImGui::IsItemActivated();
-    commit |= ImGui::IsItemDeactivated();
-
-    if(commit)
-      fSizeUndoTx.commit(iCtx, editedSize);
-
-    if(begin)
-      fSizeUndoTx.beginCurrentWidget(iCtx, fSize, "Change %s size", iCtx.getCurrentWidget()->getName());
-
-    if(fSize != editedSize)
+    if(ReGui::InputInt("w", &editedSize.x, 1, 5))
+    {
       iOnSizeUpdate(editedSize);
+    }
+
+    if(ReGui::InputInt("h", &editedSize.y, 1, 5))
+    {
+      iOnSizeUpdate(editedSize);
+    }
 
     ImGui::Unindent();
   }
   ImGui::EndGroup();
-
 }
 
 //------------------------------------------------------------------------
@@ -163,24 +152,18 @@ void Graphics::editPositionView(AppContext &iCtx)
 {
   auto editedPosition = fPosition;
 
-  ReGui::InputInt("x", &editedPosition.x, 1, 5);
-
-  auto begin = ImGui::IsItemActivated();
-  auto commit = ImGui::IsItemDeactivated();
-
-  ReGui::InputInt("y", &editedPosition.y, 1, 5);
-
-  begin |= ImGui::IsItemActivated();
-  commit |= ImGui::IsItemDeactivated();
-
-  if(commit)
-    fPositionUndoTx.commit(iCtx, editedPosition);
-
-  if(begin)
-    fPositionUndoTx.beginCurrentWidget(iCtx, fPosition, "Move %s", iCtx.getCurrentWidget()->getName());
-
-  if(fPosition != editedPosition)
+  if(ReGui::InputInt("x", &editedPosition.x, 1, 5))
   {
+    iCtx.addOrMergeUndoCurrentWidgetChange(&fPosition.x, fPosition, editedPosition,
+                                           fmt::printf("Move %s", iCtx.getCurrentWidget()->getName()));
+    fPosition = editedPosition;
+    fEdited = true;
+  }
+
+  if(ReGui::InputInt("y", &editedPosition.y, 1, 5))
+  {
+    iCtx.addOrMergeUndoCurrentWidgetChange(&fPosition.y, fPosition, editedPosition,
+                                           fmt::printf("Move %s", iCtx.getCurrentWidget()->getName()));
     fPosition = editedPosition;
     fEdited = true;
   }
@@ -201,11 +184,14 @@ void Graphics::editView(AppContext &iCtx)
   editView(iCtx,
            fFilter,
            [this, &iCtx](auto &k) {
+             iCtx.addUndoCurrentWidgetChange(fmt::printf("Change %s graphics", iCtx.getCurrentWidget()->getName()));
              fTexture = iCtx.getTexture(k);
              fFrameNumber = 0;
              fEdited = true;
            },
-           [this](auto &s) {
+           [this, &iCtx](auto &s) {
+             iCtx.addOrMergeUndoCurrentWidgetChange(&fSize, fSize, s,
+                                                    fmt::printf("Change %s size", iCtx.getCurrentWidget()->getName()));
              fSize = s;
              fTexture = nullptr;
              fFrameNumber = 0;
@@ -227,25 +213,19 @@ void Graphics::editHitBoundariesView(AppContext &iCtx)
     auto editedHB = fHitBoundaries;
 
     float *tb[] = { &editedHB.fTopInset, &editedHB.fBottomInset };
-    ReGui::SliderInt2("hit_boundaries - Top | Bottom", tb, 0, static_cast<int>(getSize().y), "inset: %d", ImGuiSliderFlags_AlwaysClamp);
-
-    auto begin = ImGui::IsItemActivated();
-    auto commit = ImGui::IsItemDeactivated();
+    if(ReGui::SliderInt2("hit_boundaries - Top | Bottom", tb, 0, static_cast<int>(getSize().y), "inset: %d", ImGuiSliderFlags_AlwaysClamp))
+    {
+      iCtx.addOrMergeUndoCurrentWidgetChange(&fHitBoundaries.fTopInset, fHitBoundaries, editedHB,
+                                             fmt::printf("Change %s Hit Boundaries", iCtx.getCurrentWidget()->getName()));
+      fHitBoundaries = editedHB;
+      fEdited = true;
+    }
 
     float *lr[] = { &editedHB.fLeftInset, &editedHB.fRightInset };
-    ReGui::SliderInt2("hit_boundaries - Left | Right", lr, 0, static_cast<int>(getSize().x), "inset: %d", ImGuiSliderFlags_AlwaysClamp);
-
-    begin |= ImGui::IsItemActivated();
-    commit |= ImGui::IsItemDeactivated();
-
-    if(commit)
-      fHitBoundariesUndoTx.commit(iCtx, editedHB);
-
-    if(begin)
-      fHitBoundariesUndoTx.beginCurrentWidget(iCtx, fHitBoundaries, "Change %s Hit Boundaries", iCtx.getCurrentWidget()->getName());
-
-    if(fHitBoundaries != editedHB)
+    if(ReGui::SliderInt2("hit_boundaries - Left | Right", lr, 0, static_cast<int>(getSize().x), "inset: %d", ImGuiSliderFlags_AlwaysClamp))
     {
+      iCtx.addOrMergeUndoCurrentWidgetChange(&fHitBoundaries.fLeftInset, fHitBoundaries, editedHB,
+                                             fmt::printf("Change %s Hit Boundaries", iCtx.getCurrentWidget()->getName()));
       fHitBoundaries = editedHB;
       fEdited = true;
     }
@@ -437,6 +417,7 @@ void Background::editView(AppContext &iCtx)
       auto const isSelected = key == fValue;
       if(ImGui::Selectable(path.c_str(), isSelected))
       {
+        iCtx.addUndoAttributeChange(this);
         fValue = key;
         fProvided = true;
         fEdited = true;

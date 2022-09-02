@@ -251,19 +251,12 @@ void Widget::editView(AppContext &iCtx)
 
   auto editedName = fName;
 
-  ImGui::InputText("name", &editedName);
-
-  if(ImGui::IsItemActivated())
+  if(ImGui::InputText("name", &editedName))
   {
-    fNameTx.begin(iCtx, fName, "Rename widget");
-    fNameTx.add(iCtx, this, "Rename %s widget", fName);
-  }
-
-  if(ImGui::IsItemDeactivated())
-    fNameTx.commit(iCtx, editedName);
-
-  if(fName != editedName)
+    iCtx.addOrMergeUndoWidgetChange(this, &fName, fName, editedName,
+                                    fmt::printf("Rename %s %s widget", fName, toString(fType)));
     fName = editedName;
+  }
 
   fGraphics->editPositionView(iCtx);
 
@@ -946,7 +939,7 @@ std::unique_ptr<Widget> Widget::panel_decal()
 }
 
 //------------------------------------------------------------------------
-// Widget::widget
+// Widget::copy
 //------------------------------------------------------------------------
 std::unique_ptr<Widget> Widget::copy() const
 {
@@ -954,11 +947,30 @@ std::unique_ptr<Widget> Widget::copy() const
 }
 
 //------------------------------------------------------------------------
-// Widget::widget
+// Widget::clone
 //------------------------------------------------------------------------
 std::unique_ptr<Widget> Widget::clone() const
 {
   return std::unique_ptr<Widget>(new Widget(*this));
+}
+
+//------------------------------------------------------------------------
+// Widget::eq
+//------------------------------------------------------------------------
+bool Widget::eq(Widget *iWidget) const
+{
+  RE_EDIT_INTERNAL_ASSERT(iWidget != nullptr);
+  if(iWidget->fType != fType)
+    return false;
+
+  auto numAttributes = fAttributes.size();
+  for(auto i = 0; i < numAttributes; i++)
+  {
+    if(!fAttributes[i]->eq(iWidget->fAttributes[i].get()))
+      return false;
+  }
+
+  return true;
 }
 
 //------------------------------------------------------------------------
@@ -986,7 +998,7 @@ widget::Attribute *Widget::findAttributeByName(std::string const &iAttributeName
 //------------------------------------------------------------------------
 Widget *Widget::addAttribute(std::unique_ptr<widget::Attribute> iAttribute)
 {
-  auto id = static_cast<int>(fAttributes.size() + 1);
+  auto id = static_cast<int>(fAttributes.size());
   iAttribute->init(id);
   fAttributes.emplace_back(std::move(iAttribute)); return this;
 }

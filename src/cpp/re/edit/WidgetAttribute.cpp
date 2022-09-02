@@ -93,8 +93,7 @@ std::string DiscretePropertyValueList::getValueAsLua() const
 //------------------------------------------------------------------------
 // DiscretePropertyValueList::editView
 //------------------------------------------------------------------------
-void DiscretePropertyValueList::editView(AppContext &iCtx,
-                                         int iMin,
+void DiscretePropertyValueList::editView(int iMin,
                                          int iMax,
                                          std::function<void()>                       const &iOnAdd,
                                          std::function<void(int iIndex, int iValue)> const &iOnUpdate,
@@ -109,18 +108,7 @@ void DiscretePropertyValueList::editView(AppContext &iCtx,
     ImGui::SameLine();
 
     int editedValue = fValue[i];
-    ImGui::SliderInt(re::mock::fmt::printf("%s [%d]", fName, i).c_str(), &editedValue, iMin, iMax);
-
-    auto begin = ImGui::IsItemActivated();
-    auto commit = ImGui::IsItemDeactivated();
-
-    if(commit)
-      fValueUndoTx.commit(iCtx, editedValue);
-
-    if(begin)
-      fValueUndoTx.beginCurrentWidgetAttribute(iCtx, fValue[i], this);
-
-    if(fValue[i] != editedValue)
+    if(ImGui::SliderInt(re::mock::fmt::printf("%s [%d]", fName, i).c_str(), &editedValue, iMin, iMax))
       iOnUpdate(i, editedValue);
 
     ImGui::PopID();
@@ -431,15 +419,18 @@ void Visibility::editView(AppContext &iCtx)
     if(stepCount > 1)
     {
       ImGui::Indent();
-      fValues.editView(iCtx,
-                       0, stepCount - 1,
+      fValues.editView(0, stepCount - 1,
                        [this, &iCtx]() { // onAdd
                          iCtx.addUndoAttributeChange(&fValues);
                          fValues.fValue.emplace_back(0);
                          fValues.fProvided = true;
                          fValues.fEdited = true;
                        },
-                       [this](int iIndex, int iValue) { // onUpdate
+                       [this, &iCtx](int iIndex, int iValue) { // onUpdate
+                         iCtx.addOrMergeUndoCurrentWidgetChange(&fValues.fValue[iIndex],
+                                                                fValues.fValue[iIndex],
+                                                                iValue,
+                                                                fmt::printf("Update %s.%s[%d]", iCtx.getCurrentWidget()->getName(), fValues.fName, iIndex));
                          fValues.fValue[iIndex] = iValue;
                          fValues.fEdited = true;
                        },
@@ -557,19 +548,9 @@ void String::editView(AppContext &iCtx)
 
   auto editedValue = fValue;
 
-  ImGui::InputText(fName, &editedValue);
-
-  auto begin = ImGui::IsItemActivated();
-  auto commit = ImGui::IsItemDeactivated();
-
-  if(commit)
-    fValueUndoTx.commit(iCtx, editedValue);
-
-  if(begin)
-    fValueUndoTx.beginCurrentWidgetAttribute(iCtx, fValue, this);
-
-  if(fValue != editedValue)
+  if(ImGui::InputText(fName, &editedValue))
   {
+    iCtx.addOrMergeUndoAttributeChange(this, fValue, editedValue);
     fValue = editedValue;
     fProvided = true;
     fEdited = true;
@@ -581,25 +562,13 @@ void String::editView(AppContext &iCtx)
 //------------------------------------------------------------------------
 void Bool::editView(AppContext &iCtx)
 {
-//  resetView();
-//  ImGui::SameLine();
-//  if(ImGui::Checkbox(fName, &fValue))
-//  {
-//    fProvided = true;
-//    fEdited = true;
-//  }
-
   resetView(iCtx);
   ImGui::SameLine();
-  bool value = fValue;
-  if(ImGui::Checkbox(fName, &value))
+  bool editedValue = fValue;
+  if(ImGui::Checkbox(fName, &editedValue))
   {
     iCtx.addUndoAttributeChange(this);
-//    auto action = [value = fValue, provided = fProvided](auto *iAtt) {
-//      iAtt->fValue = value;
-//      iAtt->fProvided = provided;
-//    };
-    fValue = value;
+    fValue = editedValue;
     fProvided = true;
     fEdited = true;
   }
@@ -612,8 +581,13 @@ void Integer::editView(AppContext &iCtx)
 {
   resetView(iCtx);
   ImGui::SameLine();
-  if(ImGui::InputInt(fName, &fValue))
+
+  auto editedValue = fValue;
+
+  if(ImGui::InputInt(fName, &editedValue))
   {
+    iCtx.addOrMergeUndoAttributeChange(this, fValue, editedValue);
+    fValue = editedValue;
     fProvided = true;
     fEdited = true;
   }
@@ -625,8 +599,12 @@ void Integer::editView(AppContext &iCtx)
 void PropertyPath::editView(AppContext &iCtx)
 {
   editView(iCtx,
-           [this] { reset(); },
-           [this](const Property *p) {
+           [this, &iCtx] {
+             iCtx.addUndoAttributeReset(this);
+             reset();
+           },
+           [this, &iCtx](const Property *p) {
+             iCtx.addUndoAttributeChange(this);
              fValue = p->path();
              fProvided = true;
              fEdited = true;
@@ -691,10 +669,7 @@ void PropertyPath::menuView(AppContext &iCtx,
   if(ImGui::BeginPopup("Menu"))
   {
     if(ImGui::MenuItem("Reset"))
-    {
-      iCtx.addUndoAttributeReset(this);
       iOnReset();
-    }
 
     ImGui::BeginDisabled(iPropertyPath.empty());
     if(ImGui::MenuItem("Watch"))
@@ -762,6 +737,7 @@ void ObjectPath::editView(AppContext &iCtx)
       auto const isSelected = o->path() == fValue;
       if(ImGui::Selectable(o->path().c_str(), isSelected))
       {
+        iCtx.addUndoAttributeChange(this);
         fValue = o->path();
         fProvided = true;
         fEdited = true;
@@ -883,6 +859,7 @@ void PropertyPathList::editView(AppContext &iCtx)
 
       if(ImGui::Button("OK", ImVec2(120, 0)))
       {
+        iCtx.addUndoAttributeChange(this);
         fValue = std::move(fStringListEditView->destination());
         fStringListEditView = std::nullopt;
         fProvided = true;
@@ -940,8 +917,11 @@ void Index::editView(AppContext &iCtx)
   {
     resetView(iCtx);
     ImGui::SameLine();
-    if(ImGui::SliderInt(fName, &fValue, 0, property->stepCount() - 1))
+    auto editedValue = fValue;
+    if(ImGui::SliderInt(fName, &editedValue, 0, property->stepCount() - 1))
     {
+      iCtx.addOrMergeUndoAttributeChange(this, fValue, editedValue);
+      fValue = editedValue;
       fProvided = true;
       fEdited = true;
     }
@@ -986,8 +966,11 @@ void UserSampleIndex::editView(AppContext &iCtx)
   {
     resetView(iCtx);
     ImGui::SameLine();
-    if(ImGui::SliderInt(fName, &fValue, 0, count - 1))
+    auto editedValue = fValue;
+    if(ImGui::SliderInt(fName, &editedValue, 0, count - 1))
     {
+      iCtx.addOrMergeUndoAttributeChange(this, fValue, editedValue);
+      fValue = editedValue;
       fProvided = true;
       fEdited = true;
     }
@@ -1056,9 +1039,14 @@ void ValueTemplates::editView(AppContext &iCtx)
     if(ImGui::Button("-"))
       deleteItemIdx = i;
     ImGui::SameLine();
-    auto value = fValue[i];
-    if(ImGui::InputText(re::mock::fmt::printf("%s [%d]", fName, i).c_str(), &fValue[i]))
+    auto editedValue = fValue[i];
+    if(ImGui::InputText(re::mock::fmt::printf("%s [%d]", fName, i).c_str(), &editedValue))
     {
+      iCtx.addOrMergeUndoCurrentWidgetChange(&fValue[i],
+                                             fValue[i],
+                                             editedValue,
+                                             fmt::printf("Update %s.%s[%d]", iCtx.getCurrentWidget()->getName(), fName, i));
+      fValue[i] = editedValue;
       fProvided = true;
       fEdited = true;
     }
@@ -1067,6 +1055,7 @@ void ValueTemplates::editView(AppContext &iCtx)
 
   if(deleteItemIdx >= 0)
   {
+    iCtx.addUndoAttributeChange(this);
     fValue.erase(fValue.begin() + deleteItemIdx);
     fEdited = true;
   }
@@ -1075,6 +1064,7 @@ void ValueTemplates::editView(AppContext &iCtx)
 
   if(ImGui::Button("+"))
   {
+    iCtx.addUndoAttributeChange(this);
     fValue.resize(fValue.size() + 1);
     fEdited = true;
   }

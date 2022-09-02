@@ -27,18 +27,29 @@
 namespace re::edit {
 
 class AppContext;
-
+class Widget;
 class RedoAction;
+
+template<typename T>
+class MergeableUndoValue
+{
+public:
+  T fOldValue{};
+//  T fNewValue{}; not needed for now
+};
 
 class UndoAction
 {
 public:
   virtual std::shared_ptr<RedoAction> execute(AppContext &iCtx) = 0;
+  constexpr void *getMergeKey() const { return fMergeKey; }
+  constexpr void resetMergeKey() { fMergeKey = nullptr; }
 
 public:
   long fFrame{};
   PanelType fPanelType{PanelType::kUnknown};
   std::string fDescription{};
+  void *fMergeKey{};
 };
 
 class LambdaUndoAction : public UndoAction
@@ -50,11 +61,19 @@ public:
   std::function<std::shared_ptr<RedoAction>(AppContext &)> fLambda{};
 };
 
-class WidgetUndoAction : public LambdaUndoAction
+class WidgetUndoAction : public UndoAction
 {
 public:
+  std::shared_ptr<RedoAction> execute(AppContext &iCtx) override;
+
+public:
   int fWidgetId{-1};
-  int fAttributeId{-1};
+  std::shared_ptr<Widget> fWidget{};
+};
+
+template<typename T>
+class MergeableWidgetUndoAction : public WidgetUndoAction, public MergeableUndoValue<T>
+{
 };
 
 class CompositeUndoAction : public UndoAction
@@ -105,7 +124,7 @@ private:
   class UndoTransaction : public CompositeUndoAction
   {
   public:
-    std::unique_ptr<UndoTransaction> fParent{};
+    std::shared_ptr<UndoTransaction> fParent{};
   };
 
 public:
@@ -115,11 +134,13 @@ public:
   void addUndoAction(std::shared_ptr<UndoAction> iAction);
   void undoLastAction(AppContext &iCtx);
   void redoLastAction(AppContext &iCtx);
-  void beginUndoTx(long iFrame, std::string iDescription);
+  void beginUndoTx(long iFrame, PanelType iPanelType, std::string iDescription, void *iMergeKey);
   void commitUndoTx();
   void rollbackUndoTx();
   bool hasUndoHistory() const { return !fUndoHistory.empty(); }
+  std::shared_ptr<UndoAction> popLastUndoAction();
   std::shared_ptr<UndoAction> getLastUndoAction() const;
+  std::shared_ptr<UndoAction> getLastUndoActionOrTransaction() const;
   std::shared_ptr<RedoAction> getLastRedoAction() const;
   std::vector<std::shared_ptr<UndoAction>> const &getUndoHistory() const { return fUndoHistory; }
   std::vector<std::shared_ptr<RedoAction>> const &getRedoHistory() const { return fRedoHistory; }
@@ -128,7 +149,7 @@ private:
   bool fEnabled{true};
   std::vector<std::shared_ptr<UndoAction>> fUndoHistory{};
   std::vector<std::shared_ptr<RedoAction>> fRedoHistory{};
-  std::unique_ptr<UndoTransaction> fUndoTransaction{};
+  std::shared_ptr<UndoTransaction> fUndoTransaction{};
 };
 
 }

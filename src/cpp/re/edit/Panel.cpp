@@ -544,13 +544,10 @@ void Panel::moveWidgets(AppContext &iCtx, ImVec2 const &iPosition)
     auto delta = iPosition - fLastMovePosition.value();
     if(delta.x != 0 || delta.y != 0)
     {
-      if(!fMoveTx)
+      if(iCtx.beginUndoTx("Move Widgets", &fLastMovePosition))
       {
-        fMoveTx.begin(iCtx, *fLastMovePosition, "Move Widgets");
         for(auto &widget: getSelectedWidgets())
-        {
-          fMoveTx.add(iCtx, widget.get(), "Move %s", widget->getName());
-        }
+          iCtx.addUndoWidgetChange(widget.get(), fmt::printf("Move %s", widget->getName()));
       }
 
       for(auto &widget: getSelectedWidgets())
@@ -567,6 +564,8 @@ void Panel::moveWidgets(AppContext &iCtx, ImVec2 const &iPosition)
 //------------------------------------------------------------------------
 void Panel::endMoveWidgets(AppContext &iCtx, ImVec2 const &iPosition)
 {
+  iCtx.beginUndoTx("Move Widgets", &fLastMovePosition);
+
   for(auto &widget: getSelectedWidgets())
   {
     auto position = widget->getPosition();
@@ -575,7 +574,7 @@ void Panel::endMoveWidgets(AppContext &iCtx, ImVec2 const &iPosition)
     widget->setPosition(position);
   }
 
-  fMoveTx.commit(iCtx, *fLastMovePosition);
+  iCtx.commitUndoTx(true);
   fLastMovePosition = std::nullopt;
 }
 
@@ -784,24 +783,24 @@ void Panel::editMultiSelectionView(AppContext &iCtx, std::vector<std::shared_ptr
 
   auto editedMin = min;
 
-  ReGui::InputInt("x", &editedMin.x, 1, 5);
-
-  auto begin = ImGui::IsItemActivated();
-  auto commit = ImGui::IsItemDeactivated();
-
-  ReGui::InputInt("y", &editedMin.y, 1, 5);
-
-  begin |= ImGui::IsItemActivated();
-  commit |= ImGui::IsItemDeactivated();
-
-  if(commit)
-    fMoveTx.commit(iCtx, editedMin);
-
-  if(begin)
+  if(ReGui::InputInt("x", &editedMin.x, 1, 5))
   {
-    fMoveTx.begin(iCtx, min, "Move Widgets");
-    for(auto &w: iSelectedWidgets)
-      fMoveTx.add(iCtx, w.get(), "Move %s", w->getName());
+    if(iCtx.beginUndoTx("Move Widgets", this))
+    {
+      for(auto &widget: getSelectedWidgets())
+        iCtx.addUndoWidgetChange(widget.get(), fmt::printf("Move %s", widget->getName()));
+      iCtx.commitUndoTx();
+    }
+  }
+
+  if(ReGui::InputInt("y", &editedMin.y, 1, 5))
+  {
+    if(iCtx.beginUndoTx("Move Widgets", this))
+    {
+      for(auto &widget: getSelectedWidgets())
+        iCtx.addUndoWidgetChange(widget.get(), fmt::printf("Move %s", widget->getName()));
+      iCtx.commitUndoTx();
+    }
   }
 
   auto delta = editedMin - min;
@@ -818,7 +817,7 @@ void Panel::editMultiSelectionView(AppContext &iCtx, std::vector<std::shared_ptr
       iCtx.beginUndoTx("Align Widgets Left");
       for(auto &w: iSelectedWidgets)
       {
-        iCtx.addWidgetUndoAction(w.get(), "Align %s Left", w->getName());
+        iCtx.addUndoWidgetChange(w.get(), fmt::printf("Align %s Left", w->getName()));
         auto position = w->getPosition();
         w->setPosition({min.x, position.y});
       }
@@ -832,7 +831,7 @@ void Panel::editMultiSelectionView(AppContext &iCtx, std::vector<std::shared_ptr
       iCtx.beginUndoTx("Align Widgets Top");
       for(auto &w: iSelectedWidgets)
       {
-        iCtx.addWidgetUndoAction(w.get(), "Align %s Top", w->getName());
+        iCtx.addUndoWidgetChange(w.get(), fmt::printf("Align %s Top", w->getName()));
         auto position = w->getPosition();
         w->setPosition({position.x, min.y});
       }
@@ -846,7 +845,7 @@ void Panel::editMultiSelectionView(AppContext &iCtx, std::vector<std::shared_ptr
       iCtx.beginUndoTx("Align Widgets Right");
       for(auto &w: iSelectedWidgets)
       {
-        iCtx.addWidgetUndoAction(w.get(), "Align %s Right", w->getName());
+        iCtx.addUndoWidgetChange(w.get(), fmt::printf("Align %s Right", w->getName()));
         auto position = w->getPosition();
         w->setPosition({max.x - w->getSize().x, position.y});
       }
@@ -860,7 +859,7 @@ void Panel::editMultiSelectionView(AppContext &iCtx, std::vector<std::shared_ptr
       iCtx.beginUndoTx("Align Widgets Bottom");
       for(auto &w: iSelectedWidgets)
       {
-        iCtx.addWidgetUndoAction(w.get(), "Align %s Bottom", w->getName());
+        iCtx.addUndoWidgetChange(w.get(), fmt::printf("Align %s Bottom", w->getName()));
         auto position = w->getPosition();
         w->setPosition({position.x, max.y - w->getSize().y});
       }
@@ -1092,6 +1091,7 @@ std::shared_ptr<UndoAction> Panel::createWidgetsUndoAction(AppContext &iCtx, std
 {
   auto action = std::make_unique<LambdaUndoAction>();
   action->fDescription = iDescription;
+  action->fPanelType = fType;
   auto pw = freezeWidgets();
   action->fLambda = [panelType = this->fType, pw = std::move(pw)](AppContext &iCtx) {
     auto w = iCtx.getPanel(panelType)->thawWidgets(pw);

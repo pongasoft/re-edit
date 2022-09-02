@@ -40,19 +40,9 @@ void Color3::editView(AppContext &iCtx)
 
   auto editedValue = fValue;
 
-  ReGui::ColorEdit(fName, &editedValue);
-
-  auto begin = ImGui::IsItemActivated();
-  auto commit = ImGui::IsItemDeactivated();
-
-  if(commit)
-    fValueUndoTx.commit(iCtx, editedValue);
-
-  if(begin)
-    fValueUndoTx.beginCurrentWidgetAttribute(iCtx, fValue, this);
-
-  if(fValue != editedValue)
+  if(ReGui::ColorEdit(fName, &editedValue))
   {
+    iCtx.addOrMergeUndoAttributeChange(this, fValue, editedValue);
     fValue = editedValue;
     fProvided = true;
     fEdited = true;

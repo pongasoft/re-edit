@@ -18,8 +18,24 @@
 
 #include "UndoManager.h"
 #include "Errors.h"
+#include "AppContext.h"
+#include "Panel.h"
 
 namespace re::edit {
+
+namespace stl {
+
+template<typename C>
+inline typename C::value_type last(C const &v)
+{
+  if(v.empty())
+    return {};
+
+  auto iter = v.end() - 1;
+  return *iter;
+}
+
+}
 
 //------------------------------------------------------------------------
 // UndoManager::addUndoAction
@@ -48,10 +64,11 @@ void UndoManager::addUndoAction(std::shared_ptr<UndoAction> iAction)
     }
   }
 
-  if(fUndoTransaction)
-    fUndoTransaction->fActions.emplace_back(std::move(iAction));
-  else
-    fUndoHistory.emplace_back(std::move(iAction));
+  auto history = fUndoTransaction ? &fUndoTransaction->fActions : &fUndoHistory;
+  auto last = stl::last(*history);
+  if(last)
+    last->resetMergeKey();
+  history->emplace_back(std::move(iAction));
 
   fRedoHistory.clear();
 }
@@ -61,18 +78,17 @@ void UndoManager::addUndoAction(std::shared_ptr<UndoAction> iAction)
 //------------------------------------------------------------------------
 void UndoManager::undoLastAction(AppContext &iCtx)
 {
-  if(fUndoHistory.empty())
-    return;
-
-  auto iter = fUndoHistory.end() - 1;
-  auto undoAction = *iter;
-  auto redoAction = undoAction->execute(iCtx);
-  if(redoAction)
+  auto undoAction = popLastUndoAction();
+  if(undoAction)
   {
-    redoAction->fUndoAction = undoAction;
-    fRedoHistory.emplace_back(std::move(redoAction));
+    undoAction->resetMergeKey();
+    auto redoAction = undoAction->execute(iCtx);
+    if(redoAction)
+    {
+      redoAction->fUndoAction = undoAction;
+      fRedoHistory.emplace_back(std::move(redoAction));
+    }
   }
-  fUndoHistory.erase(iter);
 }
 
 //------------------------------------------------------------------------
@@ -95,10 +111,7 @@ void UndoManager::redoLastAction(AppContext &iCtx)
 //------------------------------------------------------------------------
 std::shared_ptr<UndoAction> UndoManager::getLastUndoAction() const
 {
-  if(fUndoHistory.empty())
-    return nullptr;
-  auto iter = fUndoHistory.end() - 1;
-  return *iter;
+  return stl::last(fUndoHistory);
 }
 
 //------------------------------------------------------------------------
@@ -106,20 +119,19 @@ std::shared_ptr<UndoAction> UndoManager::getLastUndoAction() const
 //------------------------------------------------------------------------
 std::shared_ptr<RedoAction> UndoManager::getLastRedoAction() const
 {
-  if(fRedoHistory.empty())
-    return nullptr;
-  auto iter = fRedoHistory.end() - 1;
-  return *iter;
+  return stl::last(fRedoHistory);
 }
 
 //------------------------------------------------------------------------
 // UndoManager::beginUndoTx
 //------------------------------------------------------------------------
-void UndoManager::beginUndoTx(long iFrame, std::string iDescription)
+void UndoManager::beginUndoTx(long iFrame, PanelType iPanelType, std::string iDescription, void *iMergeKey)
 {
   auto tx = std::make_unique<UndoTransaction>();
   tx->fFrame = iFrame;
+  tx->fPanelType = iPanelType;
   tx->fDescription = std::move(iDescription);
+  tx->fMergeKey = iMergeKey;
   if(fUndoTransaction)
     tx->fParent = std::move(fUndoTransaction);
   fUndoTransaction = std::move(tx);
@@ -147,6 +159,28 @@ void UndoManager::commitUndoTx()
 }
 
 //------------------------------------------------------------------------
+// UndoManager::popLastUndoAction
+//------------------------------------------------------------------------
+std::shared_ptr<UndoAction> UndoManager::popLastUndoAction()
+{
+  if(fUndoHistory.empty())
+    return nullptr;
+
+  auto iter = fUndoHistory.end() - 1;
+  auto undoAction = *iter;
+  fUndoHistory.erase(iter);
+  return undoAction;
+}
+
+//------------------------------------------------------------------------
+// UndoManager::getLastUndoActionOrTransaction
+//------------------------------------------------------------------------
+std::shared_ptr<UndoAction> UndoManager::getLastUndoActionOrTransaction() const
+{
+  return fUndoTransaction ? fUndoTransaction : getLastUndoAction();
+}
+
+//------------------------------------------------------------------------
 // CompositeUndoAction::execute
 //------------------------------------------------------------------------
 std::shared_ptr<RedoAction> CompositeUndoAction::execute(AppContext &iCtx)
@@ -169,4 +203,16 @@ void CompositeRedoAction::execute(AppContext &iCtx)
   // we undo in reverse order
   std::for_each(fActions.rbegin(), fActions.rend(), [&iCtx](auto &action) { action->execute(iCtx); });
 }
+
+//------------------------------------------------------------------------
+// WidgetUndoAction::execute
+//------------------------------------------------------------------------
+std::shared_ptr<RedoAction> WidgetUndoAction::execute(AppContext &iCtx)
+{
+  auto w = iCtx.getPanel(fPanelType)->replaceWidget(fWidgetId, fWidget);
+  return std::make_shared<LambdaRedoAction>([panelType = this->fPanelType, widgetId = this->fWidgetId, w2 = std::move(w)](AppContext &iCtx) {
+    iCtx.getPanel(panelType)->replaceWidget(widgetId, w2);
+  });
+}
+
 }

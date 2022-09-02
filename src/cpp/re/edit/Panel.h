@@ -167,7 +167,6 @@ private:
   std::map<int, std::shared_ptr<Widget>> fWidgets{};
   std::vector<int> fWidgetsOrder{};
   std::vector<int> fDecalsOrder{};
-  UndoValueTransaction<ImVec2> fMoveTx{};
   std::optional<ImVec2> fLastMovePosition{};
   std::optional<MouseDrag> fMouseDrag{};
   std::optional<ImVec2> fPopupLocation{};
