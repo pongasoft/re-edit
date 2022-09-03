@@ -225,6 +225,8 @@ protected:
   long fCurrentFrame{};
   PanelState *fCurrentPanelState{};
   Widget const *fCurrentWidget{};
+  int fNativeWindowWidth{1280};
+  int fNativeWindowHeight{720};
 };
 
 //------------------------------------------------------------------------

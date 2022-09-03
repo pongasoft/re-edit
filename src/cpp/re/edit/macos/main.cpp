@@ -62,6 +62,15 @@ int main(int argc, char **argv)
   //ImFont* font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
   //IM_ASSERT(font != NULL);
 
+  re::edit::Application application{};
+
+  std::vector<std::string> args{};
+  for(int i = 1; i < argc; i++)
+    args.emplace_back(argv[i]);
+
+  if(!application.parseArgs(std::move(args)))
+    return 1;
+
   // Setup window
   glfwSetErrorCallback(glfw_error_callback);
   if(!glfwInit())
@@ -69,7 +78,12 @@ int main(int argc, char **argv)
 
   // Create window with graphics context
   glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-  GLFWwindow *window = glfwCreateWindow(1280, 720, "re-edit", nullptr, nullptr);
+  glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_TRUE);
+  GLFWwindow *window = glfwCreateWindow(application.getNativeWindowWidth(),
+                                        application.getNativeWindowHeight(),
+                                        "re-edit",
+                                        nullptr,
+                                        nullptr);
   if(window == nullptr)
     return 1;
 
@@ -93,14 +107,16 @@ int main(int argc, char **argv)
   bool show_another_window = false;
   float clear_color[4] = {0.45f, 0.55f, 0.60f, 1.00f};
 
-  re::edit::Application application{std::make_shared<re::edit::MTLTextureManager>(device)};
 
-  std::vector<std::string> args{};
-  for(int i = 1; i < argc; i++)
-    args.emplace_back(argv[i]);
-
-  if(!application.init(std::move(args)))
+  if(!application.init(std::make_shared<re::edit::MTLTextureManager>(device)))
     return 1;
+
+  // sets the initial size
+  {
+    int w, h;
+    glfwGetWindowSize(window, &w, &h);
+    application.setNativeWindowSize(w, h);
+  }
 
   // Main loop
   while(!glfwWindowShouldClose(window))
@@ -149,9 +165,15 @@ int main(int argc, char **argv)
 
       commandBuffer->presentDrawable(drawable);
       commandBuffer->commit();
+
+      int w, h;
+      glfwGetWindowSize(window, &w, &h);
+      application.setNativeWindowSize(w, h);
     }
     pPool->release();
   }
+
+  application.saveConfig();
 
   // Cleanup
   ImGui_ImplMetal_Shutdown();

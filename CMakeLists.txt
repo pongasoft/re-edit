@@ -64,6 +64,8 @@ set(re-edit_BUILD_SOURCES
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/lua/Device2D.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/lua/HDGui2D.h"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/lua/HDGui2D.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/lua/ReEdit.h"
+    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/lua/ReEdit.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/AppContext.h"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/AppContext.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/Application.h"

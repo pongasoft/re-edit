@@ -33,15 +33,30 @@ namespace re::edit {
 class Application
 {
 public:
-  explicit Application(std::shared_ptr<TextureManager> iTextureManager);
+  Application() = default;
 
-  bool init(std::vector<std::string> iArgs);
+  bool parseArgs(std::vector<std::string> iArgs);
+
+  bool init(std::shared_ptr<TextureManager> iTextureManager);
+
+  inline void setNativeWindowSize(int iWidth, int iHeight) {
+    fAppContext.fNativeWindowWidth = iWidth;
+    fAppContext.fNativeWindowHeight = iHeight;
+  }
+
+  inline int getNativeWindowWidth() const { return fAppContext.fNativeWindowWidth; }
+  inline int getNativeWindowHeight() const { return fAppContext.fNativeWindowHeight; }
+
   void setDeviceHeightRU(int iDeviceHeightRU);
 
   void render();
   void renderMainMenu();
   void renderSavePopup();
   void save();
+  void saveConfig();
+
+  static void saveFile(std::string const &iFile, std::string const &iContent);
+  [[nodiscard]] static bool fileExists(std::string const &iFile);
 
 public:
   float clear_color[4] = {0.45f, 0.55f, 0.60f, 1.00f};
@@ -49,11 +64,11 @@ public:
 private:
   std::string hdgui2D();
   std::string device2D() const;
-  void saveFile(std::string const &iFile, std::string const &iContent) const;
+
 
 private:
   int fDeviceHeightRU{1};
-  AppContext fAppContext;
+  AppContext fAppContext{};
   bool show_demo_window{false};
 
   std::string fRoot{};
