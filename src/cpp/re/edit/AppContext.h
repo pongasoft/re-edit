@@ -174,7 +174,7 @@ public: // Undo
   }
 
   bool beginUndoTx(std::string const &iDescription, void *iMergeKey = nullptr);
-  inline void commitUndoTx(bool iResetUndoMergeKey = false) { fUndoManager->commitUndoTx(); if(iResetUndoMergeKey) resetUndoMergeKey(); }
+  void commitUndoTx();
 
   void resetUndoMergeKey();
 
@@ -213,6 +213,7 @@ protected:
   std::shared_ptr<UserPreferences> fUserPreferences{};
   std::shared_ptr<PropertyManager> fPropertyManager{};
   std::shared_ptr<UndoManager> fUndoManager{};
+  std::shared_ptr<CompositeUndoAction> fUndoTransaction{};
   std::unique_ptr<PanelState> fFrontPanel;
   std::unique_ptr<PanelState> fFoldedFrontPanel;
   std::unique_ptr<PanelState> fBackPanel;

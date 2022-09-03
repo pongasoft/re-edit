@@ -120,13 +120,6 @@ public:
 
 class UndoManager
 {
-private:
-  class UndoTransaction : public CompositeUndoAction
-  {
-  public:
-    std::shared_ptr<UndoTransaction> fParent{};
-  };
-
 public:
   constexpr bool isEnabled() const { return fEnabled; }
   constexpr void enable() { fEnabled = true; }
@@ -134,13 +127,9 @@ public:
   void addUndoAction(std::shared_ptr<UndoAction> iAction);
   void undoLastAction(AppContext &iCtx);
   void redoLastAction(AppContext &iCtx);
-  void beginUndoTx(long iFrame, PanelType iPanelType, std::string iDescription, void *iMergeKey);
-  void commitUndoTx();
-  void rollbackUndoTx();
   bool hasUndoHistory() const { return !fUndoHistory.empty(); }
   std::shared_ptr<UndoAction> popLastUndoAction();
   std::shared_ptr<UndoAction> getLastUndoAction() const;
-  std::shared_ptr<UndoAction> getLastUndoActionOrTransaction() const;
   std::shared_ptr<RedoAction> getLastRedoAction() const;
   std::vector<std::shared_ptr<UndoAction>> const &getUndoHistory() const { return fUndoHistory; }
   std::vector<std::shared_ptr<RedoAction>> const &getRedoHistory() const { return fRedoHistory; }
@@ -149,7 +138,6 @@ private:
   bool fEnabled{true};
   std::vector<std::shared_ptr<UndoAction>> fUndoHistory{};
   std::vector<std::shared_ptr<RedoAction>> fRedoHistory{};
-  std::shared_ptr<UndoTransaction> fUndoTransaction{};
 };
 
 }

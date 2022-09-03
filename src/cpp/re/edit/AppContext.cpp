@@ -173,7 +173,14 @@ void AppContext::addUndoAction(std::shared_ptr<UndoAction> iAction)
   iAction->fFrame = fCurrentFrame;
   if(fCurrentPanelState)
     iAction->fPanelType = fCurrentPanelState->getType();
-  fUndoManager->addUndoAction((std::move(iAction)));
+  if(fUndoTransaction)
+  {
+    if(!iAction->fMergeKey)
+      iAction->fMergeKey = fUndoTransaction->fMergeKey;
+    fUndoTransaction->add(std::move(iAction));
+  }
+  else
+    fUndoManager->addUndoAction(std::move(iAction));
 }
 
 //------------------------------------------------------------------------
@@ -230,7 +237,9 @@ void AppContext::addUndoWidgetChange(Widget const *iWidget, std::string iDescrip
 //------------------------------------------------------------------------
 bool AppContext::beginUndoTx(std::string const &iDescription, void *iMergeKey)
 {
-  auto last = fUndoManager->getLastUndoActionOrTransaction();
+  RE_EDIT_INTERNAL_ASSERT(fUndoTransaction == nullptr); // no support for nested transactions
+
+  auto last = fUndoManager->getLastUndoAction();
 
   if(iMergeKey != nullptr && last && last->getMergeKey() == iMergeKey)
   {
@@ -238,12 +247,23 @@ bool AppContext::beginUndoTx(std::string const &iDescription, void *iMergeKey)
   }
   else
   {
-    fUndoManager->beginUndoTx(fCurrentFrame,
-                              fCurrentPanelState ? fCurrentPanelState->getType() : PanelType::kUnknown,
-                              iDescription,
-                              iMergeKey);
+    fUndoTransaction = std::make_unique<CompositeUndoAction>();
+    fUndoTransaction->fFrame = fCurrentFrame;
+    if(fCurrentPanelState)
+      fUndoTransaction->fPanelType = fCurrentPanelState->getType();
+    fUndoTransaction->fDescription = iDescription;
+    fUndoTransaction->fMergeKey = iMergeKey;
     return true;
   }
+}
+
+//------------------------------------------------------------------------
+// AppContext::commitUndoTx
+//------------------------------------------------------------------------
+void AppContext::commitUndoTx()
+{
+  RE_EDIT_INTERNAL_ASSERT(fUndoTransaction != nullptr);
+  fUndoManager->addUndoAction(std::move(fUndoTransaction));
 }
 
 //------------------------------------------------------------------------
@@ -251,10 +271,9 @@ bool AppContext::beginUndoTx(std::string const &iDescription, void *iMergeKey)
 //------------------------------------------------------------------------
 void AppContext::resetUndoMergeKey()
 {
-  auto last = fUndoManager->getLastUndoActionOrTransaction();
+  auto last = fUndoManager->getLastUndoAction();
   if(last)
     last->resetMergeKey();
 }
-
 
 }

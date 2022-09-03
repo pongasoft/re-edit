@@ -544,13 +544,15 @@ void Panel::moveWidgets(AppContext &iCtx, ImVec2 const &iPosition)
     auto delta = iPosition - fLastMovePosition.value();
     if(delta.x != 0 || delta.y != 0)
     {
-      if(iCtx.beginUndoTx("Move Widgets", &fLastMovePosition))
+      auto selectedWidgets = getSelectedWidgets();
+      if(iCtx.beginUndoTx(fmt::printf("Move %d widgets", selectedWidgets.size()), &fLastMovePosition))
       {
-        for(auto &widget: getSelectedWidgets())
+        for(auto &widget: selectedWidgets)
           iCtx.addUndoWidgetChange(widget.get(), fmt::printf("Move %s", widget->getName()));
+        iCtx.commitUndoTx();
       }
 
-      for(auto &widget: getSelectedWidgets())
+      for(auto &widget: selectedWidgets)
       {
         widget->move(delta);
       }
@@ -564,8 +566,6 @@ void Panel::moveWidgets(AppContext &iCtx, ImVec2 const &iPosition)
 //------------------------------------------------------------------------
 void Panel::endMoveWidgets(AppContext &iCtx, ImVec2 const &iPosition)
 {
-  iCtx.beginUndoTx("Move Widgets", &fLastMovePosition);
-
   for(auto &widget: getSelectedWidgets())
   {
     auto position = widget->getPosition();
@@ -574,7 +574,8 @@ void Panel::endMoveWidgets(AppContext &iCtx, ImVec2 const &iPosition)
     widget->setPosition(position);
   }
 
-  iCtx.commitUndoTx(true);
+  iCtx.resetUndoMergeKey();
+
   fLastMovePosition = std::nullopt;
 }
 

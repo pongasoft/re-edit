@@ -64,11 +64,10 @@ void UndoManager::addUndoAction(std::shared_ptr<UndoAction> iAction)
     }
   }
 
-  auto history = fUndoTransaction ? &fUndoTransaction->fActions : &fUndoHistory;
-  auto last = stl::last(*history);
+  auto last = stl::last(fUndoHistory);
   if(last)
     last->resetMergeKey();
-  history->emplace_back(std::move(iAction));
+  fUndoHistory.emplace_back(std::move(iAction));
 
   fRedoHistory.clear();
 }
@@ -123,42 +122,6 @@ std::shared_ptr<RedoAction> UndoManager::getLastRedoAction() const
 }
 
 //------------------------------------------------------------------------
-// UndoManager::beginUndoTx
-//------------------------------------------------------------------------
-void UndoManager::beginUndoTx(long iFrame, PanelType iPanelType, std::string iDescription, void *iMergeKey)
-{
-  auto tx = std::make_unique<UndoTransaction>();
-  tx->fFrame = iFrame;
-  tx->fPanelType = iPanelType;
-  tx->fDescription = std::move(iDescription);
-  tx->fMergeKey = iMergeKey;
-  if(fUndoTransaction)
-    tx->fParent = std::move(fUndoTransaction);
-  fUndoTransaction = std::move(tx);
-}
-
-//------------------------------------------------------------------------
-// UndoManager::rollbackUndoTx
-//------------------------------------------------------------------------
-void UndoManager::rollbackUndoTx()
-{
-  RE_EDIT_INTERNAL_ASSERT(fUndoTransaction != nullptr);
-  fUndoTransaction = std::move(fUndoTransaction->fParent);
-}
-
-//------------------------------------------------------------------------
-// UndoManager::commitUndoTx
-//------------------------------------------------------------------------
-void UndoManager::commitUndoTx()
-{
-  RE_EDIT_INTERNAL_ASSERT(fUndoTransaction != nullptr);
-
-  auto tx = std::move(fUndoTransaction);
-  fUndoTransaction = std::move(tx->fParent);
-  addUndoAction(std::move(tx));
-}
-
-//------------------------------------------------------------------------
 // UndoManager::popLastUndoAction
 //------------------------------------------------------------------------
 std::shared_ptr<UndoAction> UndoManager::popLastUndoAction()
@@ -170,14 +133,6 @@ std::shared_ptr<UndoAction> UndoManager::popLastUndoAction()
   auto undoAction = *iter;
   fUndoHistory.erase(iter);
   return undoAction;
-}
-
-//------------------------------------------------------------------------
-// UndoManager::getLastUndoActionOrTransaction
-//------------------------------------------------------------------------
-std::shared_ptr<UndoAction> UndoManager::getLastUndoActionOrTransaction() const
-{
-  return fUndoTransaction ? fUndoTransaction : getLastUndoAction();
 }
 
 //------------------------------------------------------------------------
