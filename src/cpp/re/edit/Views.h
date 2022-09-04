@@ -29,7 +29,7 @@ namespace re::edit::views {
 class MultiSelectionList
 {
 public:
-  void handleClick(std::string const &s, bool iIsShift, bool iIsControl);
+  void handleClick(std::string const &s, bool iRangeSelectKey, bool iMultiSelectKey);
   void editView();
   void moveSelectionTo(MultiSelectionList &ioOther);
   void moveSelectionUp();

@@ -97,8 +97,6 @@ public:
   void duplicateWidgets(AppContext &iCtx, std::vector<std::shared_ptr<Widget>> const &iWidgets);
   std::shared_ptr<Widget> replaceWidget(int iWidgetId, std::shared_ptr<Widget> iWidget);
   std::vector<std::shared_ptr<Widget>> getSelectedWidgets() const;
-  std::vector<int> getWidgetsOrder() const { return fWidgetsOrder; }
-  std::vector<int> getDecalsOrder() const { return fDecalsOrder; }
   std::shared_ptr<Widget> getWidget(int id) const;
 
   void selectWidget(int id, bool iMultiple);
@@ -110,9 +108,6 @@ public:
    * @return the deleted widget and its order */
   std::pair<std::shared_ptr<Widget>, int> deleteWidget(AppContext &iCtx, int id);
   void deleteWidgets(AppContext &iCtx, std::vector<std::shared_ptr<Widget>> const &iWidgets);
-
-  void swapWidgets(int iIndex1, int iIndex2);
-  void swapDecals(int iIndex1, int iIndex2);
 
   std::string hdgui2D(AppContext &iCtx) const;
   std::string device2D() const;
@@ -128,9 +123,6 @@ private:
   };
 
 protected:
-  template<typename F>
-  void editOrderView(std::vector<int> const &iOrder, F iOnSwap);
-
   void editNoSelectionView(AppContext &iCtx);
   void editSingleSelectionView(AppContext &iCtx, std::shared_ptr<Widget> const &iWidget);
   void editMultiSelectionView(AppContext &iCtx, std::vector<std::shared_ptr<Widget>> const &iSelectedWidgets);
@@ -157,6 +149,27 @@ private:
   void drawCableOrigin(AppContext &iCtx);
 
 private:
+  class MultiSelectionList
+  {
+  public:
+    MultiSelectionList(Panel &iPanel, std::vector<int> &iList) : fPanel{iPanel}, fList{iList} {}
+    void handleClick(std::shared_ptr<Widget> const &iWidget, bool iRangeSelectKey, bool iMultiSelectKey);
+    void editView(AppContext &iCtx);
+    void moveSelectionUp();
+    void moveSelectionDown();
+    void selectAll();
+    void clearSelection();
+    void duplicateSelection(AppContext &iCtx);
+    void deleteSelection(AppContext &iCtx);
+    std::vector<std::shared_ptr<Widget>> getSelectedWidgets() const;
+
+  public:
+    Panel &fPanel;
+    std::vector<int> &fList;
+    std::optional<int> fLastSelected{};
+  };
+
+private:
   PanelType fType;
   int fDeviceHeightRU{1};
   std::string fNodeName;
@@ -171,6 +184,8 @@ private:
   std::optional<MouseDrag> fMouseDrag{};
   std::optional<ImVec2> fPopupLocation{};
   int fWidgetCounter{1}; // used for unique id
+  MultiSelectionList fWidgetsSelectionList{*this, fWidgetsOrder};
+  MultiSelectionList fDecalsSelectionList{*this, fDecalsOrder};
   mutable std::optional<std::vector<std::shared_ptr<Widget>>> fSelectedWidgets{};
 };
 

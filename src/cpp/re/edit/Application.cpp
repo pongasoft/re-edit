@@ -93,7 +93,6 @@ void Application::render()
 {
   if(ImGui::GetIO().WantSaveIniSettings)
   {
-    RE_EDIT_LOG_INFO("requiring save...");
     ImGui::GetIO().WantSaveIniSettings = false;
 //    saveConfig();
   }

@@ -875,6 +875,203 @@ void Panel::editMultiSelectionView(AppContext &iCtx, std::vector<std::shared_ptr
 }
 
 //------------------------------------------------------------------------
+// Panel::MultiSelectionList::getSelectedWidgets
+//------------------------------------------------------------------------
+std::vector<std::shared_ptr<Widget>> Panel::MultiSelectionList::getSelectedWidgets() const
+{
+  std::vector<std::shared_ptr<Widget>> sublist{};
+  sublist.reserve(fList.size());
+  for(auto id: fList)
+  {
+    auto widget = fPanel.getWidget(id);
+    if(widget->isSelected())
+      sublist.emplace_back(widget);
+  }
+  return sublist;
+}
+
+//------------------------------------------------------------------------
+// Panel::MultiSelectionList::editView
+//------------------------------------------------------------------------
+void Panel::MultiSelectionList::handleClick(std::shared_ptr<Widget> const &iWidget, bool iRangeSelectKey, bool iMultiSelectKey)
+{
+  auto id = iWidget->getId();
+
+  // when iMultiSelectKey is held => multiple selection
+  if(iMultiSelectKey)
+  {
+    if(!iWidget->isSelected())
+    {
+      iWidget->fSelected = true;
+      fPanel.fSelectedWidgets = std::nullopt;
+      fLastSelected = id;
+    }
+    else
+    {
+      iWidget->fSelected = false;
+      fPanel.fSelectedWidgets = std::nullopt;
+      fLastSelected = std::nullopt;
+    }
+    return;
+  }
+
+  // when iRangeSelectKey is held => add all properties between fLastSelected and this one
+  if(iRangeSelectKey && fLastSelected && std::find(fList.begin(), fList.end(), *fLastSelected) != fList.end())
+  {
+    bool copy = false;
+    for(auto elt: fList)
+    {
+      if(id != *fLastSelected && (elt == id || elt == *fLastSelected))
+      {
+        copy = !copy;
+        fPanel.getWidget(elt)->fSelected = true;
+      }
+      else if(copy)
+        fPanel.getWidget(elt)->fSelected = true;
+    }
+
+    fPanel.fSelectedWidgets = std::nullopt;
+    fLastSelected = id;
+    return;
+  }
+
+  // neither shift nor control is held => single selection (deselect all others)
+  auto wasSelected = iWidget->fSelected;
+  fPanel.clearSelection();
+  if(wasSelected)
+  {
+    fLastSelected = std::nullopt;
+  }
+  else
+  {
+    iWidget->fSelected = true;
+    fLastSelected = id;
+  }
+
+}
+
+//------------------------------------------------------------------------
+// Panel::MultiSelectionList::editView
+//------------------------------------------------------------------------
+void Panel::MultiSelectionList::editView(AppContext &iCtx)
+{
+  if(ImGui::Button("All"))
+    selectAll();
+  ImGui::SameLine();
+  if(ImGui::Button("Clr"))
+    clearSelection();
+  ImGui::SameLine();
+  if(ImGui::Button("Up"))
+    moveSelectionUp();
+  ImGui::SameLine();
+  if(ImGui::Button("Down"))
+    moveSelectionDown();
+  ImGui::SameLine();
+  if(ImGui::Button("Dup"))
+    duplicateSelection(iCtx);
+  ImGui::SameLine();
+  if(ImGui::Button("Del"))
+    deleteSelection(iCtx);
+
+  ImGui::Separator();
+
+  if(ImGui::BeginChild("List"))
+  {
+    for(auto id: fList)
+    {
+      auto widget = fPanel.getWidget(id);
+      if(ImGui::Selectable(widget->getName().c_str(), widget->isSelected()))
+      {
+        auto io = ImGui::GetIO();
+        handleClick(widget, io.KeyShift, io.KeySuper);
+      }
+    }
+  }
+  ImGui::EndChild();
+}
+
+//------------------------------------------------------------------------
+// Panel::MultiSelectionList::moveSelectionUp
+//------------------------------------------------------------------------
+void Panel::MultiSelectionList::moveSelectionUp()
+{
+  auto selectedWidgets = getSelectedWidgets();
+
+  for(auto &w: selectedWidgets)
+  {
+    auto iter = std::find(fList.begin(), fList.end(), w->getId());
+
+    // already at the top
+    if(iter == fList.begin())
+      break; // abort loop
+
+    std::swap(*(iter - 1), *iter);
+  }
+
+}
+
+//------------------------------------------------------------------------
+// Panel::MultiSelectionList::moveSelectionDown
+//------------------------------------------------------------------------
+void Panel::MultiSelectionList::moveSelectionDown()
+{
+  auto selectedWidgets = getSelectedWidgets();
+
+  // we need to iterate backward
+  for(auto i = selectedWidgets.rbegin(); i != selectedWidgets.rend(); i++)
+  {
+    auto widget = *i;
+
+    auto iter = std::find(fList.begin(), fList.end(), widget->getId());
+
+    // already at the bottom
+    if(iter + 1 == fList.end())
+      break; // abort loop
+
+    std::swap(*(iter + 1), *iter);
+  }
+
+}
+
+//------------------------------------------------------------------------
+// Panel::MultiSelectionList::selectAll
+//------------------------------------------------------------------------
+void Panel::MultiSelectionList::selectAll()
+{
+  fPanel.clearSelection();
+  for(auto id: fList)
+    fPanel.getWidget(id)->fSelected = true;
+  fLastSelected = std::nullopt;
+}
+
+//------------------------------------------------------------------------
+// Panel::MultiSelectionList::clearSelection
+//------------------------------------------------------------------------
+void Panel::MultiSelectionList::clearSelection()
+{
+  fPanel.clearSelection();
+  fLastSelected = std::nullopt;
+}
+
+//------------------------------------------------------------------------
+// Panel::MultiSelectionList::duplicateSelection
+//------------------------------------------------------------------------
+void Panel::MultiSelectionList::duplicateSelection(AppContext &iCtx)
+{
+  fPanel.duplicateWidgets(iCtx, getSelectedWidgets());
+  fLastSelected = std::nullopt;
+}
+
+//------------------------------------------------------------------------
+// Panel::MultiSelectionList::deleteSelection
+//------------------------------------------------------------------------
+void Panel::MultiSelectionList::deleteSelection(AppContext &iCtx)
+{
+  fPanel.deleteWidgets(iCtx, getSelectedWidgets());
+  fLastSelected = std::nullopt;
+}
+
+//------------------------------------------------------------------------
 // Panel::editOrderView
 //------------------------------------------------------------------------
 void Panel::editOrderView(AppContext &iCtx)
@@ -882,35 +1079,18 @@ void Panel::editOrderView(AppContext &iCtx)
   if(ImGui::BeginTabItem("Widgets"))
   {
     if(ImGui::BeginChild("Content"))
-      editOrderView(getWidgetsOrder(), [this](int i1, int i2) { swapWidgets(i1, i2); });
+      fWidgetsSelectionList.editView(iCtx);
     ImGui::EndChild();
     ImGui::EndTabItem();
   }
 
   if(ImGui::BeginTabItem("Decals"))
   {
-    auto ids = getDecalsOrder();
     if(ImGui::BeginChild("Content"))
-      editOrderView(ids, [this](int i1, int i2) { swapDecals(i1, i2); });
+      fDecalsSelectionList.editView(iCtx);
     ImGui::EndChild();
     ImGui::EndTabItem();
   }
-}
-
-//------------------------------------------------------------------------
-// Panel::swapWidgets
-//------------------------------------------------------------------------
-void Panel::swapWidgets(int iIndex1, int iIndex2)
-{
-  std::swap(fWidgetsOrder[iIndex1], fWidgetsOrder[iIndex2]);
-}
-
-//------------------------------------------------------------------------
-// Panel::swapDecals
-//------------------------------------------------------------------------
-void Panel::swapDecals(int iIndex1, int iIndex2)
-{
-  std::swap(fDecalsOrder[iIndex1], fDecalsOrder[iIndex2]);
 }
 
 //------------------------------------------------------------------------
@@ -992,37 +1172,6 @@ std::string Panel::device2D() const
                      static_cast<int>(fCableOrigin->x), static_cast<int>(fCableOrigin->y));
 
   return s.str();
-}
-
-//------------------------------------------------------------------------
-// Panel::editOrderView
-//------------------------------------------------------------------------
-template<typename F>
-void Panel::editOrderView(std::vector<int> const &iOrder, F iOnSwap)
-{
-  for(int n = 0; n < iOrder.size(); n++)
-  {
-    auto id = iOrder[n];
-    auto const widget = getWidget(id);
-    auto item = widget->getName();
-    ImGui::Selectable(item.c_str(), widget->isSelected());
-
-    if(ImGui::IsItemClicked(ImGuiMouseButton_Left))
-    {
-      auto &io = ImGui::GetIO();
-      toggleWidgetSelection(id, io.KeyShift);
-    }
-
-    if(ImGui::IsItemActive() && !ImGui::IsItemHovered())
-    {
-      int n_next = n + (ImGui::GetMouseDragDelta(0).y < 0.f ? -1 : 1);
-      if(n_next >= 0 && n_next < iOrder.size())
-      {
-        iOnSwap(n, n_next);
-        ImGui::ResetMouseDragDelta();
-      }
-    }
-  }
 }
 
 //------------------------------------------------------------------------

@@ -26,10 +26,10 @@ namespace re::edit::views {
 //------------------------------------------------------------------------
 // MultiSelectionList::handleClick
 //------------------------------------------------------------------------
-void MultiSelectionList::handleClick(std::string const &s, bool iIsShift, bool iIsControl)
+void MultiSelectionList::handleClick(std::string const &s, bool iRangeSelectKey, bool iMultiSelectKey)
 {
-  // when control is held => multiple selection
-  if(iIsControl)
+  // when iMultiSelectKey is held => multiple selection
+  if(iMultiSelectKey)
   {
     if(fSelected.find(s) == fSelected.end())
     {
@@ -44,8 +44,8 @@ void MultiSelectionList::handleClick(std::string const &s, bool iIsShift, bool i
     return;
   }
 
-  // when shift is held => add all properties between fLastSelected and this one
-  if(iIsShift && fLastSelected)
+  // when iRangeSelectKey is held => add all properties between fLastSelected and this one
+  if(iRangeSelectKey && fLastSelected)
   {
     bool copy = false;
     for(auto &elt: fList)
@@ -63,7 +63,7 @@ void MultiSelectionList::handleClick(std::string const &s, bool iIsShift, bool i
     return;
   }
 
-  // neither shift or control is held => single selection (deselect all others)
+  // neither shift nor control is held => single selection (deselect all others)
   if(fSelected.find(s) == fSelected.end() || fSelected.size() > 1)
   {
     fSelected.clear();
@@ -87,7 +87,7 @@ void MultiSelectionList::editView()
     if(ImGui::Selectable(s.c_str(), fSelected.find(s) != fSelected.end()))
     {
       auto io = ImGui::GetIO();
-      handleClick(s, io.KeyShift, io.KeyCtrl);
+      handleClick(s, io.KeyShift, io.KeySuper);
     }
   }
 

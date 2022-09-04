@@ -163,47 +163,6 @@ void PanelState::renderWidgets(AppContext &iCtx)
 {
   if(ImGui::Begin("Widgets", &iCtx.fShowWidgets))
   {
-    // Add widget Button + Popup
-    {
-      if(ImGui::Button("Add"))
-        ImGui::OpenPopup("add_widget");
-
-      if(ImGui::BeginPopup("add_widget"))
-      {
-        for(auto const &def: fWidgetDefs)
-        {
-          if(ImGui::MenuItem(def.fName))
-            fPanel.addWidget(iCtx, def.fFactory());
-        }
-        ImGui::EndPopup();
-      }
-    }
-
-    auto selectedWidgets = fPanel.getSelectedWidgets();
-
-    // Add Duplicate / Clear / Delete buttons
-    ImGui::BeginDisabled(selectedWidgets.empty());
-    {
-      ImGui::SameLine();
-      if(ImGui::Button("Dup"))
-      {
-        fPanel.duplicateWidgets(iCtx, selectedWidgets);
-      }
-
-      ImGui::SameLine();
-      if(ImGui::Button("Clr"))
-        fPanel.clearSelection();
-
-      ImGui::SameLine();
-      if(ImGui::Button("Del"))
-      {
-        fPanel.deleteWidgets(iCtx, selectedWidgets);
-      }
-    }
-    ImGui::EndDisabled();
-
-    ImGui::Separator();
-
     // Show list of widgets
     if(ImGui::BeginTabBar("Widgets & Decals", ImGuiTabBarFlags_None))
     {
