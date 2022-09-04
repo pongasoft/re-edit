@@ -62,6 +62,11 @@ Config ReEdit::loadConfig()
   {
     withOptionalValue(L.getTableValueAsOptionalInteger("native_window_width"), [&c](auto v) { c.fNativeWindowWidth = static_cast<int>(v); });
     withOptionalValue(L.getTableValueAsOptionalInteger("native_window_height"), [&c](auto v) { c.fNativeWindowHeight = static_cast<int>(v); });
+    withOptionalValue(L.getTableValueAsOptionalString("imgui.ini"), [&c](auto v) { c.fImGuiIni = std::move(v); });
+    withOptionalValue(L.getTableValueAsOptionalBoolean("show_panel"), [&c](auto v) { c.fShowPanel = v; });
+    withOptionalValue(L.getTableValueAsOptionalBoolean("show_panel_widgets"), [&c](auto v) { c.fShowPanelWidgets = v; });
+    withOptionalValue(L.getTableValueAsOptionalBoolean("show_properties"), [&c](auto v) { c.fShowProperties = v; });
+    withOptionalValue(L.getTableValueAsOptionalBoolean("show_widgets"), [&c](auto v) { c.fShowWidgets = v; });
   }
   lua_pop(L, 1);
 

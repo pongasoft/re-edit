@@ -116,6 +116,11 @@ inline std::string printf(const std::string& format, Args ... args)
   return re::mock::fmt::printf(format, args...);
 }
 
+namespace Bool {
+constexpr char const *to_chars(bool b) { return b ? "true" : "false"; }
+inline std::string to_string(bool b) { return to_chars(b); }
+}
+
 }
 
 }

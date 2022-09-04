@@ -28,6 +28,7 @@
 #include "UndoManager.h"
 #include "Constants.h"
 #include "Errors.h"
+#include "lua/ReEdit.h"
 
 namespace re::edit {
 
@@ -42,14 +43,14 @@ class Attribute;
 class AppContext
 {
 public:
-  enum class ShowBorder
+  enum class ShowBorder : int
   {
     kNone,
     kWidget,
     kHitBoundaries
   };
 
-  enum class ShowCustomDisplay
+  enum class ShowCustomDisplay : int
   {
     kNone,
     kMain,
@@ -57,7 +58,7 @@ public:
     kBackgroundHD
   };
 
-  enum class ShowSampleDropZone
+  enum class ShowSampleDropZone : int
   {
     kNone,
     kFill
@@ -194,6 +195,9 @@ public:
   float fZoom{0.20f};
 
 protected:
+  void init(lua::Config const &iConfig);
+  std::string getLuaConfig() const;
+
   void initPanels(std::string const &iDevice2DFile, std::string const &iHDGui2DFile);
   inline void setCurrentWidget(Widget const *iWidget) { fCurrentWidget = iWidget; }
   void render();

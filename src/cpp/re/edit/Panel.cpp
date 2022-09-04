@@ -623,10 +623,10 @@ void Panel::editView(AppContext &iCtx)
 
   if(ImGui::Begin("Panel Widgets"))
   {
-//    static float kItemWidth = 250.0f;
+    static float kItemWidth = 300.0f;
 //
 //    ImGui::SliderFloat("Width", &kItemWidth, 0, ImGui::GetContentRegionAvail().x);
-//    ImGui::PushItemWidth(kItemWidth);
+    ImGui::PushItemWidth(kItemWidth);
 //    ImGui::Text("region = %f | itemWidth = %f", ImGui::GetContentRegionAvail().x, kItemWidth);
 
     auto size = selectedWidgets.size();
@@ -651,7 +651,7 @@ void Panel::editView(AppContext &iCtx)
       }
     }
 
-//    ImGui::PopItemWidth();
+    ImGui::PopItemWidth();
   }
   ImGui::End();
 

@@ -321,7 +321,7 @@ std::string Value::toString() const
 {
   return re::mock::fmt::printf(R"(%s={fUseSwitch=%s,%s,%s,%s})",
                                fName,
-                               fUseSwitch ? "true" : "false",
+                               fmt::Bool::to_chars(fUseSwitch),
                                fValue.toString(),
                                fValueSwitch.toString(),
                                fValues.toString());

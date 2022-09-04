@@ -131,7 +131,7 @@ class Bool : public SingleAttribute<bool>
 {
 public:
   explicit Bool(char const *iName) : SingleAttribute<bool>{iName} {}
-  std::string getValueAsLua() const override { return fValue ? "true" : "false"; }
+  std::string getValueAsLua() const override { return fmt::Bool::to_string(fValue); }
   void editView(AppContext &iCtx) override;
 
   std::unique_ptr<Attribute> clone() const override { return Attribute::clone<Bool>(*this); }
@@ -574,7 +574,7 @@ void SingleAttribute<T>::hdgui2D(AppContext &iCtx, attribute_list_t &oAttributes
 template<typename T>
 std::string SingleAttribute<T>::toString() const
 {
-  return re::mock::fmt::printf("%s={%s,%s}", fName, getValueAsLua(), fProvided ? "true" : "false");
+  return re::mock::fmt::printf("%s={%s,%s}", fName, getValueAsLua(), fmt::Bool::to_chars(fProvided));
 }
 
 //------------------------------------------------------------------------

@@ -27,6 +27,63 @@ struct Config
 {
   int fNativeWindowWidth{1280};
   int fNativeWindowHeight{720};
+  bool fShowProperties{true};
+  bool fShowPanel{true};
+  bool fShowPanelWidgets{true};
+  bool fShowWidgets{true};
+  std::string fImGuiIni{R"(
+[Window][Debug##Default]
+Pos=60,60
+Size=400,400
+Collapsed=0
+
+[Window][re-edit]
+Pos=5,25
+Size=421,236
+Collapsed=0
+
+[Window][Panel]
+Pos=5,431
+Size=1272,285
+Collapsed=0
+
+[Window][Panel Widgets]
+Pos=429,25
+Size=556,404
+Collapsed=0
+
+[Window][Widgets]
+Pos=988,25
+Size=288,404
+Collapsed=0
+
+[Window][Properties]
+Pos=5,264
+Size=421,165
+Collapsed=0
+
+[Window][Log]
+Pos=372,65
+Size=567,590
+Collapsed=0
+
+[Window][Debug]
+Pos=189,356
+Size=900,122
+Collapsed=0
+
+[Window][values Editor]
+Pos=260,166
+Size=788,404
+Collapsed=0
+
+[Table][0x59A508FC,3]
+RefScale=13
+Column 0  Width=351
+Column 1  Width=42
+Column 2  Width=351
+)"};
+
 };
 
 class ReEdit : public re::mock::lua::MockJBox

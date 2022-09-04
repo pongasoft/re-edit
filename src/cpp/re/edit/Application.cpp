@@ -54,9 +54,8 @@ bool Application::parseArgs(std::vector<std::string> iArgs)
     }
   }
 
-  fAppContext.fNativeWindowWidth = config.fNativeWindowWidth;
-  fAppContext.fNativeWindowHeight = config.fNativeWindowHeight;
-  // ImGui::LoadIniSettingsFromMemory
+  fAppContext.init(config);
+  ImGui::LoadIniSettingsFromMemory(config.fImGuiIni.c_str(), config.fImGuiIni.size());
 
   return true;
 }
@@ -106,14 +105,6 @@ void Application::render()
 
   renderMainMenu();
 
-  if(fAppContext.fCurrentFrame == 1)
-  {
-    auto rectMin = ImGui::GetItemRectMin();
-    RE_EDIT_LOG_INFO("GetCurY %f | %fx%f", ImGui::GetCursorPosY(), rectMin.x, rectMin.y);
-    ImGui::SetNextWindowPos(ImVec2{10, ImGui::GetCursorPosY()}, ImGuiCond_FirstUseEver);
-    ImGui::SetNextWindowSize(ImVec2{}, ImGuiCond_FirstUseEver);
-  }
-
   if(ImGui::Begin("re-edit"))
   {
     fAppContext.render();
@@ -150,14 +141,6 @@ void Application::render()
     ImGui::SameLine();
     ReGui::RadioButton("Fill", &fAppContext.fShowSampleDropZone, AppContext::ShowSampleDropZone::kFill);
     ImGui::PopID();
-
-    ReGui::ToggleButton("Show Panel", "Hide Panel", &fAppContext.fShowPanel);
-    ImGui::SameLine();
-    ReGui::ToggleButton("Show Panel Widgets", "Hide Panel Widgets", &fAppContext.fShowPanelWidgets);
-    ImGui::SameLine();
-    ReGui::ToggleButton("Show Widgets", "Hide Widgets", &fAppContext.fShowWidgets);
-    ImGui::SameLine();
-    ReGui::ToggleButton("Show Properties", "Hide Properties", &fAppContext.fShowProperties);
 
     ImGui::Separator();
 
@@ -387,11 +370,13 @@ bool Application::fileExists(std::string const &iFile)
 void Application::saveConfig()
 {
   std::stringstream s{};
-  
+
   s << "format_version = \"1.0\"\n\n";
   s << "re_edit = {}\n";
-  s << fmt::printf("re_edit[\"native_window_width\"] = %d\n", fAppContext.fNativeWindowWidth);
-  s << fmt::printf("re_edit[\"native_window_height\"] = %d\n", fAppContext.fNativeWindowHeight);
+
+  s << fAppContext.getLuaConfig() << "\n";
+
+  s << fmt::printf("re_edit[\"imgui.ini\"] = [==[\n%s\n]==]\n", ImGui::SaveIniSettingsToMemory());
 
   saveFile(re::mock::fmt::path(fRoot, "re-edit.lua"), s.str());
 }
