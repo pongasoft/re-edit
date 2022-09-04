@@ -346,7 +346,10 @@ int Panel::addWidget(AppContext &iCtx, std::shared_ptr<Widget> iWidget, bool iMa
   fWidgets[id] = std::move(iWidget);
 
   if(iMakeSelected)
+  {
+    clearSelection();
     selectWidget(id, true);
+  }
 
   return id;
 }

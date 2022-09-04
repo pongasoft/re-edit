@@ -86,7 +86,7 @@ public:
 
   std::unique_ptr<Widget> copy() const;
   std::unique_ptr<Widget> clone() const;
-  bool eq(Widget *iWidget) const;
+//  bool eq(Widget *iWidget) const;
 
   static std::unique_ptr<Widget> panel_decal();
   static std::unique_ptr<Widget> analog_knob();

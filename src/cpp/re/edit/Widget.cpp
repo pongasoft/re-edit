@@ -954,24 +954,24 @@ std::unique_ptr<Widget> Widget::clone() const
   return std::unique_ptr<Widget>(new Widget(*this));
 }
 
-//------------------------------------------------------------------------
-// Widget::eq
-//------------------------------------------------------------------------
-bool Widget::eq(Widget *iWidget) const
-{
-  RE_EDIT_INTERNAL_ASSERT(iWidget != nullptr);
-  if(iWidget->fType != fType)
-    return false;
-
-  auto numAttributes = fAttributes.size();
-  for(auto i = 0; i < numAttributes; i++)
-  {
-    if(!fAttributes[i]->eq(iWidget->fAttributes[i].get()))
-      return false;
-  }
-
-  return true;
-}
+////------------------------------------------------------------------------
+//// Widget::eq
+////------------------------------------------------------------------------
+//bool Widget::eq(Widget *iWidget) const
+//{
+//  RE_EDIT_INTERNAL_ASSERT(iWidget != nullptr);
+//  if(iWidget->fType != fType)
+//    return false;
+//
+//  auto numAttributes = fAttributes.size();
+//  for(auto i = 0; i < numAttributes; i++)
+//  {
+//    if(!fAttributes[i]->eq(iWidget->fAttributes[i].get()))
+//      return false;
+//  }
+//
+//  return true;
+//}
 
 //------------------------------------------------------------------------
 // Widget::computeIsHidden
