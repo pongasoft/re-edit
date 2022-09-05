@@ -90,8 +90,6 @@ std::shared_ptr<Widget> Panel::getWidget(int id) const
 //------------------------------------------------------------------------
 void Panel::draw(AppContext &iCtx)
 {
-  std::string dragState{"N/A"};
-
   ImVec2 backgroundScreenPosition;
   auto const cp = ImGui::GetCursorScreenPos();
   if(fGraphics.hasTexture())
@@ -108,13 +106,28 @@ void Panel::draw(AppContext &iCtx)
     ImGui::SetCursorScreenPos(cp); // TextureItem moves the cursor so we restore it
     ImGui::InvisibleButton("canvas", clickableArea, ImGuiButtonFlags_MouseButtonLeft);
 
-    auto mousePos = ImGui::GetMousePos() - backgroundScreenPosition; // accounts for scrollbars
-    if(fMouseDrag)
+    auto const mousePos = ImGui::GetMousePos() - backgroundScreenPosition; // accounts for scrollbars
+    if(fShiftMouseDrag)
+    {
+      if(ImGui::IsMouseReleased(ImGuiMouseButton_Left))
+      {
+        fShiftMouseDrag = std::nullopt;
+      }
+      else
+      {
+        fShiftMouseDrag->fCurrentPosition = mousePos / iCtx.fZoom;
+        if(fShiftMouseDrag->fInitialPosition.x != fShiftMouseDrag->fCurrentPosition.x ||
+          fShiftMouseDrag->fInitialPosition.y != fShiftMouseDrag->fCurrentPosition.y)
+        {
+          selectWidgets(iCtx, fShiftMouseDrag->fInitialPosition, fShiftMouseDrag->fCurrentPosition);
+        }
+      }
+
+    } else if(fMouseDrag)
     {
       if(ImGui::IsMouseReleased(ImGuiMouseButton_Left))
       {
         fMouseDrag = std::nullopt;
-        dragState = "onRelease";
         endMoveWidgets(iCtx, mousePos / iCtx.fZoom);
       }
       else
@@ -123,18 +136,19 @@ void Panel::draw(AppContext &iCtx)
         if(fMouseDrag->fInitialPosition.x != fMouseDrag->fCurrentPosition.x ||
            fMouseDrag->fInitialPosition.y != fMouseDrag->fCurrentPosition.y)
         {
-          dragState = "onDrag";
           moveWidgets(iCtx, mousePos / iCtx.fZoom);
         }
-        else
-          dragState = "waiting for drag";
       }
     } else if(ImGui::IsItemClicked(ImGuiMouseButton_Left))
     {
-      fMouseDrag = MouseDrag{mousePos, mousePos};
       auto &io = ImGui::GetIO();
-      dragState = "onPressed / " + std::to_string(io.KeySuper);
-      selectWidget(iCtx, mousePos / iCtx.fZoom, io.KeySuper);
+      if(io.KeyShift)
+        fShiftMouseDrag = MouseDrag{mousePos / iCtx.fZoom, mousePos / iCtx.fZoom};
+      else
+      {
+        fMouseDrag = MouseDrag{mousePos, mousePos};
+        selectWidget(iCtx, mousePos / iCtx.fZoom, io.KeySuper);
+      }
     }
   }
   ImGui::SetCursorScreenPos(cp); // InvisibleButton moves the cursor so we restore it
@@ -189,6 +203,12 @@ void Panel::draw(AppContext &iCtx)
     iCtx.drawLine({max.x, 0}, {max.x, frameSize.y}, color);
   }
 
+  if(fShiftMouseDrag)
+  {
+    auto color = ImGui::GetColorU32({1,1,0,1});
+    iCtx.drawRect(fShiftMouseDrag->fInitialPosition, fShiftMouseDrag->fCurrentPosition - fShiftMouseDrag->fInitialPosition, color);
+  }
+
   auto logging = LoggingManager::instance();
 
   if(logging->isShowDebug())
@@ -199,10 +219,6 @@ void Panel::draw(AppContext &iCtx)
     logging->debug("Key[Super]", "%s", fmt::Bool::to_chars(io.KeySuper));
     auto mousePos = ImGui::GetMousePos() - backgroundScreenPosition; // accounts for scrollbars
     logging->debug("MouseDown", "%s | %fx%f (%fx%f)", ImGui::IsMouseDown(ImGuiMouseButton_::ImGuiMouseButton_Left) ? "true" : "false", mousePos.x, mousePos.y, backgroundScreenPosition.x, backgroundScreenPosition.y);
-    if(fMouseDrag)
-      logging->debug("dragState", "%s | fDragStart=%fx%f", dragState.c_str(), fMouseDrag->fCurrentPosition.x, fMouseDrag->fCurrentPosition.y);
-    else
-      logging->debug("dragState", "%s", dragState.c_str());
   }
 }
 
@@ -461,16 +477,17 @@ std::shared_ptr<Widget> Panel::findWidgetOnTopAt(ImVec2 const &iPosition) const
 //------------------------------------------------------------------------
 // Panel::selectWidget
 //------------------------------------------------------------------------
-void Panel::selectWidget(AppContext &iCtx, ImVec2 const &iPosition, bool iMultiple)
+void Panel::selectWidget(AppContext &iCtx, ImVec2 const &iPosition, bool iMultiSelectKey)
 {
   auto widget = findWidgetOnTopAt(iPosition);
   if(!widget)
   {
-    clearSelection();
+    if(!iMultiSelectKey)
+      clearSelection();
   }
   else
   {
-    if(iMultiple)
+    if(iMultiSelectKey)
     {
       if(!widget->isSelected())
         fLastMovePosition = iPosition;
@@ -1272,6 +1289,28 @@ std::shared_ptr<UndoAction> Panel::createWidgetsUndoAction(AppContext &iCtx, std
   };
   return action;
 
+}
+
+//------------------------------------------------------------------------
+// Panel::selectWidgets
+//------------------------------------------------------------------------
+void Panel::selectWidgets(AppContext &iCtx, ImVec2 const &iPosition1, ImVec2 const &iPosition2)
+{
+  auto topLeft = iPosition1;
+  auto bottomRight = iPosition2;
+  if(topLeft.x > bottomRight.x)
+    std::swap(topLeft.x, bottomRight.x);
+  if(topLeft.y > bottomRight.y)
+    std::swap(topLeft.y, bottomRight.y);
+
+  for(auto &[id, w]: fWidgets)
+  {
+    if(!w->isSelected() && w->overlaps(topLeft, bottomRight))
+    {
+      w->fSelected = true;
+      fSelectedWidgets = std::nullopt;
+    }
+  }
 }
 
 }

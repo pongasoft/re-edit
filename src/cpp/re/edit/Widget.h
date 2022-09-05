@@ -74,6 +74,7 @@ public:
   constexpr Texture const *getTexture() const { return fGraphics->getTexture(); }
 
   inline bool contains(ImVec2 const &iPosition) const { return fGraphics->contains(iPosition); }
+  inline bool overlaps(ImVec2 const &iTopLeft, ImVec2 const &iBottomRight) const { return fGraphics->overlaps(iTopLeft, iBottomRight); }
 
   void init(AppContext &iCtx);
   void draw(AppContext &iCtx);

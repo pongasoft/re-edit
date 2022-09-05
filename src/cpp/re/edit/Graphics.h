@@ -38,6 +38,18 @@ struct HitBoundaries
 
 namespace re::edit::widget::attribute {
 
+namespace impl {
+
+constexpr bool isContained(ImVec2 const &iPosition, ImVec2 const &iTopLeft, ImVec2 const &iBottomRight)
+{
+  return iPosition.x >= iTopLeft.x
+      && iPosition.y >= iTopLeft.y
+      && iPosition.x <= iBottomRight.x
+      && iPosition.y <= iBottomRight.y;
+}
+
+}
+
 class Graphics : public Attribute
 {
 public:
@@ -48,12 +60,20 @@ public:
 
   std::string device2D() const;
 
-  inline bool contains(ImVec2 const &iPosition) const {
-    auto size = getSize();
-    return iPosition.x > fPosition.x
-           && iPosition.y > fPosition.y
-           && iPosition.x < fPosition.x + size.x
-           && iPosition.y < fPosition.y + size.y;
+  inline bool contains(ImVec2 const &iPosition) const { return impl::isContained(iPosition, fPosition, getBottomRight()); };
+
+  inline bool overlaps(ImVec2 const &iTopLeft, ImVec2 const &iBottomRight) const {
+    auto const &topLeft = fPosition;
+    auto bottomRight = getBottomRight();
+    if(topLeft.x > iBottomRight.x)
+      return false;
+    if(bottomRight.x < iTopLeft.x)
+      return false;
+    if(topLeft.y > iBottomRight.y)
+      return false;
+    if(bottomRight.y < iTopLeft.y)
+      return false;
+    return true;
   }
 
   constexpr ImVec2 getSize() const { return hasTexture() ? getTexture()->frameSize() : fSize; }

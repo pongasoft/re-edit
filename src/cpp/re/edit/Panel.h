@@ -133,7 +133,8 @@ protected:
   std::shared_ptr<UndoAction> createWidgetsUndoAction(AppContext &iCtx, std::string const &iDescription) const;
 
 private:
-  void selectWidget(AppContext &iCtx, ImVec2 const &iPosition, bool iMultiple);
+  void selectWidget(AppContext &iCtx, ImVec2 const &iPosition, bool iMultiSelectKey);
+  void selectWidgets(AppContext &iCtx, ImVec2 const &iPosition1, ImVec2 const &iPosition2);
   std::shared_ptr<Widget> findWidgetOnTopAt(std::vector<int> const &iOrder, ImVec2 const &iPosition) const;
   std::shared_ptr<Widget> findWidgetOnTopAt(ImVec2 const &iPosition) const;
   void moveWidgets(AppContext &iCtx, ImVec2 const &iPosition);
@@ -182,6 +183,7 @@ private:
   std::vector<int> fDecalsOrder{};
   std::optional<ImVec2> fLastMovePosition{};
   std::optional<MouseDrag> fMouseDrag{};
+  std::optional<MouseDrag> fShiftMouseDrag{};
   std::optional<ImVec2> fPopupLocation{};
   int fWidgetCounter{1}; // used for unique id
   MultiSelectionList fWidgetsSelectionList{*this, fWidgetsOrder};
