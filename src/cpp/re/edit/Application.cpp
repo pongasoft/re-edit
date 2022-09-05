@@ -143,13 +143,10 @@ void Application::render()
 
     ImGui::Separator();
 
-    ImGui::Checkbox("Demo Window", &show_demo_window);
-    if(show_demo_window)
-      ImGui::ShowDemoWindow(&show_demo_window);
-
-    ImGui::Checkbox(re::mock::fmt::printf("Log [%d]##Log", loggingManager->getLogCount()).c_str(), &loggingManager->getShowLog());
-    ImGui::SameLine();
-    ImGui::Checkbox("Debug", &loggingManager->getShowDebug());
+    if(fShowDemoWindow)
+      ImGui::ShowDemoWindow(&fShowDemoWindow);
+    if(fShowMetricsWindow)
+      ImGui::ShowMetricsWindow(&fShowMetricsWindow);
 
 //  if(ImGui::Button("Fake log"))
 //  {
@@ -269,6 +266,17 @@ void Application::renderMainMenu()
       ImGui::MenuItem("Panel Widgets", nullptr, &fAppContext.fShowPanelWidgets);
       ImGui::MenuItem("Widgets", nullptr, &fAppContext.fShowWidgets);
       ImGui::MenuItem("Properties", nullptr, &fAppContext.fShowProperties);
+      ImGui::EndMenu();
+    }
+
+    if(ImGui::BeginMenu("Dev"))
+    {
+      auto loggingManager = LoggingManager::instance();
+      ImGui::MenuItem("Debug", nullptr, &loggingManager->getShowDebug());
+      ImGui::MenuItem(fmt::printf("Log [%d]##Log", loggingManager->getLogCount()).c_str(), nullptr, &loggingManager->getShowLog());
+      ImGui::Separator();
+      ImGui::MenuItem("ImGui Demo", nullptr, &fShowDemoWindow);
+      ImGui::MenuItem("ImGui Metrics", nullptr, &fShowMetricsWindow);
       ImGui::EndMenu();
     }
     ImGui::EndMainMenuBar();

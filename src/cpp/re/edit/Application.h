@@ -69,7 +69,8 @@ private:
 private:
   int fDeviceHeightRU{1};
   AppContext fAppContext{};
-  bool show_demo_window{false};
+  bool fShowDemoWindow{false};
+  bool fShowMetricsWindow{false};
 
   std::string fRoot{};
   bool fSavingRequested{};
