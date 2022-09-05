@@ -45,10 +45,32 @@ std::shared_ptr<panel_nodes> Device2D::getPanelNodes(char const *iPanelName) con
 //------------------------------------------------------------------------
 std::shared_ptr<panel_nodes> Device2D::createPanelNodes(char const *iPanelName)
 {
+  std::vector<std::optional<std::string>> decalNames{};
+  if(lua_getglobal(L, "re_edit") == LUA_TTABLE)
+  {
+    if(lua_getfield(L, -1, iPanelName) == LUA_TTABLE)
+    {
+      if(lua_getfield(L, -1, "decals") == LUA_TTABLE)
+      {
+        iterateLuaArray([&decalNames, this](auto i) {
+                          auto s = lua_tostring(L, -1);
+                          if(s != nullptr)
+                            decalNames.emplace_back(s);
+                          else
+                            decalNames.emplace_back(std::nullopt);
+                        },
+                        true, false);
+      }
+      lua_pop(L, 1);
+    }
+    lua_pop(L, 1);
+  }
+  lua_pop(L, 1);
+
   auto def = std::make_shared<panel_nodes>();
   if(lua_getglobal(L, iPanelName) == LUA_TTABLE)
   {
-    processLuaTable({}, *def.get());
+    processLuaTable({}, decalNames, *def.get());
   }
   lua_pop(L, 1);
   return def;
@@ -58,14 +80,14 @@ std::shared_ptr<panel_nodes> Device2D::createPanelNodes(char const *iPanelName)
 // Device2D::processLuaTable
 // Assumes that the top of the stack contains a lua table to process
 //------------------------------------------------------------------------
-void Device2D::processLuaTable(ImVec2 iOffset, panel_nodes &oPanelNodes)
+void Device2D::processLuaTable(ImVec2 iOffset, std::vector<std::optional<std::string>> const &iDecalNames, panel_nodes &oPanelNodes)
 {
   // we process offset first because the order in which keys are processed is not guaranteed
   auto maybeOffset = getOptionalOffset();
   if(maybeOffset)
     iOffset += *maybeOffset;
 
-  iterateLuaTable([this, &iOffset, &oPanelNodes](lua_table_key_t const &key) {
+  iterateLuaTable([this, &iOffset, &iDecalNames, &oPanelNodes](lua_table_key_t const &key) {
     if(std::holds_alternative<std::string>(key))
     {
       auto name = std::get<std::string>(key);
@@ -76,7 +98,11 @@ void Device2D::processLuaTable(ImVec2 iOffset, panel_nodes &oPanelNodes)
       else if(name == "path")
       {
         if(lua_type(L, -1) == LUA_TSTRING)
-          oPanelNodes.fAnonymousNodes.emplace_back(gfx_anonymous_node{iOffset, lua_tostring(L, -1)});
+        {
+          auto idx = oPanelNodes.fDecalNodes.size();
+          auto decalName = idx < iDecalNames.size() ? iDecalNames[idx] : std::nullopt;
+          oPanelNodes.fDecalNodes.emplace_back(gfx_decal_node{iOffset, lua_tostring(L, -1), decalName});
+        }
       }
       else
       {
@@ -85,7 +111,7 @@ void Device2D::processLuaTable(ImVec2 iOffset, panel_nodes &oPanelNodes)
     }
     else
     {
-      processLuaTable(iOffset, oPanelNodes);
+      processLuaTable(iOffset, iDecalNames, oPanelNodes);
     }
   }, true, false);
 }

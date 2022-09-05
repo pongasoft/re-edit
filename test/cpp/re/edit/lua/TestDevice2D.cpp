@@ -43,7 +43,7 @@ TEST(Device2D, All)
   auto front = d2d->front();
 
   ASSERT_EQ(5, front->fNodes.size());
-  ASSERT_EQ(2, front->fAnonymousNodes.size());
+  ASSERT_EQ(2, front->fDecalNodes.size());
 
   ImVec2 offset{};
 
@@ -98,27 +98,29 @@ TEST(Device2D, All)
     ASSERT_EQ(1, n.fNumFrames);
   }
 
-  // Anonymous1_path
+  // Decal1_path
   {
-    auto &n = front->fAnonymousNodes.at(0);
+    auto &n = front->fDecalNodes.at(0);
     ASSERT_TRUE(Eq(offset, n.fPosition));
-    ASSERT_EQ("Anonymous1_path", n.fKey);
+    ASSERT_EQ("Decal1_path", n.fKey);
+    ASSERT_EQ("decal1", *n.fName);
   }
 
-  // Anonymous2_path
+  // Decal2_path
   {
     auto anonymous2Offset = offset + ImVec2{100 , 110};
 
-    auto &n = front->fAnonymousNodes.at(1);
+    auto &n = front->fDecalNodes.at(1);
     ASSERT_TRUE(Eq(anonymous2Offset, n.fPosition));
-    ASSERT_EQ("Anonymous2_path", n.fKey);
+    ASSERT_EQ("Decal2_path", n.fKey);
+    ASSERT_EQ("decal2", *n.fName);
   }
 
   auto foldedBack = d2d->folded_back();
   offset = {};
 
   ASSERT_EQ(3, foldedBack->fNodes.size());
-  ASSERT_EQ(0, foldedBack->fAnonymousNodes.size());
+  ASSERT_EQ(1, foldedBack->fDecalNodes.size());
 
   // Panel_folded_back_bg
   {
@@ -149,6 +151,15 @@ TEST(Device2D, All)
     ASSERT_FALSE(n.hasKey());
     ASSERT_EQ(1, n.fNumFrames);
   }
+
+  // Decal_path
+  {
+    auto &n = foldedBack->fDecalNodes.at(0);
+    ASSERT_TRUE(Eq(ImVec2{5, 5}, n.fPosition));
+    ASSERT_EQ("Decal_path", n.fKey);
+    ASSERT_EQ(std::nullopt, n.fName);
+  }
+
 
   ASSERT_EQ(d2d->getStackString(), "<empty>");
 }

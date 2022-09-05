@@ -133,8 +133,8 @@ void Panel::draw(AppContext &iCtx)
     {
       fMouseDrag = MouseDrag{mousePos, mousePos};
       auto &io = ImGui::GetIO();
-      dragState = "onPressed / " + std::to_string(io.KeyShift);
-      selectWidget(iCtx, mousePos / iCtx.fZoom, io.KeyShift);
+      dragState = "onPressed / " + std::to_string(io.KeySuper);
+      selectWidget(iCtx, mousePos / iCtx.fZoom, io.KeySuper);
     }
   }
   ImGui::SetCursorScreenPos(cp); // InvisibleButton moves the cursor so we restore it
@@ -194,7 +194,9 @@ void Panel::draw(AppContext &iCtx)
   if(logging->isShowDebug())
   {
     auto &io = ImGui::GetIO();
-    logging->debug("Shift", "%s", io.KeyShift ? "true" : "false");
+    logging->debug("Key[Ctrl]", "%s", fmt::Bool::to_chars(io.KeyCtrl));
+    logging->debug("Key[Shift]", "%s", fmt::Bool::to_chars(io.KeyShift));
+    logging->debug("Key[Super]", "%s", fmt::Bool::to_chars(io.KeySuper));
     auto mousePos = ImGui::GetMousePos() - backgroundScreenPosition; // accounts for scrollbars
     logging->debug("MouseDown", "%s | %fx%f (%fx%f)", ImGui::IsMouseDown(ImGuiMouseButton_::ImGuiMouseButton_Left) ? "true" : "false", mousePos.x, mousePos.y, backgroundScreenPosition.x, backgroundScreenPosition.y);
     if(fMouseDrag)
@@ -985,6 +987,14 @@ void Panel::MultiSelectionList::editView(AppContext &iCtx)
         auto io = ImGui::GetIO();
         handleClick(widget, io.KeyShift, io.KeySuper);
       }
+      if(widget->isHidden())
+      {
+        ImGui::SameLine();
+        ImGui::Text("(H)");
+      }
+      ImGui::SameLine();
+      if(!widget->errorView(iCtx))
+        ImGui::NewLine();
     }
   }
   ImGui::EndChild();
@@ -1154,13 +1164,21 @@ std::string Panel::device2D() const
   s << fmt::printf("-- %s\n", panelName);
   s << "--------------------------------------------------------------------------\n";
   s << fmt::printf("%s = {}\n", panelName);
-  int index = 1;
-  for(auto id: fDecalsOrder)
+
+  if(!fDecalsOrder.empty())
   {
-    auto const &w = fWidgets.at(id);
-    s << fmt::printf("%s[%d] = %s -- %s\n", panelName, index, w->device2D(), w->fName);
-    index++;
+    s << "re_edit = re_edit or {}\n";
+    s << fmt::printf("re_edit.%s = { decals = {} }\n", panelName);
+    int index = 1;
+    for(auto id: fDecalsOrder)
+    {
+      auto const &w = fWidgets.at(id);
+      s << fmt::printf("%s[%d] = %s -- %s\n", panelName, index, w->device2D(), w->fName);
+      s << fmt::printf("re_edit.%s.decals[%d] = \"%s\"\n", panelName, index, w->fName);
+      index++;
+    }
   }
+
   s << fmt::printf("%s[\"%s\"] = %s\n", panelName, fNodeName, fGraphics.device2D());
   for(auto id: fWidgetsOrder)
   {

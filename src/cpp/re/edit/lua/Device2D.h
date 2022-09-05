@@ -39,16 +39,17 @@ struct gfx_node
   ImVec2 getSize() const { return std::get<ImVec2>(fKeyOrSize); }
 };
 
-struct gfx_anonymous_node
+struct gfx_decal_node
 {
   ImVec2 fPosition{};
   std::string fKey{};
+  std::optional<std::string> fName{};
 };
 
 struct panel_nodes
 {
   std::map<std::string, gfx_node> fNodes{};
-  std::vector<gfx_anonymous_node> fAnonymousNodes{};
+  std::vector<gfx_decal_node> fDecalNodes{};
 
   std::optional<gfx_node> findNodeByName(std::string const &iName) const;
 };
@@ -70,7 +71,7 @@ protected:
 protected:
   std::shared_ptr<panel_nodes> getPanelNodes(char const *iPanelName) const;
   std::shared_ptr<panel_nodes> createPanelNodes(char const *iPanelName);
-  void processLuaTable(ImVec2 iOffset, panel_nodes &oPanelNodes);
+  void processLuaTable(ImVec2 iOffset, std::vector<std::optional<std::string>> const &iDecalNames, panel_nodes &oPanelNodes);
   void processGfxNode(std::string const &iName, ImVec2 iOffset, panel_nodes &oPanelNodes);
   ImVec2 getImVec2();
   std::optional<ImVec2> getOptionalOffset();

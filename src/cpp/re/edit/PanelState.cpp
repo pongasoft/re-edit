@@ -112,6 +112,22 @@ void PanelState::initPanel(AppContext &iCtx,
     fPanel.addWidget(iCtx, std::move(widget), false);
   }
 
+  // handle decals
+  for(auto &node: iPanelNodes->fDecalNodes)
+  {
+    auto widget = Widget::panel_decal();
+    widget->setPosition(node.fPosition);
+
+    auto graphics = iCtx.fTextureManager->findTexture(node.fKey);
+    if(graphics)
+      widget->setTexture(std::move(graphics));
+
+    if(node.fName)
+      widget->setName(*node.fName);
+
+    fPanel.addWidget(iCtx, std::move(widget), false);
+  }
+
   iCtx.enableUndo();
 
   iCtx.fCurrentPanelState = nullptr;
