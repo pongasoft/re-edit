@@ -940,28 +940,26 @@ std::unique_ptr<HDGui2D> HDGui2D::fromFile(std::string const &iLuaFilename)
 //------------------------------------------------------------------------
 std::shared_ptr<jbox_panel> HDGui2D::getPanel(char const *iPanelName)
 {
-  if(lua_getglobal(L, iPanelName) != LUA_TNIL)
+  if(lua_getglobal(L, iPanelName) == LUA_TTABLE)
   {
     auto p = std::make_shared<jbox_panel>();
-    if(checkTableArg())
-    {
-      withField(1, "graphics", LUA_TTABLE, [this, p]() { p->fGraphicsNode = L.getTableValueAsString("node"); });
-      withField(1, "cable_origin", LUA_TTABLE, [this, p]() { p->fCableOrigin = L.getTableValueAsString("node"); });
-      withField(1, "options", LUA_TTABLE, [this, p]() {
-        iterateLuaArray([this, p](int i) {
-          p->fOptions.emplace_back(lua_tostring(L, -1));
-        }, true, false);
-      });
-      withField(1, "widgets", LUA_TTABLE, [this, p]() {
-        iterateLuaTable([this, p](lua_table_key_t const &key) {
-          auto widget = toWidget(getObjectOnTopOfStack());
-          if(widget)
-            p->fWidgets.emplace_back(std::move(widget));
-        }, false);
-      });
-    }
+    withField(1, "graphics", LUA_TTABLE, [this, p]() { p->fGraphicsNode = L.getTableValueAsString("node"); });
+    withField(1, "cable_origin", LUA_TTABLE, [this, p]() { p->fCableOrigin = L.getTableValueAsString("node"); });
+    withField(1, "options", LUA_TTABLE, [this, p]() {
+      iterateLuaArray([this, p](int i) {
+        p->fOptions.emplace_back(lua_tostring(L, -1));
+      }, true, false);
+    });
+    withField(1, "widgets", LUA_TTABLE, [this, p]() {
+      iterateLuaTable([this, p](lua_table_key_t const &key) {
+        auto widget = toWidget(getObjectOnTopOfStack());
+        if(widget)
+          p->fWidgets.emplace_back(std::move(widget));
+      }, false);
+    });
     return p;
   }
+  lua_pop(L, 1);
 
   return nullptr;
 }
