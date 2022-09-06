@@ -167,7 +167,14 @@ bool HDGui2D::checkTableArg()
 {
   if(lua_gettop(L) <= 0 || lua_type(L, 1) != LUA_TTABLE)
   {
-    RE_EDIT_LOG_WARNING("Missing table arg... Did you use () instead of {}?");
+    int currentLine = -1;
+    lua_Debug ar;
+    if(lua_getstack(L, 1, &ar))
+    {
+      lua_getinfo(L, "l", &ar);
+      currentLine = ar.currentline;
+    }
+    RE_EDIT_LOG_WARNING("Missing table arg in hdgui_2D.lua line %d. Did you use () instead of {}?", currentLine);
     return false;
   }
   else
