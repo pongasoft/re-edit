@@ -835,7 +835,22 @@ void Panel::editMultiSelectionView(AppContext &iCtx, std::vector<std::shared_ptr
 
   if(ImGui::TreeNode("Alignment"))
   {
-    if(ImGui::Button("Left"))
+    constexpr ImVec2 smallButtonSize{80, 0};
+    ImVec2 bigButtonSize{smallButtonSize.x * 2.0f + ImGui::GetStyle().ItemSpacing.x, 0};
+
+    if(ImGui::Button("Top", bigButtonSize))
+    {
+      iCtx.beginUndoTx("Align Widgets Top");
+      for(auto &w: iSelectedWidgets)
+      {
+        iCtx.addUndoWidgetChange(w.get(), fmt::printf("Align %s Top", w->getName()));
+        auto position = w->getPosition();
+        w->setPosition({position.x, min.y});
+      }
+      iCtx.commitUndoTx();
+    }
+
+    if(ImGui::Button("Left", smallButtonSize))
     {
       iCtx.beginUndoTx("Align Widgets Left");
       for(auto &w: iSelectedWidgets)
@@ -849,21 +864,7 @@ void Panel::editMultiSelectionView(AppContext &iCtx, std::vector<std::shared_ptr
 
     ImGui::SameLine();
 
-    if(ImGui::Button("Top"))
-    {
-      iCtx.beginUndoTx("Align Widgets Top");
-      for(auto &w: iSelectedWidgets)
-      {
-        iCtx.addUndoWidgetChange(w.get(), fmt::printf("Align %s Top", w->getName()));
-        auto position = w->getPosition();
-        w->setPosition({position.x, min.y});
-      }
-      iCtx.commitUndoTx();
-    }
-
-    ImGui::SameLine();
-
-    if(ImGui::Button("Right"))
+    if(ImGui::Button("Right", smallButtonSize))
     {
       iCtx.beginUndoTx("Align Widgets Right");
       for(auto &w: iSelectedWidgets)
@@ -875,9 +876,7 @@ void Panel::editMultiSelectionView(AppContext &iCtx, std::vector<std::shared_ptr
       iCtx.commitUndoTx();
     }
 
-    ImGui::SameLine();
-
-    if(ImGui::Button("Bottom"))
+    if(ImGui::Button("Bottom", bigButtonSize))
     {
       iCtx.beginUndoTx("Align Widgets Bottom");
       for(auto &w: iSelectedWidgets)
