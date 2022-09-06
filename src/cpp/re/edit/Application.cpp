@@ -73,6 +73,7 @@ bool Application::init(std::shared_ptr<TextureManager> iTextureManager)
   auto &io = ImGui::GetIO();
   io.IniFilename = nullptr; // don't use imgui.ini file
   io.WantSaveIniSettings = false; // will be "notified" when it changes
+  io.ConfigWindowsMoveFromTitleBarOnly = true;
 
   setDeviceHeightRU(fAppContext.fPropertyManager->init(fRoot));
 
@@ -91,11 +92,11 @@ bool Application::init(std::shared_ptr<TextureManager> iTextureManager)
 //------------------------------------------------------------------------
 void Application::render()
 {
+  if(fAppContext.fUndoManager->hasUndoHistory())
+    fNeedsSaving = true;
+
   if(ImGui::GetIO().WantSaveIniSettings)
-  {
-    ImGui::GetIO().WantSaveIniSettings = false;
-//    saveConfig();
-  }
+    fNeedsSaving = true;
 
   auto loggingManager = LoggingManager::instance();
 
@@ -104,7 +105,9 @@ void Application::render()
 
   renderMainMenu();
 
-  if(ImGui::Begin("re-edit"))
+  auto flags = fNeedsSaving ?  ImGuiWindowFlags_UnsavedDocument : ImGuiWindowFlags_None;
+
+  if(ImGui::Begin("re-edit", nullptr, flags))
   {
     fAppContext.render();
 
@@ -317,6 +320,10 @@ void Application::save()
 {
   saveFile(re::mock::fmt::path(fRoot, "GUI2D", "device_2D.lua"), device2D());
   saveFile(re::mock::fmt::path(fRoot, "GUI2D", "hdgui_2D.lua"), hdgui2D());
+  saveConfig();
+  fAppContext.fUndoManager->clear();
+  fNeedsSaving = false;
+  ImGui::GetIO().WantSaveIniSettings = false;
 }
 
 //------------------------------------------------------------------------

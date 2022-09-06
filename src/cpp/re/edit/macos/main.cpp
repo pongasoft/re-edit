@@ -173,8 +173,6 @@ int main(int argc, char **argv)
     pPool->release();
   }
 
-  application.saveConfig();
-
   // Cleanup
   ImGui_ImplMetal_Shutdown();
   ImGui_ImplGlfw_Shutdown();

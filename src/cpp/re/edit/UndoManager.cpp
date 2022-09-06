@@ -136,6 +136,15 @@ std::shared_ptr<UndoAction> UndoManager::popLastUndoAction()
 }
 
 //------------------------------------------------------------------------
+// UndoManager::clear
+//------------------------------------------------------------------------
+void UndoManager::clear()
+{
+  fUndoHistory.clear();
+  fRedoHistory.clear();
+}
+
+//------------------------------------------------------------------------
 // CompositeUndoAction::execute
 //------------------------------------------------------------------------
 std::shared_ptr<RedoAction> CompositeUndoAction::execute(AppContext &iCtx)

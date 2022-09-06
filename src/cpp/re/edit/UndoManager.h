@@ -133,6 +133,7 @@ public:
   std::shared_ptr<RedoAction> getLastRedoAction() const;
   std::vector<std::shared_ptr<UndoAction>> const &getUndoHistory() const { return fUndoHistory; }
   std::vector<std::shared_ptr<RedoAction>> const &getRedoHistory() const { return fRedoHistory; }
+  void clear();
 
 private:
   bool fEnabled{true};

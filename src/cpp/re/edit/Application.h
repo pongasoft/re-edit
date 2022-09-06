@@ -74,6 +74,7 @@ private:
 
   std::string fRoot{};
   bool fSavingRequested{};
+  bool fNeedsSaving{};
 };
 
 }
