@@ -25,6 +25,7 @@
 #include "Views.h"
 #include "ReGui.h"
 #include "Color.h"
+#include <IconsFAReEdit.h>
 
 #include <string>
 #include <vector>
@@ -538,7 +539,7 @@ void SingleAttribute<T>::reset()
 template<typename T>
 void SingleAttribute<T>::resetView(AppContext &iCtx)
 {
-  if(ImGui::Button("X"))
+  if(ImGui::Button(fa::circle_x))
   {
     iCtx.addUndoAttributeReset(this);
     reset();

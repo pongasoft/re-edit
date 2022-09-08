@@ -1,0 +1,39 @@
+bars:
+  aliases:
+    names:
+      - navicon
+    unicodes:
+      secondary:
+        - 10f0c9
+  changes:
+    - 2.0.0
+    - 5.0.0
+    - 6.0.0-beta1
+    - 6.0.0-beta3
+  label: Bars
+  search:
+    terms: []
+  styles:
+    - solid
+  unicode: f0c9
+  voted: false
+circle-x:
+  changes:
+    - 6.0.0-beta1
+  label: Circle X
+  search:
+    terms: []
+  styles:
+    - solid
+  unicode: e12e
+  voted: false
+notdef:
+  changes:
+    - 6.0.0-beta1
+  label: Notdef
+  search:
+    terms: []
+  styles:
+    - solid
+  unicode: e1fe
+  voted: false

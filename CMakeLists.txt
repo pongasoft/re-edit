@@ -107,7 +107,7 @@ endif()
 
 # Build the static library
 add_library("${target}_lib" "${re-edit_BUILD_SOURCES}")
-target_include_directories("${target}_lib" PUBLIC "external/misc")
+target_include_directories("${target}_lib" PUBLIC "external/misc" "external/fontawesome/includes")
 target_link_libraries("${target}_lib" PUBLIC imgui stb re-mock)
 target_compile_definitions("${target}_lib" PUBLIC ENABLE_RE_EDIT_INTERNAL_ASSERT=1)
 

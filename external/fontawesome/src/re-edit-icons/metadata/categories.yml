@@ -1,0 +1,207 @@
+accessibility:
+  icons: []
+  label: Accessibility
+alert:
+  icons: []
+  label: Alert
+alphabet:
+  icons:
+    - circle-x
+  label: Alphabet
+animals:
+  icons: []
+  label: Animals
+arrows:
+  icons: []
+  label: Arrows
+astronomy:
+  icons: []
+  label: Astronomy
+automotive:
+  icons: []
+  label: Automotive
+buildings:
+  icons: []
+  label: Buildings
+business:
+  icons: []
+  label: Business
+camping:
+  icons: []
+  label: Camping
+charity:
+  icons: []
+  label: Charity
+charts-diagrams:
+  icons: []
+  label: Charts + Diagrams
+childhood:
+  icons: []
+  label: Childhood
+clothing-fashion:
+  icons: []
+  label: Clothing + Fashion
+coding:
+  icons:
+    - bars
+  label: Coding
+communication:
+  icons: []
+  label: Communication
+connectivity:
+  icons: []
+  label: Connectivity
+construction:
+  icons: []
+  label: Construction
+design:
+  icons: []
+  label: Design
+devices-hardware:
+  icons: []
+  label: Devices + Hardware
+disaster:
+  icons: []
+  label: Disaster + Crisis
+editing:
+  icons:
+    - bars
+  label: Editing
+education:
+  icons: []
+  label: Education
+emoji:
+  icons: []
+  label: Emoji
+energy:
+  icons: []
+  label: Energy
+files:
+  icons: []
+  label: Files
+film-video:
+  icons: []
+  label: Film + Video
+food-beverage:
+  icons: []
+  label: Food + Beverage
+fruits-vegetables:
+  icons: []
+  label: Fruits + Vegetables
+gaming:
+  icons: []
+  label: Gaming
+gender:
+  icons: []
+  label: Genders
+halloween:
+  icons: []
+  label: Halloween
+hands:
+  icons: []
+  label: Hands
+holidays:
+  icons: []
+  label: Holidays
+household:
+  icons: []
+  label: Household
+humanitarian:
+  icons: []
+  label: Humanitarian
+logistics:
+  icons: []
+  label: Logistics
+maps:
+  icons: []
+  label: Maps
+maritime:
+  icons: []
+  label: Maritime
+marketing:
+  icons: []
+  label: Marketing
+mathematics:
+  icons: []
+  label: Mathematics
+media-playback:
+  icons: []
+  label: Media Playback
+medical-health:
+  icons: []
+  label: Medical + Health
+money:
+  icons: []
+  label: Money
+moving:
+  icons: []
+  label: Moving
+music-audio:
+  icons: []
+  label: Music + Audio
+nature:
+  icons: []
+  label: Nature
+numbers:
+  icons: []
+  label: Numbers
+photos-images:
+  icons: []
+  label: Photos + Images
+political:
+  icons: []
+  label: Political
+punctuation-symbols:
+  icons: []
+  label: Punctuation + Symbols
+religion:
+  icons: []
+  label: Religion
+science:
+  icons: []
+  label: Science
+science-fiction:
+  icons: []
+  label: Science Fiction
+security:
+  icons: []
+  label: Security
+shapes:
+  icons: []
+  label: Shapes
+shopping:
+  icons: []
+  label: Shopping
+social:
+  icons: []
+  label: Social
+spinners:
+  icons: []
+  label: Spinners
+sports-fitness:
+  icons: []
+  label: Sports + Fitness
+text-formatting:
+  icons: []
+  label: Text Formatting
+time:
+  icons: []
+  label: Time
+toggle:
+  icons: []
+  label: Toggle
+transportation:
+  icons: []
+  label: Transportation
+travel-hotel:
+  icons: []
+  label: Travel + Hotel
+users-people:
+  icons: []
+  label: Users + People
+weather:
+  icons: []
+  label: Weather
+writing:
+  icons: []
+  label: Writing

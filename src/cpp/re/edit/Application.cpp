@@ -22,6 +22,8 @@
 #include "Errors.h"
 #include "lua/ReEdit.h"
 #include "LoggingManager.h"
+#include <IconsFAReEdit.h>
+#include <IconsFAReEdit.h_fa-solid-900.ttf.h>
 #include <fstream>
 #include <imgui.h>
 
@@ -74,6 +76,20 @@ bool Application::init(std::shared_ptr<TextureManager> iTextureManager)
   io.IniFilename = nullptr; // don't use imgui.ini file
   io.WantSaveIniSettings = false; // will be "notified" when it changes
   io.ConfigWindowsMoveFromTitleBarOnly = true;
+
+  io.Fonts->AddFontDefault();
+
+  static const ImWchar icons_ranges[] = { fa::kMin, fa::kMax16, 0 };
+  ImFontConfig icons_config;
+  icons_config.MergeMode = true;
+  icons_config.PixelSnapH = true;
+  icons_config.FontDataOwnedByAtlas = false;
+
+  io.Fonts->AddFontFromMemoryTTF((void *) s_fa_solid_900_ttf,
+                                 sizeof(s_fa_solid_900_ttf),
+                                 13.0f,
+                                 &icons_config,
+                                 icons_ranges);
 
   setDeviceHeightRU(fAppContext.fPropertyManager->init(fRoot));
 

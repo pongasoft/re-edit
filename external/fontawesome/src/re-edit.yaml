@@ -1,0 +1,7 @@
+projectName: Unsaved Project
+version: 6.1.2
+icons:
+  - bars:
+      - solid
+  - circle-x:
+      - solid
