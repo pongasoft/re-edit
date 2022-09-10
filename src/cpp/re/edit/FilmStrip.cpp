@@ -174,7 +174,7 @@ std::vector<FilmStrip::File> FilmStripMgr::scanDirectory(std::string const &iDir
 {
   RE_EDIT_ASSERT(!iDirectory.empty());
 
-  static const std::regex FILENAME_REGEX{"(([0-9]+)_?frames)?.png$", std::regex_constants::icase};
+  static const std::regex FILENAME_REGEX{"(([0-9]+)_?frames)?\\.png$", std::regex_constants::icase};
 
   std::vector<FilmStrip::File> res{};
 
