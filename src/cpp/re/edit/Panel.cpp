@@ -686,7 +686,7 @@ void Panel::editNoSelectionView(AppContext &iCtx)
 {
   ImGui::PushID("Panel");
 
-  if(ImGui::Button("."))
+  if(ReGui::MenuButton())
     ImGui::OpenPopup("Menu");
 
   if(ImGui::BeginPopup("Menu"))
@@ -750,7 +750,7 @@ void Panel::editNoSelectionView(AppContext &iCtx)
 //------------------------------------------------------------------------
 void Panel::editSingleSelectionView(AppContext &iCtx, std::shared_ptr<Widget> const &iWidget)
 {
-  if(ImGui::Button("."))
+  if(ReGui::MenuButton())
     ImGui::OpenPopup("Menu");
 
   if(ImGui::BeginPopup("Menu"))
@@ -776,7 +776,7 @@ void Panel::editSingleSelectionView(AppContext &iCtx, std::shared_ptr<Widget> co
 //------------------------------------------------------------------------
 void Panel::editMultiSelectionView(AppContext &iCtx, std::vector<std::shared_ptr<Widget>> const &iSelectedWidgets)
 {
-  if(ImGui::Button("."))
+  if(ReGui::MenuButton())
     ImGui::OpenPopup("Menu");
 
   if(ImGui::BeginPopup("Menu"))
@@ -979,10 +979,10 @@ void Panel::MultiSelectionList::editView(AppContext &iCtx)
   if(ImGui::Button("Clr"))
     clearSelection();
   ImGui::SameLine();
-  if(ImGui::Button("Up"))
+  if(ImGui::Button("Up "))
     moveSelectionUp();
   ImGui::SameLine();
-  if(ImGui::Button("Down"))
+  if(ImGui::Button("Dwn"))
     moveSelectionDown();
   ImGui::SameLine();
   if(ImGui::Button("Dup"))

@@ -81,6 +81,7 @@ bool Application::init(std::shared_ptr<TextureManager> iTextureManager)
 
   static const ImWchar icons_ranges[] = { fa::kMin, fa::kMax16, 0 };
   ImFontConfig icons_config;
+  icons_config.GlyphOffset = {0, 1};
   icons_config.MergeMode = true;
   icons_config.PixelSnapH = true;
   icons_config.FontDataOwnedByAtlas = false;

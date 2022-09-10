@@ -23,6 +23,7 @@
 #include <cmath>
 #include "Color.h"
 #include "Constants.h"
+#include <IconsFAReEdit.h>
 
 static constexpr ImVec2 operator*(const ImVec2& lhs, const float rhs)              { return {lhs.x * rhs, lhs.y * rhs}; }
 static constexpr ImVec2 operator/(const ImVec2& lhs, const float rhs)              { return {lhs.x / rhs, lhs.y / rhs}; }
@@ -141,6 +142,24 @@ inline bool MenuToggle(char const *iFalseLabel, char const *iTrueLabel, bool *v)
     return true;
   }
   return false;
+}
+
+constexpr auto kFaButtonSize = ImVec2{21.0f, 0.0f};
+
+//------------------------------------------------------------------------
+// ReGui::ResetButton
+//------------------------------------------------------------------------
+inline bool ResetButton(const ImVec2& iSize = kFaButtonSize)
+{
+  return ImGui::Button(fa::circle_x, iSize);
+}
+
+//------------------------------------------------------------------------
+// ReGui::MenuButton
+//------------------------------------------------------------------------
+inline bool MenuButton(const ImVec2& iSize = kFaButtonSize)
+{
+  return ImGui::Button(fa::bars, iSize);
 }
 
 }

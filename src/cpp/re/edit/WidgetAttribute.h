@@ -25,7 +25,6 @@
 #include "Views.h"
 #include "ReGui.h"
 #include "Color.h"
-#include <IconsFAReEdit.h>
 
 #include <string>
 #include <vector>
@@ -539,10 +538,17 @@ void SingleAttribute<T>::reset()
 template<typename T>
 void SingleAttribute<T>::resetView(AppContext &iCtx)
 {
-  if(ImGui::Button(fa::circle_x))
+  if(ReGui::ResetButton())
   {
     iCtx.addUndoAttributeReset(this);
     reset();
+  }
+  static bool first_time = true;
+  if(first_time)
+  {
+    first_time = false;
+    auto size = ImGui::GetItemRectSize();
+    RE_EDIT_LOG_INFO("reset %fx%f", size.x, size.y);
   }
 }
 
@@ -552,7 +558,7 @@ void SingleAttribute<T>::resetView(AppContext &iCtx)
 template<typename T>
 void SingleAttribute<T>::resetView(const std::function<void()>& iOnReset) const
 {
-  if(ImGui::Button("X"))
+  if(ReGui::ResetButton())
     iOnReset();
 }
 

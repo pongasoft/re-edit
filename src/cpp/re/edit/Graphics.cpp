@@ -88,7 +88,7 @@ void Graphics::editView(AppContext &iCtx,
                         std::function<void(std::string const &)> const &iOnTextureUpdate,
                         std::function<void(ImVec2 const &)> const &iOnSizeUpdate)
 {
-  if(ImGui::Button("X"))
+  if(ReGui::ResetButton())
   {
     iCtx.addUndoAttributeReset(this);
     reset();
@@ -396,7 +396,7 @@ void Background::editView(AppContext &iCtx)
 {
   static const auto kBackgroundFilter = [](FilmStrip const &f) { return f.numFrames() == 1; };
 
-  if(ImGui::Button("X"))
+  if(ReGui::ResetButton())
     reset();
   ImGui::SameLine();
 
