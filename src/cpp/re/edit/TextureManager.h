@@ -44,6 +44,10 @@ public:
   std::vector<std::string> const &getTextureKeys() const { return fFilmStripMgr->getKeys(); };
   std::vector<std::string> findTextureKeys(FilmStrip::Filter const &iFilter) const { return fFilmStripMgr->findKeys(iFilter); }
 
+  virtual float getScale() const { return 1.0f; }
+  virtual void createFontsTexture() {}
+  virtual void destroyFontsTexture() {}
+
 protected:
   virtual std::unique_ptr<Texture> createTexture(std::shared_ptr<FilmStrip> const &iFilmStrip) const = 0;
 

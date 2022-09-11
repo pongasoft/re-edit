@@ -76,6 +76,8 @@ set(re-edit_BUILD_SOURCES
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/Errors.h"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/FilmStrip.h"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/FilmStrip.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/FontManager.h"
+    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/FontManager.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/LoggingManager.h"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/LoggingManager.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/Graphics.h"
@@ -99,6 +101,9 @@ set(re-edit_BUILD_SOURCES
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/WidgetAttribute.h"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/WidgetAttribute.cpp")
 
+# Fonts
+set(RE_EDIT_FONTS_DIR "${CMAKE_CURRENT_LIST_DIR}/external/fonts")
+
 # Defines the macos main
 if(APPLE)
   list(APPEND re-edit_BUILD_SOURCES "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/MTLTextureManager.cpp")
@@ -107,7 +112,7 @@ endif()
 
 # Build the static library
 add_library("${target}_lib" "${re-edit_BUILD_SOURCES}")
-target_include_directories("${target}_lib" PUBLIC "external/misc" "external/fontawesome/includes")
+target_include_directories("${target}_lib" PUBLIC "external/misc" "${RE_EDIT_FONTS_DIR}/includes" "${RE_EDIT_FONTS_DIR}/src")
 target_link_libraries("${target}_lib" PUBLIC imgui stb re-mock)
 target_compile_definitions("${target}_lib" PUBLIC ENABLE_RE_EDIT_INTERNAL_ASSERT=1)
 

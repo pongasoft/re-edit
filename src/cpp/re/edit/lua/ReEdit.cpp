@@ -67,6 +67,7 @@ Config ReEdit::loadConfig()
     withOptionalValue(L.getTableValueAsOptionalBoolean("show_panel_widgets"), [&c](auto v) { c.fShowPanelWidgets = v; });
     withOptionalValue(L.getTableValueAsOptionalBoolean("show_properties"), [&c](auto v) { c.fShowProperties = v; });
     withOptionalValue(L.getTableValueAsOptionalBoolean("show_widgets"), [&c](auto v) { c.fShowWidgets = v; });
+    withOptionalValue(L.getTableValueAsOptionalNumber("font_size"), [&c](auto v) { c.fFontSize = v; });
   }
   lua_pop(L, 1);
 

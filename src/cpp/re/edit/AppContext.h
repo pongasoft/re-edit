@@ -23,6 +23,7 @@
 #include <string>
 #include <memory>
 #include "TextureManager.h"
+#include "FontManager.h"
 #include "UserPreferences.h"
 #include "PropertyManager.h"
 #include "UndoManager.h"
@@ -214,6 +215,7 @@ protected:
 
 protected:
   std::shared_ptr<TextureManager> fTextureManager{};
+  std::shared_ptr<FontManager> fFontManager{};
   std::shared_ptr<UserPreferences> fUserPreferences{};
   std::shared_ptr<PropertyManager> fPropertyManager{};
   std::shared_ptr<UndoManager> fUndoManager{};

@@ -49,6 +49,7 @@ public:
 
   void setDeviceHeightRU(int iDeviceHeightRU);
 
+  void newFrame();
   void render();
   void renderMainMenu();
   void renderSavePopup();
@@ -64,7 +65,6 @@ public:
 private:
   std::string hdgui2D();
   std::string device2D() const;
-
 
 private:
   int fDeviceHeightRU{1};

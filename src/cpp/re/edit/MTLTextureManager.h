@@ -49,6 +49,12 @@ public:
   explicit MTLTextureManager(MTL::Device *iDevice);
   ~MTLTextureManager() override = default;
 
+  float getScale() const override;
+
+  void createFontsTexture() override;
+
+  void destroyFontsTexture() override;
+
 protected:
   std::unique_ptr<Texture> createTexture(std::shared_ptr<FilmStrip> const &iFilmStrip) const override;
 

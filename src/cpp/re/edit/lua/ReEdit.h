@@ -31,6 +31,7 @@ struct Config
   bool fShowPanel{true};
   bool fShowPanelWidgets{true};
   bool fShowWidgets{true};
+  float fFontSize{12.0f};
   std::string fImGuiIni{R"(
 [Window][Debug##Default]
 Pos=60,60

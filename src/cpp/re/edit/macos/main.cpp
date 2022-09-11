@@ -148,6 +148,9 @@ int main(int argc, char **argv)
       auto renderEncoder = commandBuffer->renderCommandEncoder(renderPassDescriptor);
       renderEncoder->pushDebugGroup(NS::String::string("re-edit", NS::ASCIIStringEncoding));
 
+      // Before New Frame
+      application.newFrame();
+
       // Start the Dear ImGui frame
       ImGui_ImplMetal_NewFrame(renderPassDescriptor);
       ImGui_ImplGlfw_NewFrame();

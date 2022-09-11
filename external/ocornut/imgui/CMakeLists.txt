@@ -29,3 +29,5 @@ if(APPLE)
   target_link_directories(imgui PUBLIC "${glfw_ROOT_DIR}/macos-lib-universal")
   target_link_libraries(imgui PUBLIC glfw3 "-framework QuartzCore" "-framework Cocoa" "-framework Metal" "-framework MetalKit" "-framework IOKit" "-framework AppKit")
 endif()
+
+add_executable("binary_to_compressed_c" "${imgui_CPP_SRC_DIR}/misc/fonts/binary_to_compressed_c.cpp")

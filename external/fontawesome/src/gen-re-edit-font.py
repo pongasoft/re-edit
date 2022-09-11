@@ -254,7 +254,7 @@ class LanguageC( Language ):
 # Main
 fonts = [ FontReEdit ]
 languages = [ LanguageC ]
-ttf2headerC = True # convert ttf files to C and C++ headers
+ttf2headerC = False # convert ttf files to C and C++ headers
 
 intermediates = []
 for font in fonts:

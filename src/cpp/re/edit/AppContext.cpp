@@ -287,6 +287,7 @@ void AppContext::init(lua::Config const &iConfig)
   fShowPanelWidgets = iConfig.fShowPanelWidgets;
   fShowProperties = iConfig.fShowProperties;
   fShowWidgets = iConfig.fShowWidgets;
+  fFontManager->requestNewFont({"JetBrains Mono Regular", BuiltInFont::kJetBrainsMonoRegular, iConfig.fFontSize});
 //  fShowBorder = static_cast<ShowBorder>(iConfig.fShowBorder);
 //  fShowCustomDisplay = static_cast<ShowCustomDisplay>(iConfig.fShowCustomDisplay);
 //  fShowSampleDropZone = static_cast<ShowSampleDropZone>(iConfig.fShowSampleDropZone);
@@ -305,6 +306,7 @@ std::string AppContext::getLuaConfig() const
   s << fmt::printf("re_edit[\"show_panel_widgets\"] = %s\n", fmt::Bool::to_chars(fShowPanelWidgets));
   s << fmt::printf("re_edit[\"show_properties\"] = %s\n", fmt::Bool::to_chars(fShowProperties));
   s << fmt::printf("re_edit[\"show_widgets\"] = %s\n", fmt::Bool::to_chars(fShowWidgets));
+  s << fmt::printf("re_edit[\"font_size\"] = %f\n", fFontManager->getCurrentFont().fSize);
 //  s << fmt::printf("re_edit[\"show_border\"] = %d\n", static_cast<int>(fShowBorder));
 //  s << fmt::printf("re_edit[\"show_custom_display\"] = %d\n", static_cast<int>(fShowCustomDisplay));
 //  s << fmt::printf("re_edit[\"show_sample_drop_zone\"] = %d\n", static_cast<int>(fShowSampleDropZone));

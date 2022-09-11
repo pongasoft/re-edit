@@ -22,8 +22,6 @@
 #include "Errors.h"
 #include "lua/ReEdit.h"
 #include "LoggingManager.h"
-#include <IconsFAReEdit.h>
-#include <IconsFAReEdit.h_fa-solid-900.ttf.h>
 #include <fstream>
 #include <imgui.h>
 
@@ -42,6 +40,20 @@ bool Application::parseArgs(std::vector<std::string> iArgs)
 
   fRoot = std::string(iArgs[0]);
 
+  return true;
+}
+
+//------------------------------------------------------------------------
+// Application::init
+//------------------------------------------------------------------------
+bool Application::init(std::shared_ptr<TextureManager> iTextureManager)
+{
+  fAppContext.fFontManager = std::make_shared<FontManager>(iTextureManager);
+  fAppContext.fTextureManager = std::move(iTextureManager);
+  fAppContext.fUserPreferences = std::make_shared<UserPreferences>();
+  fAppContext.fPropertyManager = std::make_shared<PropertyManager>();
+  fAppContext.fUndoManager = std::make_shared<UndoManager>();
+
   auto configFile = re::mock::fmt::path(fRoot, "re-edit.lua");
   lua::Config config{};
   if(fileExists(configFile))
@@ -59,38 +71,10 @@ bool Application::parseArgs(std::vector<std::string> iArgs)
   fAppContext.init(config);
   ImGui::LoadIniSettingsFromMemory(config.fImGuiIni.c_str(), config.fImGuiIni.size());
 
-  return true;
-}
-
-//------------------------------------------------------------------------
-// Application::init
-//------------------------------------------------------------------------
-bool Application::init(std::shared_ptr<TextureManager> iTextureManager)
-{
-  fAppContext.fTextureManager = std::move(iTextureManager);
-  fAppContext.fUserPreferences = std::make_shared<UserPreferences>();
-  fAppContext.fPropertyManager = std::make_shared<PropertyManager>();
-  fAppContext.fUndoManager = std::make_shared<UndoManager>();
-
   auto &io = ImGui::GetIO();
   io.IniFilename = nullptr; // don't use imgui.ini file
   io.WantSaveIniSettings = false; // will be "notified" when it changes
   io.ConfigWindowsMoveFromTitleBarOnly = true;
-
-  io.Fonts->AddFontDefault();
-
-  static const ImWchar icons_ranges[] = { fa::kMin, fa::kMax16, 0 };
-  ImFontConfig icons_config;
-  icons_config.GlyphOffset = {0, 1};
-  icons_config.MergeMode = true;
-  icons_config.PixelSnapH = true;
-  icons_config.FontDataOwnedByAtlas = false;
-
-  io.Fonts->AddFontFromMemoryTTF((void *) s_fa_solid_900_ttf,
-                                 sizeof(s_fa_solid_900_ttf),
-                                 13.0f,
-                                 &icons_config,
-                                 icons_ranges);
 
   setDeviceHeightRU(fAppContext.fPropertyManager->init(fRoot));
 
@@ -102,6 +86,15 @@ bool Application::init(std::shared_ptr<TextureManager> iTextureManager)
                          re::mock::fmt::path(fRoot, "GUI2D", "hdgui_2D.lua"));
 
   return true;
+}
+
+//------------------------------------------------------------------------
+// Application::newFrame
+//------------------------------------------------------------------------
+void Application::newFrame()
+{
+  if(fAppContext.fFontManager->hasNewFontRequest())
+    fAppContext.fFontManager->applyNewFontRequest();
 }
 
 //------------------------------------------------------------------------
@@ -126,6 +119,22 @@ void Application::render()
 
   if(ImGui::Begin("re-edit", nullptr, flags))
   {
+//    if(ImGui::Button("Bigger"))
+//    {
+//      kCurrentFont.fSize++;
+//      kNewFont = kCurrentFont;
+//      fNewFontRequested = true;
+//    }
+//    ImGui::SameLine();
+//    if(ImGui::Button("Smaller"))
+//    {
+//      kCurrentFont.fSize--;
+//      kNewFont = kCurrentFont;
+//      fNewFontRequested = true;
+//    }
+//    ImGui::SameLine();
+//    ImGui::Text("%dpx", static_cast<int>(kCurrentFont.fSize));
+
     fAppContext.render();
 
     ImGui::PushID("Border");

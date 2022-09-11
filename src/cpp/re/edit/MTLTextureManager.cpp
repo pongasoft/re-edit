@@ -18,6 +18,7 @@
 
 #include "MTLTextureManager.h"
 #include "Errors.h"
+#include "backends/imgui_impl_metal.h"
 #include <algorithm>
 #include <memory>
 
@@ -84,6 +85,30 @@ std::unique_ptr<Texture> MTLTextureManager::createTexture(std::shared_ptr<FilmSt
   while(height != 0);
 
   return texture;
+}
+
+//------------------------------------------------------------------------
+// MTLTextureManager::getScale
+//------------------------------------------------------------------------
+float MTLTextureManager::getScale() const
+{
+  return 2.0;
+}
+
+//------------------------------------------------------------------------
+// MTLTextureManager::createFontsTexture
+//------------------------------------------------------------------------
+void MTLTextureManager::createFontsTexture()
+{
+  ImGui_ImplMetal_CreateFontsTexture(fDevice);
+}
+
+//------------------------------------------------------------------------
+// MTLTextureManager::destroyFontsTexture
+//------------------------------------------------------------------------
+void MTLTextureManager::destroyFontsTexture()
+{
+  ImGui_ImplMetal_DestroyFontsTexture();
 }
 
 //------------------------------------------------------------------------
