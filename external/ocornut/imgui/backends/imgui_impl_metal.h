@@ -46,9 +46,10 @@ IMGUI_IMPL_API void ImGui_ImplMetal_DestroyDeviceObjects();
 #ifdef IMGUI_IMPL_METAL_CPP
 
 #include <Metal/Metal.hpp>
+
+// Start YP changes
 #import <QuartzCore/QuartzCore.hpp>
 
-MTL::Device *ImGui_ImplMetal_Layer_GetDevice(void* layer);
 void ImGui_ImplMetal_Layer_SetDevice(void* layer, MTL::Device *iDevice);
 void ImGui_ImplMetal_Layer_SetDrawableSize(void* layer, int iWidth, int iHeight);
 void ImGui_ImplMetal_Layer_SetPixelFormat(void* layer, int pixelFormat);
@@ -56,6 +57,8 @@ CA::MetalDrawable* ImGui_ImplMetal_Layer_GetNextDrawable(void* layer);
 void* ImGui_ImplMetal_Layer();
 void ImGui_ImplMetal_NSWindow_SetLayer(void *iWindow, void* layer);
 float ImGui_ImplMetal_GetBackingScaleFactorMainScreen();
+
+// End YP changes
 
 #ifndef __OBJC__
 

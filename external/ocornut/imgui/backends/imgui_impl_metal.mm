@@ -115,12 +115,6 @@ bool ImGui_ImplMetal_CreateDeviceObjects(MTL::Device* device)
     return ImGui_ImplMetal_CreateDeviceObjects((id<MTLDevice>)(device));
 }
 
-MTL::Device *ImGui_ImplMetal_Layer_GetDevice(void* layer)
-{
-  auto metalLayer = (CAMetalLayer*) layer;
-  return (__bridge MTL::Device *) metalLayer.device;
-}
-
 void ImGui_ImplMetal_Layer_SetDevice(void* layer, MTL::Device *iDevice)
 {
   auto metalLayer = (CAMetalLayer*) layer;
