@@ -192,6 +192,7 @@ void AppContext::populateWidgetUndoAction(WidgetUndoAction *iAction, Widget cons
   RE_EDIT_INTERNAL_ASSERT(iWidget != nullptr);
 
   iAction->fWidget = iWidget->clone();
+  iAction->fWidgetId = iWidget->getId();
 }
 
 //------------------------------------------------------------------------
