@@ -55,6 +55,7 @@ void ImGui_ImplMetal_Layer_SetPixelFormat(void* layer, int pixelFormat);
 CA::MetalDrawable* ImGui_ImplMetal_Layer_GetNextDrawable(void* layer);
 void* ImGui_ImplMetal_Layer();
 void ImGui_ImplMetal_NSWindow_SetLayer(void *iWindow, void* layer);
+float ImGui_ImplMetal_GetBackingScaleFactorMainScreen();
 
 #ifndef __OBJC__
 

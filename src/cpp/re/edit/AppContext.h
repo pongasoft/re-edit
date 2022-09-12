@@ -200,6 +200,7 @@ protected:
   std::string getLuaConfig() const;
 
   void initPanels(std::string const &iDevice2DFile, std::string const &iHDGui2DFile);
+  void onNativeWindowPositionChange(int x, int y, float iScreenScale);
   inline void setCurrentWidget(Widget const *iWidget) { fCurrentWidget = iWidget; }
   void render();
   void populateWidgetUndoAction(WidgetUndoAction *iAction, Widget const *iWidget);

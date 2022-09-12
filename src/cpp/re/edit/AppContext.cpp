@@ -314,4 +314,16 @@ std::string AppContext::getLuaConfig() const
   return s.str();
 }
 
+//------------------------------------------------------------------------
+// AppContext::onNativeWindowPositionChange
+//------------------------------------------------------------------------
+void AppContext::onNativeWindowPositionChange(int x, int y, float iScreenScale)
+{
+  if(fTextureManager->getScreenScale() != iScreenScale)
+  {
+    fTextureManager->setScreenScale(iScreenScale);
+    fFontManager->requestFontScaleChange();
+  }
+}
+
 }

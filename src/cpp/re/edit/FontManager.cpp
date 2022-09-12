@@ -78,7 +78,7 @@ bool FontManager::loadFont(float iSize, const std::function<bool(float iSizePixe
 {
   auto &io = ImGui::GetIO();
   io.Fonts->Clear();
-  auto scale = fTextureManager->getScale();
+  auto scale = getFontScale();
   ImFontConfig fontConfig;
   fontConfig.OversampleH = 2;
   bool res = iFontLoader(iSize * scale, &fontConfig);
@@ -127,6 +127,17 @@ void FontManager::applyNewFontRequest()
   RE_EDIT_INTERNAL_ASSERT(hasNewFontRequest());
   setCurrentFont(*fNewFontRequest);
   fNewFontRequest = std::nullopt;
+}
+
+//------------------------------------------------------------------------
+// FontManager::requestFontScaleChange
+//------------------------------------------------------------------------
+void FontManager::requestFontScaleChange()
+{
+  if(!fNewFontRequest)
+  {
+    requestNewFont(getCurrentFont());
+  }
 }
 
 /**

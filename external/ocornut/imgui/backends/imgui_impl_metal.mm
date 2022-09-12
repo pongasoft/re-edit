@@ -32,6 +32,7 @@
 #import <Metal/Metal.h>
 #import <QuartzCore/QuartzCore.h>
 #include <AppKit/NSWindow.h>
+#include <AppKit/NSScreen.h>
 
 #pragma mark - Support classes
 
@@ -157,6 +158,12 @@ void ImGui_ImplMetal_NSWindow_SetLayer(void *iWindow, void* layer)
   auto metalLayer = (CAMetalLayer*) layer;
   nswin.contentView.layer = metalLayer;
   nswin.contentView.wantsLayer = YES;
+}
+
+float ImGui_ImplMetal_GetBackingScaleFactorMainScreen()
+{
+  auto screen = [NSScreen mainScreen];
+  return static_cast<float>(screen.backingScaleFactor);
 }
 
 #endif // #ifdef IMGUI_IMPL_METAL_CPP

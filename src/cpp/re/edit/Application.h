@@ -49,6 +49,8 @@ public:
 
   void setDeviceHeightRU(int iDeviceHeightRU);
 
+  inline void onNativeWindowPositionChange(int x, int y, float iScreenScale) { fAppContext.onNativeWindowPositionChange(x, y, iScreenScale); }
+
   void newFrame();
   void render();
   void renderMainMenu();

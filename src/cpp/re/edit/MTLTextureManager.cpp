@@ -45,8 +45,8 @@ namespace re::edit {
 //------------------------------------------------------------------------
 // MTLTextureManager::MTLTextureManager
 //------------------------------------------------------------------------
-MTLTextureManager::MTLTextureManager(MTL::Device *iDevice) :
-  TextureManager(), fDevice{iDevice} {}
+MTLTextureManager::MTLTextureManager(MTL::Device *iDevice, float iScreenScale) :
+  TextureManager(iScreenScale), fDevice{iDevice} {}
 
 //------------------------------------------------------------------------
 // MTLTextureManager::createTexture
@@ -85,14 +85,6 @@ std::unique_ptr<Texture> MTLTextureManager::createTexture(std::shared_ptr<FilmSt
   while(height != 0);
 
   return texture;
-}
-
-//------------------------------------------------------------------------
-// MTLTextureManager::getScale
-//------------------------------------------------------------------------
-float MTLTextureManager::getScale() const
-{
-  return 2.0;
 }
 
 //------------------------------------------------------------------------

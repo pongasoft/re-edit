@@ -6,7 +6,7 @@
 #include <imgui.h>
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_metal.h>
-#include <stdio.h>
+#include <cstdio>
 #include "../Application.h"
 #include "../MTLTextureManager.h"
 
@@ -102,13 +102,7 @@ int main(int argc, char **argv)
 
   auto renderPassDescriptor = MTL::RenderPassDescriptor::alloc()->init();
 
-  // Our state
-  bool show_demo_window = true;
-  bool show_another_window = false;
-  float clear_color[4] = {0.45f, 0.55f, 0.60f, 1.00f};
-
-
-  if(!application.init(std::make_shared<re::edit::MTLTextureManager>(device)))
+  if(!application.init(std::make_shared<re::edit::MTLTextureManager>(device, ImGui_ImplMetal_GetBackingScaleFactorMainScreen())))
     return 1;
 
   // sets the initial size
@@ -117,6 +111,10 @@ int main(int argc, char **argv)
     glfwGetWindowSize(window, &w, &h);
     application.setNativeWindowSize(w, h);
   }
+
+  int windowPosX;
+  int windowPosY;
+  glfwGetWindowPos(window, &windowPosX, &windowPosY);
 
   // Main loop
   while(!glfwWindowShouldClose(window))
@@ -130,6 +128,16 @@ int main(int argc, char **argv)
       // - When io.WantCaptureKeyboard is true, do not dispatch keyboard input data to your main application, or clear/overwrite your copy of the keyboard data.
       // Generally you may always pass all inputs to dear imgui, and hide them from your application based on those two flags.
       glfwPollEvents();
+
+      int newWindowPosX;
+      int newWindowPosY;
+      glfwGetWindowPos(window, &newWindowPosX, &newWindowPosX);
+      if(newWindowPosX != windowPosX || newWindowPosY != windowPosY)
+      {
+        windowPosX = newWindowPosX;
+        windowPosY = newWindowPosY;
+        application.onNativeWindowPositionChange(windowPosX, windowPosY, ImGui_ImplMetal_GetBackingScaleFactorMainScreen());
+      }
 
       int width, height;
       glfwGetFramebufferSize(window, &width, &height);

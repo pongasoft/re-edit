@@ -46,13 +46,10 @@ public:
 class MTLTextureManager : public TextureManager
 {
 public:
-  explicit MTLTextureManager(MTL::Device *iDevice);
+  MTLTextureManager(MTL::Device *iDevice, float iScreenScale);
   ~MTLTextureManager() override = default;
 
-  float getScale() const override;
-
   void createFontsTexture() override;
-
   void destroyFontsTexture() override;
 
 protected:
