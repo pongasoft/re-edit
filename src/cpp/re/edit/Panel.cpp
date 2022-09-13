@@ -177,7 +177,7 @@ void Panel::draw(AppContext &iCtx)
   else
     fPopupLocation = std::nullopt;
 
-  if(fMouseDrag && !selectedWidgets.empty())
+  if(fMouseDrag && !selectedWidgets.empty() && !ReGui::AnySpecialKey())
   {
     auto min = selectedWidgets[0]->getTopLeft();
     auto max = selectedWidgets[0]->getBottomRight();

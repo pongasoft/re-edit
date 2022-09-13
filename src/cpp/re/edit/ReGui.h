@@ -175,6 +175,15 @@ inline bool MenuButton(const ImVec2& iSize = kFaButtonSize)
   return ImGui::Button(kMenuIcon, iSize);
 }
 
+//------------------------------------------------------------------------
+// ReGui::AnySpecialKey
+//------------------------------------------------------------------------
+inline bool AnySpecialKey()
+{
+  auto &io = ImGui::GetIO();
+  return io.KeyShift || io.KeyCtrl || io.KeyAlt || io.KeySuper;
+}
+
 }
 
 #endif //RE_EDIT_RE_GUI_H
