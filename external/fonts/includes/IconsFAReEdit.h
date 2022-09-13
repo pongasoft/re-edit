@@ -6,9 +6,26 @@
 namespace fa {
 
 constexpr auto kMin = 0xe12e;
-constexpr auto kMax16 = 0xf0c9;
-constexpr auto kMax = 0xf0c9;
-constexpr auto bars = "\xef\x83\x89";	// U+f0c9
-constexpr auto circle_x = "\xee\x84\xae";	// U+e12e
-constexpr auto notdef = "\xee\x87\xbe";	// U+e1fe
+constexpr auto kMax16 = 0xf303;
+constexpr auto kMax = 0xf303;
+#define ICON_FA_ArrowRotateLeft "\xef\x83\xa2"	// U+f0e2
+constexpr auto kArrowRotateLeft = "\xef\x83\xa2";	// U+f0e2
+#define ICON_FA_ArrowRotateRight "\xef\x80\x9e"	// U+f01e
+constexpr auto kArrowRotateRight = "\xef\x80\x9e";	// U+f01e
+#define ICON_FA_Bars "\xef\x83\x89"	// U+f0c9
+constexpr auto kBars = "\xef\x83\x89";	// U+f0c9
+#define ICON_FA_CircleX "\xee\x84\xae"	// U+e12e
+constexpr auto kCircleX = "\xee\x84\xae";	// U+e12e
+#define ICON_FA_EyeSlash "\xef\x81\xb0"	// U+f070
+constexpr auto kEyeSlash = "\xef\x81\xb0";	// U+f070
+#define ICON_FA_FloppyDisk "\xef\x83\x87"	// U+f0c7
+constexpr auto kFloppyDisk = "\xef\x83\x87";	// U+f0c7
+#define ICON_FA_MagnifyingGlass "\xef\x80\x82"	// U+f002
+constexpr auto kMagnifyingGlass = "\xef\x80\x82";	// U+f002
+#define ICON_FA_Notdef "\xee\x87\xbe"	// U+e1fe
+constexpr auto kNotdef = "\xee\x87\xbe";	// U+e1fe
+#define ICON_FA_Pencil "\xef\x8c\x83"	// U+f303
+constexpr auto kPencil = "\xef\x8c\x83";	// U+f303
+#define ICON_FA_TriangleExclamation "\xef\x81\xb1"	// U+f071
+constexpr auto kTriangleExclamation = "\xef\x81\xb1";	// U+f071
 }

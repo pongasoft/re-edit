@@ -146,12 +146,25 @@ inline bool MenuToggle(char const *iFalseLabel, char const *iTrueLabel, bool *v)
 
 constexpr auto kFaButtonSize = ImVec2{21.0f, 0.0f};
 
+constexpr auto kHiddenWidgetIcon = fa::kEyeSlash;
+constexpr auto kErrorIcon = fa::kTriangleExclamation;
+constexpr auto kResetIcon = fa::kCircleX;
+constexpr auto kMenuIcon = fa::kBars;
+
+#define ReGui_Prefix(prefix, str) prefix " " str
+#define ReGui_Icon_Reset ICON_FA_CircleX
+#define ReGui_Icon_Watch ICON_FA_MagnifyingGlass
+#define ReGui_Icon_Edit ICON_FA_Pencil
+#define ReGui_Icon_Undo ICON_FA_ArrowRotateLeft
+#define ReGui_Icon_Redo ICON_FA_ArrowRotateRight
+#define ReGui_Icon_Save ICON_FA_FloppyDisk
+
 //------------------------------------------------------------------------
 // ReGui::ResetButton
 //------------------------------------------------------------------------
 inline bool ResetButton(const ImVec2& iSize = kFaButtonSize)
 {
-  return ImGui::Button(fa::circle_x, iSize);
+  return ImGui::Button(kResetIcon, iSize);
 }
 
 //------------------------------------------------------------------------
@@ -159,7 +172,7 @@ inline bool ResetButton(const ImVec2& iSize = kFaButtonSize)
 //------------------------------------------------------------------------
 inline bool MenuButton(const ImVec2& iSize = kFaButtonSize)
 {
-  return ImGui::Button(fa::bars, iSize);
+  return ImGui::Button(kMenuIcon, iSize);
 }
 
 }

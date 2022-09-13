@@ -108,6 +108,10 @@ class FontReEdit( FontFA5 ):        # Font Awesome version 5 Pro - Light, Regula
     ttfs = [
         [ 'FAS', 'fa-solid-900.ttf', './re-edit-icons/webfonts/fa-solid-900.ttf' ]
     ]
+    # font_data = '/Volumes/Vault/Downloads/fontawesome-pro-6.2.0-web/metadata/icons.yml'
+    # ttfs = [
+    #     [ 'FAS', 'fa-solid-900.ttf', '/Volumes/Vault/Downloads/fontawesome-pro-6.2.0-web/webfonts/fa-solid-900.ttf' ]
+    # ]
     font_fa_style = [ 'solid' ]
 
 
@@ -198,12 +202,18 @@ class LanguageC( Language ):
 
     @classmethod
     def line_icon( cls, icon ):
-        tmpl_line_icon = 'constexpr auto {icon} = "{code}";\t// U+{unicode}\n'
-        icon_name = icon[ 0 ].replace( '-', '_' )
+        tmpl_line_icon_define = '#define ICON_{abbr}_{icon} "{code}"\t// U+{unicode}\n'
+        tmpl_line_icon_constexpr = 'constexpr auto k{icon} = "{code}";\t// U+{unicode}\n'
+        icon_name = list(map(lambda x: x.capitalize(), icon[ 0 ].split("-")))
+        icon_name = ''.join(icon_name)
         icon_code = repr( chr( int( icon[ 1 ], 16 )).encode( 'utf-8' ))[ 2:-1 ]
-        result = tmpl_line_icon.format( icon = icon_name,
-                                        code = icon_code,
-                                        unicode =icon[ 1 ] )
+        result = tmpl_line_icon_define.format( icon = icon_name,
+                                               code = icon_code,
+                                               abbr = cls.intermediate.get( 'font_abbr' ).upper(),
+                                               unicode =icon[ 1 ] ) + \
+                 tmpl_line_icon_constexpr.format( icon = icon_name,
+                                                  code = icon_code,
+                                                  unicode =icon[ 1 ] )
         return result
 
     @classmethod

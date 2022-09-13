@@ -229,7 +229,7 @@ void Application::renderMainMenu()
   {
     if(ImGui::BeginMenu("File"))
     {
-      if(ImGui::MenuItem("Save"))
+      if(ImGui::MenuItem(ReGui_Prefix(ReGui_Icon_Save, "Save")))
       {
         ImGui::OpenPopup(savePopupId);
         fSavingRequested = true;
@@ -243,7 +243,7 @@ void Application::renderMainMenu()
       if(undoAction)
       {
         fAppContext.resetUndoMergeKey();
-        auto desc = re::mock::fmt::printf("Undo %s", undoAction->fDescription);
+        auto desc = re::mock::fmt::printf(ReGui_Prefix(ReGui_Icon_Undo, "Undo %s"), undoAction->fDescription);
         if(fAppContext.fCurrentPanelState && fAppContext.fCurrentPanelState->getType() != undoAction->fPanelType)
         {
           if(undoAction->fPanelType == PanelType::kUnknown)
@@ -259,14 +259,14 @@ void Application::renderMainMenu()
       else
       {
         ImGui::BeginDisabled();
-        ImGui::MenuItem("Undo");
+        ImGui::MenuItem(ReGui_Prefix(ReGui_Icon_Undo, "Undo"));
         ImGui::EndDisabled();
       }
 
       auto const redoAction = fAppContext.fUndoManager->getLastRedoAction();
       if(redoAction)
       {
-        auto desc = re::mock::fmt::printf("Redo %s", redoAction->fUndoAction->fDescription);
+        auto desc = re::mock::fmt::printf(ReGui_Prefix(ReGui_Icon_Redo, "Redo %s"), redoAction->fUndoAction->fDescription);
         if(fAppContext.fCurrentPanelState && fAppContext.fCurrentPanelState->getType() != redoAction->fUndoAction->fPanelType)
         {
           if(undoAction->fPanelType == PanelType::kUnknown)
@@ -282,7 +282,7 @@ void Application::renderMainMenu()
       else
       {
         ImGui::BeginDisabled();
-        ImGui::MenuItem("Redo");
+        ImGui::MenuItem(ReGui_Prefix(ReGui_Icon_Redo, "Redo"));
         ImGui::EndDisabled();
       }
 

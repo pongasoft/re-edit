@@ -1,7 +1,21 @@
-projectName: Unsaved Project
+projectName: re-edit
 version: 6.1.2
 icons:
   - bars:
       - solid
   - circle-x:
+      - solid
+  - eye-slash:
+      - solid
+  - triangle-exclamation:
+      - solid
+  - magnifying-glass:
+      - solid
+  - pencil:
+      - solid
+  - floppy-disk:
+      - solid
+  - arrow-rotate-left:
+      - solid
+  - arrow-rotate-right:
       - solid

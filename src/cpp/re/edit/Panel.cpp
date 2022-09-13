@@ -1006,7 +1006,7 @@ void Panel::MultiSelectionList::editView(AppContext &iCtx)
       if(widget->isHidden())
       {
         ImGui::SameLine();
-        ImGui::Text("(H)");
+        ImGui::Text(ReGui::kHiddenWidgetIcon);
       }
       ImGui::SameLine();
       if(!widget->errorView(iCtx))

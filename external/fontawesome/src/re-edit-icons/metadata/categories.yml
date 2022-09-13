@@ -2,7 +2,8 @@ accessibility:
   icons: []
   label: Accessibility
 alert:
-  icons: []
+  icons:
+    - triangle-exclamation
   label: Alert
 alphabet:
   icons:
@@ -12,7 +13,9 @@ animals:
   icons: []
   label: Animals
 arrows:
-  icons: []
+  icons:
+    - arrow-rotate-left
+    - arrow-rotate-right
   label: Arrows
 astronomy:
   icons: []
@@ -24,7 +27,9 @@ buildings:
   icons: []
   label: Buildings
 business:
-  icons: []
+  icons:
+    - floppy-disk
+    - pencil
   label: Business
 camping:
   icons: []
@@ -52,13 +57,18 @@ connectivity:
   icons: []
   label: Connectivity
 construction:
-  icons: []
+  icons:
+    - pencil
   label: Construction
 design:
-  icons: []
+  icons:
+    - eye-slash
+    - floppy-disk
+    - pencil
   label: Design
 devices-hardware:
-  icons: []
+  icons:
+    - floppy-disk
   label: Devices + Hardware
 disaster:
   icons: []
@@ -66,6 +76,8 @@ disaster:
 editing:
   icons:
     - bars
+    - eye-slash
+    - pencil
   label: Editing
 education:
   icons: []
@@ -77,7 +89,8 @@ energy:
   icons: []
   label: Energy
 files:
-  icons: []
+  icons:
+    - floppy-disk
   label: Files
 film-video:
   icons: []
@@ -113,7 +126,9 @@ logistics:
   icons: []
   label: Logistics
 maps:
-  icons: []
+  icons:
+    - eye-slash
+    - magnifying-glass
   label: Maps
 maritime:
   icons: []
@@ -125,7 +140,9 @@ mathematics:
   icons: []
   label: Mathematics
 media-playback:
-  icons: []
+  icons:
+    - arrow-rotate-left
+    - arrow-rotate-right
   label: Media Playback
 medical-health:
   icons: []
@@ -146,7 +163,8 @@ numbers:
   icons: []
   label: Numbers
 photos-images:
-  icons: []
+  icons:
+    - eye-slash
   label: Photos + Images
 political:
   icons: []
@@ -164,7 +182,8 @@ science-fiction:
   icons: []
   label: Science Fiction
 security:
-  icons: []
+  icons:
+    - eye-slash
   label: Security
 shapes:
   icons: []
@@ -203,5 +222,6 @@ weather:
   icons: []
   label: Weather
 writing:
-  icons: []
+  icons:
+    - pencil
   label: Writing

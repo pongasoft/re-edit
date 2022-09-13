@@ -221,7 +221,7 @@ bool Widget::errorView(AppContext &iCtx)
 {
   if(fError)
   {
-    ImGui::TextColored(ImVec4(1,0,0,1), "(?)");
+    ImGui::TextColored(ImVec4(1,0,0,1), ReGui::kErrorIcon);
     if(ImGui::IsItemHovered())
     {
       ImGui::BeginTooltip();
@@ -269,7 +269,7 @@ void Widget::editView(AppContext &iCtx)
       if(att->fError)
       {
         ImGui::SameLine();
-        ImGui::TextColored(ImVec4(1,0,0,1), "(?)");
+        ImGui::TextColored(ImVec4(1,0,0,1), ReGui::kErrorIcon);
         if(ImGui::IsItemHovered())
         {
           ImGui::BeginTooltip();

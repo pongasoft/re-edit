@@ -45,6 +45,12 @@ static void mergeFontAwesome(float iSize)
                                                  iSize,
                                                  &icons_config,
                                                  icons_ranges);
+
+//  io.Fonts->AddFontFromFileTTF("/Volumes/Vault/Downloads/fontawesome-pro-6.2.0-web/webfonts/fa-solid-900.ttf",
+//                               iSize,
+//                               &icons_config,
+//                               icons_ranges);
+
 }
 
 }

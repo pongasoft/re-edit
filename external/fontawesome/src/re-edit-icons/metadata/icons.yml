@@ -1,3 +1,49 @@
+arrow-rotate-left:
+  aliases:
+    names:
+      - arrow-left-rotate
+      - arrow-rotate-back
+      - arrow-rotate-backward
+      - undo
+    unicodes:
+      composite:
+        - 21ba
+      secondary:
+        - 10f0e2
+  changes:
+    - 2.0.0
+    - 5.0.0
+    - 6.0.0-beta1
+  label: Arrow Rotate Left
+  search:
+    terms: []
+  styles:
+    - solid
+  unicode: f0e2
+  voted: false
+arrow-rotate-right:
+  aliases:
+    names:
+      - arrow-right-rotate
+      - arrow-rotate-forward
+      - redo
+    unicodes:
+      composite:
+        - 21bb
+      secondary:
+        - 10f01e
+  changes:
+    - 1.0.0
+    - 5.0.0
+    - 5.8.0
+    - 6.0.0-beta1
+  label: Arrow Rotate Right
+  search:
+    terms: []
+  styles:
+    - solid
+  unicode: f01e
+  voted: false
 bars:
   aliases:
     names:
@@ -27,6 +73,66 @@ circle-x:
     - solid
   unicode: e12e
   voted: false
+eye-slash:
+  aliases:
+    unicodes:
+      secondary:
+        - 10f070
+  changes:
+    - 1.0.0
+    - 5.0.0
+    - 5.7.0
+    - 6.0.0-beta1
+    - 6.0.0
+  label: Eye Slash
+  search:
+    terms: []
+  styles:
+    - solid
+  unicode: f070
+  voted: false
+floppy-disk:
+  aliases:
+    names:
+      - save
+    unicodes:
+      composite:
+        - 1f5aa
+        - 1f4be
+      secondary:
+        - 10f0c7
+  changes:
+    - 2.0.0
+    - 5.0.0
+    - 5.10.2
+    - 6.0.0-beta1
+  label: Floppy Disk
+  search:
+    terms: []
+  styles:
+    - solid
+  unicode: f0c7
+  voted: false
+magnifying-glass:
+  aliases:
+    names:
+      - search
+    unicodes:
+      composite:
+        - 1f50d
+      secondary:
+        - 10f002
+  changes:
+    - 1.0.0
+    - 5.0.0
+    - 6.0.0-beta1
+  label: Magnifying glass
+  search:
+    terms: []
+  styles:
+    - solid
+  unicode: f002
+  voted: false
 notdef:
   changes:
     - 6.0.0-beta1
@@ -36,4 +142,51 @@ notdef:
   styles:
     - solid
   unicode: e1fe
+  voted: false
+pencil:
+  aliases:
+    names:
+      - pencil-alt
+    unicodes:
+      composite:
+        - f040
+        - 270f
+      primary:
+        - f040
+      secondary:
+        - 10f303
+        - 10f040
+  changes:
+    - 1.0.0
+    - 5.0.0
+    - 6.0.0-beta1
+    - 6.0.0
+  label: pencil
+  search:
+    terms: []
+  styles:
+    - solid
+  unicode: f303
+  voted: false
+triangle-exclamation:
+  aliases:
+    names:
+      - exclamation-triangle
+      - warning
+    unicodes:
+      composite:
+        - 26a0
+      secondary:
+        - 10f071
+  changes:
+    - 1.0.0
+    - 5.0.0
+    - 5.6.1
+    - 6.0.0-beta1
+  label: Triangle exclamation
+  search:
+    terms: []
+  styles:
+    - solid
+  unicode: f071
   voted: false

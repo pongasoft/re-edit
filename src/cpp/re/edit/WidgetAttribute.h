@@ -543,13 +543,6 @@ void SingleAttribute<T>::resetView(AppContext &iCtx)
     iCtx.addUndoAttributeReset(this);
     reset();
   }
-  static bool first_time = true;
-  if(first_time)
-  {
-    first_time = false;
-    auto size = ImGui::GetItemRectSize();
-    RE_EDIT_LOG_INFO("reset %fx%f", size.x, size.y);
-  }
 }
 
 //------------------------------------------------------------------------
