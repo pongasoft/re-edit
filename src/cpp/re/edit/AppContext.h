@@ -194,6 +194,7 @@ public:
   ShowCustomDisplay fShowCustomDisplay{ShowCustomDisplay::kMain};
   ShowSampleDropZone fShowSampleDropZone{ShowSampleDropZone::kFill};
   float fZoom{0.20f};
+  ImVec2 fGrid{1.0f, 1.0f};
 
 protected:
   void init(lua::Config const &iConfig);

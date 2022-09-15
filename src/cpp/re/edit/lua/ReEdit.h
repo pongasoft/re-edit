@@ -19,7 +19,8 @@
 #ifndef RE_EDIT_RE_EDIT_H
 #define RE_EDIT_RE_EDIT_H
 
-#include <re/mock/lua/MockJBox.h>
+#include "Base.h"
+#include <imgui.h>
 
 namespace re::edit::lua {
 
@@ -32,6 +33,8 @@ struct Config
   bool fShowPanelWidgets{true};
   bool fShowWidgets{true};
   float fFontSize{12.0f};
+  ImVec2 fGrid{10.0f, 10.0f};
+
   std::string fImGuiIni{R"(
 [Window][Debug##Default]
 Pos=60,60
@@ -97,7 +100,7 @@ Column 2  Width=351
 
 };
 
-class ReEdit : public re::mock::lua::MockJBox
+class ReEdit : public Base
 {
 public:
   ReEdit() = default;

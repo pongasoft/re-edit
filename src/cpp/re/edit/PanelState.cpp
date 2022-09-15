@@ -154,6 +154,38 @@ void PanelState::render(AppContext &iCtx)
     ImGui::SameLine();
     ImGui::Text("%d%%", static_cast<int>(iCtx.fZoom * 100));
 
+    static bool kSquare = iCtx.fGrid.x == iCtx.fGrid.y;
+    constexpr auto kGridStep = 5;
+    constexpr auto kGridFastStep = 50;
+
+    ImGui::PushItemWidth(kItemWidth / (kSquare ? 2.0f : 3.0f));
+
+    if(kSquare)
+    {
+      auto size = iCtx.fGrid.x;
+      if(ReGui::InputInt("grid", &size, kGridStep, kGridFastStep))
+      {
+        iCtx.fGrid.x = size;
+        iCtx.fGrid.y = size;
+      }
+    }
+    else
+    {
+      ReGui::InputInt("grid_w", &iCtx.fGrid.x, kGridStep, kGridFastStep);
+      ImGui::SameLine();
+      ReGui::InputInt("grid_h", &iCtx.fGrid.y, kGridStep, kGridFastStep);
+    }
+
+    ImGui::SameLine();
+
+    if(ImGui::Checkbox("Square", &kSquare))
+    {
+      if(kSquare)
+        iCtx.fGrid.y = iCtx.fGrid.x;
+    }
+
+    ImGui::PopItemWidth();
+
     if(iCtx.fShowPanel)
       renderPanel(iCtx, switchedTab);
 

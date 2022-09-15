@@ -84,7 +84,6 @@ std::shared_ptr<Widget> Panel::getWidget(int id) const
   return w;
 }
 
-
 //------------------------------------------------------------------------
 // Panel::draw
 //------------------------------------------------------------------------
@@ -92,6 +91,7 @@ void Panel::draw(AppContext &iCtx)
 {
   ImVec2 backgroundScreenPosition;
   auto const cp = ImGui::GetCursorScreenPos();
+  auto &io = ImGui::GetIO();
   if(fGraphics.hasTexture())
   {
     auto texture = fGraphics.getTexture();
@@ -106,7 +106,7 @@ void Panel::draw(AppContext &iCtx)
     ImGui::SetCursorScreenPos(cp); // TextureItem moves the cursor so we restore it
     ImGui::InvisibleButton("canvas", clickableArea, ImGuiButtonFlags_MouseButtonLeft);
 
-    auto const mousePos = ImGui::GetMousePos() - backgroundScreenPosition; // accounts for scrollbars
+    auto const mousePos = (ImGui::GetMousePos() - backgroundScreenPosition) / iCtx.fZoom; // accounts for scrollbars
     if(fShiftMouseDrag)
     {
       if(ImGui::IsMouseReleased(ImGuiMouseButton_Left))
@@ -115,7 +115,7 @@ void Panel::draw(AppContext &iCtx)
       }
       else
       {
-        fShiftMouseDrag->fCurrentPosition = mousePos / iCtx.fZoom;
+        fShiftMouseDrag->fCurrentPosition = mousePos;
         if(fShiftMouseDrag->fInitialPosition.x != fShiftMouseDrag->fCurrentPosition.x ||
           fShiftMouseDrag->fInitialPosition.y != fShiftMouseDrag->fCurrentPosition.y)
         {
@@ -128,26 +128,34 @@ void Panel::draw(AppContext &iCtx)
       if(ImGui::IsMouseReleased(ImGuiMouseButton_Left))
       {
         fMouseDrag = std::nullopt;
-        endMoveWidgets(iCtx, mousePos / iCtx.fZoom);
+        endMoveWidgets(iCtx, mousePos);
       }
       else
       {
+        bool shouldMoveWidgets = false;
+        auto grid = ImGui::GetIO().KeyAlt ? ImVec2{1.0f, 1.0f} : iCtx.fGrid;
         fMouseDrag->fCurrentPosition = mousePos;
-        if(fMouseDrag->fInitialPosition.x != fMouseDrag->fCurrentPosition.x ||
-           fMouseDrag->fInitialPosition.y != fMouseDrag->fCurrentPosition.y)
+        if(std::abs(fMouseDrag->fLastUpdatePosition.x - fMouseDrag->fCurrentPosition.x) >= grid.x)
         {
-          moveWidgets(iCtx, mousePos / iCtx.fZoom);
+          fMouseDrag->fLastUpdatePosition.x = fMouseDrag->fCurrentPosition.x;
+          shouldMoveWidgets = true;
         }
+        if(std::abs(fMouseDrag->fLastUpdatePosition.y - fMouseDrag->fCurrentPosition.y) >= grid.y)
+        {
+          fMouseDrag->fLastUpdatePosition.y = fMouseDrag->fCurrentPosition.y;
+          shouldMoveWidgets = true;
+        }
+        if(shouldMoveWidgets)
+          moveWidgets(iCtx, fMouseDrag->fLastUpdatePosition);
       }
     } else if(ImGui::IsItemClicked(ImGuiMouseButton_Left))
     {
-      auto &io = ImGui::GetIO();
       if(io.KeyShift)
-        fShiftMouseDrag = MouseDrag{mousePos / iCtx.fZoom, mousePos / iCtx.fZoom};
+        fShiftMouseDrag = MouseDrag{mousePos, mousePos, mousePos};
       else
       {
-        fMouseDrag = MouseDrag{mousePos, mousePos};
-        selectWidget(iCtx, mousePos / iCtx.fZoom, io.KeySuper);
+        fMouseDrag = MouseDrag{mousePos, mousePos, mousePos};
+        selectWidget(iCtx, mousePos, io.KeySuper);
       }
     }
   }
@@ -177,23 +185,26 @@ void Panel::draw(AppContext &iCtx)
   else
     fPopupLocation = std::nullopt;
 
-  if(fMouseDrag && !selectedWidgets.empty() && !ReGui::AnySpecialKey())
+  if(fMouseDrag && !selectedWidgets.empty() && (!ReGui::AnySpecialKey() || io.KeyAlt))
   {
     auto min = selectedWidgets[0]->getTopLeft();
     auto max = selectedWidgets[0]->getBottomRight();
 
-    std::for_each(selectedWidgets.begin() + 1, selectedWidgets.end(), [&min, &max](auto c) {
-      auto pos = c->getTopLeft();
-      if(pos.x < min.x)
-        min.x = pos.x;
-      if(pos.y < min.y)
-        min.y = pos.y;
-      pos = c->getBottomRight();
-      if(pos.x > max.x)
-        max.x = pos.x;
-      if(pos.y > max.y)
-        max.y = pos.y;
-    });
+    if(selectedWidgets.size() > 1)
+    {
+      std::for_each(selectedWidgets.begin() + 1, selectedWidgets.end(), [&min, &max](auto c) {
+        auto pos = c->getTopLeft();
+        if(pos.x < min.x)
+          min.x = pos.x;
+        if(pos.y < min.y)
+          min.y = pos.y;
+        pos = c->getBottomRight();
+        if(pos.x > max.x)
+          max.x = pos.x;
+        if(pos.y > max.y)
+          max.y = pos.y;
+      });
+    }
 
     auto frameSize = fGraphics.getSize();
     auto color = ImGui::GetColorU32({1,1,0,0.5});
@@ -213,7 +224,6 @@ void Panel::draw(AppContext &iCtx)
 
   if(logging->isShowDebug())
   {
-    auto &io = ImGui::GetIO();
     logging->debug("Key[Ctrl]", "%s", fmt::Bool::to_chars(io.KeyCtrl));
     logging->debug("Key[Shift]", "%s", fmt::Bool::to_chars(io.KeyShift));
     logging->debug("Key[Super]", "%s", fmt::Bool::to_chars(io.KeySuper));
@@ -645,7 +655,6 @@ void Panel::editView(AppContext &iCtx)
 
   if(ImGui::Begin("Panel Widgets"))
   {
-    static float kItemWidth = 300.0f;
 //
 //    ImGui::SliderFloat("Width", &kItemWidth, 0, ImGui::GetContentRegionAvail().x);
     ImGui::PushItemWidth(kItemWidth);

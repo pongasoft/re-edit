@@ -28,6 +28,7 @@ namespace re::edit {
 struct MouseDrag
 {
   ImVec2 fInitialPosition{};
+  ImVec2 fLastUpdatePosition{};
   ImVec2 fCurrentPosition{};
 };
 

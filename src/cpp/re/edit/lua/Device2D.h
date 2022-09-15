@@ -19,7 +19,7 @@
 #ifndef RE_EDIT_DEVICE_2D_H
 #define RE_EDIT_DEVICE_2D_H
 
-#include <re/mock/lua/MockJBox.h>
+#include "Base.h"
 #include "../Graphics.h"
 #include <map>
 
@@ -54,7 +54,7 @@ struct panel_nodes
   std::optional<gfx_node> findNodeByName(std::string const &iName) const;
 };
 
-class Device2D : public re::mock::lua::MockJBox
+class Device2D : public Base
 {
 public:
   Device2D() = default;
@@ -73,7 +73,6 @@ protected:
   std::shared_ptr<panel_nodes> createPanelNodes(char const *iPanelName);
   void processLuaTable(ImVec2 iOffset, std::vector<std::optional<std::string>> const &iDecalNames, panel_nodes &oPanelNodes);
   void processGfxNode(std::string const &iName, ImVec2 iOffset, panel_nodes &oPanelNodes);
-  ImVec2 getImVec2();
   std::optional<ImVec2> getOptionalOffset();
 };
 

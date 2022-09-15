@@ -60,6 +60,8 @@ set(re-edit_CPP_SRC_DIR "${CMAKE_CURRENT_LIST_DIR}/src/cpp")
 
 # Defines all the common sources
 set(re-edit_BUILD_SOURCES
+    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/lua/Base.h"
+    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/lua/Base.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/lua/Device2D.h"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/lua/Device2D.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/lua/HDGui2D.h"

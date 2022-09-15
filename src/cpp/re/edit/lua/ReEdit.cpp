@@ -68,6 +68,7 @@ Config ReEdit::loadConfig()
     withOptionalValue(L.getTableValueAsOptionalBoolean("show_properties"), [&c](auto v) { c.fShowProperties = v; });
     withOptionalValue(L.getTableValueAsOptionalBoolean("show_widgets"), [&c](auto v) { c.fShowWidgets = v; });
     withOptionalValue(L.getTableValueAsOptionalNumber("font_size"), [&c](auto v) { c.fFontSize = v; });
+    withOptionalValue(getOptionalImVec2TableField("grid"), [&c](auto v) { c.fGrid = v; });
   }
   lua_pop(L, 1);
 

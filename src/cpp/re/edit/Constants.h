@@ -101,6 +101,8 @@ constexpr auto kSampleBrowseGroupSize = ImVec2{290, 110};
 constexpr auto kDeviceNameHorizontal = ImVec2{400, 65};
 constexpr auto kDeviceNameVertical = ImVec2{65, 400};
 
+constexpr auto kItemWidth = 300.0f;
+
 constexpr int toPixelHeight(int iDeviceHeightRU)
 {
   return k1UPixelSize * static_cast<int>(iDeviceHeightRU);

@@ -117,38 +117,6 @@ void Device2D::processLuaTable(ImVec2 iOffset, std::vector<std::optional<std::st
 }
 
 //------------------------------------------------------------------------
-// Device2D::getImVec2
-//------------------------------------------------------------------------
-ImVec2 Device2D::getImVec2()
-{
-  ImVec2 res{};
-
-  int mapStackIndex = lua_gettop(L);
-
-  if(lua_type(L, mapStackIndex) == LUA_TTABLE)
-  {
-    iterateLuaArray([this, &res](int index) {
-      switch(index)
-      {
-        case 1:
-          res.x = lua_tonumber(L, -1);
-          break;
-
-        case 2:
-          res.y = lua_tonumber(L, -1);
-          break;
-
-        default:
-          // ignored
-          break;
-      }
-    }, true, false);
-  }
-
-  return res;
-}
-
-//------------------------------------------------------------------------
 // Device2D::processGfxNode
 //------------------------------------------------------------------------
 void Device2D::processGfxNode(std::string const &iName, ImVec2 iOffset, panel_nodes &oPanelNodes)
