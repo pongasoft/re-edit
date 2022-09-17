@@ -43,7 +43,7 @@ Collapsed=0
 
 [Window][re-edit]
 Pos=5,25
-Size=421,181
+Size=421,204
 Collapsed=0
 
 [Window][Panel]
@@ -62,8 +62,8 @@ Size=288,404
 Collapsed=0
 
 [Window][Properties]
-Pos=5,209
-Size=421,220
+Pos=5,231
+Size=422,198
 Collapsed=0
 
 [Window][Log]
@@ -89,6 +89,11 @@ Collapsed=0
 [Window][Dear ImGui Metrics/Debugger]
 Pos=407,158
 Size=339,290
+Collapsed=0
+
+[Window][Save | Warning]
+Pos=344,307
+Size=532,100
 Collapsed=0
 
 [Table][0x59A508FC,3]

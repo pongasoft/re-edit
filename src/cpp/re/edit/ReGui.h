@@ -147,18 +147,36 @@ inline bool ToggleButton(char const *iFalseLabel, char const *iTrueLabel, bool* 
 }
 
 //------------------------------------------------------------------------
-// ReGui::RadioButton
-// With a better api
+// ReGui::TextRadioButton
+// Behaves like a radio button but with a shape of a button
 //------------------------------------------------------------------------
 template<typename T>
-inline bool RadioButton(char const *iLabel, T *ioCurrentValue, T iSelectedValue)
+inline bool TextRadioButton(char const *iLabel, T *ioValue, T iTrueValue, const ImVec2& size = ImVec2(0, 0))
 {
-  if(ImGui::RadioButton(iLabel, *ioCurrentValue == iSelectedValue))
+  auto res = false;
+  if(*ioValue != iTrueValue)
   {
-    *ioCurrentValue = iSelectedValue;
-    return true;
+    ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().DisabledAlpha);
+    if(ImGui::Button(iLabel, size))
+    {
+      *ioValue = iTrueValue;
+      res = true;
+    }
+    ImGui::PopStyleVar();
   }
-  return false;
+  else
+  {
+    ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.0);
+    ImGui::PushStyleColor(ImGuiCol_Border, ImGui::GetStyle().Colors[ImGuiCol_Text]);
+    if(ImGui::Button(iLabel, size))
+    {
+      *ioValue = iTrueValue;
+      res = true;
+    }
+    ImGui::PopStyleColor();
+    ImGui::PopStyleVar();
+  }
+  return res;
 }
 
 //------------------------------------------------------------------------

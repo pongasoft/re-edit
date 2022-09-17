@@ -137,56 +137,53 @@ void Application::render()
 
     fAppContext.render();
 
-    ImGui::Text("Rendering");
     ImGui::PushID("Rendering");
-    ImGui::Indent();
-    
+
     ImGui::PushID("Widget");
     ImGui::AlignTextToFramePadding();
-    ImGui::Text("Widget");
+    ImGui::Text("Widget          ");
     ImGui::SameLine();
-    ReGui::RadioButton("None", &fAppContext.fWidgetRendering, AppContext::EWidgetRendering::kNone);
+    ReGui::TextRadioButton("None  ", &fAppContext.fWidgetRendering, AppContext::EWidgetRendering::kNone);
     ImGui::SameLine();
-    ReGui::RadioButton("Normal", &fAppContext.fWidgetRendering, AppContext::EWidgetRendering::kNormal);
+    ReGui::TextRadioButton("Normal", &fAppContext.fWidgetRendering, AppContext::EWidgetRendering::kNormal);
     ImGui::SameLine();
-    ReGui::RadioButton("X-Ray", &fAppContext.fWidgetRendering, AppContext::EWidgetRendering::kXRay);
+    ReGui::TextRadioButton("X-Ray ", &fAppContext.fWidgetRendering, AppContext::EWidgetRendering::kXRay);
     ImGui::PopID();
 
     ImGui::PushID("Border");
     ImGui::AlignTextToFramePadding();
-    ImGui::Text("Border");
+    ImGui::Text("Border          ");
     ImGui::SameLine();
-    ReGui::RadioButton("None", &fAppContext.fBorderRendering, AppContext::EBorderRendering::kNone);
+    ReGui::TextRadioButton("None  ", &fAppContext.fBorderRendering, AppContext::EBorderRendering::kNone);
     ImGui::SameLine();
-    ReGui::RadioButton("Normal", &fAppContext.fBorderRendering, AppContext::EBorderRendering::kNormal);
+    ReGui::TextRadioButton("Normal", &fAppContext.fBorderRendering, AppContext::EBorderRendering::kNormal);
     ImGui::SameLine();
-    ReGui::RadioButton("Hit Boundaries", &fAppContext.fBorderRendering, AppContext::EBorderRendering::kHitBoundaries);
+    ReGui::TextRadioButton("Hit B.", &fAppContext.fBorderRendering, AppContext::EBorderRendering::kHitBoundaries);
     ImGui::PopID();
 
 
     ImGui::PushID("Custom Display");
     ImGui::AlignTextToFramePadding();
-    ImGui::Text("Custom Display");
+    ImGui::Text("Custom Display  ");
     ImGui::SameLine();
-    ReGui::RadioButton("None", &fAppContext.fCustomDisplayRendering, AppContext::ECustomDisplayRendering::kNone);
+    ReGui::TextRadioButton("None  ", &fAppContext.fCustomDisplayRendering, AppContext::ECustomDisplayRendering::kNone);
     ImGui::SameLine();
-    ReGui::RadioButton("Main", &fAppContext.fCustomDisplayRendering, AppContext::ECustomDisplayRendering::kMain);
+    ReGui::TextRadioButton("Main  ", &fAppContext.fCustomDisplayRendering, AppContext::ECustomDisplayRendering::kMain);
     ImGui::SameLine();
-    ReGui::RadioButton("SD Bg", &fAppContext.fCustomDisplayRendering, AppContext::ECustomDisplayRendering::kBackgroundSD);
+    ReGui::TextRadioButton("SD Bg.", &fAppContext.fCustomDisplayRendering, AppContext::ECustomDisplayRendering::kBackgroundSD);
     ImGui::SameLine();
-    ReGui::RadioButton("HD Bg", &fAppContext.fCustomDisplayRendering, AppContext::ECustomDisplayRendering::kBackgroundHD);
+    ReGui::TextRadioButton("HD Bg.", &fAppContext.fCustomDisplayRendering, AppContext::ECustomDisplayRendering::kBackgroundHD);
     ImGui::PopID();
 
     ImGui::PushID("Sample Drop Zone");
     ImGui::AlignTextToFramePadding();
     ImGui::Text("Sample Drop Zone");
     ImGui::SameLine();
-    ReGui::RadioButton("None", &fAppContext.fSampleDropZoneRendering, AppContext::ESampleDropZoneRendering::kNone);
+    ReGui::TextRadioButton("None  ", &fAppContext.fSampleDropZoneRendering, AppContext::ESampleDropZoneRendering::kNone);
     ImGui::SameLine();
-    ReGui::RadioButton("Fill", &fAppContext.fSampleDropZoneRendering, AppContext::ESampleDropZoneRendering::kFill);
+    ReGui::TextRadioButton("Fill  ", &fAppContext.fSampleDropZoneRendering, AppContext::ESampleDropZoneRendering::kFill);
     ImGui::PopID();
 
-    ImGui::Unindent();
     ImGui::PopID();
     ImGui::Separator();
 
