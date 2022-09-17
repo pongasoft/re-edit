@@ -836,13 +836,18 @@ void PropertyPathList::editView(AppContext &iCtx)
 
   if(ImGui::Button(re::mock::fmt::printf("[%d] properties", fValue.size()).c_str(), ImVec2{ImGui::CalcItemWidth(), 0}))
   {
+    auto sortBy = [&iCtx, this](std::vector<std::string> &ioString, std::string const &iSortCriteria) {
+      fSortCriteria = iSortCriteria;
+      iCtx.sortProperties(ioString, iSortCriteria == "Path" ? kByPathComparator : kByTagComparator);
+    };
     ImGui::OpenPopup(popupTitleName.c_str());
     fStringListEditView = views::StringListEdit(iCtx.findPropertyNames(fFilter),
                                                 "Properties",
-                                                true,
+                                                sortBy,
+                                                {"Path", "Tag"},
+                                                fSortCriteria,
                                                 fValue,
-                                                fName,
-                                                false);
+                                                fName);
   }
   ImGui::SameLine(0, ImGui::GetStyle().ItemInnerSpacing.x);
   ImGui::Text("%s", fName);

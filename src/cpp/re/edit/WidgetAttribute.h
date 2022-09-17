@@ -248,6 +248,7 @@ public:
 public:
   Property::Filter fFilter;
   std::optional<views::StringListEdit> fStringListEditView{};
+  std::string fSortCriteria{"Path"};
 };
 
 class DiscretePropertyValueList : public SingleAttribute<std::vector<int>>

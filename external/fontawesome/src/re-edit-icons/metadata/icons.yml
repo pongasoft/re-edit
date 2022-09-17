@@ -44,6 +44,19 @@ arrow-rotate-right:
     - solid
   unicode: f01e
   voted: false
+arrow-up-arrow-down:
+  aliases:
+    names:
+      - sort-up-down
+  changes:
+    - 6.0.0-beta1
+  label: Arrow up arrow down
+  search:
+    terms: []
+  styles:
+    - solid
+  unicode: e099
+  voted: false
 bars:
   aliases:
     names:

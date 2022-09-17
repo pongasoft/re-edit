@@ -19,6 +19,8 @@
 #include "Views.h"
 #include "imgui.h"
 #include "Errors.h"
+#include "Constants.h"
+#include "ReGui.h"
 #include <utility>
 
 namespace re::edit::views {
@@ -98,7 +100,8 @@ void MultiSelectionList::editView()
 //------------------------------------------------------------------------
 void MultiSelectionList::sort()
 {
-  std::sort(fList.begin(), fList.end());
+  if(fSortBy)
+    fSortBy(fList, fSortCriteria);
 }
 
 //------------------------------------------------------------------------
@@ -109,9 +112,14 @@ void MultiSelectionList::moveSelectionTo(MultiSelectionList &ioOther)
   if(fSelected.empty())
     return;
 
+  for(auto &s: fList)
+  {
+    if(fSelected.find(s) != fSelected.end())
+      ioOther.fList.emplace_back(s);
+  }
+
   for(auto &s: fSelected)
   {
-    ioOther.fList.emplace_back(s);
     fList.erase(std::find(fList.begin(), fList.end(), s));
   }
 
@@ -187,14 +195,13 @@ void MultiSelectionList::moveSelectionDown()
 //------------------------------------------------------------------------
 StringListEdit::StringListEdit(std::vector<std::string> iSourceList,
                                std::string iSourceName,
-                               bool iKeepSourceSorted,
+                               MultiSelectionList::sort_by_t iSourceSortBy,
+                               std::vector<std::string> iSourceSortCriteriaList,
+                               std::string iSourceSortCriteria,
                                std::vector<std::string> iDestinationList,
-                               std::string iDestinationName,
-                               bool iKeepDestinationSorted) :
+                               std::string iDestinationName) :
   fSourceName{std::move(iSourceName)},
-  fKeepSourceSorted{iKeepSourceSorted},
-  fDestinationName{std::move(iDestinationName)},
-  fKeepDestinationSorted{iKeepDestinationSorted}
+  fDestinationName{std::move(iDestinationName)}
 {
   std::string max{};
 
@@ -210,14 +217,18 @@ StringListEdit::StringListEdit(std::vector<std::string> iSourceList,
 
   // handle destination first
   fDestination.fList = std::move(iDestinationList);
-  if(fKeepDestinationSorted)
-    fDestination.sort();
+
+  fSource.fSortBy = std::move(iSourceSortBy);
+  if(fSource.fSortBy)
+  {
+    RE_EDIT_INTERNAL_ASSERT(!iSourceSortCriteriaList.empty());
+    fSource.fSortCriteriaList = std::move(iSourceSortCriteriaList);
+    fSource.fSortCriteria = std::move(iSourceSortCriteria);
+  }
 
   if(fDestination.empty())
   {
     fSource.fList = std::move(iSourceList);
-    if(fKeepSourceSorted)
-      fSource.sort();
   }
   else
   {
@@ -227,14 +238,10 @@ StringListEdit::StringListEdit(std::vector<std::string> iSourceList,
     for(auto &s: fDestination.fList)
       src.erase(s);
 
-    if(fKeepSourceSorted)
-      // we can use src because it is already sorted...
-      std::copy(src.begin(), src.end(), std::back_inserter(fSource.fList));
-    else
-    {
-      std::copy_if(iSourceList.begin(), iSourceList.end(), std::back_inserter(fSource.fList), [&src](auto const &s) { return src.find(s) != src.end(); });
-    }
+    std::copy_if(iSourceList.begin(), iSourceList.end(), std::back_inserter(fSource.fList), [&src](auto const &s) { return src.find(s) != src.end(); });
   }
+
+  fSource.sort();
 }
 
 //------------------------------------------------------------------------
@@ -244,11 +251,49 @@ void StringListEdit::editView()
 {
   if(ImGui::BeginTable("StringListEdit", 3, ImGuiTableFlags_Resizable | ImGuiTableFlags_Borders))
   {
-    // TODO: Add a way to sort the columns by a criteria (ex: property by name or tag)
     ImGui::TableSetupColumn(fSourceName.c_str());
     ImGui::TableSetupColumn("Action");
     ImGui::TableSetupColumn(fDestinationName.c_str());
-    ImGui::TableHeadersRow();
+
+    ImGui::TableNextRow(ImGuiTableRowFlags_Headers);
+
+    if(!fSource.fSortCriteriaList.empty())
+    {
+      ImGui::TableSetColumnIndex(0);
+      ImGui::PushID(0);
+
+      ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(ImGui::GetStyle().FramePadding.x, 1));
+      if(ImGui::Button(fa::kArrowUpArrowDown))
+        ImGui::OpenPopup("Sort Menu");
+      ImGui::PopStyleVar();
+
+      ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
+      ImGui::TableHeader(fSourceName.c_str());
+
+      if(ImGui::BeginPopup("Sort Menu"))
+      {
+        ImGui::Text("Sort");
+        ImGui::Separator();
+        for(auto &sortCriteria: fSource.fSortCriteriaList)
+        {
+          if(ImGui::MenuItem(fmt::printf("By %s", sortCriteria).c_str(), nullptr, sortCriteria == fSource.fSortCriteria))
+          {
+            fSource.fSortCriteria = sortCriteria;
+            fSource.sort();
+          }
+        }
+        ImGui::EndPopup();
+      }
+
+      ImGui::PopID();
+    }
+    else
+    {
+      ReGui::DefaultHeaderColumn(0);
+    }
+
+    ReGui::DefaultHeaderColumn(1);
+    ReGui::DefaultHeaderColumn(2);
 
     ImGui::TableNextRow();
     ImGui::TableSetColumnIndex(0);
@@ -267,14 +312,6 @@ void StringListEdit::editView()
     ImGui::BeginDisabled(fSource.fSelected.empty());
     if(ImGui::Button("->", buttonSize))
       fSource.moveSelectionTo(fDestination);
-    if(!fKeepSourceSorted)
-    {
-      if(ImGui::Button("Up", buttonSize))
-        fSource.moveSelectionUp();
-      ImGui::SameLine();
-      if(ImGui::Button("Down", buttonSize))
-        fSource.moveSelectionDown();
-    }
     if(ImGui::Button("None", buttonSize))
       fSource.clearSelection();
     ImGui::EndDisabled();
@@ -290,15 +327,7 @@ void StringListEdit::editView()
     if(ImGui::Button("<-", buttonSize))
     {
       fDestination.moveSelectionTo(fSource);
-      if(fKeepSourceSorted)
-        fSource.sort();
-    }
-    if(!fKeepDestinationSorted)
-    {
-      if(ImGui::Button("Up", buttonSize))
-        fDestination.moveSelectionUp();
-      if(ImGui::Button("Down", buttonSize))
-        fDestination.moveSelectionDown();
+      fSource.sort();
     }
     if(ImGui::Button("None", buttonSize))
       fDestination.clearSelection();

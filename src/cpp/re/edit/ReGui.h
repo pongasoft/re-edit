@@ -240,6 +240,18 @@ inline bool MenuButton(const ImVec2& iSize = kFaButtonSize)
 }
 
 //------------------------------------------------------------------------
+// ReGui::DefaultHeaderColumn
+//------------------------------------------------------------------------
+inline void DefaultHeaderColumn(int iColumn)
+{
+  ImGui::TableSetColumnIndex(iColumn);
+  const char* column_name = ImGui::TableGetColumnName(iColumn); // Retrieve name passed to TableSetupColumn()
+  ImGui::PushID(iColumn);
+  ImGui::TableHeader(column_name);
+  ImGui::PopID();
+}
+
+//------------------------------------------------------------------------
 // ReGui::AnySpecialKey
 //------------------------------------------------------------------------
 inline bool AnySpecialKey()

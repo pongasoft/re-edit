@@ -42,6 +42,7 @@ public:
 
   std::vector<Property const *> findProperties(Property::Filter const &iFilter) const;
   std::vector<std::string> findPropertyNames(Property::Filter const &iFilter) const;
+  void sortProperties(std::vector<std::string> &ioProperties, Property::Comparator const &iComparator) const;
   Property const *findProperty(std::string const &iPropertyPath) const;
   std::string getPropertyInfo(std::string const &iPropertyPath) const;
 

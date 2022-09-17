@@ -131,6 +131,22 @@ std::vector<std::string> PropertyManager::findPropertyNames(Property::Filter con
 }
 
 //------------------------------------------------------------------------
+// PropertyManager::sortProperties
+//------------------------------------------------------------------------
+void PropertyManager::sortProperties(std::vector<std::string> &ioProperties,
+                                     Property::Comparator const &iComparator) const
+{
+  std::vector<const Property *> properties{};
+  properties.reserve(ioProperties.size());
+  for(auto &path: ioProperties)
+    properties.emplace_back(&fProperties.at(path));
+  std::sort(properties.begin(), properties.end(), iComparator);
+  ioProperties.clear();
+  for(auto &p: properties)
+    ioProperties.emplace_back(p->path());
+}
+
+//------------------------------------------------------------------------
 // PropertyManager::findProperty
 //------------------------------------------------------------------------
 Property const *PropertyManager::findProperty(std::string const &iPropertyPath) const

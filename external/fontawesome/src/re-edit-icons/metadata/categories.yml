@@ -16,6 +16,7 @@ arrows:
   icons:
     - arrow-rotate-left
     - arrow-rotate-right
+    - arrow-up-arrow-down
   label: Arrows
 astronomy:
   icons: []

@@ -29,6 +29,9 @@ namespace re::edit::views {
 class MultiSelectionList
 {
 public:
+  using sort_by_t = std::function<void(std::vector<std::string> &ioString, std::string const &iSortCriteria)>;
+
+public:
   void handleClick(std::string const &s, bool iRangeSelectKey, bool iMultiSelectKey);
   void editView();
   void moveSelectionTo(MultiSelectionList &ioOther);
@@ -45,6 +48,9 @@ public:
   std::vector<std::string> fList{};
   std::optional<std::string> fLastSelected{};
   std::set<std::string> fSelected{};
+  std::vector<std::string> fSortCriteriaList{};
+  std::string fSortCriteria{};
+  sort_by_t fSortBy{};
 };
 
 class StringListEdit
@@ -52,10 +58,11 @@ class StringListEdit
 public:
   StringListEdit(std::vector<std::string> iSourceList,
                  std::string iSourceName,
-                 bool iKeepSourceSorted,
+                 MultiSelectionList::sort_by_t iSourceSortBy,
+                 std::vector<std::string> iSourceSortCriteriaList,
+                 std::string iSourceSortCriteria,
                  std::vector<std::string> iDestinationList,
-                 std::string iDestinationName,
-                 bool iKeepDestinationSorted);
+                 std::string iDestinationName);
   void editView();
 
   std::vector<std::string> const &source() const { return fSource.fList; }
@@ -67,10 +74,8 @@ public:
 private:
   MultiSelectionList fSource{};
   std::string fSourceName;
-  bool fKeepSourceSorted;
   MultiSelectionList fDestination{};
   std::string fDestinationName;
-  bool fKeepDestinationSorted;
 
   ImVec2 fSize{};
 };

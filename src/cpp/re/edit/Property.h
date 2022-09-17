@@ -49,6 +49,7 @@ struct Object
 struct Property
 {
   using Filter = std::function<bool(Property const &iProperty)>;
+  using Comparator = std::function<bool(Property const *iLeft, Property const *iRight)>;
 
   constexpr TJBox_PropertyRef const &ref() const { return fInfo.fPropertyRef; };
   constexpr Object const &parent() const { return fParent; };
@@ -68,6 +69,14 @@ struct Property
 
 static constexpr auto kDocGuiOwnerFilter = [](const Property &p) {
   return p.owner() == mock::PropertyOwner::kDocOwner || p.owner() == mock::PropertyOwner::kGUIOwner;
+};
+
+static constexpr auto kByPathComparator = [](Property const *iLeft, Property const *iRight) {
+  return iLeft->path() < iRight->path();
+};
+
+static constexpr auto kByTagComparator = [](Property const *iLeft, Property const *iRight) {
+  return iLeft->tag() < iRight->tag();
 };
 
 
