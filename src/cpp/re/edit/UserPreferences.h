@@ -26,11 +26,14 @@ namespace re::edit {
 class UserPreferences
 {
 public:
-  ImVec4 fWidgetBorderColor{0,1,0,1};
+  ImU32 fWidgetBorderColor{ReGui::GetColorU32(ImVec4{0,1,0,1})};
 
-  ImVec4 fWidgetErrorColor{1,0,0,0.5};
+  ImU32 fWidgetErrorColor{ReGui::GetColorU32(ImVec4{1,0,0,0.5})};
 
-  ImVec4 fSelectedWidgetColor{1,1,0,1};
+  ImU32 fSelectedWidgetColor{ReGui::GetColorU32(ImVec4{1,1,0,1})};
+
+  ImU32 fWidgetNoTextureColor{ReGui::GetColorU32(ImVec4{1,0,0,1})};
+  ImU32 fWidgetNoTextureXRayColor{ReGui::GetColorU32(ImVec4{1,0,0,0.4})};
 };
 
 }

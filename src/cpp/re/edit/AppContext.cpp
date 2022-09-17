@@ -116,17 +116,25 @@ ImVec2 AppContext::getPanelSize() const
 //------------------------------------------------------------------------
 // AppContext::TextureItem
 //------------------------------------------------------------------------
-void AppContext::TextureItem(Texture const *iTexture, ImVec2 const &iPosition, int iFrameNumber, const ImVec4& iBorderCol) const
+void AppContext::TextureItem(Texture const *iTexture,
+                             ImVec2 const &iPosition,
+                             int iFrameNumber,
+                             ImU32 iBorderColor,
+                             ImU32 iTextureColor) const
 {
-  iTexture->Item(iPosition, fZoom, iFrameNumber, iBorderCol);
+  iTexture->Item(iPosition, fZoom, iFrameNumber, iBorderColor, iTextureColor);
 }
 
 //------------------------------------------------------------------------
 // AppContext::drawTexture
 //------------------------------------------------------------------------
-void AppContext::drawTexture(Texture const *iTexture, ImVec2 const &iPosition, int iFrameNumber, const ImVec4& iBorderCol) const
+void AppContext::drawTexture(Texture const *iTexture,
+                             ImVec2 const &iPosition,
+                             int iFrameNumber,
+                             ImU32 iBorderColor,
+                             ImU32 iTextureColor) const
 {
-  iTexture->draw(iPosition, fZoom, iFrameNumber, iBorderCol);
+  iTexture->draw(iPosition, fZoom, iFrameNumber, iBorderColor, iTextureColor);
 }
 
 //------------------------------------------------------------------------

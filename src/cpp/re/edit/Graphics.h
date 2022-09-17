@@ -106,9 +106,9 @@ public:
 
   error_t checkForErrors(AppContext &iCtx) const override;
 
-  void draw(AppContext &iCtx, const ImVec4& iBorderCol) const;
-  void drawBorder(AppContext &iCtx, const ImVec4& iBorderCol) const;
-  void drawHitBoundaries(AppContext &iCtx, const ImVec4& iColor) const;
+  void draw(AppContext &iCtx, ImU32 iBorderColor, bool iXRay) const;
+  void drawBorder(AppContext &iCtx, ImU32 iBorderColor) const;
+  void drawHitBoundaries(AppContext &iCtx, ImU32 iColor) const;
 
   std::unique_ptr<Attribute> clone() const override { return Attribute::clone<Graphics>(*this); }
 
@@ -142,7 +142,7 @@ public:
   std::string getValueAsLua() const override;
 
   void editView(AppContext &iCtx) override;
-  bool draw(AppContext &iCtx, Graphics const *iParent) const;
+  bool draw(AppContext &iCtx, Graphics const *iParent, ImU32 iBorderColor, bool xRay) const;
 
   std::unique_ptr<Attribute> clone() const override { return Attribute::clone<Background>(*this); }
 

@@ -112,55 +112,69 @@ void Widget::draw(AppContext &iCtx)
   if(isHidden())
     return;
 
-  ImVec4 borderColor{};
+  ImU32 borderColor{};
   if(fSelected)
     borderColor = iCtx.getUserPreferences().fSelectedWidgetColor;
   else
   {
-    if(iCtx.fShowBorder == AppContext::ShowBorder::kWidget)
+    if(iCtx.fBorderRendering == AppContext::EBorderRendering::kNormal)
       borderColor = iCtx.getUserPreferences().fWidgetBorderColor;
   }
 
-  switch(fType)
+  // widget is not rendered at all
+  if(iCtx.fWidgetRendering == AppContext::EWidgetRendering::kNone)
   {
-    case WidgetType::kCustomDisplay:
-      switch(iCtx.fShowCustomDisplay)
-      {
-        case AppContext::ShowCustomDisplay::kNone:
-          fGraphics->drawBorder(iCtx, borderColor);
-          break;
-        case AppContext::ShowCustomDisplay::kMain:
-          fGraphics->draw(iCtx, borderColor);
-          break;
-        case AppContext::ShowCustomDisplay::kBackgroundSD:
-        case AppContext::ShowCustomDisplay::kBackgroundHD:
-        {
-          auto bgAttribute = findAttributeByNameAndType<Background>("background");
-          bgAttribute->draw(iCtx, fGraphics);
-          fGraphics->drawBorder(iCtx, borderColor);
-          break;
-        }
-        default:
-          RE_EDIT_FAIL("not reached");
-      }
-      break;
-
-    case WidgetType::kSampleDropZone:
-      switch(iCtx.fShowSampleDropZone)
-      {
-        case AppContext::ShowSampleDropZone::kNone:
-          fGraphics->drawBorder(iCtx, borderColor);
-          break;
-        case AppContext::ShowSampleDropZone::kFill:
-          fGraphics->draw(iCtx, borderColor);
-          break;
-      }
-      break;
-
-    default:
-      fGraphics->draw(iCtx, borderColor);
-      break;
+    // border and hit boundaries
+    fGraphics->drawBorder(iCtx, borderColor);
   }
+  else
+  {
+    auto xRay = iCtx.fWidgetRendering == AppContext::EWidgetRendering::kNormal;
+
+    switch(fType)
+    {
+      case WidgetType::kCustomDisplay:
+        switch(iCtx.fCustomDisplayRendering)
+        {
+          case AppContext::ECustomDisplayRendering::kNone:
+            fGraphics->drawBorder(iCtx, borderColor);
+            break;
+          case AppContext::ECustomDisplayRendering::kMain:
+            fGraphics->draw(iCtx, borderColor, xRay);
+            break;
+          case AppContext::ECustomDisplayRendering::kBackgroundSD:
+          case AppContext::ECustomDisplayRendering::kBackgroundHD:
+          {
+            auto bgAttribute = findAttributeByNameAndType<Background>("background");
+            if(!bgAttribute->draw(iCtx, fGraphics, borderColor, xRay))
+              fGraphics->drawBorder(iCtx, borderColor);
+            break;
+          }
+          default:
+            RE_EDIT_FAIL("not reached");
+        }
+        break;
+
+      case WidgetType::kSampleDropZone:
+        switch(iCtx.fSampleDropZoneRendering)
+        {
+          case AppContext::ESampleDropZoneRendering::kNone:
+            fGraphics->drawBorder(iCtx, borderColor);
+            break;
+          case AppContext::ESampleDropZoneRendering::kFill:
+            fGraphics->draw(iCtx, borderColor, xRay);
+            break;
+        }
+        break;
+
+      default:
+        fGraphics->draw(iCtx, borderColor, xRay);
+        break;
+    }
+  }
+
+  if(iCtx.fBorderRendering == AppContext::EBorderRendering::kHitBoundaries)
+    fGraphics->drawHitBoundaries(iCtx, ReGui::GetColorU32(kHitBoundariesColor));
 
   if(fError)
     iCtx.drawRectFilled(fGraphics->fPosition, fGraphics->getSize(), iCtx.getUserPreferences().fWidgetErrorColor);

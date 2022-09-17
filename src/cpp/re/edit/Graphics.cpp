@@ -44,40 +44,58 @@ bool operator!=(HitBoundaries const &lhs, HitBoundaries const &rhs)
 }
 namespace re::edit::widget::attribute {
 
+namespace impl {
+
+//------------------------------------------------------------------------
+// impl::computeTextureColor
+//------------------------------------------------------------------------
+constexpr ImU32 computeTextureColor(bool iXRay)
+{
+  return iXRay ?
+         ReGui::GetColorU32(kWhiteColor) :
+         ReGui::GetColorU32(kXRayColor);
+}
+
+}
+
 //------------------------------------------------------------------------
 // Graphics::draw
 //------------------------------------------------------------------------
-void Graphics::draw(AppContext &iCtx, ImVec4 const &iBorderCol) const
+void Graphics::draw(AppContext &iCtx, ImU32 iBorderColor, bool iXRay) const
 {
   if(hasTexture())
-    iCtx.drawTexture(getTexture(), fPosition, fFrameNumber);
+  {
+    iCtx.drawTexture(getTexture(), fPosition, fFrameNumber, iBorderColor, impl::computeTextureColor(iXRay));
+  }
   else
-    iCtx.drawRectFilled(fPosition, getSize(), ImVec4{1, 0, 0, 1});
-
-  if(fHitBoundariesEnabled && iCtx.fShowBorder == AppContext::ShowBorder::kHitBoundaries)
-    drawHitBoundaries(iCtx, kHitBoundariesColor);
-
-  if(iBorderCol.w > 0.0f)
-    drawBorder(iCtx, iBorderCol);
+  {
+    auto color = iXRay ?
+                 iCtx.getUserPreferences().fWidgetNoTextureColor :
+                 iCtx.getUserPreferences().fWidgetNoTextureXRayColor;
+    iCtx.drawRectFilled(fPosition, getSize(), color);
+    drawBorder(iCtx, iBorderColor);
+  }
 }
 
 //------------------------------------------------------------------------
 // Graphics::drawBorder
 //------------------------------------------------------------------------
-void Graphics::drawBorder(AppContext &iCtx, ImVec4 const &iBorderCol) const
+void Graphics::drawBorder(AppContext &iCtx, ImU32 iBorderColor) const
 {
-  iCtx.drawRect(fPosition, getSize(), iBorderCol);
+  if(!ReGui::ColorIsTransparent(iBorderColor))
+    iCtx.drawRect(fPosition, getSize(), iBorderColor);
 }
 
 //------------------------------------------------------------------------
 // Graphics::drawHitBoundaries
 //------------------------------------------------------------------------
-void Graphics::drawHitBoundaries(AppContext &iCtx, ImVec4 const &iColor) const
+void Graphics::drawHitBoundaries(AppContext &iCtx, ImU32 iColor) const
 {
-  iCtx.drawRect(fPosition + ImVec2{fHitBoundaries.fLeftInset, fHitBoundaries.fTopInset},
-                getSize() - ImVec2{fHitBoundaries.fLeftInset + fHitBoundaries.fRightInset,
-                                   fHitBoundaries.fTopInset + fHitBoundaries.fBottomInset},
-                iColor);
+  if(fHitBoundariesEnabled)
+    iCtx.drawRect(fPosition + ImVec2{fHitBoundaries.fLeftInset, fHitBoundaries.fTopInset},
+                  getSize() - ImVec2{fHitBoundaries.fLeftInset + fHitBoundaries.fRightInset,
+                                     fHitBoundaries.fTopInset + fHitBoundaries.fBottomInset},
+                  iColor);
 }
 
 //------------------------------------------------------------------------
@@ -208,7 +226,7 @@ void Graphics::editView(AppContext &iCtx)
 //------------------------------------------------------------------------
 void Graphics::editHitBoundariesView(AppContext &iCtx)
 {
-  if(fHitBoundariesEnabled && iCtx.fShowBorder == AppContext::ShowBorder::kHitBoundaries)
+  if(fHitBoundariesEnabled && iCtx.fBorderRendering == AppContext::EBorderRendering::kHitBoundaries)
   {
     auto editedHB = fHitBoundaries;
 
@@ -342,30 +360,30 @@ bool Graphics::copyFrom(Attribute const *iFromAttribute)
 //------------------------------------------------------------------------
 // Background::draw
 //------------------------------------------------------------------------
-bool Background::draw(AppContext &iCtx, Graphics const *iParent) const
+bool Background::draw(AppContext &iCtx, Graphics const *iParent, ImU32 iBorderColor, bool xRay) const
 {
   if(fProvided)
   {
-    switch(iCtx.fShowCustomDisplay)
+    switch(iCtx.fCustomDisplayRendering)
     {
-      case AppContext::ShowCustomDisplay::kBackgroundSD:
+      case AppContext::ECustomDisplayRendering::kBackgroundSD:
       {
         auto texture = iCtx.findTexture(fValue);
         if(texture)
         {
           auto zoom = iCtx.fZoom * iParent->getSize().x / texture->frameWidth();
-          texture->draw(iParent->fPosition, iCtx.fZoom, zoom, 0);
+          texture->draw(iParent->fPosition, iCtx.fZoom, zoom, 0, iBorderColor, impl::computeTextureColor(xRay));
           return true;
         }
         break;
       }
 
-      case AppContext::ShowCustomDisplay::kBackgroundHD:
+      case AppContext::ECustomDisplayRendering::kBackgroundHD:
       {
         auto texture = iCtx.findHDTexture(fValue);
         if(texture)
         {
-          iCtx.drawTexture(texture.get(), iParent->fPosition);
+          iCtx.drawTexture(texture.get(), iParent->fPosition, 0, iBorderColor, impl::computeTextureColor(xRay));
           return true;
         }
         break;

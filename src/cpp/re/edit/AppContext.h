@@ -44,14 +44,21 @@ class Attribute;
 class AppContext
 {
 public:
-  enum class ShowBorder : int
+  enum class EWidgetRendering : int
   {
     kNone,
-    kWidget,
+    kNormal,
+    kXRay
+  };
+
+  enum class EBorderRendering : int
+  {
+    kNone,
+    kNormal,
     kHitBoundaries
   };
 
-  enum class ShowCustomDisplay : int
+  enum class ECustomDisplayRendering : int
   {
     kNone,
     kMain,
@@ -59,7 +66,7 @@ public:
     kBackgroundHD
   };
 
-  enum class ShowSampleDropZone : int
+  enum class ESampleDropZoneRendering : int
   {
     kNone,
     kFill
@@ -101,17 +108,21 @@ public: // Texture
   inline std::shared_ptr<Texture> findTexture(std::string const &iKey) const { return fTextureManager->findTexture(iKey); }
   inline std::shared_ptr<Texture> findHDTexture(std::string const &iKey) const { return fTextureManager->findHDTexture(iKey); }
 
-  void TextureItem(Texture const *iTexture, ImVec2 const &iPosition = {0,0}, int iFrameNumber = 0, const ImVec4& iBorderCol = ImVec4(0,0,0,0)) const;
+  void TextureItem(Texture const *iTexture,
+                   ImVec2 const &iPosition = {0,0},
+                   int iFrameNumber = 0,
+                   ImU32 iBorderColor = ReGui::kTransparentColorU32,
+                   ImU32 iTextureColor = ReGui::kWhiteColorU32) const;
 
-  void drawTexture(Texture const *iTexture, ImVec2 const &iPosition = {0,0}, int iFrameNumber = 0, const ImVec4& iBorderCol = ImVec4(0,0,0,0)) const;
+  void drawTexture(Texture const *iTexture,
+                   ImVec2 const &iPosition = {0,0},
+                   int iFrameNumber = 0,
+                   ImU32 iBorderColor = ReGui::kTransparentColorU32,
+                   ImU32 iTextureColor = ReGui::kWhiteColorU32) const;
+
   void drawRect(ImVec2 const &iPosition, ImVec2 const &iSize, ImU32 iColor) const;
   void drawRectFilled(ImVec2 const &iPosition, ImVec2 const &iSize, ImU32 iColor, float iRounding = 0.0f, ImDrawFlags iFlags = 0) const;
-  inline void drawRectFilled(ImVec2 const &iPosition, ImVec2 const &iSize, const ImVec4& iColor, float iRounding = 0.0f, ImDrawFlags iFlags = 0) const {
-    drawRectFilled(iPosition, iSize, ImGui::GetColorU32(iColor), iRounding, iFlags);
-  }
-  void drawRect(ImVec2 const &iPosition, ImVec2 const &iSize, const ImVec4& iColor) const { drawRect(iPosition, iSize, ImGui::GetColorU32(iColor)); }
   void drawLine(const ImVec2& iP1, const ImVec2& iP2, ImU32 iColor, float iThickness = 1.0f) const;
-  inline void drawLine(const ImVec2& iP1, const ImVec2& iP2, const ImVec4& iColor, float iThickness = 1.0f) const { drawLine(iP1, iP2, ImGui::GetColorU32(iColor), iThickness); }
 
 public: // Undo
   constexpr bool isUndoEnabled() const { return fUndoManager->isEnabled(); }
@@ -190,9 +201,11 @@ public: // Undo
   friend class Application;
 
 public:
-  ShowBorder fShowBorder{ShowBorder::kNone};
-  ShowCustomDisplay fShowCustomDisplay{ShowCustomDisplay::kMain};
-  ShowSampleDropZone fShowSampleDropZone{ShowSampleDropZone::kFill};
+  EWidgetRendering fWidgetRendering{EWidgetRendering::kNormal};
+  EBorderRendering fBorderRendering{EBorderRendering::kNone};
+  ECustomDisplayRendering fCustomDisplayRendering{ECustomDisplayRendering::kMain};
+  ESampleDropZoneRendering fSampleDropZoneRendering{ESampleDropZoneRendering::kFill};
+
   float fZoom{0.20f};
   ImVec2 fGrid{1.0f, 1.0f};
 

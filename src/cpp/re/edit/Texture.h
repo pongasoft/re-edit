@@ -21,6 +21,7 @@
 
 #include <imgui.h>
 #include "FilmStrip.h"
+#include "ReGui.h"
 
 namespace re::edit {
 
@@ -56,34 +57,54 @@ public:
 
   constexpr bool isValid() const { return fFilmStrip->isValid(); }
 
-  constexpr float width() const { return fFilmStrip->width(); }
-  constexpr float height() const { return fFilmStrip->height(); }
+  constexpr float width() const { return static_cast<float>(fFilmStrip->width()); }
+  constexpr float height() const { return static_cast<float>(fFilmStrip->height()); }
 
   constexpr int numFrames() const { return fFilmStrip->numFrames(); }
-  constexpr float frameWidth() const { return fFilmStrip->frameWidth(); }
-  constexpr float frameHeight() const { return fFilmStrip->frameHeight(); }
+  constexpr float frameWidth() const { return static_cast<float>(fFilmStrip->frameWidth()); }
+  constexpr float frameHeight() const { return static_cast<float>(fFilmStrip->frameHeight()); }
   constexpr ImVec2 frameSize() const { return {frameWidth(), frameHeight()}; }
 
   std::shared_ptr<FilmStrip> getFilmStrip() const { return fFilmStrip; }
 
-  inline void Item(ImVec2 const &iPosition, float iZoom, int iFrameNumber, const ImVec4& iBorderCol = ImVec4(0,0,0,0)) const
+  inline void Item(ImVec2 const &iPosition,
+                   float iZoom,
+                   int iFrameNumber,
+                   ImU32 iBorderColor = ReGui::kTransparentColorU32,
+                   ImU32 iTextureColor = ReGui::kWhiteColorU32) const
   {
-    doDraw(true, iPosition, iZoom, iZoom, iFrameNumber, iBorderCol);
-  }
-  inline void draw(ImVec2 const &iPosition, float iZoom, int iFrameNumber, const ImVec4& iBorderCol = ImVec4(0,0,0,0)) const
-  {
-    doDraw(false, iPosition, iZoom, iZoom, iFrameNumber, iBorderCol);
+    doDraw(true, iPosition, iZoom, iZoom, iFrameNumber, iBorderColor, iTextureColor);
   }
 
-  inline void draw(ImVec2 const &iPosition, float iPositionZoom, float iTextureZoom, int iFrameNumber, const ImVec4& iBorderCol = ImVec4(0,0,0,0)) const
+  inline void draw(ImVec2 const &iPosition,
+                   float iZoom,
+                   int iFrameNumber,
+                   ImU32 iBorderColor = ReGui::kTransparentColorU32,
+                   ImU32 iTextureColor = ReGui::kWhiteColorU32) const
   {
-    doDraw(false, iPosition, iPositionZoom, iTextureZoom, iFrameNumber, iBorderCol);
+    doDraw(false, iPosition, iZoom, iZoom, iFrameNumber, iBorderColor, iTextureColor);
+  }
+
+  inline void draw(ImVec2 const &iPosition,
+                   float iPositionZoom,
+                   float iTextureZoom,
+                   int iFrameNumber,
+                   ImU32 iBorderColor = ReGui::kTransparentColorU32,
+                   ImU32 iTextureColor = ReGui::kWhiteColorU32) const
+  {
+    doDraw(false, iPosition, iPositionZoom, iTextureZoom, iFrameNumber, iBorderColor, iTextureColor);
   }
 
   void addData(std::unique_ptr<Data> iData) { fData.emplace_back(std::move(iData)); }
 
 protected:
-  void doDraw(bool iAddItem, ImVec2 const &iPosition, float iPositionZoom, float iTextureZoom, int iFrameNumber, const ImVec4& iBorderCol) const;
+  void doDraw(bool iAddItem,
+              ImVec2 const &iPosition,
+              float iPositionZoom,
+              float iTextureZoom,
+              int iFrameNumber,
+              ImU32 iBorderColor,
+              ImU32 iTextureColor) const;
 
 protected:
   std::shared_ptr<FilmStrip> fFilmStrip{};

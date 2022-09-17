@@ -53,6 +53,52 @@ static constexpr bool operator!=(const ImVec2& lhs, const ImVec2& rhs)
 
 namespace re::edit::ReGui {
 
+namespace impl {
+constexpr auto ImSaturate(float f) { return (f < 0.0f) ? 0.0f : (f > 1.0f) ? 1.0f : f; }
+constexpr auto ImF32ToInt8Sat(float f) { return ((int)(ImSaturate(f) * 255.0f + 0.5f)); }
+}
+
+//------------------------------------------------------------------------
+// ReGui::GetColorU32
+// ImGui::GetColorU32 is a runtime call which uses global alpha, which is 1.0f
+// This call is a constexpr call (ignores the global alpha)
+//------------------------------------------------------------------------
+constexpr ImU32 GetColorU32(ImVec4 const &iColor)
+{
+  ImU32 out = ((ImU32)impl::ImF32ToInt8Sat(iColor.x)) << IM_COL32_R_SHIFT;
+  out |= ((ImU32)impl::ImF32ToInt8Sat(iColor.y)) << IM_COL32_G_SHIFT;
+  out |= ((ImU32)impl::ImF32ToInt8Sat(iColor.z)) << IM_COL32_B_SHIFT;
+  out |= ((ImU32)impl::ImF32ToInt8Sat(iColor.w)) << IM_COL32_A_SHIFT;
+  return out;
+}
+
+//------------------------------------------------------------------------
+// ReGui::GetColorImVec4
+// Convert back an ImU32 to a ImVec4
+//------------------------------------------------------------------------
+constexpr ImVec4 GetColorImVec4(ImU32 iColor)
+{
+  constexpr float sc = 1.0f / 255.0f;
+  return {
+    (float)((iColor >> IM_COL32_R_SHIFT) & 0xFF) * sc,
+    (float)((iColor >> IM_COL32_G_SHIFT) & 0xFF) * sc,
+    (float)((iColor >> IM_COL32_B_SHIFT) & 0xFF) * sc,
+    (float)((iColor >> IM_COL32_A_SHIFT) & 0xFF) * sc
+  };
+}
+
+//------------------------------------------------------------------------
+// ReGui::ColorIsTransparent
+// return `true` if the color is fully transparent (meaning drawing with it is a noop)
+//------------------------------------------------------------------------
+constexpr bool ColorIsTransparent(ImU32 iColor)
+{
+  return (iColor & IM_COL32_A_MASK) == 0;
+}
+
+constexpr ImU32 kWhiteColorU32 = GetColorU32(kWhiteColor);
+constexpr ImU32 kTransparentColorU32 = 0;
+
 //------------------------------------------------------------------------
 // ReGui::InputInt
 // Handle float <-> int conversion
@@ -183,6 +229,7 @@ inline bool AnySpecialKey()
   auto &io = ImGui::GetIO();
   return io.KeyShift || io.KeyCtrl || io.KeyAlt || io.KeySuper;
 }
+
 
 }
 

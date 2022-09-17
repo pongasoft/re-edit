@@ -88,7 +88,8 @@ void Texture::doDraw(bool iAddItem,
                      float iPositionZoom,
                      float iTextureZoom,
                      int iFrameNumber,
-                     ImVec4 const &iBorderCol) const
+                     ImU32 iBorderColor,
+                     ImU32 iTextureColor) const
 {
   if(fData.empty())
     return;
@@ -120,7 +121,7 @@ void Texture::doDraw(bool iAddItem,
     auto height = data->fHeight;
     auto uv0 = ImVec2(0, (frameY) / height);
     auto uv1 = ImVec2(1, (frameY + frameHeight) / height);
-    drawList->AddImage(data->fImTextureID, rect.Min, rect.Max, uv0, uv1, ImGui::GetColorU32(ImVec4{1, 1, 1, 1}));
+    drawList->AddImage(data->fImTextureID, rect.Min, rect.Max, uv0, uv1, iTextureColor);
   }
   else
   {
@@ -142,7 +143,7 @@ void Texture::doDraw(bool iAddItem,
       // case when it starts/ends in the same texture
       auto uv0 = ImVec2(0, startY / height);
       auto uv1 = ImVec2(1, endY / height);
-      drawList->AddImage(data->fImTextureID, rect.Min, rect.Max, uv0, uv1, ImGui::GetColorU32(ImVec4{1, 1, 1, 1}));
+      drawList->AddImage(data->fImTextureID, rect.Min, rect.Max, uv0, uv1, iTextureColor);
     }
     else
     {
@@ -157,20 +158,20 @@ void Texture::doDraw(bool iAddItem,
       auto fraction = heightInData1 / frameHeight;
       auto rect1 = rect;
       rect1.Max.y = (rect.Max.y - rect.Min.y) * fraction + rect.Min.y;
-      drawList->AddImage(data->fImTextureID, rect1.Min, rect1.Max, uv0, uv1, ImGui::GetColorU32(ImVec4{1, 1, 1, 1}));
+      drawList->AddImage(data->fImTextureID, rect1.Min, rect1.Max, uv0, uv1, iTextureColor);
       data = fData[i++].get();
       height = data->fHeight;
       uv0 = ImVec2(0, 0);
       uv1 = ImVec2(1, heightInData2 / height);
       auto rect2 = rect;
       rect2.Min.y = rect1.Max.y;
-      drawList->AddImage(data->fImTextureID, rect2.Min, rect2.Max, uv0, uv1, ImGui::GetColorU32(ImVec4{1, 1, 1, 1}));
+      drawList->AddImage(data->fImTextureID, rect2.Min, rect2.Max, uv0, uv1, iTextureColor);
     }
   }
 
   // add a border?
-  if(iBorderCol.w > 0.0f)
-    drawList->AddRect(rect.Min, rect.Max, ImGui::GetColorU32(iBorderCol), 0.0f);
+  if(!ReGui::ColorIsTransparent(iBorderColor))
+    drawList->AddRect(rect.Min, rect.Max, iBorderColor, 0.0f);
 }
 
 }

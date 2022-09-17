@@ -103,6 +103,9 @@ constexpr auto kDeviceNameVertical = ImVec2{65, 400};
 
 constexpr auto kItemWidth = 300.0f;
 
+constexpr auto kWhiteColor = ImVec4{1, 1, 1, 1};
+constexpr auto kXRayColor = ImVec4{1, 1, 1, 0.4};
+
 constexpr int toPixelHeight(int iDeviceHeightRU)
 {
   return k1UPixelSize * static_cast<int>(iDeviceHeightRU);
