@@ -95,12 +95,6 @@ Collapsed=0
 Pos=344,307
 Size=532,100
 Collapsed=0
-
-[Table][0x59A508FC,3]
-RefScale=13
-Column 0  Width=351
-Column 1  Width=42
-Column 2  Width=351
 )"};
 
 };

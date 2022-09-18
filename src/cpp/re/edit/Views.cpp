@@ -191,6 +191,49 @@ void MultiSelectionList::moveSelectionDown()
 }
 
 //------------------------------------------------------------------------
+// MultiSelectionList::setupTableHeader
+//------------------------------------------------------------------------
+void MultiSelectionList::setupTableHeader(int iColumnIndex)
+{
+  ImGui::TableSetColumnIndex(iColumnIndex);
+  ImGui::PushID(iColumnIndex);
+
+  ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(ImGui::GetStyle().FramePadding.x, 1));
+  if(ImGui::Button(ReGui::kMenuIcon))
+    ImGui::OpenPopup("Header Menu");
+  ImGui::PopStyleVar();
+
+  ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
+  ImGui::TableHeader(ImGui::TableGetColumnName(iColumnIndex));
+
+  if(ImGui::BeginPopup("Header Menu"))
+  {
+    if(ImGui::MenuItem("Select All"))
+      selectAll();
+    if(ImGui::MenuItem("Select None"))
+      clearSelection();
+    if(!fSortCriteriaList.empty())
+    {
+      if(ImGui::BeginMenu(ReGui_Icon_Sort " Sort"))
+      {
+        for(auto &sortCriteria: fSortCriteriaList)
+        {
+          if(ImGui::MenuItem(fmt::printf("By %s", sortCriteria).c_str(), nullptr, sortCriteria == fSortCriteria))
+          {
+            fSortCriteria = sortCriteria;
+            sort();
+          }
+        }
+        ImGui::EndMenu();
+      }
+    }
+    ImGui::EndPopup();
+  }
+
+  ImGui::PopID();
+}
+
+//------------------------------------------------------------------------
 // StringList::StringList
 //------------------------------------------------------------------------
 StringListEdit::StringListEdit(std::vector<std::string> iSourceList,
@@ -203,6 +246,11 @@ StringListEdit::StringListEdit(std::vector<std::string> iSourceList,
   fSourceName{std::move(iSourceName)},
   fDestinationName{std::move(iDestinationName)}
 {
+  auto const &style = ImGui::GetStyle();
+
+  // account for scrollbar size
+  auto extraWidth = style.ScrollbarSize + style.FramePadding.x;
+
   std::string max{};
 
   for(auto &s: iSourceList)
@@ -213,7 +261,7 @@ StringListEdit::StringListEdit(std::vector<std::string> iSourceList,
 
   auto const size = ImGui::CalcTextSize(max.c_str());
 
-  fSize = ImVec2{size.x, size.y * 25};
+  fSize = ImVec2{size.x + extraWidth, size.y * 25};
 
   // handle destination first
   fDestination.fList = std::move(iDestinationList);
@@ -249,51 +297,22 @@ StringListEdit::StringListEdit(std::vector<std::string> iSourceList,
 //------------------------------------------------------------------------
 void StringListEdit::editView()
 {
-  if(ImGui::BeginTable("StringListEdit", 3, ImGuiTableFlags_Resizable | ImGuiTableFlags_Borders))
+  if(ImGui::BeginTable("StringListEdit", 3, ImGuiTableFlags_Borders))
   {
-    ImGui::TableSetupColumn(fSourceName.c_str());
+    ImGui::TableSetupColumn(fSourceName.c_str(), ImGuiTableColumnFlags_WidthFixed, fSize.x);
     ImGui::TableSetupColumn("Action");
-    ImGui::TableSetupColumn(fDestinationName.c_str());
+    ImGui::TableSetupColumn(fDestinationName.c_str(), ImGuiTableColumnFlags_WidthFixed, fSize.x);
 
     ImGui::TableNextRow(ImGuiTableRowFlags_Headers);
 
-    if(!fSource.fSortCriteriaList.empty())
-    {
-      ImGui::TableSetColumnIndex(0);
-      ImGui::PushID(0);
+    // Column 0 setup
+    fSource.setupTableHeader(0);
 
-      ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(ImGui::GetStyle().FramePadding.x, 1));
-      if(ImGui::Button(fa::kArrowUpArrowDown))
-        ImGui::OpenPopup("Sort Menu");
-      ImGui::PopStyleVar();
-
-      ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
-      ImGui::TableHeader(fSourceName.c_str());
-
-      if(ImGui::BeginPopup("Sort Menu"))
-      {
-        ImGui::Text("Sort");
-        ImGui::Separator();
-        for(auto &sortCriteria: fSource.fSortCriteriaList)
-        {
-          if(ImGui::MenuItem(fmt::printf("By %s", sortCriteria).c_str(), nullptr, sortCriteria == fSource.fSortCriteria))
-          {
-            fSource.fSortCriteria = sortCriteria;
-            fSource.sort();
-          }
-        }
-        ImGui::EndPopup();
-      }
-
-      ImGui::PopID();
-    }
-    else
-    {
-      ReGui::DefaultHeaderColumn(0);
-    }
-
+    // Column 1 setup
     ReGui::DefaultHeaderColumn(1);
-    ReGui::DefaultHeaderColumn(2);
+
+    // Column 2 setup
+    fDestination.setupTableHeader(2);
 
     ImGui::TableNextRow();
     ImGui::TableSetColumnIndex(0);
@@ -303,42 +322,35 @@ void StringListEdit::editView()
     }
     ImGui::EndChild();
 
+    auto column0Height = ImGui::GetItemRectSize().y;
+
     ImGui::TableSetColumnIndex(1);
 
     const ImVec2 buttonSize{-FLT_MIN, 0.0f};
 
+    // This "complex" logic is so that the 2 buttons are vertically centered in the column :(
+    auto const &style = ImGui::GetStyle();
+    auto buttonHeight = ImGui::CalcTextSize("->").y + (style.FramePadding.y * 2.0f);
+    ImGui::SetCursorPosY(ImGui::GetCursorPosY() + (column0Height / 2.0f) - buttonHeight - (style.ItemSpacing.y / 2.0f));
+
     ImGui::PushID("Source");
-    ImGui::Text("Left");
     ImGui::BeginDisabled(fSource.fSelected.empty());
     if(ImGui::Button("->", buttonSize))
       fSource.moveSelectionTo(fDestination);
-    if(ImGui::Button("None", buttonSize))
-      fSource.clearSelection();
     ImGui::EndDisabled();
-    if(ImGui::Button("All", buttonSize))
-      fSource.selectAll();
     ImGui::PopID();
 
-    ImGui::Separator();
-
     ImGui::PushID("Dest.");
-    ImGui::Text("Right");
     ImGui::BeginDisabled(fDestination.fSelected.empty());
     if(ImGui::Button("<-", buttonSize))
     {
       fDestination.moveSelectionTo(fSource);
       fSource.sort();
     }
-    if(ImGui::Button("None", buttonSize))
-      fDestination.clearSelection();
     ImGui::EndDisabled();
-    if(ImGui::Button("All", buttonSize))
-      fDestination.selectAll();
     ImGui::PopID();
 
-
     ImGui::TableSetColumnIndex(2);
-//    if(ImGui::BeginChild("##Destination", {ImGui::GetColumnWidth(), height}))
     if(ImGui::BeginChild("##Destination", fSize))
     {
       fDestination.editView();

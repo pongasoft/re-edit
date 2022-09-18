@@ -40,6 +40,7 @@ public:
   void sort();
   void selectAll();
   void clearSelection();
+  void setupTableHeader(int iColumnIndex);
   inline bool isSelected(std::string const &s) const { return fSelected.find(s) != fSelected.end(); }
   constexpr bool empty() const { return fList.empty(); }
   constexpr size_t selectedCount() const { return fSelected.size(); }
