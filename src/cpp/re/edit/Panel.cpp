@@ -766,11 +766,32 @@ void Panel::editSingleSelectionView(AppContext &iCtx, std::shared_ptr<Widget> co
   {
     std::vector<std::shared_ptr<Widget>> selectedWidgets{iWidget};
     renderSelectedWidgetsMenu(iCtx, selectedWidgets);
+
+    if(iWidget->isHidden())
+    {
+      ImGui::Separator();
+      if(ImGui::BeginMenu("Show"))
+      {
+        iWidget->renderShowMenu(iCtx);
+        ImGui::EndMenu();
+      }
+    }
     ImGui::EndPopup();
   }
 
   ImGui::SameLine();
   ImGui::Text("%s", re::edit::toString(iWidget->getType()));
+
+  if(iWidget->isHidden())
+  {
+    ImGui::SameLine();
+    ImGui::Text(ReGui::kHiddenWidgetIcon);
+    if(ImGui::BeginPopupContextItem(iWidget->fName.c_str()))
+    {
+      iWidget->renderShowMenu(iCtx);
+      ImGui::EndPopup();
+    }
+  }
 
   ImGui::SameLine();
   if(!iWidget->errorView(iCtx))
@@ -1007,13 +1028,21 @@ void Panel::MultiSelectionList::editView(AppContext &iCtx)
     for(auto id: fList)
     {
       auto widget = fPanel.getWidget(id);
-      if(ImGui::Selectable(widget->getName().c_str(), widget->isSelected()))
+      if(ImGui::Selectable(widget->getName().c_str(), widget->isSelected(), ImGuiSelectableFlags_AllowDoubleClick))
       {
         auto io = ImGui::GetIO();
-        handleClick(widget, io.KeyShift, io.KeySuper);
+        if(ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
+          widget->showIfHidden(iCtx);
+        else
+          handleClick(widget, io.KeyShift, io.KeySuper);
       }
       if(widget->isHidden())
       {
+        if(ImGui::BeginPopupContextItem())
+        {
+          widget->renderShowMenu(iCtx);
+          ImGui::EndPopup();
+        }
         ImGui::SameLine();
         ImGui::Text(ReGui::kHiddenWidgetIcon);
       }

@@ -362,7 +362,7 @@ void Application::save()
   saveFile(re::mock::fmt::path(fRoot, "GUI2D", "device_2D.lua"), device2D());
   saveFile(re::mock::fmt::path(fRoot, "GUI2D", "hdgui_2D.lua"), hdgui2D());
   saveConfig();
-  fAppContext.fUndoManager->clear();
+//  fAppContext.fUndoManager->clear();
   fNeedsSaving = false;
   ImGui::GetIO().WantSaveIniSettings = false;
 }

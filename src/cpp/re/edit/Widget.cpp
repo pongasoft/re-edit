@@ -996,6 +996,36 @@ void Widget::computeIsHidden(AppContext &iCtx)
 }
 
 //------------------------------------------------------------------------
+// Widget::showIfHidden
+//------------------------------------------------------------------------
+void Widget::showIfHidden(AppContext &iCtx)
+{
+  if(fHidden && fVisibility && !fVisibility->fSwitch.fValue.empty() && !fVisibility->fValues.fValue.empty())
+  {
+    iCtx.setPropertyValueAsInt(fVisibility->fSwitch.fValue, fVisibility->fValues.fValue[0]);
+  }
+}
+
+//------------------------------------------------------------------------
+// Widget::renderShowMenu
+//------------------------------------------------------------------------
+void Widget::renderShowMenu(AppContext &iCtx)
+{
+  if(fHidden && fVisibility && !fVisibility->fSwitch.fValue.empty() && !fVisibility->fValues.fValue.empty())
+  {
+    auto const &path = fVisibility->fSwitch.fValue;
+    auto const &values = fVisibility->fValues.fValue;
+    ImGui::Text("%s", path.c_str());
+    ImGui::Separator();
+    for(auto value: values)
+    {
+      if(ImGui::MenuItem(fmt::printf("value=%d", value).c_str()))
+        iCtx.setPropertyValueAsInt(path, value);
+    }
+  }
+}
+
+//------------------------------------------------------------------------
 // Widget::findAttributeByName
 //------------------------------------------------------------------------
 widget::Attribute *Widget::findAttributeByName(std::string const &iAttributeName) const

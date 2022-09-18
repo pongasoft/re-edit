@@ -138,6 +138,8 @@ public:
 
 protected:
   void computeIsHidden(AppContext &iCtx);
+  void showIfHidden(AppContext &iCtx);
+  void renderShowMenu(AppContext &iCtx);
   bool isPanelDecal() const { return fType == WidgetType::kPanelDecal; }
 
 protected:
