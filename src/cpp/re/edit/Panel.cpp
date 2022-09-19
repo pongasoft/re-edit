@@ -295,6 +295,12 @@ void Panel::renderWidgetMenu(AppContext &iCtx, std::shared_ptr<Widget> const &iW
   if(ImGui::MenuItem(fmt::printf("Delete %s",
                                  iWidget->getName()).c_str()))
     deleteWidget(iCtx, iWidget->getId());
+
+  if(iWidget->canBeShown())
+  {
+    ImGui::Separator();
+    iWidget->renderShowMenu(iCtx);
+  }
 }
 
 //------------------------------------------------------------------------
@@ -764,18 +770,7 @@ void Panel::editSingleSelectionView(AppContext &iCtx, std::shared_ptr<Widget> co
 
   if(ImGui::BeginPopup("Menu"))
   {
-    std::vector<std::shared_ptr<Widget>> selectedWidgets{iWidget};
-    renderSelectedWidgetsMenu(iCtx, selectedWidgets);
-
-    if(iWidget->isHidden())
-    {
-      ImGui::Separator();
-      if(ImGui::BeginMenu("Show"))
-      {
-        iWidget->renderShowMenu(iCtx);
-        ImGui::EndMenu();
-      }
-    }
+    renderWidgetMenu(iCtx, iWidget);
     ImGui::EndPopup();
   }
 
@@ -786,11 +781,6 @@ void Panel::editSingleSelectionView(AppContext &iCtx, std::shared_ptr<Widget> co
   {
     ImGui::SameLine();
     ImGui::Text(ReGui::kHiddenWidgetIcon);
-    if(ImGui::BeginPopupContextItem(iWidget->fName.c_str()))
-    {
-      iWidget->renderShowMenu(iCtx);
-      ImGui::EndPopup();
-    }
   }
 
   ImGui::SameLine();
@@ -1036,13 +1026,13 @@ void Panel::MultiSelectionList::editView(AppContext &iCtx)
         else
           handleClick(widget, io.KeyShift, io.KeySuper);
       }
+      if(ImGui::BeginPopupContextItem())
+      {
+        fPanel.renderWidgetMenu(iCtx, widget);
+        ImGui::EndPopup();
+      }
       if(widget->isHidden())
       {
-        if(ImGui::BeginPopupContextItem())
-        {
-          widget->renderShowMenu(iCtx);
-          ImGui::EndPopup();
-        }
         ImGui::SameLine();
         ImGui::Text(ReGui::kHiddenWidgetIcon);
       }

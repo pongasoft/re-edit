@@ -54,6 +54,7 @@ public:
   constexpr bool isSelected() const { return fSelected; }
 
   constexpr bool isHidden() const { return fHidden; }
+  constexpr bool canBeShown() const { return fHidden && fVisibility && !fVisibility->fSwitch.fValue.empty() && !fVisibility->fValues.fValue.empty(); }
 
   constexpr bool isError() const { return fError; };
   constexpr void setError(bool iError) { fError = iError; };

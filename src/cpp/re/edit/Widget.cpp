@@ -1000,7 +1000,7 @@ void Widget::computeIsHidden(AppContext &iCtx)
 //------------------------------------------------------------------------
 void Widget::showIfHidden(AppContext &iCtx)
 {
-  if(fHidden && fVisibility && !fVisibility->fSwitch.fValue.empty() && !fVisibility->fValues.fValue.empty())
+  if(canBeShown())
   {
     iCtx.setPropertyValueAsInt(fVisibility->fSwitch.fValue, fVisibility->fValues.fValue[0]);
   }
@@ -1011,16 +1011,26 @@ void Widget::showIfHidden(AppContext &iCtx)
 //------------------------------------------------------------------------
 void Widget::renderShowMenu(AppContext &iCtx)
 {
-  if(fHidden && fVisibility && !fVisibility->fSwitch.fValue.empty() && !fVisibility->fValues.fValue.empty())
+  if(canBeShown())
   {
     auto const &path = fVisibility->fSwitch.fValue;
     auto const &values = fVisibility->fValues.fValue;
-    ImGui::Text("%s", path.c_str());
-    ImGui::Separator();
-    for(auto value: values)
+    if(values.size() == 1)
     {
-      if(ImGui::MenuItem(fmt::printf("value=%d", value).c_str()))
-        iCtx.setPropertyValueAsInt(path, value);
+      if(ImGui::MenuItem(fmt::printf("Show [%s=%d]", path, values[0]).c_str()))
+        iCtx.setPropertyValueAsInt(path, values[0]);
+    }
+    else
+    {
+      if(ImGui::BeginMenu(fmt::printf("Show [%s]", path).c_str()))
+      {
+        for(auto value: values)
+        {
+          if(ImGui::MenuItem(fmt::printf("value=%d", value).c_str()))
+            iCtx.setPropertyValueAsInt(path, value);
+        }
+        ImGui::EndMenu();
+      }
     }
   }
 }
