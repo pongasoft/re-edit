@@ -88,8 +88,8 @@ public:
 
   constexpr void move(ImVec2 const &iDelta) { fPosition = fPosition + iDelta; fEdited = true; }
 
-  constexpr bool hasTexture() const { return getTexture() != nullptr; }
-  constexpr Texture const *getTexture() const { return fTexture.get(); }
+  inline bool hasTexture() const { return getTexture() != nullptr; }
+  inline Texture const *getTexture() const { return fTexture.get(); }
   void setTexture(std::shared_ptr<Texture> iTexture) { fTexture = std::move(iTexture); fEdited = true; }
   void setSize(ImVec2 const &iSize) { fSize = iSize; fEdited = true; }
 

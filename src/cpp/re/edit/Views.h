@@ -22,6 +22,8 @@
 #include <vector>
 #include <set>
 #include <string>
+#include <optional>
+#include <functional>
 #include "imgui.h"
 
 namespace re::edit::views {
@@ -42,8 +44,8 @@ public:
   void clearSelection();
   void setupTableHeader(int iColumnIndex);
   inline bool isSelected(std::string const &s) const { return fSelected.find(s) != fSelected.end(); }
-  constexpr bool empty() const { return fList.empty(); }
-  constexpr size_t selectedCount() const { return fSelected.size(); }
+  inline bool empty() const { return fList.empty(); }
+  inline size_t selectedCount() const { return fSelected.size(); }
 
 public:
   std::vector<std::string> fList{};

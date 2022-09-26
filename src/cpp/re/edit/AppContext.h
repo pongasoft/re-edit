@@ -81,8 +81,8 @@ public:
   Panel *getPanel(PanelType iType) const;
 
 public: // UserPreferences
-  constexpr UserPreferences const &getUserPreferences() const { return *fUserPreferences; }
-  constexpr UserPreferences &getUserPreferences() { return *fUserPreferences; }
+  inline UserPreferences const &getUserPreferences() const { return *fUserPreferences; }
+  inline UserPreferences &getUserPreferences() { return *fUserPreferences; }
 
 public: // Properties
   inline std::vector<Object const *> findObjects(Object::Filter const &iFilter) const { return fPropertyManager->findObjects(iFilter); }

@@ -53,9 +53,9 @@ public:
 
   virtual ~Texture() = default;
 
-  constexpr std::string const &key() const { return fFilmStrip->key(); };
+  inline std::string const &key() const { return fFilmStrip->key(); };
 
-  constexpr bool isValid() const { return fFilmStrip->isValid(); }
+  inline bool isValid() const { return fFilmStrip->isValid(); }
 
   constexpr float width() const { return static_cast<float>(fFilmStrip->width()); }
   constexpr float height() const { return static_cast<float>(fFilmStrip->height()); }

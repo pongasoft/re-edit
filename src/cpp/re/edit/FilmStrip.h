@@ -24,6 +24,7 @@
 #include <map>
 #include <memory>
 #include <vector>
+#include <functional>
 #include <imgui.h>
 
 namespace re::edit {
@@ -56,7 +57,7 @@ public:
     data_t *fData{};
   };
 
-  constexpr std::string const &key() const { return fFile->fKey; };
+  inline std::string const &key() const { return fFile->fKey; };
   constexpr std::string const &errorMessage() const { return fErrorMessage; };
 
   inline bool isValid() const { return fData != nullptr; }

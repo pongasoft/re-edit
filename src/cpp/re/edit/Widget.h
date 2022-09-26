@@ -72,7 +72,7 @@ public:
   constexpr int &getFrameNumber() { return fGraphics->fFrameNumber; }
   constexpr void setFrameNumber(int iFrameNumber) { fGraphics->fFrameNumber = iFrameNumber; }
 
-  constexpr Texture const *getTexture() const { return fGraphics->getTexture(); }
+  inline Texture const *getTexture() const { return fGraphics->getTexture(); }
 
   inline bool contains(ImVec2 const &iPosition) const { return fGraphics->contains(iPosition); }
   inline bool overlaps(ImVec2 const &iTopLeft, ImVec2 const &iBottomRight) const { return fGraphics->overlaps(iTopLeft, iBottomRight); }

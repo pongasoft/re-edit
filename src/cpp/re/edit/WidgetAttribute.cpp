@@ -838,7 +838,10 @@ void PropertyPathList::editView(AppContext &iCtx)
   {
     auto sortBy = [&iCtx, this](std::vector<std::string> &ioString, std::string const &iSortCriteria) {
       fSortCriteria = iSortCriteria;
-      iCtx.sortProperties(ioString, iSortCriteria == "Path" ? kByPathComparator : kByTagComparator);
+      if(iSortCriteria == "Path")
+        iCtx.sortProperties(ioString, kByPathComparator);
+      else
+        iCtx.sortProperties(ioString, kByTagComparator);
     };
     ImGui::OpenPopup(popupTitleName.c_str());
     fStringListEditView = views::StringListEdit(iCtx.findPropertyNames(fFilter),
@@ -1137,7 +1140,10 @@ void ReadOnly::onChanged(AppContext &iCtx)
   };
 
   auto valueAtt = iCtx.getCurrentWidget()->findAttributeByIdAndType<Value>(fValueAttributeId);
-  valueAtt->fValue.fFilter = fValue ? kReadOnlyValueFilter : kReadWriteValueFilter;
+  if(fValue)
+    valueAtt->fValue.fFilter = kReadOnlyValueFilter;
+  else
+    valueAtt->fValue.fFilter = kReadWriteValueFilter;
 }
 
 }

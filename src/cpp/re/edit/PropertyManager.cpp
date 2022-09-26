@@ -237,6 +237,8 @@ static char const *toOwnerString(PropertyOwner iOwner)
       return "Document";
     case PropertyOwner::kGUIOwner:
       return "GUI";
+    default:
+      RE_EDIT_FAIL("not reached");
   }
 }
 
@@ -265,6 +267,8 @@ static char const *toTypeString(TJBox_ValueType iValueType)
       return "Native Object";
     case kJBox_Incompatible:
       return "Incompatible";
+    default:
+      RE_EDIT_FAIL("not reached");
   }
 }
 
@@ -281,6 +285,8 @@ static char const *toPersistenceString(lua::EPersistence iPersistence)
       return "Song";
     case lua::EPersistence::kNone:
       return "None";
+    default:
+      RE_EDIT_FAIL("not reached");
   }
 }
 

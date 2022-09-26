@@ -128,8 +128,8 @@ void Device2D::processGfxNode(std::string const &iName, ImVec2 iOffset, panel_no
   if(lua_type(L, -1) == LUA_TTABLE)
   {
     auto node = gfx_node{
-      .fName = iName,
-      .fPosition = iOffset
+      /* .fName = */ iName,
+      /* .fPosition = */ iOffset
     };
 
     iterateLuaTable([this, &node](lua_table_key_t const &key) {

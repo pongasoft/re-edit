@@ -47,7 +47,7 @@ set(RE_SDK_VERSION 4.3.0)
 # or via -p option in configure.py script or in cmake-gui
 if(APPLE)
   set(RE_SDK_ROOT "/Users/Shared/ReasonStudios/JukeboxSDK_${RE_SDK_VERSION}/SDK" CACHE PATH "Location of RE SDK")
-else()
+elseif(WIN32)
   set(RE_SDK_ROOT "C:/Users/Public/Documents/ReasonStudios/JukeboxSDK_${RE_SDK_VERSION}/SDK" CACHE PATH "Location of RE SDK")
 endif()
 
@@ -111,6 +111,8 @@ set(RE_EDIT_FONTS_DIR "${CMAKE_CURRENT_LIST_DIR}/external/fonts")
 if(APPLE)
   list(APPEND re-edit_BUILD_SOURCES "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/MTLTextureManager.cpp")
   set(re-edit_MAIN_SRC "${re-edit_CPP_SRC_DIR}/re/edit/macos/main.cpp" "${re-edit_CPP_SRC_DIR}/re/edit/macos/metal.cpp")
+elseif(WIN32)
+  set(re-edit_MAIN_SRC "${re-edit_CPP_SRC_DIR}/re/edit/windows/main.cpp")
 endif()
 
 # Build the static library
