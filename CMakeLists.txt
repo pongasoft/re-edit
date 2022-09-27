@@ -2,9 +2,9 @@ cmake_minimum_required(VERSION 3.17)
 
 project(re-edit LANGUAGES CXX)
 
-set(re-edit_VERSION_MAJOR 1)
-set(re-edit_VERSION_MINOR 0)
-set(re-edit_VERSION_PATCH 0)
+set(re-edit_VERSION_MAJOR 0)
+set(re-edit_VERSION_MINOR 9)
+set(re-edit_VERSION_PATCH 4)
 set(re-edit_VERSION "${re-edit_VERSION_MAJOR}.${re-edit_VERSION_MINOR}.${re-edit_VERSION_PATCH}")
 
 set(CMAKE_CXX_STANDARD 17)
@@ -33,6 +33,18 @@ set(target "re-edit")
 # Uncomment to run with sanitizer
 #add_compile_options("-fsanitize=address")
 #add_link_options("-fsanitize=address")
+
+if(WIN32)
+  # This gets rid of the missing dlls from the C++ runtime
+  add_compile_options("$<$<CONFIG:DEBUG>:/MTd>")
+  add_compile_options("$<$<CONFIG:RELEASE>:/MT>")
+endif()
+
+# Including glfw
+set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+add_subdirectory(external/glfw/glfw-3.3.8 EXCLUDE_FROM_ALL)
 
 # Including Dear ImGui
 add_subdirectory(external/ocornut/imgui EXCLUDE_FROM_ALL)

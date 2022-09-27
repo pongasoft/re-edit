@@ -3,7 +3,6 @@ cmake_minimum_required(VERSION 3.19)
 project(imgui)
 
 set(imgui_CPP_SRC_DIR "${CMAKE_CURRENT_LIST_DIR}")
-set(glfw_ROOT_DIR "${CMAKE_CURRENT_LIST_DIR}/../../glfw/glfw")
 
 set(imgui_BUILD_SOURCES
     "${imgui_CPP_SRC_DIR}/imgui.cpp"
@@ -24,16 +23,13 @@ endif()
 
 add_library(imgui STATIC "${imgui_BUILD_SOURCES}")
 target_include_directories(imgui PUBLIC "${imgui_CPP_SRC_DIR}")
-target_include_directories(imgui PUBLIC "${glfw_ROOT_DIR}/include")
 
 if(APPLE)
   target_include_directories(imgui PUBLIC "metal-cpp")
-  target_link_directories(imgui PUBLIC "${glfw_ROOT_DIR}/macos-lib-universal")
-  target_link_libraries(imgui PUBLIC glfw3 "-framework QuartzCore" "-framework Cocoa" "-framework Metal" "-framework MetalKit" "-framework IOKit" "-framework AppKit")
+  target_link_libraries(imgui PUBLIC glfw "-framework QuartzCore" "-framework Cocoa" "-framework Metal" "-framework MetalKit" "-framework IOKit" "-framework AppKit")
 elseif(WIN32)
   target_include_directories(imgui PUBLIC "${imgui_CPP_SRC_DIR}/backends")
-  target_link_directories(imgui PUBLIC "${glfw_ROOT_DIR}/windows/lib-static-ucrt")
-  target_link_libraries(imgui PUBLIC glfw3dll.lib opengl32.lib gdi32.lib shell32.lib Shcore.lib)
+  target_link_libraries(imgui PUBLIC glfw opengl32.lib gdi32.lib shell32.lib Shcore.lib)
 endif()
 
 add_executable("binary_to_compressed_c" "${imgui_CPP_SRC_DIR}/misc/fonts/binary_to_compressed_c.cpp")

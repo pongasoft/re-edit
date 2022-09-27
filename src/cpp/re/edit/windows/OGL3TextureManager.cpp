@@ -19,6 +19,7 @@
 #include "OGL3TextureManager.h"
 #include "../Errors.h"
 #include "imgui_impl_opengl3_loader.h"
+#include "imgui_impl_opengl3.h"
 
 namespace re::edit {
 
@@ -44,9 +45,9 @@ std::unique_ptr<Texture> OGL3TextureManager::createTexture(std::shared_ptr<FilmS
 
   auto pixels = iFilmStrip->data();
 
-  GLuint image_texture;
-  glGenTextures(1, &image_texture);
-  glBindTexture(GL_TEXTURE_2D, image_texture);
+  GLuint imageTexture;
+  glGenTextures(1, &imageTexture);
+  glBindTexture(GL_TEXTURE_2D, imageTexture);
 
   // Setup filtering parameters for display
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -60,13 +61,29 @@ std::unique_ptr<Texture> OGL3TextureManager::createTexture(std::shared_ptr<FilmS
 #endif
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
 
-  auto textureID = reinterpret_cast<ImTextureID>(static_cast<intptr_t>(image_texture));
+  auto textureID = reinterpret_cast<ImTextureID>(static_cast<intptr_t>(imageTexture));
 
   auto ogl3Data = std::make_unique<OGL3Texture::OGL3Data>(textureID, static_cast<float>(height));
 
   texture->addData(std::move(ogl3Data));
 
   return texture;
+}
+
+//------------------------------------------------------------------------
+// OGL3TextureManager::createFontsTexture
+//------------------------------------------------------------------------
+void OGL3TextureManager::createFontsTexture()
+{
+  ImGui_ImplOpenGL3_CreateFontsTexture();
+}
+
+//------------------------------------------------------------------------
+// OGL3TextureManager::destroyFontsTexture
+//------------------------------------------------------------------------
+void OGL3TextureManager::destroyFontsTexture()
+{
+  ImGui_ImplOpenGL3_DestroyFontsTexture();
 }
 
 //------------------------------------------------------------------------
@@ -80,7 +97,8 @@ OGL3Texture::OGL3Data::OGL3Data(ImTextureID iImTextureID, float iHeight) : Data(
 //------------------------------------------------------------------------
 OGL3Texture::OGL3Data::~OGL3Data()
 {
-  // TODO HIGH YP: how to unload a texture????
+  GLuint imageTexture = static_cast<GLuint>(reinterpret_cast<intptr_t>(fImTextureID));
+  glDeleteTextures(1, &imageTexture);
 }
 
 }

@@ -45,6 +45,10 @@ public:
   OGL3TextureManager(float iScreenScale);
   ~OGL3TextureManager() override = default;
 
+  void createFontsTexture() override;
+
+  void destroyFontsTexture() override;
+
 protected:
   std::unique_ptr<Texture> createTexture(std::shared_ptr<FilmStrip> const &iFilmStrip) const override;
 };
