@@ -202,14 +202,18 @@ void Graphics::editView(AppContext &iCtx)
   editView(iCtx,
            fFilter,
            [this, &iCtx](auto &k) {
-             iCtx.addUndoCurrentWidgetChange(fmt::printf("Change %s graphics", iCtx.getCurrentWidget()->getName()));
+             auto currentWidget = iCtx.getCurrentWidget();
+             if(currentWidget)
+               iCtx.addUndoCurrentWidgetChange(fmt::printf("Change %s graphics", currentWidget->getName()));
              fTexture = iCtx.getTexture(k);
              fFrameNumber = 0;
              fEdited = true;
            },
            [this, &iCtx](auto &s) {
-             iCtx.addOrMergeUndoCurrentWidgetChange(&fSize, fSize, s,
-                                                    fmt::printf("Change %s size", iCtx.getCurrentWidget()->getName()));
+             auto currentWidget = iCtx.getCurrentWidget();
+             if(currentWidget)
+               iCtx.addOrMergeUndoCurrentWidgetChange(&fSize, fSize, s,
+                                                      fmt::printf("Change %s size", currentWidget->getName()));
              fSize = s;
              fTexture = nullptr;
              fFrameNumber = 0;
