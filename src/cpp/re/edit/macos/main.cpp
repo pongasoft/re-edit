@@ -8,7 +8,7 @@
 #include <backends/imgui_impl_metal.h>
 #include <cstdio>
 #include "../Application.h"
-#include "../MTLTextureManager.h"
+#include "MTLTextureManager.h"
 
 
 #define GLFW_INCLUDE_NONE
@@ -131,7 +131,7 @@ int main(int argc, char **argv)
 
       int newWindowPosX;
       int newWindowPosY;
-      glfwGetWindowPos(window, &newWindowPosX, &newWindowPosX);
+      glfwGetWindowPos(window, &newWindowPosX, &newWindowPosY);
       if(newWindowPosX != windowPosX || newWindowPosY != windowPosY)
       {
         windowPosX = newWindowPosX;

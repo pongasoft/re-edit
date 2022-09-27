@@ -19,7 +19,7 @@
 #ifndef RE_EDIT_MTL_TEXTURE_MANAGER_H
 #define RE_EDIT_MTL_TEXTURE_MANAGER_H
 
-#include "TextureManager.h"
+#include "../TextureManager.h"
 #include "imgui.h"
 #include <Metal/Metal.hpp>
 

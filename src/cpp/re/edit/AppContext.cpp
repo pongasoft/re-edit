@@ -330,6 +330,10 @@ std::string AppContext::getLuaConfig() const
 //------------------------------------------------------------------------
 void AppContext::onNativeWindowPositionChange(int x, int y, float iScreenScale)
 {
+  auto loggingManager = LoggingManager::instance();
+
+  loggingManager->debug("ScreenScale", "%f", iScreenScale);
+
   if(fTextureManager->getScreenScale() != iScreenScale)
   {
     fTextureManager->setScreenScale(iScreenScale);
