@@ -42,7 +42,7 @@ public:
 class OGL3TextureManager : public TextureManager
 {
 public:
-  OGL3TextureManager(float iScreenScale);
+  OGL3TextureManager(int iMaxTextureSize, float iScreenScale);
   ~OGL3TextureManager() override = default;
 
   void createFontsTexture() override;
@@ -51,6 +51,9 @@ public:
 
 protected:
   std::unique_ptr<Texture> createTexture(std::shared_ptr<FilmStrip> const &iFilmStrip) const override;
+
+private:
+  int fMaxTextureSize;
 };
 
 }

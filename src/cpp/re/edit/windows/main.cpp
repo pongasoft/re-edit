@@ -95,7 +95,10 @@ int main(int argc, char **argv)
   ImGui_ImplGlfw_InitForOpenGL(window, true);
   ImGui_ImplOpenGL3_Init(glsl_version);
 
-  if(!application.init(std::make_shared<re::edit::OGL3TextureManager>(getScaleFactor(window))))
+  int glMaxTextureSize;
+  glGetIntegerv(GL_MAX_TEXTURE_SIZE, &glMaxTextureSize);
+
+  if(!application.init(std::make_shared<re::edit::OGL3TextureManager>(glMaxTextureSize, getScaleFactor(window))))
     return 1;
 
   // sets the initial size
