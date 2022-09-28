@@ -261,6 +261,18 @@ inline bool AnySpecialKey()
   return io.KeyShift || io.KeyCtrl || io.KeyAlt || io.KeySuper;
 }
 
+//------------------------------------------------------------------------
+// ReGui::IsSingleSelectKey
+//------------------------------------------------------------------------
+constexpr bool IsSingleSelectKey(ImGuiIO const &io)
+{
+#if WIN32
+  return io.KeyCtrl;
+#else
+  return io.KeySuper;
+#endif
+}
+
 
 }
 

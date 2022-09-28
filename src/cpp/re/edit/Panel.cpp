@@ -155,7 +155,7 @@ void Panel::draw(AppContext &iCtx)
       else
       {
         fMouseDrag = MouseDrag{mousePos, mousePos, mousePos};
-        selectWidget(iCtx, mousePos, io.KeySuper);
+        selectWidget(iCtx, mousePos, ReGui::IsSingleSelectKey(io));
       }
     }
   }
@@ -1024,7 +1024,7 @@ void Panel::MultiSelectionList::editView(AppContext &iCtx)
         if(ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
           widget->showIfHidden(iCtx);
         else
-          handleClick(widget, io.KeyShift, io.KeySuper);
+          handleClick(widget, io.KeyShift, ReGui::IsSingleSelectKey(io));
       }
       if(ImGui::BeginPopupContextItem())
       {
