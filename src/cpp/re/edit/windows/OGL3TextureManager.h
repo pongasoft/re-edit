@@ -42,7 +42,7 @@ public:
 class OGL3TextureManager : public TextureManager
 {
 public:
-  OGL3TextureManager(int iMaxTextureSize, float iScreenScale);
+  explicit OGL3TextureManager(int iMaxTextureSize);
   ~OGL3TextureManager() override = default;
 
   void createFontsTexture() override;

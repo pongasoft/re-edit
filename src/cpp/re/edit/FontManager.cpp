@@ -84,14 +84,15 @@ bool FontManager::loadFont(float iSize, const std::function<bool(float iSizePixe
 {
   auto &io = ImGui::GetIO();
   io.Fonts->Clear();
-  auto scale = getFontScale();
+  auto fontScale = getFontScale();
+  auto size = iSize * fontScale * getFontDpiScale();
   ImFontConfig fontConfig;
   fontConfig.OversampleH = 2;
-  bool res = iFontLoader(iSize * scale, &fontConfig);
+  bool res = iFontLoader(size, &fontConfig);
   if(res)
   {
-    impl::mergeFontAwesome(iSize * scale);
-    io.FontGlobalScale = 1.0f / scale;
+    impl::mergeFontAwesome(size);
+    io.FontGlobalScale = 1.0f / fontScale;
   }
   else
   {
@@ -136,13 +137,16 @@ void FontManager::applyNewFontRequest()
 }
 
 //------------------------------------------------------------------------
-// FontManager::requestFontScaleChange
+// FontManager::setFontScales
 //------------------------------------------------------------------------
-void FontManager::requestFontScaleChange()
+void FontManager::setFontScales(float iFontScale, float iFontDpiScale)
 {
-  if(!fNewFontRequest)
+  if(fFontScale != iFontScale || iFontDpiScale != fFontDpiScale)
   {
-    requestNewFont(getCurrentFont());
+    fFontScale = iFontScale;
+    fFontDpiScale = iFontDpiScale;
+    if(!fNewFontRequest)
+      requestNewFont(getCurrentFont());
   }
 }
 

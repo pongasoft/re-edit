@@ -30,8 +30,8 @@ namespace re::edit {
 //------------------------------------------------------------------------
 // OGL3TextureManager::OGL3TextureManager
 //------------------------------------------------------------------------
-OGL3TextureManager::OGL3TextureManager(int iMaxTextureSize, float iScreenScale) :
-  TextureManager(iScreenScale),
+OGL3TextureManager::OGL3TextureManager(int iMaxTextureSize) :
+  TextureManager(),
   fMaxTextureSize{iMaxTextureSize}
 {
 }

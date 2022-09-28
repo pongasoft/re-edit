@@ -328,17 +328,14 @@ std::string AppContext::getLuaConfig() const
 //------------------------------------------------------------------------
 // AppContext::onNativeWindowPositionChange
 //------------------------------------------------------------------------
-void AppContext::onNativeWindowPositionChange(int x, int y, float iScreenScale)
+void AppContext::onNativeWindowPositionChange(int x, int y, float iFontScale, float iFontDpiScale)
 {
   auto loggingManager = LoggingManager::instance();
 
-  loggingManager->debug("ScreenScale", "%f", iScreenScale);
+  loggingManager->debug("FontScale", "%f", iFontScale);
+  loggingManager->debug("FontDpiScale", "%f", iFontDpiScale);
 
-  if(fTextureManager->getScreenScale() != iScreenScale)
-  {
-    fTextureManager->setScreenScale(iScreenScale);
-    fFontManager->requestFontScaleChange();
-  }
+  fFontManager->setFontScales(iFontScale, iFontDpiScale);
 }
 
 }

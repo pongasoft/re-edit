@@ -34,19 +34,58 @@ static void glfw_error_callback(int error, const char *description)
   fprintf(stderr, "Glfw Error %d: %s\n", error, description);
 }
 
-static float getScaleFactor(GLFWwindow *iWindow)
+static void printInfo(GLFWwindow *iWindow)
 {
-  auto monitor = MonitorFromWindow(glfwGetWin32Window(iWindow), MONITOR_DEFAULTTOPRIMARY);
+//  auto glfwMonitor = glfwGetWindowMonitor(iWindow);
+//  fprintf(stdout, "monitor = %s", glfwGetMonitorName(glfwMonitor));
+
+  int count;
+  GLFWmonitor** monitors = glfwGetMonitors(&count);
+
+  if(monitors)
+  {
+    for(int i = 0; i < count; i++)
+    {
+      auto monitor = monitors[i];
+      float xscale, yscale;
+      glfwGetMonitorContentScale(monitor, &xscale, &yscale);
+      fprintf(stdout, "monitor[%d] %s | xscale=%f | yscale=%f\n", i, glfwGetMonitorName(monitor), xscale, yscale);
+    }
+  }
+
+  auto monitor = MonitorFromWindow(glfwGetWin32Window(iWindow), MONITOR_DEFAULTTONULL);
+  if(!monitor)
+  {
+    fprintf(stderr, "no monitor\n");
+    return;
+  }
+
+  uint32_t dpi_x, dpi_y;
+  GetDpiForMonitor(monitor, MDT_EFFECTIVE_DPI, &dpi_x, &dpi_y);
+  fprintf(stdout, "monitor dpi x=%d y=%d\n", dpi_x, dpi_y);
+
+  int value;
+  glGetIntegerv(GL_MAX_TEXTURE_SIZE, &value);   //Returns 1 value
+  fprintf(stdout, "GL_MAX_TEXTURE_SIZE = %d\n", value);
+}
+
+static float getFontDpiScale(GLFWwindow *iWindow)
+{
+  if(true)
+    return 1.0f;
+
+  auto monitor = MonitorFromWindow(glfwGetWin32Window(iWindow), MONITOR_DEFAULTTONULL);
   if(!monitor)
     return 1.0f;
-  DEVICE_SCALE_FACTOR scaleFactor;
-  if(GetScaleFactorForMonitor(monitor, &scaleFactor) != S_OK || scaleFactor == DEVICE_SCALE_FACTOR::DEVICE_SCALE_FACTOR_INVALID)
-    return 1.0f;
-  return static_cast<float>(scaleFactor) / 100.0f;
+  uint32_t dpi_x, dpi_y;
+  GetDpiForMonitor(monitor, MDT_EFFECTIVE_DPI, &dpi_x, &dpi_y);
+  return static_cast<float>(dpi_x) / static_cast<float>(USER_DEFAULT_SCREEN_DPI);
 }
 
 int main(int argc, char **argv)
 {
+//  SetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE);
+
   const char *glsl_version = "#version 130";
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
@@ -98,7 +137,7 @@ int main(int argc, char **argv)
   int glMaxTextureSize;
   glGetIntegerv(GL_MAX_TEXTURE_SIZE, &glMaxTextureSize);
 
-  if(!application.init(std::make_shared<re::edit::OGL3TextureManager>(glMaxTextureSize, getScaleFactor(window))))
+  if(!application.init(std::make_shared<re::edit::OGL3TextureManager>(glMaxTextureSize)))
     return 1;
 
   // sets the initial size
@@ -111,6 +150,10 @@ int main(int argc, char **argv)
   int windowPosX;
   int windowPosY;
   glfwGetWindowPos(window, &windowPosX, &windowPosY);
+
+  application.onNativeWindowPositionChange(windowPosX, windowPosY, 1.0f, getFontDpiScale(window));
+
+  printInfo(window);
 
   // Main loop
   while(!glfwWindowShouldClose(window))
@@ -129,7 +172,7 @@ int main(int argc, char **argv)
     {
       windowPosX = newWindowPosX;
       windowPosY = newWindowPosY;
-      application.onNativeWindowPositionChange(windowPosX, windowPosY, getScaleFactor(window));
+      application.onNativeWindowPositionChange(windowPosX, windowPosY, 1.0f, getFontDpiScale(window));
     }
 
     // Before New Frame

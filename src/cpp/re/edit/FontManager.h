@@ -47,10 +47,11 @@ public:
   explicit FontManager(std::shared_ptr<TextureManager> iTextureManager) : fTextureManager{std::move(iTextureManager)}
   {}
 
-  constexpr float getFontScale() const { return fTextureManager->getScreenScale(); }
+  constexpr float getFontScale() const { return fFontScale; }
+  constexpr float getFontDpiScale() const { return fFontDpiScale; }
+  void setFontScales(float iFontScale, float iFontDpiScale);
   FontDef getCurrentFont() const { return fCurrentFont; }
   void requestNewFont(FontDef const &iFont) { fNewFontRequest = iFont; }
-  void requestFontScaleChange();
   bool hasNewFontRequest() const { return fNewFontRequest.has_value(); }
   void applyNewFontRequest();
 
@@ -64,6 +65,8 @@ private:
   std::shared_ptr<TextureManager> fTextureManager{};
   FontDef fCurrentFont{};
   std::optional<FontDef> fNewFontRequest{};
+  float fFontScale{1.0f};
+  float fFontDpiScale{1.0f};
 };
 
 }

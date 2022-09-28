@@ -29,7 +29,7 @@ namespace re::edit {
 class TextureManager
 {
 public:
-  explicit TextureManager(float iScreenScale) : fScreenScale{iScreenScale} {};
+  TextureManager() = default;
   virtual ~TextureManager() = default;
 
   void init(std::string iDirectory);
@@ -44,8 +44,6 @@ public:
   std::vector<std::string> const &getTextureKeys() const { return fFilmStripMgr->getKeys(); };
   std::vector<std::string> findTextureKeys(FilmStrip::Filter const &iFilter) const { return fFilmStripMgr->findKeys(iFilter); }
 
-  constexpr float getScreenScale() const { return fScreenScale; }
-  constexpr void setScreenScale(float iScreenScale) { fScreenScale = iScreenScale; }
   virtual void createFontsTexture() {}
   virtual void destroyFontsTexture() {}
 
@@ -54,7 +52,6 @@ protected:
 
 private:
   std::unique_ptr<FilmStripMgr> fFilmStripMgr{};
-  float fScreenScale;
   mutable std::map<std::string, std::shared_ptr<Texture>> fTextures{};
 };
 

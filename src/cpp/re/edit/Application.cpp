@@ -137,6 +137,19 @@ void Application::render()
 
     fAppContext.render();
 
+//    auto const &currentFont = fAppContext.fFontManager->getCurrentFont();
+//    auto fontSize = static_cast<int>(currentFont.fSize);
+//    if(ImGui::SliderInt("font_size", &fontSize, 7, 50))
+//    {
+//      fAppContext.fFontManager->requestNewFont(FontDef{currentFont.fName, currentFont.fSource, static_cast<float>(fontSize)});
+//    }
+//
+//    auto fontScale = fAppContext.fFontManager->getFontScale();
+//    if(ImGui::SliderFloat("font_scale", &fontScale, 1.0f, 2.0f))
+//    {
+//      fAppContext.fFontManager->setFontScales(fontScale, fAppContext.fFontManager->getFontDpiScale());
+//    }
+
     ImGui::PushID("Rendering");
 
     ImGui::PushID("Widget");
