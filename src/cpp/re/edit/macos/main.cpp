@@ -102,7 +102,7 @@ int main(int argc, char **argv)
 
   auto renderPassDescriptor = MTL::RenderPassDescriptor::alloc()->init();
 
-  if(!application.init(std::make_shared<re::edit::MTLTextureManager>(device, ImGui_ImplMetal_GetBackingScaleFactorMainScreen())))
+  if(!application.init(std::make_shared<re::edit::MTLTextureManager>(device)))
     return 1;
 
   // sets the initial size
@@ -115,6 +115,8 @@ int main(int argc, char **argv)
   int windowPosX;
   int windowPosY;
   glfwGetWindowPos(window, &windowPosX, &windowPosY);
+
+  application.onNativeWindowPositionChange(windowPosX, windowPosY, ImGui_ImplMetal_GetBackingScaleFactorMainScreen(), 1.0f);
 
   // Main loop
   while(!glfwWindowShouldClose(window))
@@ -136,7 +138,7 @@ int main(int argc, char **argv)
       {
         windowPosX = newWindowPosX;
         windowPosY = newWindowPosY;
-        application.onNativeWindowPositionChange(windowPosX, windowPosY, ImGui_ImplMetal_GetBackingScaleFactorMainScreen());
+        application.onNativeWindowPositionChange(windowPosX, windowPosY, ImGui_ImplMetal_GetBackingScaleFactorMainScreen(), 1.0f);
       }
 
       int width, height;

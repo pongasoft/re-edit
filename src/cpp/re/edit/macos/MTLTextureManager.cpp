@@ -45,8 +45,8 @@ namespace re::edit {
 //------------------------------------------------------------------------
 // MTLTextureManager::MTLTextureManager
 //------------------------------------------------------------------------
-MTLTextureManager::MTLTextureManager(MTL::Device *iDevice, float iScreenScale) :
-  TextureManager(iScreenScale), fDevice{iDevice} {}
+MTLTextureManager::MTLTextureManager(MTL::Device *iDevice) :
+  TextureManager(), fDevice{iDevice} {}
 
 //------------------------------------------------------------------------
 // MTLTextureManager::createTexture
