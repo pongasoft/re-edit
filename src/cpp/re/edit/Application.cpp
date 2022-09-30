@@ -94,7 +94,11 @@ bool Application::init(std::shared_ptr<TextureManager> iTextureManager)
 void Application::newFrame()
 {
   if(fAppContext.fFontManager->hasNewFontRequest())
+  {
     fAppContext.fFontManager->applyNewFontRequest();
+    fAppContext.fFaButtonSize =
+      ImVec2{fAppContext.fFontManager->getCurrentFont().fSize + ImGui::GetStyle().FramePadding.x * 2, 0};
+  }
 }
 
 //------------------------------------------------------------------------
@@ -115,9 +119,9 @@ void Application::render()
 
   renderMainMenu();
 
-  auto flags = fNeedsSaving ?  ImGuiWindowFlags_UnsavedDocument : ImGuiWindowFlags_None;
+  int flags = fNeedsSaving ?  ImGuiWindowFlags_UnsavedDocument : ImGuiWindowFlags_None;
 
-  if(ImGui::Begin("re-edit", nullptr, flags))
+  if(auto l = fMainWindow.begin(flags))
   {
 //    if(ImGui::Button("Bigger"))
 //    {
@@ -137,12 +141,38 @@ void Application::render()
 
     fAppContext.render();
 
-//    auto const &currentFont = fAppContext.fFontManager->getCurrentFont();
-//    auto fontSize = static_cast<int>(currentFont.fSize);
-//    if(ImGui::SliderInt("font_size", &fontSize, 7, 50))
-//    {
-//      fAppContext.fFontManager->requestNewFont(FontDef{currentFont.fName, currentFont.fSource, static_cast<float>(fontSize)});
-//    }
+    auto const &currentFont = fAppContext.fFontManager->getCurrentFont();
+    auto fontSize = static_cast<int>(currentFont.fSize);
+    if(ImGui::SliderInt("font_size", &fontSize, 7, 36))
+    {
+      fAppContext.fFontManager->requestNewFont(FontDef{currentFont.fName, currentFont.fSource, static_cast<float>(fontSize)});
+//      if(fontSize != 12.0f)
+//      {
+//        auto scale = fontSize / 12.0f;
+//        ImGuiStyle newStyle{};
+//        newStyle.ScaleAllSizes(scale);
+//        ImGui::GetStyle() = newStyle;
+//      }
+    }
+
+    static float kScale = 1.0f;
+
+    if(ImGui::SliderFloat("scale", &kScale, 1.0f, 3.0f))
+    {
+      ImGuiStyle newStyle{};
+      newStyle.ScaleAllSizes(kScale);
+      ImGui::GetStyle() = newStyle;
+    }
+
+    if(ImGui::Button("Fit"))
+    {
+      fMainWindow.requestSizeToFit();
+      fAppContext.fPanelWindow.requestSizeToFit();
+      fAppContext.fPanelWidgetsWindow.requestSizeToFit();
+      fAppContext.fWidgetsWindow.requestSizeToFit();
+      fAppContext.fPropertiesWindow.requestSizeToFit();
+    }
+
 //
 //    auto fontScale = fAppContext.fFontManager->getFontScale();
 //    if(ImGui::SliderFloat("font_scale", &fontScale, 1.0f, 2.0f))
@@ -223,8 +253,6 @@ void Application::render()
 
     loggingManager->render();
   }
-
-  ImGui::End();
 
   if(fSavingRequested)
     renderSavePopup();
@@ -319,10 +347,10 @@ void Application::renderMainMenu()
 
     if(ImGui::BeginMenu("Window"))
     {
-      ImGui::MenuItem("Panel", nullptr, &fAppContext.fShowPanel);
-      ImGui::MenuItem("Panel Widgets", nullptr, &fAppContext.fShowPanelWidgets);
-      ImGui::MenuItem("Widgets", nullptr, &fAppContext.fShowWidgets);
-      ImGui::MenuItem("Properties", nullptr, &fAppContext.fShowProperties);
+      fAppContext.fPanelWindow.menuItem();
+      fAppContext.fPanelWidgetsWindow.menuItem();
+      fAppContext.fWidgetsWindow.menuItem();
+      fAppContext.fPropertiesWindow.menuItem();
       ImGui::EndMenu();
     }
 

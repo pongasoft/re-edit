@@ -71,6 +71,7 @@ private:
 private:
   int fDeviceHeightRU{1};
   AppContext fAppContext{};
+  ReGui::Window fMainWindow{"re-edit", std::nullopt, ImGuiWindowFlags_NoCollapse};
   bool fShowDemoWindow{false};
   bool fShowMetricsWindow{false};
 

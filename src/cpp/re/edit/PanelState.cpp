@@ -186,17 +186,10 @@ void PanelState::render(AppContext &iCtx)
 
     ImGui::PopItemWidth();
 
-    if(iCtx.fShowPanel)
-      renderPanel(iCtx, switchedTab);
-
-    if(iCtx.fShowPanelWidgets)
-      renderPanelWidgets(iCtx);
-
-    if(iCtx.fShowWidgets)
-      renderWidgets(iCtx);
-
-    if(iCtx.fShowProperties)
-      renderProperties(iCtx);
+    renderPanel(iCtx, switchedTab);
+    renderPanelWidgets(iCtx);
+    renderWidgets(iCtx);
+    renderProperties(iCtx);
 
     ImGui::EndTabItem();
 
@@ -209,7 +202,7 @@ void PanelState::render(AppContext &iCtx)
 //------------------------------------------------------------------------
 void PanelState::renderWidgets(AppContext &iCtx)
 {
-  if(ImGui::Begin("Widgets", &iCtx.fShowWidgets))
+  if(auto l = iCtx.fWidgetsWindow.begin())
   {
     // Show list of widgets
     if(ImGui::BeginTabBar("Widgets & Decals", ImGuiTabBarFlags_None))
@@ -218,7 +211,6 @@ void PanelState::renderWidgets(AppContext &iCtx)
       ImGui::EndTabBar();
     }
   }
-  ImGui::End();
 }
 
 //------------------------------------------------------------------------
@@ -226,7 +218,7 @@ void PanelState::renderWidgets(AppContext &iCtx)
 //------------------------------------------------------------------------
 void PanelState::renderPanel(AppContext &iCtx, bool iSetScroll)
 {
-  if(ImGui::Begin("Panel", &iCtx.fShowPanel, ImGuiWindowFlags_HorizontalScrollbar))
+  if(auto l = iCtx.fPanelWindow.begin())
   {
     fPanel.draw(iCtx);
     if(iSetScroll)
@@ -237,7 +229,6 @@ void PanelState::renderPanel(AppContext &iCtx, bool iSetScroll)
     else
       fScroll = {ImGui::GetScrollX(), ImGui::GetScrollY()};
   }
-  ImGui::End();
 }
 
 //------------------------------------------------------------------------
@@ -245,11 +236,10 @@ void PanelState::renderPanel(AppContext &iCtx, bool iSetScroll)
 //------------------------------------------------------------------------
 void PanelState::renderPanelWidgets(AppContext &iCtx)
 {
-  if(ImGui::Begin("Panel Widgets", &iCtx.fShowPanelWidgets, ImGuiWindowFlags_HorizontalScrollbar))
+  if(auto l = iCtx.fPanelWidgetsWindow.begin())
   {
     fPanel.editView(iCtx);
   }
-  ImGui::End();
 }
 
 //------------------------------------------------------------------------
@@ -257,7 +247,7 @@ void PanelState::renderPanelWidgets(AppContext &iCtx)
 //------------------------------------------------------------------------
 void PanelState::renderProperties(AppContext &iCtx)
 {
-  if(ImGui::Begin("Properties", &iCtx.fShowProperties, ImGuiWindowFlags_HorizontalScrollbar))
+  if(auto l = iCtx.fPropertiesWindow.begin())
   {
     {
       if(ImGui::Button("Add"))
@@ -291,7 +281,7 @@ void PanelState::renderProperties(AppContext &iCtx)
         for(auto const &path: properties)
         {
           ImGui::PushID(path.c_str());
-          if(ReGui::ResetButton())
+          if(ReGui::ResetButton(iCtx.fFaButtonSize))
             iCtx.fPropertyManager->removeFromWatchlist(path);
           ImGui::SameLine();
           ImGui::TextWrapped("%s", path.c_str());
@@ -312,7 +302,6 @@ void PanelState::renderProperties(AppContext &iCtx)
     }
     ImGui::EndChild();
   }
-  ImGui::End();
 }
 
 }

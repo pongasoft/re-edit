@@ -208,8 +208,6 @@ inline bool MenuToggle(char const *iFalseLabel, char const *iTrueLabel, bool *v)
   return false;
 }
 
-constexpr auto kFaButtonSize = ImVec2{21.0f, 0.0f};
-
 constexpr auto kHiddenWidgetIcon = fa::kEyeSlash;
 constexpr auto kErrorIcon = fa::kTriangleExclamation;
 constexpr auto kResetIcon = fa::kCircleX;
@@ -227,7 +225,7 @@ constexpr auto kMenuIcon = fa::kBars;
 //------------------------------------------------------------------------
 // ReGui::ResetButton
 //------------------------------------------------------------------------
-inline bool ResetButton(const ImVec2& iSize = kFaButtonSize)
+inline bool ResetButton(const ImVec2& iSize)
 {
   return ImGui::Button(kResetIcon, iSize);
 }
@@ -235,7 +233,7 @@ inline bool ResetButton(const ImVec2& iSize = kFaButtonSize)
 //------------------------------------------------------------------------
 // ReGui::MenuButton
 //------------------------------------------------------------------------
-inline bool MenuButton(const ImVec2& iSize = kFaButtonSize)
+inline bool MenuButton(const ImVec2& iSize)
 {
   return ImGui::Button(kMenuIcon, iSize);
 }
@@ -272,6 +270,76 @@ constexpr bool IsSingleSelectKey(ImGuiIO const &io)
   return io.KeySuper;
 #endif
 }
+
+//------------------------------------------------------------------------
+// ReGui::Window
+//------------------------------------------------------------------------
+class Window
+{
+public:
+  class Lifecycle
+  {
+  public:
+    friend class Window;
+    Lifecycle(Lifecycle const &) = delete;
+    Lifecycle &operator=(Lifecycle const &) = delete;
+
+    ~Lifecycle()
+    {
+      if(fEndRequired)
+        ImGui::End();
+    }
+
+    constexpr explicit operator bool() const { return fContentEnabled; }
+
+  private:
+    constexpr Lifecycle() : fContentEnabled{false}, fEndRequired{false} {}
+    explicit constexpr Lifecycle(bool iContentEnabled) : fContentEnabled{iContentEnabled}, fEndRequired{true} {}
+
+  private:
+    bool fContentEnabled;
+    bool fEndRequired;
+  };
+public:
+  Window(char const *iName, std::optional<bool> iVisible, ImGuiWindowFlags iFlags = 0) :
+    fName{iName},
+    fVisible{iVisible == std::nullopt ? true : *iVisible},
+    fDisableClosingWidget{iVisible == std::nullopt},
+    fFlags{iFlags} {}
+
+  void requestSizeToFit() { fSizeToFitRequested = 2; }
+
+  constexpr bool isVisible() const { return fVisible; }
+  constexpr void setIsVisible(bool iVisible) { fVisible = iVisible; }
+
+  [[nodiscard]] Lifecycle begin(ImGuiWindowFlags flags = 0)
+  {
+    if(fVisible)
+    {
+      if(fSizeToFitRequested > 0)
+      {
+        flags |= ImGuiWindowFlags_AlwaysAutoResize;
+        fSizeToFitRequested--;
+      }
+      return Lifecycle{ImGui::Begin(fName, fDisableClosingWidget ? nullptr : &fVisible, fFlags | flags)};
+    }
+    else
+      return {};
+  }
+
+  void menuItem()
+  {
+    ImGui::MenuItem(fName, nullptr, &fVisible);
+  }
+
+private:
+  char const *fName;
+  bool fVisible;
+  bool fDisableClosingWidget;
+  ImGuiWindowFlags fFlags;
+
+  int fSizeToFitRequested{};
+};
 
 
 }

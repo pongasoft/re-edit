@@ -85,7 +85,7 @@ bool FontManager::loadFont(float iSize, const std::function<bool(float iSizePixe
   auto &io = ImGui::GetIO();
   io.Fonts->Clear();
   auto fontScale = getFontScale();
-  auto size = iSize * fontScale * getFontDpiScale();
+  auto size = std::floor(iSize * fontScale * getFontDpiScale());
   ImFontConfig fontConfig;
   fontConfig.OversampleH = 2;
   bool res = iFontLoader(size, &fontConfig);

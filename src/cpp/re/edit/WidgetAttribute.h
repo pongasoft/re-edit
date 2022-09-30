@@ -103,7 +103,6 @@ public:
   explicit SingleAttribute(char const *iName) : Attribute{iName} {}
   void hdgui2D(AppContext &iCtx, attribute_list_t &oAttributes) const override;
   void resetView(AppContext &iCtx);
-  void resetView(const std::function<void()>& iOnReset) const;
   virtual std::string getValueAsLua() const = 0;
   void reset() override;
 
@@ -539,21 +538,11 @@ void SingleAttribute<T>::reset()
 template<typename T>
 void SingleAttribute<T>::resetView(AppContext &iCtx)
 {
-  if(ReGui::ResetButton())
+  if(ReGui::ResetButton(iCtx.fFaButtonSize))
   {
     iCtx.addUndoAttributeReset(this);
     reset();
   }
-}
-
-//------------------------------------------------------------------------
-// SingleAttribute<T>::resetView
-//------------------------------------------------------------------------
-template<typename T>
-void SingleAttribute<T>::resetView(const std::function<void()>& iOnReset) const
-{
-  if(ReGui::ResetButton())
-    iOnReset();
 }
 
 //------------------------------------------------------------------------

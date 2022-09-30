@@ -701,7 +701,7 @@ void Panel::editNoSelectionView(AppContext &iCtx)
 {
   ImGui::PushID("Panel");
 
-  if(ReGui::MenuButton())
+  if(ReGui::MenuButton(iCtx.fFaButtonSize))
     ImGui::OpenPopup("Menu");
 
   if(ImGui::BeginPopup("Menu"))
@@ -765,7 +765,7 @@ void Panel::editNoSelectionView(AppContext &iCtx)
 //------------------------------------------------------------------------
 void Panel::editSingleSelectionView(AppContext &iCtx, std::shared_ptr<Widget> const &iWidget)
 {
-  if(ReGui::MenuButton())
+  if(ReGui::MenuButton(iCtx.fFaButtonSize))
     ImGui::OpenPopup("Menu");
 
   if(ImGui::BeginPopup("Menu"))
@@ -796,7 +796,7 @@ void Panel::editSingleSelectionView(AppContext &iCtx, std::shared_ptr<Widget> co
 //------------------------------------------------------------------------
 void Panel::editMultiSelectionView(AppContext &iCtx, std::vector<std::shared_ptr<Widget>> const &iSelectedWidgets)
 {
-  if(ReGui::MenuButton())
+  if(ReGui::MenuButton(iCtx.fFaButtonSize))
     ImGui::OpenPopup("Menu");
 
   if(ImGui::BeginPopup("Menu"))
@@ -1132,17 +1132,13 @@ void Panel::editOrderView(AppContext &iCtx)
 {
   if(ImGui::BeginTabItem("Widgets"))
   {
-    if(ImGui::BeginChild("Content"))
-      fWidgetsSelectionList.editView(iCtx);
-    ImGui::EndChild();
+    fWidgetsSelectionList.editView(iCtx);
     ImGui::EndTabItem();
   }
 
   if(ImGui::BeginTabItem("Decals"))
   {
-    if(ImGui::BeginChild("Content"))
-      fDecalsSelectionList.editView(iCtx);
-    ImGui::EndChild();
+    fDecalsSelectionList.editView(iCtx);
     ImGui::EndTabItem();
   }
 }

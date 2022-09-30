@@ -661,7 +661,7 @@ void PropertyPath::menuView(AppContext &iCtx,
                             std::function<void()> const &iOnReset,
                             std::function<void(AppContext &iCtx)> const &iEditPropertyView)
 {
-  if(ReGui::MenuButton())
+  if(ReGui::MenuButton(iCtx.fFaButtonSize))
     ImGui::OpenPopup("Menu");
 
   auto editPopupId = ImGui::GetID("Edit_popup");

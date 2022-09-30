@@ -98,7 +98,8 @@ public: // Properties
   void propertyEditView(std::string const &iPropertyPath) { fPropertyManager->editView(iPropertyPath); }
   void addPropertyToWatchlist(std::string const &iPropertyPath, bool iShowProperties = true) {
     fPropertyManager->addToWatchlist(iPropertyPath);
-    fShowProperties = iShowProperties;
+    if(iShowProperties)
+      fPropertiesWindow.setIsVisible(true);
   }
   void removePropertyFromWatchlist(std::string const &iPropertyPath) { fPropertyManager->removeFromWatchlist(iPropertyPath); }
   constexpr int getUserSamplesCount() const { return fPropertyManager->getUserSamplesCount(); }
@@ -210,6 +211,7 @@ public:
 
   float fZoom{0.20f};
   ImVec2 fGrid{1.0f, 1.0f};
+  ImVec2 fFaButtonSize{21.0f, 0.0f};
 
 protected:
   void init(lua::Config const &iConfig);
@@ -241,10 +243,10 @@ protected:
   std::unique_ptr<PanelState> fFoldedFrontPanel;
   std::unique_ptr<PanelState> fBackPanel;
   std::unique_ptr<PanelState> fFoldedBackPanel;
-  bool fShowProperties{};
-  bool fShowPanel{true};
-  bool fShowPanelWidgets{true};
-  bool fShowWidgets{};
+  ReGui::Window fPanelWindow{"Panel", true, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoCollapse};
+  ReGui::Window fPanelWidgetsWindow{"Panel Widgets", true, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoCollapse};
+  ReGui::Window fWidgetsWindow{"Widgets", true, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoCollapse};
+  ReGui::Window fPropertiesWindow{"Properties", true, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoCollapse};
   long fCurrentFrame{};
   PanelState *fCurrentPanelState{};
   Widget const *fCurrentWidget{};
