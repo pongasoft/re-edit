@@ -106,9 +106,10 @@ void Graphics::editView(AppContext &iCtx,
                         std::function<void(std::string const &)> const &iOnTextureUpdate,
                         std::function<void(ImVec2 const &)> const &iOnSizeUpdate)
 {
-  if(ReGui::ResetButton())
+  if(ReGui::ResetButton(iCtx.fFaButtonSize))
   {
-    iCtx.addUndoAttributeReset(this);
+    if(iCtx.getCurrentWidget())
+      iCtx.addUndoAttributeReset(this);
     reset();
   }
   ImGui::SameLine();
@@ -418,7 +419,7 @@ void Background::editView(AppContext &iCtx)
 {
   static const auto kBackgroundFilter = [](FilmStrip const &f) { return f.numFrames() == 1; };
 
-  if(ReGui::ResetButton())
+  if(ReGui::ResetButton(iCtx.fFaButtonSize))
     reset();
   ImGui::SameLine();
 
