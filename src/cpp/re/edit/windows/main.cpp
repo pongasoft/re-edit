@@ -29,9 +29,45 @@
 //#pragma comment(lib, "legacy_stdio_definitions")
 //#endif
 
+//! glfw_error_callback
 static void glfw_error_callback(int error, const char *description)
 {
   fprintf(stderr, "Glfw Error %d: %s\n", error, description);
+}
+
+//! getFontDpiScale
+static float getFontDpiScale(GLFWwindow *iWindow)
+{
+  float dpiScale{1.0f};
+
+  if(iWindow)
+    glfwGetWindowContentScale(iWindow, &dpiScale, nullptr);
+  else
+  {
+    auto monitor = glfwGetPrimaryMonitor();
+    if(monitor)
+    {
+      glfwGetMonitorContentScale(monitor, &dpiScale, nullptr);
+    }
+  }
+  return dpiScale;
+}
+
+//! onWindowContentScaleChange
+static void onWindowContentScaleChange(GLFWwindow* iWindow, float iXscale, float iYscale)
+{
+  re::edit::Application *application = reinterpret_cast<re::edit::Application *>(glfwGetWindowUserPointer(iWindow));
+  application->onNativeWindowFontDpiScaleChange(iXscale);
+  fprintf(stdout, "onWindowContentScaleChange %f: %f\n", iXscale, iYscale);
+}
+
+//! onWindowSizeChange
+static void onWindowSizeChange(GLFWwindow* iWindow, int iWidth, int iHeight)
+{
+  re::edit::Application *application = reinterpret_cast<re::edit::Application *>(glfwGetWindowUserPointer(iWindow));
+  auto scale = getFontDpiScale(iWindow);
+  application->setNativeWindowSize(static_cast<int>(iWidth / scale), static_cast<int>(iHeight /scale));
+  fprintf(stdout, "onWindowSizeChange %d: %d\n", iWidth, iHeight);
 }
 
 static void printInfo(GLFWwindow *iWindow)
@@ -69,26 +105,14 @@ static void printInfo(GLFWwindow *iWindow)
   fprintf(stdout, "GL_MAX_TEXTURE_SIZE = %d\n", value);
 }
 
-static float getFontDpiScale(GLFWwindow *iWindow)
-{
-  if(true)
-    return 1.0f;
-
-  auto monitor = MonitorFromWindow(glfwGetWin32Window(iWindow), MONITOR_DEFAULTTONULL);
-  if(!monitor)
-    return 1.0f;
-  uint32_t dpi_x, dpi_y;
-  GetDpiForMonitor(monitor, MDT_EFFECTIVE_DPI, &dpi_x, &dpi_y);
-  return static_cast<float>(dpi_x) / static_cast<float>(USER_DEFAULT_SCREEN_DPI);
-}
-
 int main(int argc, char **argv)
 {
-//  SetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE);
+  SetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE);
 
   const char *glsl_version = "#version 130";
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+
   //glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);  // 3.2+ only
   //glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);            // 3.0+ only
 
@@ -118,9 +142,11 @@ int main(int argc, char **argv)
   if(!glfwInit())
     return 1;
 
+  auto scale = getFontDpiScale(nullptr); // primary monitor
+
   // Create window with graphics context
-  GLFWwindow *window = glfwCreateWindow(application.getNativeWindowWidth(),
-                                        application.getNativeWindowHeight(),
+  GLFWwindow *window = glfwCreateWindow(application.getNativeWindowWidth() * scale,
+                                        application.getNativeWindowHeight() * scale,
                                         "re-edit",
                                         nullptr,
                                         nullptr);
@@ -140,18 +166,11 @@ int main(int argc, char **argv)
   if(!application.init(std::make_shared<re::edit::OGL3TextureManager>(glMaxTextureSize)))
     return 1;
 
-  // sets the initial size
-  {
-    int w, h;
-    glfwGetWindowSize(window, &w, &h);
-    application.setNativeWindowSize(w, h);
-  }
+  glfwSetWindowUserPointer(window, &application);
+  glfwSetWindowContentScaleCallback(window, onWindowContentScaleChange);
+  glfwSetWindowSizeCallback(window, onWindowSizeChange);
 
-  int windowPosX;
-  int windowPosY;
-  glfwGetWindowPos(window, &windowPosX, &windowPosY);
-
-  application.onNativeWindowPositionChange(windowPosX, windowPosY, 1.0f, getFontDpiScale(window));
+  application.onNativeWindowFontDpiScaleChange(getFontDpiScale(window));
 
   printInfo(window);
 
@@ -164,16 +183,6 @@ int main(int argc, char **argv)
     // - When io.WantCaptureKeyboard is true, do not dispatch keyboard input data to your main application, or clear/overwrite your copy of the keyboard data.
     // Generally you may always pass all inputs to dear imgui, and hide them from your application based on those two flags.
     glfwPollEvents();
-
-    int newWindowPosX;
-    int newWindowPosY;
-    glfwGetWindowPos(window, &newWindowPosX, &newWindowPosY);
-    if(newWindowPosX != windowPosX || newWindowPosY != windowPosY)
-    {
-      windowPosX = newWindowPosX;
-      windowPosY = newWindowPosY;
-      application.onNativeWindowPositionChange(windowPosX, windowPosY, 1.0f, getFontDpiScale(window));
-    }
 
     // Before New Frame
     application.newFrame();
@@ -197,10 +206,6 @@ int main(int argc, char **argv)
                  application.clear_color[3]);
     glClear(GL_COLOR_BUFFER_BIT);
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
-    int w, h;
-    glfwGetWindowSize(window, &w, &h);
-    application.setNativeWindowSize(w, h);
 
     glfwSwapBuffers(window);
   }

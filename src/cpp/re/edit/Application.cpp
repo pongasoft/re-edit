@@ -93,11 +93,22 @@ bool Application::init(std::shared_ptr<TextureManager> iTextureManager)
 //------------------------------------------------------------------------
 void Application::newFrame()
 {
-  if(fAppContext.fFontManager->hasNewFontRequest())
+  if(fAppContext.fFontManager->hasFontChangeRequest())
   {
-    fAppContext.fFontManager->applyNewFontRequest();
-    fAppContext.fFaButtonSize =
-      ImVec2{fAppContext.fFontManager->getCurrentFont().fSize + ImGui::GetStyle().FramePadding.x * 2, 0};
+    auto oldDpiScale = fAppContext.fFontManager->getCurrentFontDpiScale();
+    fAppContext.fFontManager->applyFontChangeRequest();
+    auto newDpiScale = fAppContext.fFontManager->getCurrentFontDpiScale();
+
+    if(oldDpiScale != newDpiScale)
+    {
+      auto scaleFactor = newDpiScale;
+      ImGuiStyle newStyle{};
+      ImGui::StyleColorsDark(&newStyle);
+      newStyle.ScaleAllSizes(scaleFactor);
+      ImGui::GetStyle() = newStyle;
+    }
+
+    fRecomputeDimensionsRequested = true;
   }
 }
 
@@ -106,6 +117,13 @@ void Application::newFrame()
 //------------------------------------------------------------------------
 void Application::render()
 {
+  if(fRecomputeDimensionsRequested)
+  {
+    fAppContext.fFaButtonSize = ImVec2{ImGui::CalcTextSize(ReGui::kResetIcon).x + ImGui::GetStyle().FramePadding.x * 2, 0};
+    fAppContext.fItemWidth = 30 * ImGui::CalcTextSize("W").x;
+    fRecomputeDimensionsRequested = false;
+  }
+
   if(fAppContext.fUndoManager->hasUndoHistory())
     fNeedsSaving = true;
 
@@ -143,26 +161,19 @@ void Application::render()
 
     auto const &currentFont = fAppContext.fFontManager->getCurrentFont();
     auto fontSize = static_cast<int>(currentFont.fSize);
-    if(ImGui::SliderInt("font_size", &fontSize, 7, 36))
+    if(ImGui::InputInt("font_size", &fontSize))
     {
       fAppContext.fFontManager->requestNewFont(FontDef{currentFont.fName, currentFont.fSource, static_cast<float>(fontSize)});
-//      if(fontSize != 12.0f)
-//      {
-//        auto scale = fontSize / 12.0f;
-//        ImGuiStyle newStyle{};
-//        newStyle.ScaleAllSizes(scale);
-//        ImGui::GetStyle() = newStyle;
-//      }
     }
 
-    static float kScale = 1.0f;
-
-    if(ImGui::SliderFloat("scale", &kScale, 1.0f, 3.0f))
-    {
-      ImGuiStyle newStyle{};
-      newStyle.ScaleAllSizes(kScale);
-      ImGui::GetStyle() = newStyle;
-    }
+//    static float kScale = 1.0f;
+//
+//    if(ImGui::SliderFloat("scale", &kScale, 1.0f, 3.0f))
+//    {
+//      ImGuiStyle newStyle{};
+//      newStyle.ScaleAllSizes(kScale);
+//      ImGui::GetStyle() = newStyle;
+//    }
 
     if(ImGui::Button("Fit"))
     {
@@ -171,6 +182,8 @@ void Application::render()
       fAppContext.fPanelWidgetsWindow.requestSizeToFit();
       fAppContext.fWidgetsWindow.requestSizeToFit();
       fAppContext.fPropertiesWindow.requestSizeToFit();
+      RE_EDIT_LOG_INFO("dpiScale=%f | ImGui::GetFontSize()=%f | kResetIcon=%f | X=%f",
+                       fAppContext.fFontManager->getCurrentFontDpiScale(), ImGui::GetFontSize(), ImGui::CalcTextSize(ReGui::kResetIcon).x, ImGui::CalcTextSize("X").x);
     }
 
 //

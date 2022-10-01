@@ -326,16 +326,32 @@ std::string AppContext::getLuaConfig() const
 }
 
 //------------------------------------------------------------------------
-// AppContext::onNativeWindowPositionChange
+// AppContext::onNativeWindowFontDpiScaleChange
 //------------------------------------------------------------------------
-void AppContext::onNativeWindowPositionChange(int x, int y, float iFontScale, float iFontDpiScale)
+void AppContext::onNativeWindowFontDpiScaleChange(float iFontDpiScale)
 {
-  auto loggingManager = LoggingManager::instance();
-
-  loggingManager->debug("FontScale", "%f", iFontScale);
-  loggingManager->debug("FontDpiScale", "%f", iFontDpiScale);
-
-  fFontManager->setFontScales(iFontScale, iFontDpiScale);
+  fFontManager->setDpiFontScale(iFontDpiScale);
 }
+
+//------------------------------------------------------------------------
+// AppContext::onNativeWindowFontScaleChange
+//------------------------------------------------------------------------
+void AppContext::onNativeWindowFontScaleChange(float iFontScale)
+{
+  fFontManager->setFontScale(iFontScale);
+}
+
+////------------------------------------------------------------------------
+//// AppContext::onNativeWindowPositionChange
+////------------------------------------------------------------------------
+//void AppContext::onNativeWindowPositionChange(int x, int y, float iFontScale, float iFontDpiScale)
+//{
+//  auto loggingManager = LoggingManager::instance();
+//
+//  loggingManager->debug("FontScale", "%f", iFontScale);
+//  loggingManager->debug("FontDpiScale", "%f", iFontDpiScale);
+//
+//  fFontManager->setFontScales(iFontScale, iFontDpiScale);
+//}
 
 }

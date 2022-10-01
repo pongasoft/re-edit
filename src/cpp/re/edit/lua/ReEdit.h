@@ -24,6 +24,8 @@
 
 namespace re::edit::lua {
 
+constexpr float kDefaultFontSize = 12.0f;
+
 struct Config
 {
   int fNativeWindowWidth{1280};
@@ -32,7 +34,7 @@ struct Config
   bool fShowPanel{true};
   bool fShowPanelWidgets{true};
   bool fShowWidgets{true};
-  float fFontSize{12.0f};
+  float fFontSize{kDefaultFontSize};
   ImVec2 fGrid{10.0f, 10.0f};
 
   std::string fImGuiIni{R"(

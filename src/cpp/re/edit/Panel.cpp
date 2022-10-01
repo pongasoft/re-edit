@@ -436,7 +436,7 @@ std::pair<std::shared_ptr<Widget>, int> Panel::deleteWidget(AppContext &iCtx, in
     RE_EDIT_INTERNAL_ASSERT(iter != fDecalsOrder.end());
     auto order = iter - fDecalsOrder.begin();
     fDecalsOrder.erase(iter);
-    return {std::move(widget), order};
+    return {std::move(widget), static_cast<int>(order)};
   }
   else
   {
@@ -444,7 +444,7 @@ std::pair<std::shared_ptr<Widget>, int> Panel::deleteWidget(AppContext &iCtx, in
     RE_EDIT_INTERNAL_ASSERT(iter != fWidgetsOrder.end());
     auto order = iter - fWidgetsOrder.begin();
     fWidgetsOrder.erase(iter);
-    return {std::move(widget), order};
+    return {std::move(widget), static_cast<int>(order)};
   }
 }
 
@@ -663,7 +663,7 @@ void Panel::editView(AppContext &iCtx)
   {
 //
 //    ImGui::SliderFloat("Width", &kItemWidth, 0, ImGui::GetContentRegionAvail().x);
-    ImGui::PushItemWidth(kItemWidth);
+    ImGui::PushItemWidth(iCtx.fItemWidth);
 //    ImGui::Text("region = %f | itemWidth = %f", ImGui::GetContentRegionAvail().x, kItemWidth);
 
     auto size = selectedWidgets.size();

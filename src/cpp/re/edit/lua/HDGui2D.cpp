@@ -878,7 +878,7 @@ void HDGui2D::populate(DiscretePropertyValueList *oList)
     withField(-1, oList->fName, LUA_TTABLE, [this, oList]() {
       iterateLuaArray([this, values = &oList->fValue](auto i) {
         if(lua_type(L, -1) == LUA_TNUMBER)
-          values->emplace_back(lua_tonumber(L, -1));
+          values->emplace_back(static_cast<int>(lua_tonumber(L, -1)));
       }, true, false);
       oList->fProvided = true;
     });

@@ -84,8 +84,8 @@ bool FontManager::loadFont(float iSize, const std::function<bool(float iSizePixe
 {
   auto &io = ImGui::GetIO();
   io.Fonts->Clear();
-  auto fontScale = getFontScale();
-  auto size = std::floor(iSize * fontScale * getFontDpiScale());
+  auto fontScale = getCurrentFontScale();
+  auto size = std::floor(iSize * fontScale * getCurrentFontDpiScale());
   ImFontConfig fontConfig;
   fontConfig.OversampleH = 2;
   bool res = iFontLoader(size, &fontConfig);
@@ -100,6 +100,17 @@ bool FontManager::loadFont(float iSize, const std::function<bool(float iSizePixe
     io.FontGlobalScale = 1.0f;
   }
   return res;
+}
+
+//------------------------------------------------------------------------
+// FontManager::requestNewFont
+//------------------------------------------------------------------------
+void FontManager::requestNewFont(FontDef const &iFont)
+{
+  if(fFontChangeRequest)
+    fFontChangeRequest = FontChangeRequest{iFont, fFontChangeRequest->fFontScale, fFontChangeRequest->fFontDpiScale};
+  else
+    fFontChangeRequest = FontChangeRequest{iFont, fCurrentFontScale, fCurrentFontDpiScale};
 }
 
 //------------------------------------------------------------------------
@@ -127,26 +138,42 @@ void FontManager::loadFontFromFile(char const *iFontFilename, float iSize) const
 }
 
 //------------------------------------------------------------------------
-// FontManager::applyNewFontRequest
+// FontManager::applyFontChangeRequest
 //------------------------------------------------------------------------
-void FontManager::applyNewFontRequest()
+void FontManager::applyFontChangeRequest()
 {
-  RE_EDIT_INTERNAL_ASSERT(hasNewFontRequest());
-  setCurrentFont(*fNewFontRequest);
-  fNewFontRequest = std::nullopt;
+  RE_EDIT_INTERNAL_ASSERT(hasFontChangeRequest());
+  fCurrentFontScale = fFontChangeRequest->fFontScale;
+  fCurrentFontDpiScale = fFontChangeRequest->fFontDpiScale;
+  setCurrentFont(fFontChangeRequest->fFontDef);
+  fFontChangeRequest = std::nullopt;
 }
 
 //------------------------------------------------------------------------
-// FontManager::setFontScales
+// FontManager::setFontScale
 //------------------------------------------------------------------------
-void FontManager::setFontScales(float iFontScale, float iFontDpiScale)
+void FontManager::setFontScale(float iFontScale)
 {
-  if(fFontScale != iFontScale || iFontDpiScale != fFontDpiScale)
+  if(fCurrentFontScale != iFontScale)
   {
-    fFontScale = iFontScale;
-    fFontDpiScale = iFontDpiScale;
-    if(!fNewFontRequest)
-      requestNewFont(getCurrentFont());
+    if(fFontChangeRequest)
+      fFontChangeRequest = FontChangeRequest{fFontChangeRequest->fFontDef, iFontScale, fFontChangeRequest->fFontDpiScale};
+    else
+      fFontChangeRequest = FontChangeRequest{getCurrentFont(), iFontScale, getCurrentFontDpiScale()};
+  }
+}
+
+//------------------------------------------------------------------------
+// FontManager::setDpiFontScale
+//------------------------------------------------------------------------
+void FontManager::setDpiFontScale(float iFontDpiScale)
+{
+  if(iFontDpiScale != fCurrentFontDpiScale)
+  {
+    if(fFontChangeRequest)
+      fFontChangeRequest = FontChangeRequest{fFontChangeRequest->fFontDef, fFontChangeRequest->fFontScale, iFontDpiScale};
+    else
+      fFontChangeRequest = FontChangeRequest{getCurrentFont(), getCurrentFontScale(), iFontDpiScale};
   }
 }
 

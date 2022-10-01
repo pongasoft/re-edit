@@ -24,6 +24,7 @@
 #include "Color.h"
 #include "Constants.h"
 #include <IconsFAReEdit.h>
+#include <optional>
 
 static constexpr ImVec2 operator*(const ImVec2& lhs, const float rhs)              { return {lhs.x * rhs, lhs.y * rhs}; }
 static constexpr ImVec2 operator/(const ImVec2& lhs, const float rhs)              { return {lhs.x / rhs, lhs.y / rhs}; }
@@ -303,7 +304,7 @@ public:
 public:
   Window(char const *iName, std::optional<bool> iVisible, ImGuiWindowFlags iFlags = 0) :
     fName{iName},
-    fVisible{iVisible == std::nullopt ? true : *iVisible},
+    fVisible{iVisible == std::nullopt || *iVisible},
     fDisableClosingWidget{iVisible == std::nullopt},
     fFlags{iFlags} {}
 

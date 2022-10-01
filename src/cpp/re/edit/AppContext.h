@@ -212,13 +212,15 @@ public:
   float fZoom{0.20f};
   ImVec2 fGrid{1.0f, 1.0f};
   ImVec2 fFaButtonSize{21.0f, 0.0f};
+  float fItemWidth{300.0f};
 
 protected:
   void init(lua::Config const &iConfig);
   std::string getLuaConfig() const;
 
   void initPanels(std::string const &iDevice2DFile, std::string const &iHDGui2DFile);
-  void onNativeWindowPositionChange(int x, int y, float iFontScale, float iFontDpiScale);
+  void onNativeWindowFontDpiScaleChange(float iFontDpiScale);
+  void onNativeWindowFontScaleChange(float iFontScale);
   inline void setCurrentWidget(Widget const *iWidget) { fCurrentWidget = iWidget; }
   void render();
   void populateWidgetUndoAction(WidgetUndoAction *iAction, Widget const *iWidget);

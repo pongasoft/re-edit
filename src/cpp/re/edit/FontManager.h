@@ -47,26 +47,37 @@ public:
   explicit FontManager(std::shared_ptr<TextureManager> iTextureManager) : fTextureManager{std::move(iTextureManager)}
   {}
 
-  constexpr float getFontScale() const { return fFontScale; }
-  constexpr float getFontDpiScale() const { return fFontDpiScale; }
-  void setFontScales(float iFontScale, float iFontDpiScale);
+  inline float getCurrentDpiScaledFontSize() const { return computeDpiScaledFontSize(fCurrentFont.fSize); }
+  constexpr float getCurrentFontScale() const { return fCurrentFontScale; }
+  constexpr float getCurrentFontDpiScale() const { return fCurrentFontDpiScale; }
+  void setFontScale(float iFontScale);
+  void setDpiFontScale(float iFontDpiScale);
   FontDef getCurrentFont() const { return fCurrentFont; }
-  void requestNewFont(FontDef const &iFont) { fNewFontRequest = iFont; }
-  bool hasNewFontRequest() const { return fNewFontRequest.has_value(); }
-  void applyNewFontRequest();
+  void requestNewFont(FontDef const &iFont);
+  bool hasFontChangeRequest() const { return fFontChangeRequest.has_value(); }
+  void applyFontChangeRequest();
 
 protected:
   void loadCompressedBase85Font(char const *iCompressedData, float iSize) const;
   void loadFontFromFile(char const *iFontFilename, float iSize) const;
   bool loadFont(float iSize, const std::function<bool (float iSizePixels, const ImFontConfig* iFontCfg)>& iFontLoader) const;
   void setCurrentFont(FontDef const &iFont);
+  inline float computeDpiScaledFontSize(float iFontSize) const { return std::floor(iFontSize * fCurrentFontDpiScale); }
 
+private:
+  struct FontChangeRequest
+  {
+    FontDef fFontDef{};
+    float fFontScale{1.0f};
+    float fFontDpiScale{1.0f};
+
+  };
 private:
   std::shared_ptr<TextureManager> fTextureManager{};
   FontDef fCurrentFont{};
-  std::optional<FontDef> fNewFontRequest{};
-  float fFontScale{1.0f};
-  float fFontDpiScale{1.0f};
+  float fCurrentFontScale{1.0f};
+  float fCurrentFontDpiScale{1.0f};
+  std::optional<FontChangeRequest> fFontChangeRequest{};
 };
 
 }

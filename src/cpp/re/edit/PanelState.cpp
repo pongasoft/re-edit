@@ -158,7 +158,7 @@ void PanelState::render(AppContext &iCtx)
     constexpr auto kGridStep = 5;
     constexpr auto kGridFastStep = 50;
 
-    ImGui::PushItemWidth(kItemWidth / (kSquare ? 2.0f : 3.0f));
+    ImGui::PushItemWidth(iCtx.fItemWidth / (kSquare ? 2.0f : 3.0f));
 
     if(kSquare)
     {

@@ -49,7 +49,8 @@ public:
 
   void setDeviceHeightRU(int iDeviceHeightRU);
 
-  inline void onNativeWindowPositionChange(int x, int y, float iFontScale, float iFontDpiScale) { fAppContext.onNativeWindowPositionChange(x, y, iFontScale, iFontDpiScale); }
+  inline void onNativeWindowFontDpiScaleChange(float iFontDpiScale) { fAppContext.onNativeWindowFontDpiScaleChange(iFontDpiScale); }
+//  inline void onNativeWindowPositionChange(int x, int y, float iFontScale, float iFontDpiScale) { fAppContext.onNativeWindowPositionChange(x, y, iFontScale, iFontDpiScale); }
 
   void newFrame();
   void render();
@@ -78,6 +79,7 @@ private:
   std::string fRoot{};
   bool fSavingRequested{};
   bool fNeedsSaving{};
+  bool fRecomputeDimensionsRequested{};
 };
 
 }
