@@ -44,28 +44,28 @@ Size=400,400
 Collapsed=0
 
 [Window][re-edit]
-Pos=5,25
+Pos=1,19
 Size=421,204
 Collapsed=0
 
 [Window][Panel]
-Pos=5,431
-Size=1272,285
+Pos=1,424
+Size=1278,295
 Collapsed=0
 
 [Window][Panel Widgets]
-Pos=429,25
-Size=556,404
+Pos=423,19
+Size=552,404
 Collapsed=0
 
 [Window][Widgets]
-Pos=988,25
-Size=288,404
+Pos=976,19
+Size=303,404
 Collapsed=0
 
 [Window][Properties]
-Pos=5,231
-Size=422,198
+Pos=1,224
+Size=421,199
 Collapsed=0
 
 [Window][Log]

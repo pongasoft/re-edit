@@ -27,6 +27,7 @@
 #include "lua/HDGui2D.h"
 #include "lua/Device2D.h"
 #include "PanelState.h"
+#include <optional>
 
 namespace re::edit {
 
@@ -35,9 +36,9 @@ class Application
 public:
   Application() = default;
 
-  bool parseArgs(std::vector<std::string> iArgs);
+  std::optional<lua::Config> parseArgs(std::vector<std::string> iArgs);
 
-  bool init(std::shared_ptr<TextureManager> iTextureManager);
+  bool init(lua::Config const &iConfig, std::shared_ptr<TextureManager> iTextureManager);
 
   inline void setNativeWindowSize(int iWidth, int iHeight) {
     fAppContext.fNativeWindowWidth = iWidth;
@@ -50,6 +51,7 @@ public:
   void setDeviceHeightRU(int iDeviceHeightRU);
 
   inline void onNativeWindowFontDpiScaleChange(float iFontDpiScale) { fAppContext.onNativeWindowFontDpiScaleChange(iFontDpiScale); }
+  inline void onNativeWindowFontScaleChange(float iFontScale) { fAppContext.onNativeWindowFontScaleChange(iFontScale); }
 //  inline void onNativeWindowPositionChange(int x, int y, float iFontScale, float iFontDpiScale) { fAppContext.onNativeWindowPositionChange(x, y, iFontScale, iFontDpiScale); }
 
   void newFrame();

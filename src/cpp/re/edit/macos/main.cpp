@@ -33,6 +33,40 @@ static void glfw_error_callback(int error, const char *description)
   fprintf(stderr, "Glfw Error %d: %s\n", error, description);
 }
 
+//! getFontDpiScale
+static float getFontDpiScale(GLFWwindow *iWindow)
+{
+  float dpiScale{1.0f};
+
+  if(iWindow)
+    glfwGetWindowContentScale(iWindow, &dpiScale, nullptr);
+  else
+  {
+    auto monitor = glfwGetPrimaryMonitor();
+    if(monitor)
+    {
+      glfwGetMonitorContentScale(monitor, &dpiScale, nullptr);
+    }
+  }
+  return dpiScale;
+}
+
+//! onWindowSizeChange
+static void onWindowSizeChange(GLFWwindow* iWindow, int iWidth, int iHeight)
+{
+  auto application = reinterpret_cast<re::edit::Application *>(glfwGetWindowUserPointer(iWindow));
+  application->setNativeWindowSize(iWidth, iHeight);
+  fprintf(stdout, "onWindowSizeChange %d: %d\n", iWidth, iHeight);
+}
+
+//! onWindowContentScaleChange
+static void onWindowContentScaleChange(GLFWwindow* iWindow, float iXscale, float iYscale)
+{
+  auto application = reinterpret_cast<re::edit::Application *>(glfwGetWindowUserPointer(iWindow));
+  application->onNativeWindowFontScaleChange(iXscale);
+  fprintf(stdout, "onWindowContentScaleChange %f: %f\n", iXscale, iYscale);
+}
+
 int main(int argc, char **argv)
 {
   // Setup Dear ImGui context
@@ -68,7 +102,8 @@ int main(int argc, char **argv)
   for(int i = 1; i < argc; i++)
     args.emplace_back(argv[i]);
 
-  if(!application.parseArgs(std::move(args)))
+  auto config = application.parseArgs(std::move(args));
+  if(!config)
     return 1;
 
   // Setup window
@@ -79,8 +114,8 @@ int main(int argc, char **argv)
   // Create window with graphics context
   glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
   glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_TRUE);
-  GLFWwindow *window = glfwCreateWindow(application.getNativeWindowWidth(),
-                                        application.getNativeWindowHeight(),
+  GLFWwindow *window = glfwCreateWindow(config->fNativeWindowWidth,
+                                        config->fNativeWindowHeight,
                                         "re-edit",
                                         nullptr,
                                         nullptr);
@@ -102,21 +137,13 @@ int main(int argc, char **argv)
 
   auto renderPassDescriptor = MTL::RenderPassDescriptor::alloc()->init();
 
-  if(!application.init(std::make_shared<re::edit::MTLTextureManager>(device)))
+  if(!application.init(*config, std::make_shared<re::edit::MTLTextureManager>(device)))
     return 1;
 
-  // sets the initial size
-  {
-    int w, h;
-    glfwGetWindowSize(window, &w, &h);
-    application.setNativeWindowSize(w, h);
-  }
-
-  int windowPosX;
-  int windowPosY;
-  glfwGetWindowPos(window, &windowPosX, &windowPosY);
-
-  application.onNativeWindowPositionChange(windowPosX, windowPosY, ImGui_ImplMetal_GetBackingScaleFactorMainScreen(), 1.0f);
+  application.onNativeWindowFontScaleChange(getFontDpiScale(window));
+  glfwSetWindowUserPointer(window, &application);
+  glfwSetWindowContentScaleCallback(window, onWindowContentScaleChange);
+  glfwSetWindowSizeCallback(window, onWindowSizeChange);
 
   // Main loop
   while(!glfwWindowShouldClose(window))
@@ -130,16 +157,6 @@ int main(int argc, char **argv)
       // - When io.WantCaptureKeyboard is true, do not dispatch keyboard input data to your main application, or clear/overwrite your copy of the keyboard data.
       // Generally you may always pass all inputs to dear imgui, and hide them from your application based on those two flags.
       glfwPollEvents();
-
-      int newWindowPosX;
-      int newWindowPosY;
-      glfwGetWindowPos(window, &newWindowPosX, &newWindowPosY);
-      if(newWindowPosX != windowPosX || newWindowPosY != windowPosY)
-      {
-        windowPosX = newWindowPosX;
-        windowPosY = newWindowPosY;
-        application.onNativeWindowPositionChange(windowPosX, windowPosY, ImGui_ImplMetal_GetBackingScaleFactorMainScreen(), 1.0f);
-      }
 
       int width, height;
       glfwGetFramebufferSize(window, &width, &height);
@@ -178,10 +195,6 @@ int main(int argc, char **argv)
 
       commandBuffer->presentDrawable(drawable);
       commandBuffer->commit();
-
-      int w, h;
-      glfwGetWindowSize(window, &w, &h);
-      application.setNativeWindowSize(w, h);
     }
     pPool->release();
   }

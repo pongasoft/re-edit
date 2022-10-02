@@ -134,7 +134,8 @@ int main(int argc, char **argv)
   for(int i = 1; i < argc; i++)
     args.emplace_back(argv[i]);
 
-  if(!application.parseArgs(std::move(args)))
+  auto config = application.parseArgs(std::move(args));
+  if(!config)
     return 1;
 
   // Setup window
@@ -145,8 +146,8 @@ int main(int argc, char **argv)
   auto scale = getFontDpiScale(nullptr); // primary monitor
 
   // Create window with graphics context
-  GLFWwindow *window = glfwCreateWindow(application.getNativeWindowWidth() * scale,
-                                        application.getNativeWindowHeight() * scale,
+  GLFWwindow *window = glfwCreateWindow(config->fNativeWindowWidth * scale,
+                                        config->fNativeWindowHeight * scale,
                                         "re-edit",
                                         nullptr,
                                         nullptr);
@@ -163,7 +164,7 @@ int main(int argc, char **argv)
   int glMaxTextureSize;
   glGetIntegerv(GL_MAX_TEXTURE_SIZE, &glMaxTextureSize);
 
-  if(!application.init(std::make_shared<re::edit::OGL3TextureManager>(glMaxTextureSize)))
+  if(!application.init(*config, std::make_shared<re::edit::OGL3TextureManager>(glMaxTextureSize)))
     return 1;
 
   glfwSetWindowUserPointer(window, &application);

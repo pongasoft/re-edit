@@ -30,29 +30,15 @@ namespace re::edit {
 //------------------------------------------------------------------------
 // Application::parseArgs
 //------------------------------------------------------------------------
-bool Application::parseArgs(std::vector<std::string> iArgs)
+std::optional<lua::Config> Application::parseArgs(std::vector<std::string> iArgs)
 {
   if(iArgs.empty())
   {
     RE_EDIT_LOG_ERROR("You must provide the path to the root folder of the device");
-    return false;
+    return std::nullopt;
   }
 
   fRoot = std::string(iArgs[0]);
-
-  return true;
-}
-
-//------------------------------------------------------------------------
-// Application::init
-//------------------------------------------------------------------------
-bool Application::init(std::shared_ptr<TextureManager> iTextureManager)
-{
-  fAppContext.fFontManager = std::make_shared<FontManager>(iTextureManager);
-  fAppContext.fTextureManager = std::move(iTextureManager);
-  fAppContext.fUserPreferences = std::make_shared<UserPreferences>();
-  fAppContext.fPropertyManager = std::make_shared<PropertyManager>();
-  fAppContext.fUndoManager = std::make_shared<UndoManager>();
 
   auto configFile = re::mock::fmt::path(fRoot, "re-edit.lua");
   lua::Config config{};
@@ -68,8 +54,22 @@ bool Application::init(std::shared_ptr<TextureManager> iTextureManager)
     }
   }
 
-  fAppContext.init(config);
-  ImGui::LoadIniSettingsFromMemory(config.fImGuiIni.c_str(), config.fImGuiIni.size());
+  return config;
+}
+
+//------------------------------------------------------------------------
+// Application::init
+//------------------------------------------------------------------------
+bool Application::init(lua::Config const &iConfig, std::shared_ptr<TextureManager> iTextureManager)
+{
+  fAppContext.fFontManager = std::make_shared<FontManager>(iTextureManager);
+  fAppContext.fTextureManager = std::move(iTextureManager);
+  fAppContext.fUserPreferences = std::make_shared<UserPreferences>();
+  fAppContext.fPropertyManager = std::make_shared<PropertyManager>();
+  fAppContext.fUndoManager = std::make_shared<UndoManager>();
+
+  fAppContext.init(iConfig);
+  ImGui::LoadIniSettingsFromMemory(iConfig.fImGuiIni.c_str(), iConfig.fImGuiIni.size());
 
   auto &io = ImGui::GetIO();
   io.IniFilename = nullptr; // don't use imgui.ini file
@@ -159,12 +159,12 @@ void Application::render()
 
     fAppContext.render();
 
-    auto const &currentFont = fAppContext.fFontManager->getCurrentFont();
-    auto fontSize = static_cast<int>(currentFont.fSize);
-    if(ImGui::InputInt("font_size", &fontSize))
-    {
-      fAppContext.fFontManager->requestNewFont(FontDef{currentFont.fName, currentFont.fSource, static_cast<float>(fontSize)});
-    }
+//    auto const &currentFont = fAppContext.fFontManager->getCurrentFont();
+//    auto fontSize = static_cast<int>(currentFont.fSize);
+//    if(ImGui::InputInt("font_size", &fontSize))
+//    {
+//      fAppContext.fFontManager->requestNewFont(FontDef{currentFont.fName, currentFont.fSource, static_cast<float>(fontSize)});
+//    }
 
 //    static float kScale = 1.0f;
 //
@@ -175,16 +175,16 @@ void Application::render()
 //      ImGui::GetStyle() = newStyle;
 //    }
 
-    if(ImGui::Button("Fit"))
-    {
-      fMainWindow.requestSizeToFit();
-      fAppContext.fPanelWindow.requestSizeToFit();
-      fAppContext.fPanelWidgetsWindow.requestSizeToFit();
-      fAppContext.fWidgetsWindow.requestSizeToFit();
-      fAppContext.fPropertiesWindow.requestSizeToFit();
-      RE_EDIT_LOG_INFO("dpiScale=%f | ImGui::GetFontSize()=%f | kResetIcon=%f | X=%f",
-                       fAppContext.fFontManager->getCurrentFontDpiScale(), ImGui::GetFontSize(), ImGui::CalcTextSize(ReGui::kResetIcon).x, ImGui::CalcTextSize("X").x);
-    }
+//    if(ImGui::Button("Fit"))
+//    {
+//      fMainWindow.requestSizeToFit();
+//      fAppContext.fPanelWindow.requestSizeToFit();
+//      fAppContext.fPanelWidgetsWindow.requestSizeToFit();
+//      fAppContext.fWidgetsWindow.requestSizeToFit();
+//      fAppContext.fPropertiesWindow.requestSizeToFit();
+//      RE_EDIT_LOG_INFO("dpiScale=%f | ImGui::GetFontSize()=%f | kResetIcon=%f | X=%f",
+//                       fAppContext.fFontManager->getCurrentFontDpiScale(), ImGui::GetFontSize(), ImGui::CalcTextSize(ReGui::kResetIcon).x, ImGui::CalcTextSize("X").x);
+//    }
 
 //
 //    auto fontScale = fAppContext.fFontManager->getFontScale();
