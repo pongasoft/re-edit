@@ -6,6 +6,7 @@
 #include <imgui.h>
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_metal.h>
+#include <backends/regui_impl_metal.h>
 #include <cstdio>
 #include "../Application.h"
 #include "MTLTextureManager.h"

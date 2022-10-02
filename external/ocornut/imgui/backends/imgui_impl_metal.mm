@@ -115,51 +115,6 @@ bool ImGui_ImplMetal_CreateDeviceObjects(MTL::Device* device)
     return ImGui_ImplMetal_CreateDeviceObjects((id<MTLDevice>)(device));
 }
 
-void ImGui_ImplMetal_Layer_SetDevice(void* layer, MTL::Device *iDevice)
-{
-  auto metalLayer = (CAMetalLayer*) layer;
-  metalLayer.device = (__bridge id<MTLDevice>) iDevice;
-}
-
-void ImGui_ImplMetal_Layer_SetPixelFormat(void* layer, int pixelFormat)
-{
-  auto metalLayer = (CAMetalLayer*) layer;
-  metalLayer.pixelFormat = (MTLPixelFormat) pixelFormat;
-}
-
-void ImGui_ImplMetal_Layer_SetDrawableSize(void* layer, int iWidth, int iHeight)
-{
-  auto metalLayer = (CAMetalLayer*) layer;
-  metalLayer.drawableSize = CGSizeMake(iWidth, iHeight);
-}
-
-CA::MetalDrawable* ImGui_ImplMetal_Layer_GetNextDrawable(void* layer)
-{
-  auto metalLayer = (CAMetalLayer*) layer;
-  id <CAMetalDrawable> metalDrawable = [metalLayer nextDrawable];
-  return ( __bridge CA::MetalDrawable*) metalDrawable;
-}
-
-void* ImGui_ImplMetal_Layer()
-{
-  CAMetalLayer *layer = [CAMetalLayer layer];
-  return layer;
-}
-
-void ImGui_ImplMetal_NSWindow_SetLayer(void *iWindow, void* layer)
-{
-  auto nswin = (NSWindow *) iWindow;
-  auto metalLayer = (CAMetalLayer*) layer;
-  nswin.contentView.layer = metalLayer;
-  nswin.contentView.wantsLayer = YES;
-}
-
-float ImGui_ImplMetal_GetBackingScaleFactorMainScreen()
-{
-  auto screen = [NSScreen mainScreen];
-  return static_cast<float>(screen.backingScaleFactor);
-}
-
 #endif // #ifdef IMGUI_IMPL_METAL_CPP
 
 #pragma mark - Dear ImGui Metal Backend API

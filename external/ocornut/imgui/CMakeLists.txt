@@ -15,8 +15,10 @@ set(imgui_BUILD_SOURCES
     )
 
 if(APPLE)
-  find_library(SDL2Fwk SDL2 REQUIRED)
-  list(APPEND imgui_BUILD_SOURCES "${imgui_CPP_SRC_DIR}/backends/imgui_impl_metal.mm")
+  list(APPEND imgui_BUILD_SOURCES
+      "${imgui_CPP_SRC_DIR}/backends/imgui_impl_metal.mm"
+      "${imgui_CPP_SRC_DIR}/backends/regui_impl_metal.mm"
+      )
 elseif(WIN32)
   list(APPEND imgui_BUILD_SOURCES "${imgui_CPP_SRC_DIR}/backends/imgui_impl_opengl3.cpp")
 endif()
