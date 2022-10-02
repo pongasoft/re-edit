@@ -30,7 +30,7 @@ struct Config
 {
   int fNativeWindowWidth{1280};
   int fNativeWindowHeight{720};
-  bool fShowProperties{true};
+  bool fShowProperties{false};
   bool fShowPanel{true};
   bool fShowPanelWidgets{true};
   bool fShowWidgets{true};
@@ -45,28 +45,33 @@ Collapsed=0
 
 [Window][re-edit]
 Pos=1,19
-Size=421,204
+Size=340,329
 Collapsed=0
+DockId=0x00000002,0
 
 [Window][Panel]
-Pos=1,424
-Size=1278,295
+Pos=1,350
+Size=1278,367
 Collapsed=0
+DockId=0x00000009,0
 
 [Window][Panel Widgets]
-Pos=423,19
-Size=552,404
+Pos=343,19
+Size=514,329
 Collapsed=0
+DockId=0x00000003,0
 
 [Window][Widgets]
-Pos=976,19
-Size=303,404
+Pos=859,19
+Size=420,329
 Collapsed=0
+DockId=0x00000004,0
 
 [Window][Properties]
-Pos=1,224
-Size=421,199
+Pos=1084,19
+Size=195,329
 Collapsed=0
+DockId=0x00000005,0
 
 [Window][Log]
 Pos=372,65
@@ -97,6 +102,17 @@ Collapsed=0
 Pos=344,307
 Size=532,100
 Collapsed=0
+
+[Docking][Data]
+DockNode        ID=0x00000001 Pos=1,19 Size=1278,698 Split=Y Selected=0xC781E574
+  DockNode      ID=0x00000008 Parent=0x00000001 SizeRef=1278,329 Split=X
+    DockNode    ID=0x00000006 Parent=0x00000008 SizeRef=856,204 Split=X
+      DockNode  ID=0x00000002 Parent=0x00000006 SizeRef=340,204 Selected=0xE560F6EE
+      DockNode  ID=0x00000003 Parent=0x00000006 SizeRef=514,204 Selected=0xC781E574
+    DockNode    ID=0x00000007 Parent=0x00000008 SizeRef=420,204 Split=X Selected=0x939C4135
+      DockNode  ID=0x00000004 Parent=0x00000007 SizeRef=223,329 Selected=0x939C4135
+      DockNode  ID=0x00000005 Parent=0x00000007 SizeRef=195,329 Selected=0x199AB496
+  DockNode      ID=0x00000009 Parent=0x00000001 SizeRef=1278,367 Selected=0xFFEA1EA4
 )"};
 
 };

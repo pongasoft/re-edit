@@ -222,6 +222,7 @@ protected:
   void onNativeWindowFontDpiScaleChange(float iFontDpiScale);
   void onNativeWindowFontScaleChange(float iFontScale);
   inline void setCurrentWidget(Widget const *iWidget) { fCurrentWidget = iWidget; }
+  void renderTabs();
   void render();
   void populateWidgetUndoAction(WidgetUndoAction *iAction, Widget const *iWidget);
 
@@ -251,6 +252,7 @@ protected:
   ReGui::Window fPropertiesWindow{"Properties", true, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoCollapse};
   long fCurrentFrame{};
   PanelState *fCurrentPanelState{};
+  PanelState *fPreviousPanelState{};
   Widget const *fCurrentWidget{};
   int fNativeWindowWidth{1280};
   int fNativeWindowHeight{720};

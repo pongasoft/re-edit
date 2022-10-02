@@ -1,2 +1,2 @@
-Version 9aae45eb4a05a5a1f96be1ef37eb503a12ceb889 (v1.88 / main)
-Cloned from https://github.com/ocornut/imgui on 2022/08/07
+Version 69beaa1d0b7fc8f4b448dcf1780b08cfc959da65 (v1.89 wip / docking)
+Cloned from https://github.com/ocornut/imgui on 2022/10/02

@@ -134,25 +134,20 @@ void PanelState::initPanel(AppContext &iCtx,
 }
 
 //------------------------------------------------------------------------
-// PanelState::render
+// PanelState::renderTab
 //------------------------------------------------------------------------
-void PanelState::render(AppContext &iCtx)
+bool PanelState::renderTab(AppContext &iCtx)
 {
   if(ImGui::BeginTabItem(fPanel.getName()))
   {
-    bool switchedTab = iCtx.fCurrentPanelState != this;
-
-    iCtx.fCurrentPanelState = this;
-    iCtx.fZoom = fZoom;
-
     fPanel.computeIsHidden(iCtx);
     fPanel.checkForWidgetErrors(iCtx);
 
-    int zoom = static_cast<int>(iCtx.fZoom * 5);
+    int zoom = static_cast<int>(fZoom * 5);
     if(ImGui::SliderInt("zoom", &zoom, 1, 10))
-      iCtx.fZoom = static_cast<float>(zoom) / 5.0f;
+      fZoom = static_cast<float>(zoom) / 5.0f;
     ImGui::SameLine();
-    ImGui::Text("%d%%", static_cast<int>(iCtx.fZoom * 100));
+    ImGui::Text("%d%%", static_cast<int>(fZoom * 100));
 
     static bool kSquare = iCtx.fGrid.x == iCtx.fGrid.y;
     constexpr auto kGridStep = 5;
@@ -186,15 +181,24 @@ void PanelState::render(AppContext &iCtx)
 
     ImGui::PopItemWidth();
 
-    renderPanel(iCtx, switchedTab);
-    renderPanelWidgets(iCtx);
-    renderWidgets(iCtx);
-    renderProperties(iCtx);
-
     ImGui::EndTabItem();
 
-    fZoom = iCtx.fZoom;
+    return true;
   }
+
+  return false;
+}
+
+//------------------------------------------------------------------------
+// PanelState::render
+//------------------------------------------------------------------------
+void PanelState::render(AppContext &iCtx)
+{
+  iCtx.fZoom = fZoom;
+  renderPanel(iCtx, iCtx.fCurrentPanelState != iCtx.fPreviousPanelState);
+  renderPanelWidgets(iCtx);
+  renderWidgets(iCtx);
+  renderProperties(iCtx);
 }
 
 //------------------------------------------------------------------------
@@ -303,5 +307,6 @@ void PanelState::renderProperties(AppContext &iCtx)
     ImGui::EndChild();
   }
 }
+
 
 }

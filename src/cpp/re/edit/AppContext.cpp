@@ -46,18 +46,32 @@ void AppContext::initPanels(std::string const &iDevice2DFile, std::string const 
 }
 
 //------------------------------------------------------------------------
+// AppContext::renderTabs
+//------------------------------------------------------------------------
+void AppContext::renderTabs()
+{
+  if(ImGui::BeginTabBar("Panels", ImGuiTabBarFlags_None))
+  {
+    if(fFrontPanel->renderTab(*this))
+      fCurrentPanelState = fFrontPanel.get();
+    if(fBackPanel->renderTab(*this))
+      fCurrentPanelState = fBackPanel.get();
+    if(fFoldedFrontPanel->renderTab(*this))
+      fCurrentPanelState = fFoldedFrontPanel.get();
+    if(fFoldedBackPanel->renderTab(*this))
+      fCurrentPanelState = fFoldedBackPanel.get();
+    ImGui::EndTabBar();
+  }
+}
+
+//------------------------------------------------------------------------
 // AppContext::render
 //------------------------------------------------------------------------
 void AppContext::render()
 {
-  if(ImGui::BeginTabBar("Panels", ImGuiTabBarFlags_None))
-  {
-    fFrontPanel->render(*this);
-    fBackPanel->render(*this);
-    fFoldedFrontPanel->render(*this);
-    fFoldedBackPanel->render(*this);
-    ImGui::EndTabBar();
-  }
+  RE_EDIT_INTERNAL_ASSERT(fCurrentPanelState != nullptr);
+  fCurrentPanelState->render(*this);
+  fPreviousPanelState = fCurrentPanelState;
 }
 
 //------------------------------------------------------------------------

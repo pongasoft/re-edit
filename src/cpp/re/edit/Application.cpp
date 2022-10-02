@@ -120,7 +120,7 @@ void Application::render()
   if(fRecomputeDimensionsRequested)
   {
     fAppContext.fFaButtonSize = ImVec2{ImGui::CalcTextSize(ReGui::kResetIcon).x + ImGui::GetStyle().FramePadding.x * 2, 0};
-    fAppContext.fItemWidth = 30 * ImGui::CalcTextSize("W").x;
+    fAppContext.fItemWidth = 40 * ImGui::CalcTextSize("W").x;
     fRecomputeDimensionsRequested = false;
   }
 
@@ -157,7 +157,7 @@ void Application::render()
 //    ImGui::SameLine();
 //    ImGui::Text("%dpx", static_cast<int>(kCurrentFont.fSize));
 
-    fAppContext.render();
+    fAppContext.renderTabs();
 
 //    auto const &currentFont = fAppContext.fFontManager->getCurrentFont();
 //    auto fontSize = static_cast<int>(currentFont.fSize);
@@ -266,6 +266,8 @@ void Application::render()
 
     loggingManager->render();
   }
+
+  fAppContext.render();
 
   if(fSavingRequested)
     renderSavePopup();

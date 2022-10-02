@@ -36,6 +36,7 @@ public:
                  std::shared_ptr<lua::panel_nodes> const &iPanelNodes,
                  std::shared_ptr<lua::jbox_panel> const &iPanel);
 
+  bool renderTab(AppContext &iCtx);
   void render(AppContext &iCtx);
 
   friend class AppContext;

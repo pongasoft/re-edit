@@ -57,7 +57,6 @@ static void onWindowSizeChange(GLFWwindow* iWindow, int iWidth, int iHeight)
 {
   auto application = reinterpret_cast<re::edit::Application *>(glfwGetWindowUserPointer(iWindow));
   application->setNativeWindowSize(iWidth, iHeight);
-  fprintf(stdout, "onWindowSizeChange %d: %d\n", iWidth, iHeight);
 }
 
 //! onWindowContentScaleChange
@@ -65,7 +64,6 @@ static void onWindowContentScaleChange(GLFWwindow* iWindow, float iXscale, float
 {
   auto application = reinterpret_cast<re::edit::Application *>(glfwGetWindowUserPointer(iWindow));
   application->onNativeWindowFontScaleChange(iXscale);
-  fprintf(stdout, "onWindowContentScaleChange %f: %f\n", iXscale, iYscale);
 }
 
 int main(int argc, char **argv)
@@ -74,9 +72,10 @@ int main(int argc, char **argv)
   IMGUI_CHECKVERSION();
   ImGui::CreateContext();
   ImGuiIO &io = ImGui::GetIO();
-  (void) io;
-  //io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;  // Enable Keyboard Controls
-  //io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;   // Enable Gamepad Controls
+
+  // enable docking
+  io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+  io.ConfigDockingWithShift = true;
 
   // Setup style
   ImGui::StyleColorsDark();
