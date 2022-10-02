@@ -1013,7 +1013,7 @@ void Panel::MultiSelectionList::editView(AppContext &iCtx)
 
   ImGui::Separator();
 
-  if(ImGui::BeginChild("List"))
+  if(ImGui::BeginChild("List", ImVec2{}, false, ImGuiWindowFlags_HorizontalScrollbar))
   {
     for(auto id: fList)
     {
