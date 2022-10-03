@@ -137,6 +137,8 @@ void Application::render()
 
   renderMainMenu();
 
+  ImGui::DockSpaceOverViewport(ImGui::GetMainViewport());
+
   int flags = fNeedsSaving ?  ImGuiWindowFlags_UnsavedDocument : ImGuiWindowFlags_None;
 
   if(auto l = fMainWindow.begin(flags))
