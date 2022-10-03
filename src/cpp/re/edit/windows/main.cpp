@@ -67,7 +67,6 @@ static void onWindowSizeChange(GLFWwindow* iWindow, int iWidth, int iHeight)
   re::edit::Application *application = reinterpret_cast<re::edit::Application *>(glfwGetWindowUserPointer(iWindow));
   auto scale = getFontDpiScale(iWindow);
   application->setNativeWindowSize(static_cast<int>(iWidth / scale), static_cast<int>(iHeight /scale));
-  fprintf(stdout, "onWindowSizeChange %d: %d\n", iWidth, iHeight);
 }
 
 static void printInfo(GLFWwindow *iWindow)
@@ -123,7 +122,7 @@ int main(int argc, char **argv)
 
   // enable docking
   io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-  io.ConfigDockingWithShift = true;
+  io.ConfigDockingWithShift = false;
 
   // Setup Dear ImGui style
   ImGui::StyleColorsDark();

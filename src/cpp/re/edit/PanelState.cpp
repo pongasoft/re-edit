@@ -194,7 +194,7 @@ bool PanelState::renderTab(AppContext &iCtx)
 //------------------------------------------------------------------------
 void PanelState::render(AppContext &iCtx)
 {
-  iCtx.fZoom = fZoom;
+  iCtx.fZoom = fZoom * iCtx.fFontManager->getCurrentFontDpiScale();
   renderPanel(iCtx, iCtx.fCurrentPanelState != iCtx.fPreviousPanelState);
   renderPanelWidgets(iCtx);
   renderWidgets(iCtx);

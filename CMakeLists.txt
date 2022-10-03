@@ -4,7 +4,7 @@ project(re-edit LANGUAGES CXX)
 
 set(re-edit_VERSION_MAJOR 0)
 set(re-edit_VERSION_MINOR 9)
-set(re-edit_VERSION_PATCH 4)
+set(re-edit_VERSION_PATCH 5)
 set(re-edit_VERSION "${re-edit_VERSION_MAJOR}.${re-edit_VERSION_MINOR}.${re-edit_VERSION_PATCH}")
 
 set(CMAKE_CXX_STANDARD 17)

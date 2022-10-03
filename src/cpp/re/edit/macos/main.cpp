@@ -75,7 +75,7 @@ int main(int argc, char **argv)
 
   // enable docking
   io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-  io.ConfigDockingWithShift = true;
+  io.ConfigDockingWithShift = false;
 
   // Setup style
   ImGui::StyleColorsDark();
