@@ -1,11 +1,11 @@
 cmake_minimum_required(VERSION 3.17)
 
-project(re-edit LANGUAGES CXX)
-
 set(re-edit_VERSION_MAJOR 0)
 set(re-edit_VERSION_MINOR 9)
 set(re-edit_VERSION_PATCH 5)
 set(re-edit_VERSION "${re-edit_VERSION_MAJOR}.${re-edit_VERSION_MINOR}.${re-edit_VERSION_PATCH}")
+
+project(re-edit VERSION "${re-edit_VERSION}" LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 
@@ -137,6 +137,49 @@ target_compile_definitions("${target}_lib" PUBLIC ENABLE_RE_EDIT_INTERNAL_ASSERT
 # Build the executable
 add_executable(${target} "${re-edit_MAIN_SRC}")
 target_link_libraries(${target} PRIVATE "${target}_lib")
+
+#######################################################
+# Install
+#######################################################
+set(CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/install")
+
+install(
+    TARGETS "${target}"
+    COMPONENT "exe"
+    DESTINATION "."
+)
+
+#######################################################
+# Archive
+#######################################################
+if (APPLE)
+  set(re-edit_ARCHIVE_ARCHITECTURE "macOS_64bits")
+elseif (WIN32)
+  set(re-edit_ARCHIVE_ARCHITECTURE "win_64bits")
+endif ()
+
+set(CPACK_PACKAGE_NAME                "${target}")
+set(CPACK_PACKAGE_VERSION_MAJOR       "${re-edit_VERSION_MAJOR}")
+set(CPACK_PACKAGE_VERSION_MINOR       "${re-edit_VERSION_MINOR}")
+set(CPACK_PACKAGE_VERSION_PATCH       "${re-edit_VERSION_PATCH}-dev")
+set(CPACK_SYSTEM_NAME                 "${re-edit_ARCHIVE_ARCHITECTURE}")
+
+set(CPACK_GENERATOR ZIP)
+set(CPACK_VERBATIM_VARIABLES TRUE)
+set(CPACK_ARCHIVE_COMPONENT_INSTALL OFF)
+set(CPACK_COMPONENTS_ALL_IN_ONE_PACKAGE ON)
+set(CPACK_COMPONENTS_GROUPING ALL_COMPONENTS_IN_ONE)
+
+include(CPack)
+
+cpack_add_component("exe")
+
+add_custom_target("create_archive"
+    COMMAND ${CMAKE_COMMAND} -E echo "Creating archive..."
+    COMMAND "${CMAKE_CPACK_COMMAND}" --verbose -G ZIP -C $<CONFIG>
+    WORKING_DIRECTORY "${CMAKE_BINARY_DIR}" # CPackConfig.cmake is created there
+    DEPENDS "${target}"
+    )
 
 #######################################################
 # Testing
