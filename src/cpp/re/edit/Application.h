@@ -82,6 +82,7 @@ private:
   bool fSavingRequested{};
   bool fNeedsSaving{};
   bool fRecomputeDimensionsRequested{};
+  std::optional<std::string> fNewLayoutRequested{};
 };
 
 }

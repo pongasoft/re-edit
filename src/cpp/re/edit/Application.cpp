@@ -93,6 +93,12 @@ bool Application::init(lua::Config const &iConfig, std::shared_ptr<TextureManage
 //------------------------------------------------------------------------
 void Application::newFrame()
 {
+  if(fNewLayoutRequested)
+  {
+    ImGui::LoadIniSettingsFromMemory(fNewLayoutRequested->c_str(), fNewLayoutRequested->size());
+    fNewLayoutRequested = std::nullopt;
+  }
+
   if(fAppContext.fFontManager->hasFontChangeRequest())
   {
     auto oldDpiScale = fAppContext.fFontManager->getCurrentFontDpiScale();
@@ -368,6 +374,11 @@ void Application::renderMainMenu()
       fAppContext.fPanelWidgetsWindow.menuItem();
       fAppContext.fWidgetsWindow.menuItem();
       fAppContext.fPropertiesWindow.menuItem();
+      ImGui::Separator();
+      if(ImGui::MenuItem("Horizontal Layout"))
+        fNewLayoutRequested = lua::kDefaultHorizontalLayout;
+      if(ImGui::MenuItem("Vertical Layout"))
+        fNewLayoutRequested = lua::kDefaultVerticalLayout;
       ImGui::EndMenu();
     }
 
