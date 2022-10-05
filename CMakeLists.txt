@@ -5,6 +5,32 @@ set(re-edit_VERSION_MINOR 9)
 set(re-edit_VERSION_PATCH 5)
 set(re-edit_VERSION "${re-edit_VERSION_MAJOR}.${re-edit_VERSION_MINOR}.${re-edit_VERSION_PATCH}")
 
+if(APPLE)
+  set(CMAKE_OSX_DEPLOYMENT_TARGET "10.14" CACHE STRING "" FORCE)
+  # on macOS "uname -m" returns the architecture (x86_64 or arm64)
+  execute_process(
+      COMMAND uname -m
+      RESULT_VARIABLE result
+      OUTPUT_VARIABLE RE_EDIT_OSX_NATIVE_ARCHITECTURE
+      OUTPUT_STRIP_TRAILING_WHITESPACE
+  )
+  if((CMAKE_GENERATOR STREQUAL "Xcode")                # works only with Xcode
+      AND (RE_EDIT_OSX_NATIVE_ARCHITECTURE STREQUAL "arm64")) # and only when running on arm64
+    set(CMAKE_OSX_ARCHITECTURES "arm64;x86_64" CACHE STRING "" FORCE)
+    set(re-edit_ARCHIVE_ARCHITECTURE "macOS_universal")
+    set(CMAKE_GTEST_DISCOVER_TESTS_DISCOVERY_MODE PRE_TEST) # fixes gtest crash
+    message(STATUS "macOS universal (x86_64 / arm64) build")
+  else()
+    option(re-edit_UNIVERSAL_BUILD "Build universal binary (x86_64 & arm64)" OFF)
+    set(re-edit_ARCHIVE_ARCHITECTURE "macOS_${RE_EDIT_OSX_NATIVE_ARCHITECTURE}")
+    message(STATUS "macOS native ${RE_EDIT_OSX_NATIVE_ARCHITECTURE} build")
+  endif()
+endif()
+
+if(WIN32)
+  set(re-edit_ARCHIVE_ARCHITECTURE "win_64bits")
+endif()
+
 project(re-edit VERSION "${re-edit_VERSION}" LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
@@ -138,6 +164,26 @@ target_compile_definitions("${target}_lib" PUBLIC ENABLE_RE_EDIT_INTERNAL_ASSERT
 add_executable(${target} "${re-edit_MAIN_SRC}")
 target_link_libraries(${target} PRIVATE "${target}_lib")
 
+#if(APPLE AND ${re-edit_UNIVERSAL_BUILD})
+#  message(STATUS "setting up target for univeral build")
+#  function(target_setup_universal_binary target)
+#    set_target_properties(${target}
+#        PROPERTIES
+#        XCODE_ATTRIBUTE_OSX_ARCHITECTURES   "x86_64;arm64"
+#        XCODE_ATTRIBUTE_ARCHS               "$(ARCHS_STANDARD_64_BIT)"
+#        )
+#    set_target_properties(${target}
+#        PROPERTIES
+#        XCODE_ATTRIBUTE_ONLY_ACTIVE_ARCH        "NO"
+#        )
+#  endfunction()
+#  target_setup_universal_binary("${target}")
+#  target_setup_universal_binary(glfw)
+#  target_setup_universal_binary(imgui)
+#  target_setup_universal_binary(re-mock)
+#  target_setup_universal_binary(stb)
+#endif()
+
 #######################################################
 # Install
 #######################################################
@@ -152,12 +198,6 @@ install(
 #######################################################
 # Archive
 #######################################################
-if (APPLE)
-  set(re-edit_ARCHIVE_ARCHITECTURE "macOS_64bits")
-elseif (WIN32)
-  set(re-edit_ARCHIVE_ARCHITECTURE "win_64bits")
-endif ()
-
 set(CPACK_PACKAGE_NAME                "${target}")
 set(CPACK_PACKAGE_VERSION_MAJOR       "${re-edit_VERSION_MAJOR}")
 set(CPACK_PACKAGE_VERSION_MINOR       "${re-edit_VERSION_MINOR}")
