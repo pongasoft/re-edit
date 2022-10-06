@@ -21,12 +21,7 @@
 #include "Errors.h"
 #include <re/mock/fmt.h>
 #include <regex>
-
-#if WIN32
 #include <filesystem>
-#else
-#include <dirent.h>
-#endif
 
 namespace re::edit {
 
@@ -183,7 +178,6 @@ std::vector<FilmStrip::File> FilmStripMgr::scanDirectory(std::string const &iDir
 
   std::vector<FilmStrip::File> res{};
 
-#if WIN32
   std::error_code errorCode;
   auto iter = std::filesystem::directory_iterator(iDirectory, errorCode);
   if(!errorCode)
@@ -194,60 +188,24 @@ std::vector<FilmStrip::File> FilmStripMgr::scanDirectory(std::string const &iDir
       auto filename = ent.path().filename().string();
       if(std::regex_search(filename.c_str(), m, FILENAME_REGEX))
       {
-        auto entry = re::mock::fmt::path(iDirectory, filename);
-        struct stat buf{};
-        if(stat(entry.c_str(), &buf) == 0)
+        if(ent.exists(errorCode))
         {
           auto inferredNumFrames = m[2].matched ? std::stoi(m[2].str()) : 1;
           auto key = filename;
           key = key.substr(0, key.size() - 4); // remove .png
-          res.emplace_back(FilmStrip::File{entry, key, static_cast<long>(ent.last_write_time().time_since_epoch().count()), inferredNumFrames});
+          res.emplace_back(FilmStrip::File{ent.path(), key, static_cast<long>(ent.last_write_time().time_since_epoch().count()), inferredNumFrames});
         }
         else
         {
-          RE_EDIT_LOG_ERROR("Error (%d) with file [%s] : ", errno, entry);
+          RE_EDIT_LOG_ERROR("Error with file [%s]: (%d | %s)", ent.path().c_str(), errorCode.value(), errorCode.message());
         }
       }
     }
   }
   else
   {
-    RE_EDIT_LOG_ERROR("Could not scan directory [%s]", iDirectory);
+    RE_EDIT_LOG_ERROR("Could not scan directory [%s]: (%d | %s)", iDirectory, errorCode.value(), errorCode.message());
   }
-
-#else
-  DIR *dir;
-  struct dirent *ent;
-  if((dir = opendir(iDirectory.c_str())) != nullptr)
-  {
-    while((ent = readdir(dir)) != nullptr)
-    {
-      std::cmatch m;
-      if(std::regex_search(ent->d_name, m, FILENAME_REGEX))
-      {
-        auto entry = re::mock::fmt::path(iDirectory, ent->d_name);
-        struct stat buf{};
-        if(stat(entry.c_str(), &buf) == 0)
-        {
-          auto inferredNumFrames = m[2].matched ? std::stoi(m[2].str()) : 1;
-          auto key = std::string(ent->d_name);
-          key = key.substr(0, key.size() - 4); // remove .png
-          res.emplace_back(FilmStrip::File{entry, key, buf.st_mtime, inferredNumFrames});
-        }
-        else
-        {
-          RE_EDIT_LOG_ERROR("Error (%d) with file [%s] : ", errno, entry);
-        }
-      }
-    }
-    closedir(dir);
-  }
-  else
-  {
-    RE_EDIT_LOG_ERROR("Could not scan directory [%s]", iDirectory);
-  }
-#endif
-
   return res;
 }
 

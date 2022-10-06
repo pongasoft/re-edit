@@ -29,7 +29,7 @@ namespace re::edit {
 //------------------------------------------------------------------------
 // PropertyManager::init
 //------------------------------------------------------------------------
-int PropertyManager::init(std::string const &iDirectory)
+int PropertyManager::init(fs::path const &iDirectory)
 {
   // TODO: this will NOT work if the original device has a different constructor
   //       since it is instantiated via realtime_controller.lua
@@ -39,11 +39,11 @@ int PropertyManager::init(std::string const &iDirectory)
     void renderBatch(const TJBox_PropertyDiff [], TJBox_UInt32) {}
   };
 
-  auto config = DeviceConfig<NoOpDevice>(Info::from_file(re::mock::fmt::path(iDirectory, "info.lua")))
+  auto config = DeviceConfig<NoOpDevice>(Info::from_file(iDirectory / "info.lua"))
     .device_root_dir(iDirectory)
-    .device_resources_dir(re::mock::fmt::path(iDirectory, "Resources"))
-    .mdef_file(re::mock::fmt::path(iDirectory, "motherboard_def.lua"))
-    .rtc_file(re::mock::fmt::path(iDirectory, "realtime_controller.lua"))
+    .device_resources_dir(iDirectory / "Resources")
+    .mdef_file(iDirectory / "motherboard_def.lua")
+    .rtc_file(iDirectory / "realtime_controller.lua")
     .rt([](Realtime &rt) { rt = Realtime{}; }); // no object creation at all
 //    .rt([](Realtime &rt) { rt = Realtime::byDefault<NoOpDevice>(); });
 

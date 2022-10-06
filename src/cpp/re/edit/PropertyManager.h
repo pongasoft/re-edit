@@ -25,17 +25,20 @@
 #include <optional>
 #include <set>
 #include <re/mock/Rack.h>
+#include <filesystem>
 
 #include "Property.h"
 
 namespace re::edit {
+
+namespace fs = std::filesystem;
 
 class PropertyManager
 {
 public:
 //  void init(std::string const &iMotherboardDefLuaFilename);
   // return the size of the device in RU
-  int init(std::string const &iDirectory);
+  int init(fs::path const &iDirectory);
 
   std::vector<Object const *> findObjects(Object::Filter const &iFilter) const;
 //  Object const *findObject(std::string const &iObjectPath) const;

@@ -27,6 +27,8 @@
 
 namespace re::edit {
 
+namespace fs = std::filesystem;
+
 //------------------------------------------------------------------------
 // Application::parseArgs
 //------------------------------------------------------------------------
@@ -38,11 +40,11 @@ std::optional<lua::Config> Application::parseArgs(std::vector<std::string> iArgs
     return std::nullopt;
   }
 
-  fRoot = std::string(iArgs[0]);
+  fRoot = fs::path(iArgs[0]);
 
-  auto configFile = re::mock::fmt::path(fRoot, "re-edit.lua");
+  auto configFile = fRoot / "re-edit.lua";
   lua::Config config{};
-  if(fileExists(configFile))
+  if(fs::exists(configFile))
   {
     try
     {
@@ -50,7 +52,7 @@ std::optional<lua::Config> Application::parseArgs(std::vector<std::string> iArgs
     }
     catch(re::mock::Exception &e)
     {
-      RE_EDIT_LOG_WARNING("Error while reading %s | %s", configFile, e.what());
+      RE_EDIT_LOG_WARNING("Error while reading %s | %s", configFile.c_str(), e.what());
     }
   }
 
@@ -78,12 +80,12 @@ bool Application::init(lua::Config const &iConfig, std::shared_ptr<TextureManage
 
   setDeviceHeightRU(fAppContext.fPropertyManager->init(fRoot));
 
-  fAppContext.fTextureManager->init(re::mock::fmt::path(fRoot, "GUI2D"));
+  fAppContext.fTextureManager->init(fRoot / "GUI2D");
   fAppContext.fTextureManager->scanDirectory();
   fAppContext.fTextureManager->findTextureKeys([](auto const &) { return true; }); // forces preloading the textures to get their sizes
 
-  fAppContext.initPanels(re::mock::fmt::path(fRoot, "GUI2D", "device_2D.lua"),
-                         re::mock::fmt::path(fRoot, "GUI2D", "hdgui_2D.lua"));
+  fAppContext.initPanels(fRoot / "GUI2D" / "device_2D.lua",
+                         fRoot / "GUI2D" / "hdgui_2D.lua");
 
   return true;
 }
@@ -428,8 +430,8 @@ void Application::renderSavePopup()
 //------------------------------------------------------------------------
 void Application::save()
 {
-  saveFile(re::mock::fmt::path(fRoot, "GUI2D", "device_2D.lua"), device2D());
-  saveFile(re::mock::fmt::path(fRoot, "GUI2D", "hdgui_2D.lua"), hdgui2D());
+  saveFile(fRoot / "GUI2D" / "device_2D.lua", device2D());
+  saveFile(fRoot / "GUI2D" / "hdgui_2D.lua", hdgui2D());
   saveConfig();
 //  fAppContext.fUndoManager->clear();
   fNeedsSaving = false;
@@ -473,19 +475,10 @@ std::string Application::device2D() const
 //------------------------------------------------------------------------
 // Application::saveFile
 //------------------------------------------------------------------------
-void Application::saveFile(std::string const &iFile, std::string const &iContent)
+void Application::saveFile(fs::path const &iFile, std::string const &iContent)
 {
   std::ofstream f{iFile};
   f << iContent;
-}
-
-//------------------------------------------------------------------------
-// Application::fileExists
-//------------------------------------------------------------------------
-bool Application::fileExists(std::string const &iFile)
-{
-  std::ifstream f{iFile};
-  return f.good();
 }
 
 //------------------------------------------------------------------------
@@ -502,7 +495,7 @@ void Application::saveConfig()
 
   s << fmt::printf("re_edit[\"imgui.ini\"] = [==[\n%s\n]==]\n", ImGui::SaveIniSettingsToMemory());
 
-  saveFile(re::mock::fmt::path(fRoot, "re-edit.lua"), s.str());
+  saveFile(fRoot / "re-edit.lua", s.str());
 }
 
 }

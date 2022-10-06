@@ -28,8 +28,11 @@
 #include "lua/Device2D.h"
 #include "PanelState.h"
 #include <optional>
+#include <filesystem>
 
 namespace re::edit {
+
+namespace fs = std::filesystem;
 
 class Application
 {
@@ -61,8 +64,7 @@ public:
   void save();
   void saveConfig();
 
-  static void saveFile(std::string const &iFile, std::string const &iContent);
-  [[nodiscard]] static bool fileExists(std::string const &iFile);
+  static void saveFile(fs::path const &iFile, std::string const &iContent);
 
 public:
   float clear_color[4] = {0.45f, 0.55f, 0.60f, 1.00f};
@@ -78,7 +80,7 @@ private:
   bool fShowDemoWindow{false};
   bool fShowMetricsWindow{false};
 
-  std::string fRoot{};
+  fs::path fRoot{};
   bool fSavingRequested{};
   bool fNeedsSaving{};
   bool fRecomputeDimensionsRequested{};
