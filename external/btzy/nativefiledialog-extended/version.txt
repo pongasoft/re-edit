@@ -1,0 +1,2 @@
+Version 31df8e30cc14c6929033152ffd61dd1c98b4f5b3 (master)
+Cloned from https://github.com/btzy/nativefiledialog-extended on 2022/10/09

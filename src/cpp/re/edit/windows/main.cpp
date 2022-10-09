@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <shellscalingapi.h>
 #include <winuser.h>
+#include "nfd.h"
 
 #if defined(IMGUI_IMPL_OPENGL_ES2)
 #include <GLES2/gl2.h>
@@ -167,6 +168,12 @@ int main(int argc, char **argv)
   if(!application.init(*config, std::make_shared<re::edit::OGL3TextureManager>(glMaxTextureSize)))
     return 1;
 
+  if(NFD_Init() != NFD_OKAY)
+  {
+    fprintf(stderr, "Error while initializing nfd");
+    return 1;
+  }
+
   glfwSetWindowUserPointer(window, &application);
   glfwSetWindowContentScaleCallback(window, onWindowContentScaleChange);
   glfwSetWindowSizeCallback(window, onWindowSizeChange);
@@ -215,6 +222,8 @@ int main(int argc, char **argv)
   ImGui_ImplOpenGL3_Shutdown();
   ImGui_ImplGlfw_Shutdown();
   ImGui::DestroyContext();
+
+  NFD_Quit();
 
   glfwDestroyWindow(window);
   glfwTerminate();

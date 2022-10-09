@@ -10,6 +10,7 @@
 #include <cstdio>
 #include "../Application.h"
 #include "MTLTextureManager.h"
+#include "nfd.h"
 
 
 #define GLFW_INCLUDE_NONE
@@ -140,6 +141,12 @@ int main(int argc, char **argv)
   if(!application.init(*config, std::make_shared<re::edit::MTLTextureManager>(device)))
     return 1;
 
+  if(NFD_Init() != NFD_OKAY)
+  {
+    fprintf(stderr, "Error while initializing nfd");
+    return 1;
+  }
+
   application.onNativeWindowFontScaleChange(getFontDpiScale(window));
   glfwSetWindowUserPointer(window, &application);
   glfwSetWindowContentScaleCallback(window, onWindowContentScaleChange);
@@ -203,6 +210,8 @@ int main(int argc, char **argv)
   ImGui_ImplMetal_Shutdown();
   ImGui_ImplGlfw_Shutdown();
   ImGui::DestroyContext();
+
+  NFD_Quit();
 
   glfwDestroyWindow(window);
   glfwTerminate();

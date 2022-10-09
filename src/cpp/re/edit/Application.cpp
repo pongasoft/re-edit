@@ -22,6 +22,7 @@
 #include "Errors.h"
 #include "lua/ReEdit.h"
 #include "LoggingManager.h"
+#include "nfd.h"
 #include <fstream>
 #include <imgui.h>
 
@@ -310,6 +311,24 @@ void Application::renderMainMenu()
   {
     if(ImGui::BeginMenu("File"))
     {
+      if(ImGui::MenuItem("Load"))
+      {
+        nfdchar_t *outPath;
+        nfdresult_t result = NFD_PickFolder(&outPath, nullptr);
+        if(result == NFD_OKAY)
+        {
+          RE_EDIT_LOG_INFO("Success %s", outPath);
+          NFD_FreePath(outPath);
+        }
+        else if(result == NFD_CANCEL)
+        {
+          RE_EDIT_LOG_INFO("Cancel");
+        }
+        else
+        {
+          RE_EDIT_LOG_ERROR("Error: %s\n", NFD_GetError());
+        }
+      }
       if(ImGui::MenuItem(ReGui_Prefix(ReGui_Icon_Save, "Save")))
       {
         ImGui::OpenPopup(savePopupId);
