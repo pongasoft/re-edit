@@ -150,10 +150,10 @@ set(RE_EDIT_FONTS_DIR "${CMAKE_CURRENT_LIST_DIR}/external/fonts")
 
 # Defines the macos main
 if(APPLE)
-  list(APPEND re-edit_BUILD_SOURCES "${re-edit_CPP_SRC_DIR}/re/edit/macos/MTLTextureManager.cpp")
+  list(APPEND re-edit_BUILD_SOURCES "${re-edit_CPP_SRC_DIR}/re/edit/macos/MTLManagers.cpp")
   set(re-edit_MAIN_SRC "${re-edit_CPP_SRC_DIR}/re/edit/macos/main.cpp" "${re-edit_CPP_SRC_DIR}/re/edit/macos/metal.cpp")
 elseif(WIN32)
-  list(APPEND re-edit_BUILD_SOURCES "${re-edit_CPP_SRC_DIR}/re/edit/windows/OGL3TextureManager.cpp")
+  list(APPEND re-edit_BUILD_SOURCES "${re-edit_CPP_SRC_DIR}/re/edit/windows/OGL3Managers.cpp")
   set(re-edit_MAIN_SRC "${re-edit_CPP_SRC_DIR}/re/edit/windows/main.cpp")
 endif()
 

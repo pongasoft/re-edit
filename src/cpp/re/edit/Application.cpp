@@ -61,9 +61,11 @@ std::optional<lua::Config> Application::parseArgs(std::vector<std::string> iArgs
 //------------------------------------------------------------------------
 // Application::init
 //------------------------------------------------------------------------
-bool Application::init(lua::Config const &iConfig, std::shared_ptr<TextureManager> iTextureManager)
+bool Application::init(lua::Config const &iConfig,
+                       std::shared_ptr<TextureManager> iTextureManager,
+                       std::shared_ptr<NativeFontManager> iNativeFontManager)
 {
-  fAppContext.fFontManager = std::make_shared<FontManager>(iTextureManager);
+  fAppContext.fFontManager = std::make_shared<FontManager>(iNativeFontManager);
   fAppContext.fTextureManager = std::move(iTextureManager);
   fAppContext.fUserPreferences = std::make_shared<UserPreferences>();
   fAppContext.fPropertyManager = std::make_shared<PropertyManager>();

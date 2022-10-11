@@ -7,7 +7,7 @@
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 #include "../Application.h"
-#include "OGL3TextureManager.h"
+#include "OGL3Managers.h"
 #include <stdio.h>
 #include <shellscalingapi.h>
 #include <winuser.h>
@@ -165,7 +165,9 @@ int main(int argc, char **argv)
   int glMaxTextureSize;
   glGetIntegerv(GL_MAX_TEXTURE_SIZE, &glMaxTextureSize);
 
-  if(!application.init(*config, std::make_shared<re::edit::OGL3TextureManager>(glMaxTextureSize)))
+  if(!application.init(*config,
+                       std::make_shared<re::edit::OGL3TextureManager>(glMaxTextureSize),
+                       std::make_shared<re::edit::OGL3FontManager>()))
     return 1;
 
   if(NFD_Init() != NFD_OKAY)

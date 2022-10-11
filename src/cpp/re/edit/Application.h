@@ -39,7 +39,9 @@ public:
 
   std::optional<lua::Config> parseArgs(std::vector<std::string> iArgs);
 
-  bool init(lua::Config const &iConfig, std::shared_ptr<TextureManager> iTextureManager);
+  bool init(lua::Config const &iConfig,
+            std::shared_ptr<TextureManager> iTextureManager,
+            std::shared_ptr<NativeFontManager> iNativeFontManager);
 
   inline void setNativeWindowSize(int iWidth, int iHeight) {
     fAppContext.fNativeWindowWidth = iWidth;

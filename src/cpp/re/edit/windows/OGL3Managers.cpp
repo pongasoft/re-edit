@@ -17,7 +17,7 @@
  */
 
 #include <utility>
-#include "OGL3TextureManager.h"
+#include "OGL3Managers.h"
 #include "../Errors.h"
 #include "imgui_impl_opengl3_loader.h"
 #include "imgui_impl_opengl3.h"
@@ -87,22 +87,6 @@ std::unique_ptr<Texture> OGL3TextureManager::createTexture(std::shared_ptr<FilmS
 }
 
 //------------------------------------------------------------------------
-// OGL3TextureManager::createFontsTexture
-//------------------------------------------------------------------------
-void OGL3TextureManager::createFontsTexture()
-{
-  ImGui_ImplOpenGL3_CreateFontsTexture();
-}
-
-//------------------------------------------------------------------------
-// OGL3TextureManager::destroyFontsTexture
-//------------------------------------------------------------------------
-void OGL3TextureManager::destroyFontsTexture()
-{
-  ImGui_ImplOpenGL3_DestroyFontsTexture();
-}
-
-//------------------------------------------------------------------------
 // OGL3Data::OGL3Data
 //------------------------------------------------------------------------
 OGL3Texture::OGL3Data::OGL3Data(ImTextureID iImTextureID, float iHeight) : Data(iImTextureID, iHeight)
@@ -115,6 +99,22 @@ OGL3Texture::OGL3Data::~OGL3Data()
 {
   GLuint imageTexture = static_cast<GLuint>(reinterpret_cast<intptr_t>(fImTextureID));
   glDeleteTextures(1, &imageTexture);
+}
+
+//------------------------------------------------------------------------
+// OGL3FontManager::createFontsTexture
+//------------------------------------------------------------------------
+void OGL3FontManager::createFontsTexture()
+{
+  ImGui_ImplOpenGL3_CreateFontsTexture();
+}
+
+//------------------------------------------------------------------------
+// OGL3FontManager::destroyFontsTexture
+//------------------------------------------------------------------------
+void OGL3FontManager::destroyFontsTexture()
+{
+  ImGui_ImplOpenGL3_DestroyFontsTexture();
 }
 
 }

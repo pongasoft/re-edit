@@ -20,6 +20,7 @@
 #define RE_EDIT_OGL3_TEXTURE_MANAGER_H
 
 #include "../TextureManager.h"
+#include "../FontManager.h"
 
 namespace re::edit {
 
@@ -45,16 +46,22 @@ public:
   explicit OGL3TextureManager(int iMaxTextureSize);
   ~OGL3TextureManager() override = default;
 
-  void createFontsTexture() override;
-
-  void destroyFontsTexture() override;
-
 protected:
   std::unique_ptr<Texture> createTexture(std::shared_ptr<FilmStrip> const &iFilmStrip) const override;
 
 private:
   int fMaxTextureSize;
 };
+
+class OGL3FontManager : public NativeFontManager
+{
+public:
+  OGL3FontManager() = default;
+  void createFontsTexture() override;
+  void destroyFontsTexture() override;
+};
+
+
 
 }
 

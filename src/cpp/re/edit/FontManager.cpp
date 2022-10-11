@@ -60,7 +60,7 @@ static void mergeFontAwesome(float iSize)
 //------------------------------------------------------------------------
 void FontManager::setCurrentFont(FontDef const &iFont)
 {
-  fTextureManager->destroyFontsTexture();
+  fNativeFontManager->destroyFontsTexture();
 
   if(std::holds_alternative<BuiltInFont>(iFont.fSource))
   {
@@ -73,7 +73,7 @@ void FontManager::setCurrentFont(FontDef const &iFont)
     loadFontFromFile(std::get<std::string>(iFont.fSource).c_str(), iFont.fSize);
   }
 
-  fTextureManager->createFontsTexture();
+  fNativeFontManager->createFontsTexture();
   fCurrentFont = iFont;
 }
 

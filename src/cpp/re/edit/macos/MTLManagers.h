@@ -20,6 +20,7 @@
 #define RE_EDIT_MTL_TEXTURE_MANAGER_H
 
 #include "../TextureManager.h"
+#include "../FontManager.h"
 #include "imgui.h"
 #include <Metal/Metal.hpp>
 
@@ -49,11 +50,19 @@ public:
   MTLTextureManager(MTL::Device *iDevice);
   ~MTLTextureManager() override = default;
 
-  void createFontsTexture() override;
-  void destroyFontsTexture() override;
-
 protected:
   std::unique_ptr<Texture> createTexture(std::shared_ptr<FilmStrip> const &iFilmStrip) const override;
+
+private:
+  MTL::Device *fDevice;
+};
+
+class MTLFontManager : public NativeFontManager
+{
+public:
+  MTLFontManager(MTL::Device *iDevice) : NativeFontManager{}, fDevice{iDevice} {}
+  void createFontsTexture() override;
+  void destroyFontsTexture() override;
 
 private:
   MTL::Device *fDevice;

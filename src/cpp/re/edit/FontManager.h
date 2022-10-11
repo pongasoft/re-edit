@@ -22,10 +22,18 @@
 #include <variant>
 #include <string>
 #include <optional>
-
-#include "TextureManager.h"
+#include <imgui.h>
+#include <cmath>
 
 namespace re::edit {
+
+class NativeFontManager
+{
+public:
+  virtual void createFontsTexture() {}
+  virtual void destroyFontsTexture() {}
+  virtual ~NativeFontManager() = default;
+};
 
 enum class BuiltInFont
 {
@@ -44,7 +52,7 @@ class FontManager
 public:
 
 public:
-  explicit FontManager(std::shared_ptr<TextureManager> iTextureManager) : fTextureManager{std::move(iTextureManager)}
+  explicit FontManager(std::shared_ptr<NativeFontManager> iNativeFontManager) : fNativeFontManager{std::move(iNativeFontManager)}
   {}
 
   inline float getCurrentDpiScaledFontSize() const { return computeDpiScaledFontSize(fCurrentFont.fSize); }
@@ -73,7 +81,7 @@ private:
 
   };
 private:
-  std::shared_ptr<TextureManager> fTextureManager{};
+  std::shared_ptr<NativeFontManager> fNativeFontManager{};
   FontDef fCurrentFont{};
   float fCurrentFontScale{1.0f};
   float fCurrentFontDpiScale{1.0f};

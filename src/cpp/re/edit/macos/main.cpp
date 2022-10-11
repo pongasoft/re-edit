@@ -9,7 +9,7 @@
 #include <backends/regui_impl_metal.h>
 #include <cstdio>
 #include "../Application.h"
-#include "MTLTextureManager.h"
+#include "MTLManagers.h"
 #include "nfd.h"
 
 
@@ -138,7 +138,9 @@ int main(int argc, char **argv)
 
   auto renderPassDescriptor = MTL::RenderPassDescriptor::alloc()->init();
 
-  if(!application.init(*config, std::make_shared<re::edit::MTLTextureManager>(device)))
+  if(!application.init(*config,
+                       std::make_shared<re::edit::MTLTextureManager>(device),
+                       std::make_shared<re::edit::MTLFontManager>(device)))
     return 1;
 
   if(NFD_Init() != NFD_OKAY)

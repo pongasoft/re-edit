@@ -16,7 +16,7 @@
  * @author Yan Pujante
  */
 
-#include "MTLTextureManager.h"
+#include "MTLManagers.h"
 #include "../Errors.h"
 #include "backends/imgui_impl_metal.h"
 #include <algorithm>
@@ -88,22 +88,6 @@ std::unique_ptr<Texture> MTLTextureManager::createTexture(std::shared_ptr<FilmSt
 }
 
 //------------------------------------------------------------------------
-// MTLTextureManager::createFontsTexture
-//------------------------------------------------------------------------
-void MTLTextureManager::createFontsTexture()
-{
-  ImGui_ImplMetal_CreateFontsTexture(fDevice);
-}
-
-//------------------------------------------------------------------------
-// MTLTextureManager::destroyFontsTexture
-//------------------------------------------------------------------------
-void MTLTextureManager::destroyFontsTexture()
-{
-  ImGui_ImplMetal_DestroyFontsTexture();
-}
-
-//------------------------------------------------------------------------
 // MTLTexture::MTLTexture
 //------------------------------------------------------------------------
 MTLTexture::MTLTexture(std::shared_ptr<FilmStrip> iFilmStrip) :
@@ -125,6 +109,22 @@ MTLTexture::MTLData::MTLData(ImTextureID iImTextureID, float iHeight) : Data(iIm
 MTLTexture::MTLData::~MTLData()
 {
   getMTLTexture()->release();
+}
+
+//------------------------------------------------------------------------
+// MTLFontManager::createFontsTexture
+//------------------------------------------------------------------------
+void MTLFontManager::createFontsTexture()
+{
+  ImGui_ImplMetal_CreateFontsTexture(fDevice);
+}
+
+//------------------------------------------------------------------------
+// MTLFontManager::destroyFontsTexture
+//------------------------------------------------------------------------
+void MTLFontManager::destroyFontsTexture()
+{
+  ImGui_ImplMetal_DestroyFontsTexture();
 }
 
 }
