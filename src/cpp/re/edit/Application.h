@@ -28,11 +28,9 @@
 #include "lua/Device2D.h"
 #include "PanelState.h"
 #include <optional>
-#include <filesystem>
+#include "fs.h"
 
 namespace re::edit {
-
-namespace fs = std::filesystem;
 
 class Application
 {

@@ -21,6 +21,7 @@
 
 #include "Base.h"
 #include <imgui.h>
+#include "../fs.h"
 
 namespace re::edit::lua {
 
@@ -199,7 +200,7 @@ public:
 
   Config getConfig();
 
-  static std::unique_ptr<ReEdit> fromFile(std::string const &iLuaFilename);
+  static std::unique_ptr<ReEdit> fromFile(fs::path const &iLuaFilename);
 
 protected:
   Config loadConfig();

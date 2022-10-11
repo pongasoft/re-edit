@@ -218,7 +218,7 @@ protected:
   void init(lua::Config const &iConfig);
   std::string getLuaConfig() const;
 
-  void initPanels(std::string const &iDevice2DFile, std::string const &iHDGui2DFile);
+  void initPanels(fs::path const &iDevice2DFile, fs::path const &iHDGui2DFile);
   void onNativeWindowFontDpiScaleChange(float iFontDpiScale);
   void onNativeWindowFontScaleChange(float iFontScale);
   inline void setCurrentWidget(Widget const *iWidget) { fCurrentWidget = iWidget; }

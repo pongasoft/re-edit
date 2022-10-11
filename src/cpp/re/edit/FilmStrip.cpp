@@ -21,7 +21,6 @@
 #include "Errors.h"
 #include <re/mock/fmt.h>
 #include <regex>
-#include <filesystem>
 
 namespace re::edit {
 
@@ -65,14 +64,14 @@ std::unique_ptr<FilmStrip> FilmStrip::load(std::shared_ptr<File> const &iFile)
   RE_EDIT_ASSERT(iFile->fNumFrames > 0);
 
   int width, height, channels;
-  auto data = stbi_load(iFile->fPath.c_str(), &width, &height, &channels, 4);
+  auto data = stbi_load(iFile->fPath.string().c_str(), &width, &height, &channels, 4);
   if(data)
   {
     return std::unique_ptr<FilmStrip>(new FilmStrip(iFile, width, height, std::make_unique<Data>(data)));
   }
   else
   {
-    RE_EDIT_LOG_ERROR("Error loading file [%s] | %s", iFile->fPath, stbi_failure_reason());
+    RE_EDIT_LOG_ERROR("Error loading file [%s] | %s", iFile->fPath.c_str(), stbi_failure_reason());
     return std::unique_ptr<FilmStrip>(new FilmStrip(iFile, stbi_failure_reason()));
   }
 }
@@ -170,7 +169,7 @@ size_t FilmStripMgr::scanDirectory()
 //------------------------------------------------------------------------
 // FilmStripMgr::scanDirectory
 //------------------------------------------------------------------------
-std::vector<FilmStrip::File> FilmStripMgr::scanDirectory(std::string const &iDirectory)
+std::vector<FilmStrip::File> FilmStripMgr::scanDirectory(fs::path const &iDirectory)
 {
   RE_EDIT_ASSERT(!iDirectory.empty());
 
@@ -204,7 +203,7 @@ std::vector<FilmStrip::File> FilmStripMgr::scanDirectory(std::string const &iDir
   }
   else
   {
-    RE_EDIT_LOG_ERROR("Could not scan directory [%s]: (%d | %s)", iDirectory, errorCode.value(), errorCode.message());
+    RE_EDIT_LOG_ERROR("Could not scan directory [%s]: (%d | %s)", iDirectory.c_str(), errorCode.value(), errorCode.message());
   }
   return res;
 }

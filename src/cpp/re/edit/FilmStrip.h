@@ -26,6 +26,7 @@
 #include <vector>
 #include <functional>
 #include <imgui.h>
+#include "fs.h"
 
 namespace re::edit {
 
@@ -37,7 +38,7 @@ public:
 public:
   struct File
   {
-    std::string fPath{};
+    fs::path fPath{};
     std::string fKey{};
     long fLastModifiedTime{};
     int fNumFrames{1};
@@ -112,7 +113,7 @@ private:
 class FilmStripMgr
 {
 public:
-  explicit FilmStripMgr(std::string iDirectory) : fDirectory{std::move(iDirectory)} {}
+  explicit FilmStripMgr(fs::path iDirectory) : fDirectory{std::move(iDirectory)} {}
   std::shared_ptr<FilmStrip> findFilmStrip(std::string const &iKey) const;
   std::shared_ptr<FilmStrip> getFilmStrip(std::string const &iKey) const;
 
@@ -120,10 +121,10 @@ public:
   std::vector<std::string> const &getKeys() const { return fKeys; };
   std::vector<std::string> findKeys(FilmStrip::Filter const &iFilter) const;
 
-  static std::vector<FilmStrip::File> scanDirectory(std::string const &iDirectory);
+  static std::vector<FilmStrip::File> scanDirectory(fs::path const &iDirectory);
 
 private:
-  std::string fDirectory;
+  fs::path fDirectory;
   mutable std::map<std::string, std::shared_ptr<FilmStrip>> fFilmStrips{};
   std::map<std::string, std::shared_ptr<FilmStrip::File>> fFiles{};
   std::vector<std::string> fKeys{};

@@ -25,13 +25,11 @@
 #include <optional>
 #include <set>
 #include <re/mock/Rack.h>
-#include <filesystem>
+#include "fs.h"
 
 #include "Property.h"
 
 namespace re::edit {
-
-namespace fs = std::filesystem;
 
 class PropertyManager
 {

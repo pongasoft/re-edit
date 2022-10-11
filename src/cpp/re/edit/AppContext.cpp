@@ -35,7 +35,7 @@ AppContext::AppContext() :
 //------------------------------------------------------------------------
 // AppContext::initPanels
 //------------------------------------------------------------------------
-void AppContext::initPanels(std::string const &iDevice2DFile, std::string const &iHDGui2DFile)
+void AppContext::initPanels(fs::path const &iDevice2DFile, fs::path const &iHDGui2DFile)
 {
   auto d2d = lua::Device2D::fromFile(iDevice2DFile);
   auto hdg = lua::HDGui2D::fromFile(iHDGui2DFile);

@@ -64,7 +64,7 @@ public:
   std::shared_ptr<panel_nodes> back() const { return getPanelNodes("back"); }
   std::shared_ptr<panel_nodes> folded_back() const { return getPanelNodes("folded_back"); }
 
-  static std::unique_ptr<Device2D> fromFile(std::string const &iLuaFilename);
+  static std::unique_ptr<Device2D> fromFile(fs::path const &iLuaFilename);
 
 protected:
 

@@ -24,7 +24,7 @@ namespace re::edit::lua {
 //------------------------------------------------------------------------
 // Device2D::fromFile
 //------------------------------------------------------------------------
-std::unique_ptr<Device2D> Device2D::fromFile(std::string const &iLuaFilename)
+std::unique_ptr<Device2D> Device2D::fromFile(fs::path const &iLuaFilename)
 {
   auto res = std::make_unique<Device2D>();
   res->loadFile(iLuaFilename);

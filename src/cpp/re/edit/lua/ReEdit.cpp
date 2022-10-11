@@ -23,7 +23,7 @@ namespace re::edit::lua {
 //------------------------------------------------------------------------
 // ReEdit::fromFile
 //------------------------------------------------------------------------
-std::unique_ptr<ReEdit> ReEdit::fromFile(std::string const &iLuaFilename)
+std::unique_ptr<ReEdit> ReEdit::fromFile(fs::path const &iLuaFilename)
 {
   auto res = std::make_unique<ReEdit>();
   res->loadFile(iLuaFilename);

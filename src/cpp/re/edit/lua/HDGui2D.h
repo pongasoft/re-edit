@@ -99,7 +99,7 @@ public:
 
   int luaIgnored();
 
-  static std::unique_ptr<HDGui2D> fromFile(std::string const &iLuaFilename);
+  static std::unique_ptr<HDGui2D> fromFile(fs::path const &iLuaFilename);
 
   std::shared_ptr<jbox_panel> front() { return getPanel("front"); }
   std::shared_ptr<jbox_panel> folded_front() { return getPanel("folded_front"); }

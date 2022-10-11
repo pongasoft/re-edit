@@ -32,7 +32,7 @@ public:
   TextureManager() = default;
   virtual ~TextureManager() = default;
 
-  void init(std::string iDirectory);
+  void init(fs::path iDirectory);
 
   std::shared_ptr<Texture> getTexture(std::string const &iKey) const;
   std::shared_ptr<Texture> findTexture(std::string const &iKey) const;
