@@ -177,6 +177,8 @@ public:
 
   std::unique_ptr<Attribute> clone() const override { return Attribute::clone<PropertyPath>(*this); }
 
+  error_t checkForErrors(AppContext &iCtx) const override;
+
 //  bool eq(Attribute const *iAttribute) const override
 //  {
 //    return Attribute::eq(this, iAttribute, [](auto *l, auto *r) { return l->fValue == r->fValue;});

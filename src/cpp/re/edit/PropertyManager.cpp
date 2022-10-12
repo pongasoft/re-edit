@@ -297,24 +297,42 @@ static char const *toPersistenceString(lua::EPersistence iPersistence)
 std::string PropertyManager::getPropertyInfo(std::string const &iPropertyPath) const
 {
   auto p = findProperty(iPropertyPath);
-  RE_EDIT_INTERNAL_ASSERT(p != nullptr);
-  if(p->isDiscrete())
-    return re::mock::fmt::printf("path = %s\ntype = %s\nsteps = %d\nowner = %s\ntag = %d\npersistence = %s\nvalue = %s",
-                                 iPropertyPath,
-                                 toTypeString(p->type()),
-                                 p->stepCount(),
-                                 toOwnerString(p->owner()),
-                                 p->tag(),
-                                 toPersistenceString(p->persistence()),
-                                 fDevice->toString(p->path()));
+  if(p)
+  {
+    if(p->isDiscrete())
+      return fmt::printf("path  = %s\n"
+                         "type  = %s\n"
+                         "steps = %d\n"
+                         "owner = %s\n"
+                         "tag   = %d\n"
+                         "pers. = %s\n"
+                         "value = %s",
+                         iPropertyPath,
+                         toTypeString(p->type()),
+                         p->stepCount(),
+                         toOwnerString(p->owner()),
+                         p->tag(),
+                         toPersistenceString(p->persistence()),
+                         fDevice->toString(p->path()));
+    else
+      return fmt::printf("path  = %s\n"
+                         "type  = %s\n"
+                         "owner = %s\n"
+                         "tag   = %d\n"
+                         "pers. = %s\n"
+                         "value = %s",
+                         iPropertyPath,
+                         toTypeString(p->type()),
+                         toOwnerString(p->owner()),
+                         p->tag(),
+                         toPersistenceString(p->persistence()),
+                         fDevice->toString(p->path()));
+  }
   else
-    return re::mock::fmt::printf("path = %s\ntype = %s\nowner = %s\ntag = %d\npersistence = %s\nvalue = %s",
-                                 iPropertyPath,
-                                 toTypeString(p->type()),
-                                 toOwnerString(p->owner()),
-                                 p->tag(),
-                                 toPersistenceString(p->persistence()),
-                                 fDevice->toString(p->path()));
+  {
+    return fmt::printf("path  = %s\n"
+                       "error = Invalid property (missing from motherboard)\n", iPropertyPath);
+  }
 }
 
 //------------------------------------------------------------------------

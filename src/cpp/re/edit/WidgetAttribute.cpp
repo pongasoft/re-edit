@@ -721,6 +721,31 @@ void PropertyPath::menuView(AppContext &iCtx,
 }
 
 //------------------------------------------------------------------------
+// PropertyPath::menuView
+//------------------------------------------------------------------------
+Attribute::error_t PropertyPath::checkForErrors(AppContext &iCtx) const
+{
+  if(fProvided)
+  {
+    auto property = iCtx.findProperty(fValue);
+    if(!property)
+      return "Invalid property (missing from motherboard)";
+    if(fFilter)
+    {
+      auto properties = iCtx.findProperties(fFilter);
+      if(std::find(properties.begin(), properties.end(), property) == properties.end())
+      return "Invalid property (wrong type)";
+    }
+  }
+  else
+  {
+    if(fRequired)
+      return "Required";
+  }
+  return kNoError;
+}
+
+//------------------------------------------------------------------------
 // ObjectPath::editView
 //------------------------------------------------------------------------
 void ObjectPath::editView(AppContext &iCtx)

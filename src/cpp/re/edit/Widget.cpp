@@ -361,7 +361,7 @@ Widget *Widget::value(Property::Filter iValueFilter, Property::Filter iValueSwit
 //------------------------------------------------------------------------
 Widget *Widget::value(Property::Filter iValueFilter)
 {
-  return addAttribute(std::make_unique<PropertyPath>("value", std::move(iValueFilter)));
+  return addAttribute(Attribute::build<PropertyPath>("value", true, "", std::move(iValueFilter)));
 }
 
 //------------------------------------------------------------------------
