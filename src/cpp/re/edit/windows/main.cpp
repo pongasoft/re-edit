@@ -203,7 +203,8 @@ int main(int argc, char **argv)
     ImGui::NewFrame();
 
     // Main rendering
-    application.render();
+    if(!application.render())
+      glfwSetWindowShouldClose(window, GLFW_TRUE);
 
     // Rendering
     ImGui::Render();
@@ -230,5 +231,5 @@ int main(int argc, char **argv)
   glfwDestroyWindow(window);
   glfwTerminate();
 
-  return 0;
+  return application.hasException() ? 1 : 0;
 }

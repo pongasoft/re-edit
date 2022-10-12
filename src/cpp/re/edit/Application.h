@@ -58,11 +58,13 @@ public:
 //  inline void onNativeWindowPositionChange(int x, int y, float iFontScale, float iFontDpiScale) { fAppContext.onNativeWindowPositionChange(x, y, iFontScale, iFontDpiScale); }
 
   void newFrame();
-  void render();
+  bool render() noexcept;
   void renderMainMenu();
   void renderSavePopup();
   void save();
   void saveConfig();
+
+  constexpr bool hasException() const { return fException != std::nullopt; }
 
   static void saveFile(fs::path const &iFile, std::string const &iContent);
 
@@ -70,6 +72,8 @@ public:
   float clear_color[4] = {0.45f, 0.55f, 0.60f, 1.00f};
 
 private:
+  bool doRenderException();
+  bool doRender(); // may throw exception
   std::string hdgui2D();
   std::string device2D() const;
 
@@ -85,6 +89,7 @@ private:
   bool fNeedsSaving{};
   bool fRecomputeDimensionsRequested{};
   std::optional<std::string> fNewLayoutRequested{};
+  std::optional<std::exception_ptr> fException{};
 };
 
 }

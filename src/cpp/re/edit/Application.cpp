@@ -25,6 +25,7 @@
 #include "nfd.h"
 #include <fstream>
 #include <imgui.h>
+#include <imgui_internal.h>
 
 namespace re::edit {
 
@@ -122,9 +123,67 @@ void Application::newFrame()
 }
 
 //------------------------------------------------------------------------
+// what
+//------------------------------------------------------------------------
+inline std::string what(std::exception_ptr const &p)
+{
+  if(p)
+  {
+    try
+    {
+      std::rethrow_exception(p);
+    }
+    catch(std::exception &e)
+    {
+      return e.what();
+    }
+    catch(...)
+    {
+      return "Unknown exception";
+    }
+  }
+
+  return "No Error";
+}
+
+//------------------------------------------------------------------------
 // Application::render
 //------------------------------------------------------------------------
-void Application::render()
+bool Application::render() noexcept
+{
+  if(fException)
+  {
+    try
+    {
+      return doRenderException();
+    }
+    catch(...)
+    {
+      RE_EDIT_LOG_ERROR("Unrecoverable exception detected: %s... bailing out", what(std::current_exception()));
+      ImGui::ErrorCheckEndFrameRecover(nullptr);
+      return false;
+    }
+  }
+  else
+  {
+    try
+    {
+      return doRender();
+    }
+    catch(...)
+    {
+      fException = std::current_exception();
+      ImGui::ErrorCheckEndFrameRecover(nullptr);
+      RE_EDIT_LOG_ERROR("Unrecoverable exception detected: %s", what(*fException));
+      return true; // will render a popup
+    }
+  }
+}
+
+//------------------------------------------------------------------------
+// Application::doRender
+//------------------------------------------------------------------------
+bool Application::doRender()
 {
   if(fRecomputeDimensionsRequested)
   {
@@ -203,6 +262,11 @@ void Application::render()
 //    {
 //      fAppContext.fFontManager->setFontScales(fontScale, fAppContext.fFontManager->getFontDpiScale());
 //    }
+
+    if(ImGui::Button("Error"))
+    {
+      RE_EDIT_INTERNAL_ASSERT(false, "do you see me?");
+    }
 
     ImGui::PushID("Rendering");
 
@@ -284,6 +348,8 @@ void Application::render()
     renderSavePopup();
 
   fAppContext.fPropertyManager->afterRenderFrame();
+
+  return true;
 }
 
 //------------------------------------------------------------------------
@@ -415,6 +481,43 @@ void Application::renderMainMenu()
     }
     ImGui::EndMainMenuBar();
   }
+}
+
+//------------------------------------------------------------------------
+// Application::doRenderException
+//------------------------------------------------------------------------
+bool Application::doRenderException()
+{
+  static constexpr auto kExceptionPopup = "Unhandled Error";
+
+  bool shouldContinue = true;
+
+  if(!ImGui::IsPopupOpen(kExceptionPopup))
+    ImGui::OpenPopup(kExceptionPopup);
+
+  if(ImGui::BeginPopupModal(kExceptionPopup, nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+  {
+    ImGui::Text("!!! Unhandled Error !!!");
+    ImGui::Text("An unhandled error was detected. Please report it at https://github.com/pongasoft/re-edit-dev/issues");
+    ImGui::Text("Error: %s", what(*fException).c_str());
+    ImGui::Text("Do you want to try to save before quitting?");
+    if(ImGui::Button("OK", ImVec2(120, 0)))
+    {
+      save();
+      shouldContinue = false;
+      ImGui::CloseCurrentPopup();
+    }
+    ImGui::SetItemDefaultFocus();
+    ImGui::SameLine();
+    if(ImGui::Button("Exit", ImVec2(120, 0)))
+    {
+      shouldContinue = false;
+      ImGui::CloseCurrentPopup();
+    }
+    ImGui::EndPopup();
+  }
+
+  return shouldContinue;
 }
 
 //------------------------------------------------------------------------
