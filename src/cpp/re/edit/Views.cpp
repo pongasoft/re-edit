@@ -89,7 +89,7 @@ void MultiSelectionList::editView()
     if(ImGui::Selectable(s.c_str(), fSelected.find(s) != fSelected.end()))
     {
       auto io = ImGui::GetIO();
-      handleClick(s, io.KeyShift, io.KeySuper);
+      handleClick(s, io.KeyShift, ReGui::IsSingleSelectKey(io));
     }
   }
 
