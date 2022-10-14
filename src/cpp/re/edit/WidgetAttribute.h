@@ -239,6 +239,8 @@ public:
                           Property::Filter const &iFilter,
                           std::function<void(int iIndex, const Property *)> const &iOnSelect) const;
 
+  error_t checkForErrors(AppContext &iCtx) const override;
+
   std::unique_ptr<Attribute> clone() const override { return Attribute::clone<PropertyPathList>(*this); }
 
 //  bool eq(Attribute const *iAttribute) const override

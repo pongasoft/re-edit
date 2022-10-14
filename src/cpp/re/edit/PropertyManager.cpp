@@ -139,7 +139,13 @@ void PropertyManager::sortProperties(std::vector<std::string> &ioProperties,
   std::vector<const Property *> properties{};
   properties.reserve(ioProperties.size());
   for(auto &path: ioProperties)
-    properties.emplace_back(&fProperties.at(path));
+  {
+    auto property = findProperty(path);
+    if(property)
+      properties.emplace_back(property);
+    else
+      RE_EDIT_LOG_WARNING("Invalid property %s", path);
+  }
   std::sort(properties.begin(), properties.end(), iComparator);
   ioProperties.clear();
   for(auto &p: properties)

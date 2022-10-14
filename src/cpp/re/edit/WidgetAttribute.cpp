@@ -913,6 +913,30 @@ void PropertyPathList::editView(AppContext &iCtx)
 }
 
 //------------------------------------------------------------------------
+// PropertyPathList::checkForErrors
+//------------------------------------------------------------------------
+Attribute::error_t PropertyPathList::checkForErrors(AppContext &iCtx) const
+{
+  auto properties = iCtx.findProperties(fFilter);
+
+  for(auto &p: fValue)
+  {
+    auto property = iCtx.findProperty(p);
+
+    if(!property)
+      return "Invalid property (missing from motherboard)";
+
+    if(!properties.empty())
+    {
+      if(std::find(properties.begin(), properties.end(), property) == properties.end())
+        return "Invalid property (wrong type)";
+    }
+  }
+
+  return kNoError;
+}
+
+//------------------------------------------------------------------------
 // StaticStringList::editView
 //------------------------------------------------------------------------
 void StaticStringList::editView(AppContext &iCtx)
@@ -1040,7 +1064,7 @@ Attribute::error_t Values::checkForErrors(AppContext &iCtx) const
   if(fValue.empty())
     return kEmptyListError;
   else
-    return kNoError;
+    return PropertyPathList::checkForErrors(iCtx);
 }
 
 //------------------------------------------------------------------------
