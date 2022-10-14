@@ -194,11 +194,15 @@ int main(int argc, char **argv)
 
       // Main rendering
       if(!application.render())
+      {
         glfwSetWindowShouldClose(window, GLFW_TRUE);
-
-      // Rendering
-      ImGui::Render();
-      ImGui_ImplMetal_RenderDrawData(ImGui::GetDrawData(), commandBuffer, renderEncoder);
+      }
+      else
+      {
+        // Rendering
+        ImGui::Render();
+        ImGui_ImplMetal_RenderDrawData(ImGui::GetDrawData(), commandBuffer, renderEncoder);
+      }
 
       renderEncoder->popDebugGroup();
       renderEncoder->endEncoding();

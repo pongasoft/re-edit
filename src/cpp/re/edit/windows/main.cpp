@@ -202,12 +202,6 @@ int main(int argc, char **argv)
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
-    // Main rendering
-    if(!application.render())
-      glfwSetWindowShouldClose(window, GLFW_TRUE);
-
-    // Rendering
-    ImGui::Render();
     int display_w, display_h;
     glfwGetFramebufferSize(window, &display_w, &display_h);
     glViewport(0, 0, display_w, display_h);
@@ -216,7 +210,18 @@ int main(int argc, char **argv)
                  application.clear_color[2] * application.clear_color[3],
                  application.clear_color[3]);
     glClear(GL_COLOR_BUFFER_BIT);
-    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+    // Main rendering
+    if(!application.render())
+    {
+      glfwSetWindowShouldClose(window, GLFW_TRUE);
+    }
+    else
+    {
+      // Rendering
+      ImGui::Render();
+      ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+    }
 
     glfwSwapBuffers(window);
   }

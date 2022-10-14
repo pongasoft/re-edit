@@ -122,10 +122,12 @@ void Application::newFrame()
   }
 }
 
+namespace impl {
+
 //------------------------------------------------------------------------
-// what
+// impl::what
 //------------------------------------------------------------------------
-inline std::string what(std::exception_ptr const &p)
+std::string what(std::exception_ptr const &p)
 {
   if(p)
   {
@@ -147,6 +149,26 @@ inline std::string what(std::exception_ptr const &p)
 }
 
 //------------------------------------------------------------------------
+// impl::executeCatchAllExceptions
+//------------------------------------------------------------------------
+template<typename F>
+bool executeCatchAllExceptions(F f) noexcept
+{
+  try
+  {
+    f();
+    return true;
+  }
+  catch(...)
+  {
+    fprintf(stderr, "ABORT| Unrecoverable exception detected: %s", what(std::current_exception()).c_str());
+    return false;
+  }
+}
+
+}
+
+//------------------------------------------------------------------------
 // Application::render
 //------------------------------------------------------------------------
 bool Application::render() noexcept
@@ -159,8 +181,10 @@ bool Application::render() noexcept
     }
     catch(...)
     {
-      RE_EDIT_LOG_ERROR("Unrecoverable exception detected: %s... bailing out", what(std::current_exception()));
-      ImGui::ErrorCheckEndFrameRecover(nullptr);
+      impl::executeCatchAllExceptions([e = std::current_exception()] {
+        RE_EDIT_LOG_ERROR("Unrecoverable exception detected: %s... bailing out", impl::what(e));
+        ImGui::ErrorCheckEndFrameRecover(nullptr);
+      });
       return false;
     }
   }
@@ -173,9 +197,10 @@ bool Application::render() noexcept
     catch(...)
     {
       fException = std::current_exception();
-      ImGui::ErrorCheckEndFrameRecover(nullptr);
-      RE_EDIT_LOG_ERROR("Unrecoverable exception detected: %s", what(*fException));
-      return true; // will render a popup
+      return impl::executeCatchAllExceptions([e = std::current_exception()] {
+        RE_EDIT_LOG_ERROR("Unrecoverable exception detected: %s", impl::what(e));
+        ImGui::ErrorCheckEndFrameRecover(nullptr);
+      });
     }
   }
 }
@@ -499,7 +524,7 @@ bool Application::doRenderException()
   {
     ImGui::Text("!!! Unhandled Error !!!");
     ImGui::Text("An unhandled error was detected. Please report it at https://github.com/pongasoft/re-edit-dev/issues");
-    ImGui::Text("Error: %s", what(*fException).c_str());
+    ImGui::Text("Error: %s", impl::what(*fException).c_str());
     ImGui::Text("Do you want to try to save before quitting?");
     if(ImGui::Button("OK", ImVec2(120, 0)))
     {

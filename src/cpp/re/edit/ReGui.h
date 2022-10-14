@@ -285,11 +285,7 @@ public:
     Lifecycle(Lifecycle const &) = delete;
     Lifecycle &operator=(Lifecycle const &) = delete;
 
-    ~Lifecycle()
-    {
-      if(fEndRequired)
-        ImGui::End();
-    }
+    ~Lifecycle();
 
     constexpr explicit operator bool() const { return fContentEnabled; }
 
@@ -313,20 +309,7 @@ public:
   constexpr bool isVisible() const { return fVisible; }
   constexpr void setIsVisible(bool iVisible) { fVisible = iVisible; }
 
-  [[nodiscard]] Lifecycle begin(ImGuiWindowFlags flags = 0)
-  {
-    if(fVisible)
-    {
-      if(fSizeToFitRequested > 0)
-      {
-        flags |= ImGuiWindowFlags_AlwaysAutoResize;
-        fSizeToFitRequested--;
-      }
-      return Lifecycle{ImGui::Begin(fName, fDisableClosingWidget ? nullptr : &fVisible, fFlags | flags)};
-    }
-    else
-      return {};
-  }
+  [[nodiscard]] Lifecycle begin(ImGuiWindowFlags flags = 0);
 
   void menuItem()
   {
