@@ -28,14 +28,8 @@ Window::Lifecycle::~Lifecycle()
 {
   if(fEndRequired)
   {
-    try
-    {
+    if(std::uncaught_exceptions() == 0)
       ImGui::End();
-    }
-    catch(ImGuiException &e)
-    {
-      RE_EDIT_LOG_ERROR("%s", e.what());
-    }
   }
 }
 
