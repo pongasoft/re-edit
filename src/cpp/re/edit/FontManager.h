@@ -24,6 +24,8 @@
 #include <optional>
 #include <imgui.h>
 #include <cmath>
+#include <memory>
+#include <functional>
 
 namespace re::edit {
 

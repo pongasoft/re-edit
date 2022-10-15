@@ -21,6 +21,7 @@
 
 #include <exception>
 #include <string>
+#include <stdexcept>
 
 struct ImGuiException : public std::logic_error {
   explicit ImGuiException(std::string const &s) : std::logic_error(s.c_str()) {}
