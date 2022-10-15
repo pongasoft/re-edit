@@ -29,7 +29,9 @@ buildings:
   label: Buildings
 business:
   icons:
+    - copy
     - floppy-disk
+    - folder-open
     - pencil
   label: Business
 camping:
@@ -50,6 +52,7 @@ clothing-fashion:
 coding:
   icons:
     - bars
+    - folder-open
   label: Coding
 communication:
   icons: []
@@ -63,6 +66,7 @@ construction:
   label: Construction
 design:
   icons:
+    - copy
     - eye-slash
     - floppy-disk
     - pencil
@@ -91,7 +95,9 @@ energy:
   label: Energy
 files:
   icons:
+    - copy
     - floppy-disk
+    - folder-open
   label: Files
 film-video:
   icons: []
@@ -224,5 +230,6 @@ weather:
   label: Weather
 writing:
   icons:
+    - folder-open
     - pencil
   label: Writing

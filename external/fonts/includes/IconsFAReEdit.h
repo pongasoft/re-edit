@@ -18,10 +18,14 @@ constexpr auto kArrowUpArrowDown = "\xee\x82\x99";	// U+e099
 constexpr auto kBars = "\xef\x83\x89";	// U+f0c9
 #define ICON_FA_CircleX "\xee\x84\xae"	// U+e12e
 constexpr auto kCircleX = "\xee\x84\xae";	// U+e12e
+#define ICON_FA_Copy "\xef\x83\x85"	// U+f0c5
+constexpr auto kCopy = "\xef\x83\x85";	// U+f0c5
 #define ICON_FA_EyeSlash "\xef\x81\xb0"	// U+f070
 constexpr auto kEyeSlash = "\xef\x81\xb0";	// U+f070
 #define ICON_FA_FloppyDisk "\xef\x83\x87"	// U+f0c7
 constexpr auto kFloppyDisk = "\xef\x83\x87";	// U+f0c7
+#define ICON_FA_FolderOpen "\xef\x81\xbc"	// U+f07c
+constexpr auto kFolderOpen = "\xef\x81\xbc";	// U+f07c
 #define ICON_FA_MagnifyingGlass "\xef\x80\x82"	// U+f002
 constexpr auto kMagnifyingGlass = "\xef\x80\x82";	// U+f002
 #define ICON_FA_Notdef "\xee\x87\xbe"	// U+e1fe

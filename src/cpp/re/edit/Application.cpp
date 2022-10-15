@@ -29,99 +29,6 @@
 
 namespace re::edit {
 
-//------------------------------------------------------------------------
-// Application::parseArgs
-//------------------------------------------------------------------------
-std::optional<lua::Config> Application::parseArgs(std::vector<std::string> iArgs)
-{
-  if(iArgs.empty())
-  {
-    RE_EDIT_LOG_ERROR("You must provide the path to the root folder of the device");
-    return std::nullopt;
-  }
-
-  fRoot = fs::path(iArgs[0]);
-
-  auto configFile = fRoot / "re-edit.lua";
-  lua::Config config{};
-  if(fs::exists(configFile))
-  {
-    try
-    {
-      config = lua::ReEdit::fromFile(configFile)->getConfig();
-    }
-    catch(re::mock::Exception &e)
-    {
-      RE_EDIT_LOG_WARNING("Error while reading %s | %s", configFile.c_str(), e.what());
-    }
-  }
-
-  return config;
-}
-
-//------------------------------------------------------------------------
-// Application::init
-//------------------------------------------------------------------------
-bool Application::init(lua::Config const &iConfig,
-                       std::shared_ptr<TextureManager> iTextureManager,
-                       std::shared_ptr<NativeFontManager> iNativeFontManager)
-{
-  fAppContext.fFontManager = std::make_shared<FontManager>(iNativeFontManager);
-  fAppContext.fTextureManager = std::move(iTextureManager);
-  fAppContext.fUserPreferences = std::make_shared<UserPreferences>();
-  fAppContext.fPropertyManager = std::make_shared<PropertyManager>();
-  fAppContext.fUndoManager = std::make_shared<UndoManager>();
-
-  fAppContext.init(iConfig);
-  ImGui::LoadIniSettingsFromMemory(iConfig.fImGuiIni.c_str(), iConfig.fImGuiIni.size());
-
-  auto &io = ImGui::GetIO();
-  io.IniFilename = nullptr; // don't use imgui.ini file
-  io.WantSaveIniSettings = false; // will be "notified" when it changes
-  io.ConfigWindowsMoveFromTitleBarOnly = true;
-
-  setDeviceHeightRU(fAppContext.fPropertyManager->init(fRoot));
-
-  fAppContext.fTextureManager->init(fRoot / "GUI2D");
-  fAppContext.fTextureManager->scanDirectory();
-  fAppContext.fTextureManager->findTextureKeys([](auto const &) { return true; }); // forces preloading the textures to get their sizes
-
-  fAppContext.initPanels(fRoot / "GUI2D" / "device_2D.lua",
-                         fRoot / "GUI2D" / "hdgui_2D.lua");
-
-  return true;
-}
-
-//------------------------------------------------------------------------
-// Application::newFrame
-//------------------------------------------------------------------------
-void Application::newFrame()
-{
-  if(fNewLayoutRequested)
-  {
-    ImGui::LoadIniSettingsFromMemory(fNewLayoutRequested->c_str(), fNewLayoutRequested->size());
-    fNewLayoutRequested = std::nullopt;
-  }
-
-  if(fAppContext.fFontManager->hasFontChangeRequest())
-  {
-    auto oldDpiScale = fAppContext.fFontManager->getCurrentFontDpiScale();
-    fAppContext.fFontManager->applyFontChangeRequest();
-    auto newDpiScale = fAppContext.fFontManager->getCurrentFontDpiScale();
-
-    if(oldDpiScale != newDpiScale)
-    {
-      auto scaleFactor = newDpiScale;
-      ImGuiStyle newStyle{};
-      ImGui::StyleColorsDark(&newStyle);
-      newStyle.ScaleAllSizes(scaleFactor);
-      ImGui::GetStyle() = newStyle;
-    }
-
-    fRecomputeDimensionsRequested = true;
-  }
-}
-
 namespace impl {
 
 //------------------------------------------------------------------------
@@ -169,6 +76,108 @@ bool executeCatchAllExceptions(F f) noexcept
 }
 
 //------------------------------------------------------------------------
+// Application::parseArgs
+//------------------------------------------------------------------------
+std::optional<lua::Config> Application::parseArgs(std::vector<std::string> iArgs)
+{
+  if(iArgs.empty())
+  {
+    RE_EDIT_LOG_ERROR("You must provide the path to the root folder of the device");
+    return std::nullopt;
+  }
+
+  fRoot = fs::path(iArgs[0]);
+
+  auto configFile = fRoot / "re-edit.lua";
+  lua::Config config{};
+  if(fs::exists(configFile))
+  {
+    try
+    {
+      config = lua::ReEdit::fromFile(configFile)->getConfig();
+    }
+    catch(re::mock::Exception &e)
+    {
+      RE_EDIT_LOG_WARNING("Error while reading %s | %s", configFile.c_str(), e.what());
+    }
+  }
+
+  return config;
+}
+
+//------------------------------------------------------------------------
+// Application::init
+//------------------------------------------------------------------------
+bool Application::init(lua::Config const &iConfig,
+                       std::shared_ptr<TextureManager> iTextureManager,
+                       std::shared_ptr<NativeFontManager> iNativeFontManager)
+{
+  try
+  {
+    fAppContext.fFontManager = std::make_shared<FontManager>(iNativeFontManager);
+    fAppContext.fTextureManager = std::move(iTextureManager);
+    fAppContext.fUserPreferences = std::make_shared<UserPreferences>();
+    fAppContext.fPropertyManager = std::make_shared<PropertyManager>();
+    fAppContext.fUndoManager = std::make_shared<UndoManager>();
+
+    fAppContext.init(iConfig);
+    ImGui::LoadIniSettingsFromMemory(iConfig.fImGuiIni.c_str(), iConfig.fImGuiIni.size());
+
+    auto &io = ImGui::GetIO();
+    io.IniFilename = nullptr; // don't use imgui.ini file
+    io.WantSaveIniSettings = false; // will be "notified" when it changes
+    io.ConfigWindowsMoveFromTitleBarOnly = true;
+
+    setDeviceHeightRU(fAppContext.fPropertyManager->init(fRoot));
+
+    fAppContext.fTextureManager->init(fRoot / "GUI2D");
+    fAppContext.fTextureManager->scanDirectory();
+    fAppContext.fTextureManager->findTextureKeys([](auto const &) { return true; }); // forces preloading the textures to get their sizes
+
+    fAppContext.initPanels(fRoot / "GUI2D" / "device_2D.lua",
+                           fRoot / "GUI2D" / "hdgui_2D.lua");
+  }
+  catch(...)
+  {
+    fException = std::current_exception();
+    fAppContext.fInitException = fException;
+    RE_EDIT_LOG_ERROR("Exception detected during initialization: %s", impl::what(*fAppContext.fInitException));
+  }
+
+  return fAppContext.fInitException == std::nullopt;
+}
+
+//------------------------------------------------------------------------
+// Application::newFrame
+//------------------------------------------------------------------------
+void Application::newFrame()
+{
+  if(fNewLayoutRequested)
+  {
+    ImGui::LoadIniSettingsFromMemory(fNewLayoutRequested->c_str(), fNewLayoutRequested->size());
+    fNewLayoutRequested = std::nullopt;
+  }
+
+  if(fAppContext.fFontManager->hasFontChangeRequest())
+  {
+    auto oldDpiScale = fAppContext.fFontManager->getCurrentFontDpiScale();
+    fAppContext.fFontManager->applyFontChangeRequest();
+    auto newDpiScale = fAppContext.fFontManager->getCurrentFontDpiScale();
+
+    if(oldDpiScale != newDpiScale)
+    {
+      auto scaleFactor = newDpiScale;
+      ImGuiStyle newStyle{};
+      ImGui::StyleColorsDark(&newStyle);
+      newStyle.ScaleAllSizes(scaleFactor);
+      ImGui::GetStyle() = newStyle;
+    }
+
+    fRecomputeDimensionsRequested = true;
+  }
+}
+
+//------------------------------------------------------------------------
 // Application::render
 //------------------------------------------------------------------------
 bool Application::render() noexcept
@@ -177,7 +186,7 @@ bool Application::render() noexcept
   {
     try
     {
-      return doRenderException();
+      return doRenderException(*fException, fAppContext.fInitException == std::nullopt);
     }
     catch(...)
     {
@@ -288,10 +297,10 @@ bool Application::doRender()
 //      fAppContext.fFontManager->setFontScales(fontScale, fAppContext.fFontManager->getFontDpiScale());
 //    }
 
-    if(ImGui::Button("Error"))
-    {
-      RE_EDIT_INTERNAL_ASSERT(false, "do you see me?");
-    }
+//    if(ImGui::Button("Error"))
+//    {
+//      RE_EDIT_INTERNAL_ASSERT(false, "do you see me?");
+//    }
 
     ImGui::PushID("Rendering");
 
@@ -402,24 +411,24 @@ void Application::renderMainMenu()
   {
     if(ImGui::BeginMenu("File"))
     {
-      if(ImGui::MenuItem("Load"))
-      {
-        nfdchar_t *outPath;
-        nfdresult_t result = NFD_PickFolder(&outPath, nullptr);
-        if(result == NFD_OKAY)
-        {
-          RE_EDIT_LOG_INFO("Success %s", outPath);
-          NFD_FreePath(outPath);
-        }
-        else if(result == NFD_CANCEL)
-        {
-          RE_EDIT_LOG_INFO("Cancel");
-        }
-        else
-        {
-          RE_EDIT_LOG_ERROR("Error: %s\n", NFD_GetError());
-        }
-      }
+//      if(ImGui::MenuItem(ReGui_Prefix(ReGui_Icon_Open, "Load")))
+//      {
+//        nfdchar_t *outPath;
+//        nfdresult_t result = NFD_PickFolder(&outPath, nullptr);
+//        if(result == NFD_OKAY)
+//        {
+//          RE_EDIT_LOG_INFO("Success %s", outPath);
+//          NFD_FreePath(outPath);
+//        }
+//        else if(result == NFD_CANCEL)
+//        {
+//          RE_EDIT_LOG_INFO("Cancel");
+//        }
+//        else
+//        {
+//          RE_EDIT_LOG_ERROR("Error: %s\n", NFD_GetError());
+//        }
+//      }
       if(ImGui::MenuItem(ReGui_Prefix(ReGui_Icon_Save, "Save")))
       {
         ImGui::OpenPopup(savePopupId);
@@ -511,34 +520,48 @@ void Application::renderMainMenu()
 //------------------------------------------------------------------------
 // Application::doRenderException
 //------------------------------------------------------------------------
-bool Application::doRenderException()
+bool Application::doRenderException(std::exception_ptr iException, bool iSaveButton)
 {
-  static constexpr auto kExceptionPopup = "Unhandled Error";
+  static constexpr auto kExceptionPopup = "Error";
 
   bool shouldContinue = true;
 
   if(!ImGui::IsPopupOpen(kExceptionPopup))
     ImGui::OpenPopup(kExceptionPopup);
 
-  if(ImGui::BeginPopupModal(kExceptionPopup, nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+  if(ImGui::BeginPopupModal(kExceptionPopup, nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_HorizontalScrollbar))
   {
-    ImGui::Text("!!! Unhandled Error !!!");
-    ImGui::Text("An unhandled error was detected. Please report it at https://github.com/pongasoft/re-edit-dev/issues");
-    ImGui::Text("Error: %s", impl::what(*fException).c_str());
-    ImGui::Text("Do you want to try to save before quitting?");
-    if(ImGui::Button("OK", ImVec2(120, 0)))
+    ImGui::Text("!!! Error !!!");
+    ImGui::Separator();
+    bool copy_to_clipboard = ImGui::Button(ReGui_Prefix(ReGui_Icon_Copy, "Copy to clipboard"));
+    if (copy_to_clipboard)
     {
-      save();
-      shouldContinue = false;
-      ImGui::CloseCurrentPopup();
+      ImGui::LogToClipboard();
     }
-    ImGui::SetItemDefaultFocus();
-    ImGui::SameLine();
+    ImGui::Text("Error: %s", impl::what(iException).c_str());
+    if (copy_to_clipboard)
+    {
+      ImGui::LogFinish();
+    }
+    ImGui::Separator();
+    if(iSaveButton)
+    {
+      ImGui::Text("Do you want to try to save before quitting?");
+      if(ImGui::Button("OK (try to save)", ImVec2(120, 0)))
+      {
+        save();
+        shouldContinue = false;
+        ImGui::CloseCurrentPopup();
+      }
+      ImGui::SetItemDefaultFocus();
+      ImGui::SameLine();
+    }
     if(ImGui::Button("Exit", ImVec2(120, 0)))
     {
       shouldContinue = false;
       ImGui::CloseCurrentPopup();
     }
+    ImGui::Text("Note: If you think this is an error in the tool, please report it at https://github.com/pongasoft/re-edit-dev/issues");
     ImGui::EndPopup();
   }
 

@@ -168,7 +168,9 @@ int main(int argc, char **argv)
   if(!application.init(*config,
                        std::make_shared<re::edit::OGL3TextureManager>(glMaxTextureSize),
                        std::make_shared<re::edit::OGL3FontManager>()))
-    return 1;
+  {
+    fprintf(stderr, "An error was detected during initialization...");
+  }
 
   if(NFD_Init() != NFD_OKAY)
   {

@@ -21,3 +21,7 @@ icons:
       - solid
   - arrow-up-arrow-down:
       - solid
+  - copy:
+      - solid
+  - folder-open:
+      - solid

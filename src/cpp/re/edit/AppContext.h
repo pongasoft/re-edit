@@ -22,6 +22,7 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include <exception>
 #include "TextureManager.h"
 #include "FontManager.h"
 #include "UserPreferences.h"
@@ -256,6 +257,7 @@ protected:
   Widget const *fCurrentWidget{};
   int fNativeWindowWidth{1280};
   int fNativeWindowHeight{720};
+  std::optional<std::exception_ptr> fInitException{};
 };
 
 //------------------------------------------------------------------------

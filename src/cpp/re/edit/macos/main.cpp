@@ -141,7 +141,9 @@ int main(int argc, char **argv)
   if(!application.init(*config,
                        std::make_shared<re::edit::MTLTextureManager>(device),
                        std::make_shared<re::edit::MTLFontManager>(device)))
-    return 1;
+  {
+    fprintf(stderr, "An error was detected during initialization...");
+  }
 
   if(NFD_Init() != NFD_OKAY)
   {

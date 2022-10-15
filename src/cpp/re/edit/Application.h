@@ -72,7 +72,7 @@ public:
   float clear_color[4] = {0.45f, 0.55f, 0.60f, 1.00f};
 
 private:
-  bool doRenderException();
+  bool doRenderException(std::exception_ptr iException, bool iSaveButton);
   bool doRender(); // may throw exception
   std::string hdgui2D();
   std::string device2D() const;

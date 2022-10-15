@@ -220,8 +220,10 @@ constexpr auto kMenuIcon = fa::kBars;
 #define ReGui_Icon_Edit ICON_FA_Pencil
 #define ReGui_Icon_Undo ICON_FA_ArrowRotateLeft
 #define ReGui_Icon_Redo ICON_FA_ArrowRotateRight
+#define ReGui_Icon_Open ICON_FA_FolderOpen
 #define ReGui_Icon_Save ICON_FA_FloppyDisk
 #define ReGui_Icon_Sort ICON_FA_ArrowUpArrowDown
+#define ReGui_Icon_Copy ICON_FA_Copy
 
 //------------------------------------------------------------------------
 // ReGui::ResetButton
