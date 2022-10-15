@@ -34,5 +34,6 @@ struct ImGuiException : public std::logic_error {
 
 #define IM_ASSERT(test) (test) ? (void)0 : ImGuiException::throwException("IMGUI ASSERT: \"" #test "\"", __FILE__, __LINE__)
 
+#define IMGUI_USE_STB_SPRINTF
 
 #endif //RE_EDIT_IMGUI_USER_CONFIG_H
