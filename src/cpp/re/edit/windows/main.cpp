@@ -165,6 +165,8 @@ int main(int argc, char **argv)
   int glMaxTextureSize;
   glGetIntegerv(GL_MAX_TEXTURE_SIZE, &glMaxTextureSize);
 
+  printInfo(window);
+
   if(!application.init(*config,
                        std::make_shared<re::edit::OGL3TextureManager>(glMaxTextureSize),
                        std::make_shared<re::edit::OGL3FontManager>()))
@@ -183,8 +185,6 @@ int main(int argc, char **argv)
   glfwSetWindowSizeCallback(window, onWindowSizeChange);
 
   application.onNativeWindowFontDpiScaleChange(getFontDpiScale(window));
-
-  printInfo(window);
 
   // Main loop
   while(!glfwWindowShouldClose(window))
