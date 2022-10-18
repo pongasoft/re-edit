@@ -538,7 +538,12 @@ bool Application::doRenderException(std::exception_ptr iException, bool iSaveBut
     {
       ImGui::LogToClipboard();
     }
-    ImGui::Text("Error: %s", impl::what(iException).c_str());
+    std::istringstream stream(impl::what(iException));
+    std::string line;
+    while(std::getline(stream, line, '\n'))
+    {
+      ImGui::Text("%s", line.c_str());
+    }
     if (copy_to_clipboard)
     {
       ImGui::LogFinish();
