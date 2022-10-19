@@ -652,8 +652,21 @@ std::string Application::device2D() const
 //------------------------------------------------------------------------
 void Application::saveFile(fs::path const &iFile, std::string const &iContent)
 {
-  std::ofstream f{iFile};
-  f << iContent;
+  try
+  {
+    // we do it in 2 steps since step 1 is the one that is more likely to fail
+    // 1. we save in a new file
+    auto tmpFile = iFile.parent_path() / fmt::printf("%s.re_edit.tmp", iFile.filename());
+    std::ofstream f{tmpFile};
+    f << iContent;
+    f.close();
+    // 2. we rename
+    fs::rename(tmpFile, iFile);
+  }
+  catch(...)
+  {
+    RE_EDIT_LOG_ERROR("Error while saving file %s: %s", iFile, impl::what(std::current_exception()));
+  }
 }
 
 //------------------------------------------------------------------------
