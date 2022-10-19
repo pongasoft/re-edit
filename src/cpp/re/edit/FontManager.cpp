@@ -40,6 +40,7 @@ static void mergeFontAwesome(float iSize)
   icons_config.PixelSnapH = true;
   icons_config.OversampleH = 2;
   icons_config.FontDataOwnedByAtlas = false;
+  icons_config.GlyphMinAdvanceX = iSize; // to make it monospace
 
   io.Fonts->AddFontFromMemoryCompressedBase85TTF(IconsFAReEdit_compressed_data_base85,
                                                  iSize,

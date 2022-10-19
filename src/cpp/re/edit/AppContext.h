@@ -220,7 +220,6 @@ public:
 
   float fZoom{0.20f};
   ImVec2 fGrid{1.0f, 1.0f};
-  ImVec2 fFaButtonSize{21.0f, 0.0f};
   float fItemWidth{300.0f};
 
 protected:

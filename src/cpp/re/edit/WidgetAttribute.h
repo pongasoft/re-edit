@@ -542,7 +542,7 @@ void SingleAttribute<T>::reset()
 template<typename T>
 void SingleAttribute<T>::resetView(AppContext &iCtx)
 {
-  if(ReGui::ResetButton(iCtx.fFaButtonSize))
+  if(ReGui::ResetButton())
   {
     iCtx.addUndoAttributeReset(this);
     reset();

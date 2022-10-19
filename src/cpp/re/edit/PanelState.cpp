@@ -285,7 +285,7 @@ void PanelState::renderProperties(AppContext &iCtx)
         for(auto const &path: properties)
         {
           ImGui::PushID(path.c_str());
-          if(ReGui::ResetButton(iCtx.fFaButtonSize))
+          if(ReGui::ResetButton())
             iCtx.fPropertyManager->removeFromWatchlist(path);
           ImGui::SameLine();
           ImGui::TextWrapped("%s", path.c_str());

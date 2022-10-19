@@ -229,17 +229,17 @@ constexpr auto kMenuIcon = fa::kBars;
 //------------------------------------------------------------------------
 // ReGui::ResetButton
 //------------------------------------------------------------------------
-inline bool ResetButton(const ImVec2& iSize)
+inline bool ResetButton()
 {
-  return ImGui::Button(kResetIcon, iSize);
+  return ImGui::Button(kResetIcon);
 }
 
 //------------------------------------------------------------------------
 // ReGui::MenuButton
 //------------------------------------------------------------------------
-inline bool MenuButton(const ImVec2& iSize)
+inline bool MenuButton()
 {
-  return ImGui::Button(kMenuIcon, iSize);
+  return ImGui::Button(kMenuIcon);
 }
 
 //------------------------------------------------------------------------

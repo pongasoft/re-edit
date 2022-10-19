@@ -221,7 +221,6 @@ bool Application::doRender()
 {
   if(fRecomputeDimensionsRequested)
   {
-    fAppContext.fFaButtonSize = ImVec2{ImGui::CalcTextSize(ReGui::kResetIcon).x + ImGui::GetStyle().FramePadding.x * 2, 0};
     fAppContext.fItemWidth = 40 * ImGui::CalcTextSize("W").x;
     fRecomputeDimensionsRequested = false;
   }
