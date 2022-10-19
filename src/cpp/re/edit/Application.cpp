@@ -326,6 +326,24 @@ bool Application::doRender()
     ReGui::TextRadioButton("Hit B.", &fAppContext.fBorderRendering, AppContext::EBorderRendering::kHitBoundaries);
     ImGui::PopID();
 
+    ImGui::PushID("SizeOnly");
+    ImGui::AlignTextToFramePadding();
+    ImGui::Text("No Graphics     ");
+    ImGui::SameLine();
+    ReGui::TextRadioButton("None  ", &fAppContext.fNoGraphicsRendering, AppContext::ENoGraphicsRendering::kNone);
+    ImGui::SameLine();
+    ReGui::TextRadioButton("Border", &fAppContext.fNoGraphicsRendering, AppContext::ENoGraphicsRendering::kBorder);
+    ImGui::SameLine();
+    ReGui::TextRadioButton("Fill  ", &fAppContext.fNoGraphicsRendering, AppContext::ENoGraphicsRendering::kFill);
+//    ImGui::SameLine();
+//    auto noTextureColor = ReGui::GetColorImVec4(fAppContext.fUserPreferences->fWidgetNoGraphicsColor);
+//    if(ImGui::ColorEdit4("No Graphics", &noTextureColor.x, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel))
+//    {
+//      fAppContext.fUserPreferences->fWidgetNoGraphicsColor = ReGui::GetColorU32(noTextureColor);
+//      noTextureColor.w *= 0.4;
+//      fAppContext.fUserPreferences->fWidgetNoGraphicsXRayColor = ReGui::GetColorU32(noTextureColor);
+//    }
+    ImGui::PopID();
 
     ImGui::PushID("Custom Display");
     ImGui::AlignTextToFramePadding();

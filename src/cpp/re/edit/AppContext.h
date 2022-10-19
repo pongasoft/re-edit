@@ -73,6 +73,13 @@ public:
     kFill
   };
 
+  enum class ENoGraphicsRendering : int
+  {
+    kNone,
+    kBorder,
+    kFill
+  };
+
 public:
   AppContext();
 
@@ -209,6 +216,7 @@ public:
   EBorderRendering fBorderRendering{EBorderRendering::kNone};
   ECustomDisplayRendering fCustomDisplayRendering{ECustomDisplayRendering::kMain};
   ESampleDropZoneRendering fSampleDropZoneRendering{ESampleDropZoneRendering::kFill};
+  ENoGraphicsRendering fNoGraphicsRendering{ENoGraphicsRendering::kFill};
 
   float fZoom{0.20f};
   ImVec2 fGrid{1.0f, 1.0f};

@@ -70,9 +70,20 @@ void Graphics::draw(AppContext &iCtx, ImU32 iBorderColor, bool iXRay) const
   else
   {
     auto color = iXRay ?
-                 iCtx.getUserPreferences().fWidgetNoTextureColor :
-                 iCtx.getUserPreferences().fWidgetNoTextureXRayColor;
-    iCtx.drawRectFilled(fPosition, getSize(), color);
+                 iCtx.getUserPreferences().fWidgetNoGraphicsColor :
+                 iCtx.getUserPreferences().fWidgetNoGraphicsXRayColor;
+    switch(iCtx.fNoGraphicsRendering)
+    {
+      case AppContext::ENoGraphicsRendering::kFill:
+        iCtx.drawRectFilled(fPosition, getSize(), color);
+        break;
+      case AppContext::ENoGraphicsRendering::kBorder:
+        iCtx.drawRect(fPosition, getSize(), color);
+        break;
+      case AppContext::ENoGraphicsRendering::kNone:
+        // do nothing
+        break;
+    }
     drawBorder(iCtx, iBorderColor);
   }
 }

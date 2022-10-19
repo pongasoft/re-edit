@@ -32,8 +32,8 @@ public:
 
   ImU32 fSelectedWidgetColor{ReGui::GetColorU32(ImVec4{1,1,0,1})};
 
-  ImU32 fWidgetNoTextureColor{ReGui::GetColorU32(ImVec4{1,0,0,1})};
-  ImU32 fWidgetNoTextureXRayColor{ReGui::GetColorU32(ImVec4{1,0,0,0.4})};
+  ImU32 fWidgetNoGraphicsColor{ReGui::GetColorU32(ImVec4{0.5,0.5,0.5,1})};
+  ImU32 fWidgetNoGraphicsXRayColor{ReGui::GetColorU32(ImVec4{0.5,0.5,0.5,0.4})};
 };
 
 }
