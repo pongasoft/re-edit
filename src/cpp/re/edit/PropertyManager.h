@@ -45,6 +45,7 @@ public:
   std::vector<std::string> findPropertyNames(Property::Filter const &iFilter) const;
   void sortProperties(std::vector<std::string> &ioProperties, Property::Comparator const &iComparator) const;
   Property const *findProperty(std::string const &iPropertyPath) const;
+  bool hasProperty(std::string const &iPropertyPath) const;
   std::string getPropertyInfo(std::string const &iPropertyPath) const;
 
   int getIntValue(std::string const &iPropertyPath) const;

@@ -460,11 +460,24 @@ Attribute::error_t Visibility::checkForErrors(AppContext &iCtx) const
   auto property = iCtx.findProperty(fSwitch.fValue);
   if(property)
   {
-    if(property->stepCount() == 0)
+    auto const stepCount = property->stepCount();
+
+    if(stepCount == 0)
       return kNotADiscretePropertyError;
 
     if(fValues.fValue.empty())
       return kEmptyList;
+    
+    for(auto v: fValues.fValue)
+    {
+      if(v < 0 || v >= stepCount)
+        return "Invalid value (outside of bound)";
+    }
+  }
+  else
+  {
+    if(fSwitch.fProvided)
+      return "Invalid property (missing from motherboard)";
   }
 
   return kNoError;

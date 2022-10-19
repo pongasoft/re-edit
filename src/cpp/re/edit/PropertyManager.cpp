@@ -153,6 +153,14 @@ void PropertyManager::sortProperties(std::vector<std::string> &ioProperties,
 }
 
 //------------------------------------------------------------------------
+// PropertyManager::hasProperty
+//------------------------------------------------------------------------
+bool PropertyManager::hasProperty(std::string const &iPropertyPath) const
+{
+  return fProperties.find(iPropertyPath) != fProperties.end();
+}
+
+//------------------------------------------------------------------------
 // PropertyManager::findProperty
 //------------------------------------------------------------------------
 Property const *PropertyManager::findProperty(std::string const &iPropertyPath) const
@@ -169,7 +177,10 @@ Property const *PropertyManager::findProperty(std::string const &iPropertyPath) 
 //------------------------------------------------------------------------
 int PropertyManager::getIntValue(std::string const &iPropertyPath) const
 {
-  return fDevice->getNum<int>(iPropertyPath);
+  if(hasProperty(iPropertyPath))
+    return fDevice->getNum<int>(iPropertyPath);
+  else
+    return 0;
 }
 
 //------------------------------------------------------------------------
@@ -201,7 +212,8 @@ void PropertyManager::afterRenderFrame()
 //------------------------------------------------------------------------
 void PropertyManager::addToWatchlist(std::string const &iPropertyPath)
 {
-  fPropertyWatchlist.emplace(iPropertyPath);
+  if(hasProperty(iPropertyPath))
+    fPropertyWatchlist.emplace(iPropertyPath);
 }
 
 //------------------------------------------------------------------------
