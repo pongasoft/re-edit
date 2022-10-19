@@ -163,22 +163,9 @@ std::optional<impl::jbox_object> HDGui2D::getObjectOnTopOfStack()
 //------------------------------------------------------------------------
 // HDGui2D::checkTableArg
 //------------------------------------------------------------------------
-bool HDGui2D::checkTableArg()
+void HDGui2D::checkTableArg()
 {
-  if(lua_gettop(L) <= 0 || lua_type(L, 1) != LUA_TTABLE)
-  {
-    int currentLine = -1;
-    lua_Debug ar;
-    if(lua_getstack(L, 1, &ar))
-    {
-      lua_getinfo(L, "l", &ar);
-      currentLine = ar.currentline;
-    }
-    RE_EDIT_LOG_WARNING("Missing table arg in hdgui_2D.lua line %d. Did you use () instead of {}?", currentLine);
-    return false;
-  }
-  else
-    return true;
+  luaL_checktype(L, 1, LUA_TTABLE);
 }
 
 //------------------------------------------------------------------------
@@ -204,9 +191,7 @@ int HDGui2D::luaIgnored()
 //------------------------------------------------------------------------
 int HDGui2D::luaUIText()
 {
-  RE_EDIT_ASSERT(lua_gettop(L) == 1, "jbox.ui_text() is expecting 1 argument");
-  int t = lua_type(L, 1);
-  luaL_argexpected(L, t == LUA_TSTRING, 1, "jbox.ui_text() is expecting a string argument");
+  luaL_checktype(L, 1, LUA_TSTRING);
   return addObjectOnTopOfStack(impl::jbox_ui_text{lua_tostring(L, 1)});
 }
 
@@ -215,9 +200,7 @@ int HDGui2D::luaUIText()
 //------------------------------------------------------------------------
 int HDGui2D::luaImage()
 {
-  RE_EDIT_ASSERT(lua_gettop(L) == 1, "jbox.image() is expecting 1 argument");
-  int t = lua_type(L, 1);
-  luaL_argexpected(L, t == LUA_TTABLE, 1, "jbox.image() is expecting a table argument");
+  luaL_checktype(L, 1, LUA_TTABLE);
   return addObjectOnTopOfStack(impl::jbox_image{L.getTableValueAsString("path", 1)});
 }
 
@@ -227,7 +210,7 @@ int HDGui2D::luaImage()
 int HDGui2D::luaAnalogKnob()
 {
   auto p = makeWidget(Widget::analog_knob());
-  if(checkTableArg())
+  checkTableArg();
   {
     populateGraphics(p);
     populate<Value>(p, "value");
@@ -246,7 +229,7 @@ int HDGui2D::luaAnalogKnob()
 int HDGui2D::luaAudioOutputSocket()
 {
   auto p = makeWidget(Widget::audio_output_socket());
-  if(checkTableArg())
+  checkTableArg();
   {
     populateGraphics(p);
     populate<Socket>(p, "socket");
@@ -260,7 +243,7 @@ int HDGui2D::luaAudioOutputSocket()
 int HDGui2D::luaAudioInputSocket()
 {
   auto p = makeWidget(Widget::audio_input_socket());
-  if(checkTableArg())
+  checkTableArg();
   {
     populateGraphics(p);
     populate<Socket>(p, "socket");
@@ -274,7 +257,7 @@ int HDGui2D::luaAudioInputSocket()
 int HDGui2D::luaCustomDisplay()
 {
   auto p = makeWidget(Widget::custom_display());
-  if(checkTableArg())
+  checkTableArg();
   {
     populateGraphics(p);
     populate<Background>(p, "background");
@@ -297,7 +280,7 @@ int HDGui2D::luaCustomDisplay()
 int HDGui2D::luaCVOutputSocket()
 {
   auto p = makeWidget(Widget::cv_output_socket());
-  if(checkTableArg())
+  checkTableArg();
   {
     populateGraphics(p);
     populate<Socket>(p, "socket");
@@ -311,7 +294,7 @@ int HDGui2D::luaCVOutputSocket()
 int HDGui2D::luaCVInputSocket()
 {
   auto p = makeWidget(Widget::cv_input_socket());
-  if(checkTableArg())
+  checkTableArg();
   {
     populateGraphics(p);
     populate<Socket>(p, "socket");
@@ -325,7 +308,7 @@ int HDGui2D::luaCVInputSocket()
 int HDGui2D::luaCVTrimKnob()
 {
   auto p = makeWidget(Widget::cv_trim_knob());
-  if(checkTableArg())
+  checkTableArg();
   {
     populateGraphics(p);
     populate<Socket>(p, "socket");
@@ -339,7 +322,7 @@ int HDGui2D::luaCVTrimKnob()
 int HDGui2D::luaDeviceName()
 {
   auto p = makeWidget(Widget::device_name());
-  if(checkTableArg())
+  checkTableArg();
   {
     populateGraphics(p);
   }
@@ -352,7 +335,7 @@ int HDGui2D::luaDeviceName()
 int HDGui2D::luaMomentaryButton()
 {
   auto p = makeWidget(Widget::momentary_button());
-  if(checkTableArg())
+  checkTableArg();
   {
     populateGraphics(p);
     populate<PropertyPath>(p, "value");
@@ -371,7 +354,7 @@ int HDGui2D::luaMomentaryButton()
 int HDGui2D::luaPatchBrowseGroup()
 {
   auto p = makeWidget(Widget::patch_browse_group());
-  if(checkTableArg())
+  checkTableArg();
   {
     populateGraphics(p);
     populate<Bool>(p, "fx_patch");
@@ -386,7 +369,7 @@ int HDGui2D::luaPatchBrowseGroup()
 int HDGui2D::luaPatchName()
 {
   auto p = makeWidget(Widget::patch_name());
-  if(checkTableArg())
+  checkTableArg();
   {
     populateGraphics(p);
     populate<StaticStringList>(p, "text_style");
@@ -403,7 +386,7 @@ int HDGui2D::luaPatchName()
 int HDGui2D::luaPitchWheel()
 {
   auto p = makeWidget(Widget::pitch_wheel());
-  if(checkTableArg())
+  checkTableArg();
   {
     populateGraphics(p);
     populate<PropertyPath>(p, "value");
@@ -422,7 +405,7 @@ int HDGui2D::luaPitchWheel()
 int HDGui2D::luaPlaceholder()
 {
   auto p = makeWidget(Widget::placeholder());
-  if(checkTableArg())
+  checkTableArg();
   {
     populateGraphics(p);
   }
@@ -435,7 +418,7 @@ int HDGui2D::luaPlaceholder()
 int HDGui2D::luaPopupButton()
 {
   auto p = makeWidget(Widget::popup_button());
-  if(checkTableArg())
+  checkTableArg();
   {
     populateGraphics(p);
     populate<PropertyPath>(p, "value");
@@ -454,7 +437,7 @@ int HDGui2D::luaPopupButton()
 int HDGui2D::luaSampleBrowseGroup()
 {
   auto p = makeWidget(Widget::sample_browse_group());
-  if(checkTableArg())
+  checkTableArg();
   {
     populateGraphics(p);
     populate<Visibility>(p, "visibility");
@@ -469,7 +452,7 @@ int HDGui2D::luaSampleBrowseGroup()
 int HDGui2D::luaSampleDropZone()
 {
   auto p = makeWidget(Widget::sample_drop_zone());
-  if(checkTableArg())
+  checkTableArg();
   {
     populateGraphics(p);
     populate<Visibility>(p, "visibility");
@@ -484,7 +467,7 @@ int HDGui2D::luaSampleDropZone()
 int HDGui2D::luaSequenceFader()
 {
   auto p = makeWidget(Widget::sequence_fader());
-  if(checkTableArg())
+  checkTableArg();
   {
     populateGraphics(p);
     populate<Value>(p, "value");
@@ -508,7 +491,7 @@ int HDGui2D::luaSequenceFader()
 int HDGui2D::luaSequenceMeter()
 {
   auto p = makeWidget(Widget::sequence_meter());
-  if(checkTableArg())
+  checkTableArg();
   {
     populateGraphics(p);
     populate<PropertyPath>(p, "value");
@@ -523,7 +506,7 @@ int HDGui2D::luaSequenceMeter()
 int HDGui2D::luaStaticDecoration()
 {
   auto p = makeWidget(Widget::static_decoration());
-  if(checkTableArg())
+  checkTableArg();
   {
     populateGraphics(p);
     populate<Visibility>(p, "visibility");
@@ -538,7 +521,7 @@ int HDGui2D::luaStaticDecoration()
 int HDGui2D::luaStepButton()
 {
   auto p = makeWidget(Widget::step_button());
-  if(checkTableArg())
+  checkTableArg();
   {
     populateGraphics(p);
     populate<PropertyPath>(p, "value");
@@ -558,7 +541,7 @@ int HDGui2D::luaStepButton()
 int HDGui2D::luaRadioButton()
 {
   auto p = makeWidget(Widget::radio_button());
-  if(checkTableArg())
+  checkTableArg();
   {
     populateGraphics(p);
     populate<PropertyPath>(p, "value");
@@ -579,7 +562,7 @@ int HDGui2D::luaRadioButton()
 int HDGui2D::luaToggleButton()
 {
   auto p = makeWidget(Widget::toggle_button());
-  if(checkTableArg())
+  checkTableArg();
   {
     populateGraphics(p);
     populate<PropertyPath>(p, "value");
@@ -598,7 +581,7 @@ int HDGui2D::luaToggleButton()
 int HDGui2D::luaUpDownButton()
 {
   auto p = makeWidget(Widget::up_down_button());
-  if(checkTableArg())
+  checkTableArg();
   {
     populateGraphics(p);
     populate<PropertyPath>(p, "value");
@@ -618,7 +601,7 @@ int HDGui2D::luaUpDownButton()
 int HDGui2D::luaValueDisplay()
 {
   auto p = makeWidget(Widget::value_display());
-  if(checkTableArg())
+  checkTableArg();
   {
     populateGraphics(p);
     populate<Value>(p, "value");
@@ -642,7 +625,7 @@ int HDGui2D::luaValueDisplay()
 int HDGui2D::luaZeroSnapKnob()
 {
   auto p = makeWidget(Widget::zero_snap_knob());
-  if(checkTableArg())
+  checkTableArg();
   {
     populateGraphics(p);
     populate<Value>(p, "value");
@@ -926,9 +909,7 @@ int HDGui2D::luaPanel()
   // Implementation note: we "delay" the processing of the map until when it is needed because there are cases
   // when the map argument is modified after calling jbox.panel() and it is a valid use case in Render2D
   // As a result this function simply returns the map that was provided as an argument (after making sure it is a map)
-  RE_EDIT_ASSERT(lua_gettop(L) == 1, "jbox.panel() is expecting 1 argument");
-  int t = lua_type(L, 1);
-  luaL_argexpected(L, t == LUA_TTABLE, 1, "jbox.panel() is expecting a table argument");
+  checkTableArg();
   return 1;
 }
 

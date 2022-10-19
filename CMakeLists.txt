@@ -94,7 +94,7 @@ endif()
 
 # Adding dependency on re-mock
 option(RE_MOCK_SUPPORT_FOR_AUDIO_FILE "" ON)
-# using re-mock v1.1.0
+# using re-mock 64c2bdf986d22fe2a6589c4b43495e7689dfa10d
 add_subdirectory(../../pongasoft/re-mock re-mock EXCLUDE_FROM_ALL)
 
 # Defines the location of the sources

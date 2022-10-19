@@ -115,7 +115,7 @@ protected:
   std::optional<impl::jbox_image> getTableValueAsOptionalImage(char const *iKey, int idx = -1);
   std::shared_ptr<jbox_panel> getPanel(char const *iPanelName);
 
-  bool checkTableArg();
+  void checkTableArg();
 
   void populateGraphics(std::shared_ptr<jbox_widget> &oWidget);
 
