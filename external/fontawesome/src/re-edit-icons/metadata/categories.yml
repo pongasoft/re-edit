@@ -29,9 +29,10 @@ buildings:
   label: Buildings
 business:
   icons:
-    - copy
+    - clipboard
     - floppy-disk
     - folder-open
+    - paste
     - pencil
   label: Business
 camping:
@@ -66,9 +67,10 @@ construction:
   label: Construction
 design:
   icons:
-    - copy
+    - clone
     - eye-slash
     - floppy-disk
+    - paste
     - pencil
   label: Design
 devices-hardware:
@@ -95,9 +97,10 @@ energy:
   label: Energy
 files:
   icons:
-    - copy
+    - clone
     - floppy-disk
     - folder-open
+    - paste
   label: Files
 film-video:
   icons: []
@@ -171,6 +174,7 @@ numbers:
   label: Numbers
 photos-images:
   icons:
+    - clone
     - eye-slash
   label: Photos + Images
 political:

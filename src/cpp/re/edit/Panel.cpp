@@ -289,7 +289,7 @@ void Panel::renderWidgetMenu(AppContext &iCtx, std::shared_ptr<Widget> const &iW
                                  iWidget->isSelected() ? "Unselect" : "Select",
                                  iWidget->getName()).c_str()))
     toggleWidgetSelection(iWidget->getId(), true);
-  if(ImGui::MenuItem(fmt::printf("Duplicate %s",
+  if(ImGui::MenuItem(fmt::printf(ReGui_Prefix(ReGui_Icon_Duplicate, "Duplicate %s"),
                                  iWidget->getName()).c_str()))
     addWidget(iCtx, iWidget->copy());
   if(ImGui::MenuItem(fmt::printf("Delete %s",
@@ -342,7 +342,7 @@ bool Panel::renderSelectedWidgetsMenu(AppContext &iCtx,
 
       if(ImGui::MenuItem("Clear Selection"))
         clearSelection();
-      if(ImGui::MenuItem("Duplicate Widgets"))
+      if(ImGui::MenuItem(ReGui_Prefix(ReGui_Icon_Duplicate, "Duplicate Widgets")))
       {
         duplicateWidgets(iCtx, iSelectedWidgets);
       }

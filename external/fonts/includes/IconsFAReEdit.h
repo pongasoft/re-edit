@@ -6,8 +6,8 @@
 namespace fa {
 
 constexpr auto kMin = 0xe099;
-constexpr auto kMax16 = 0xf303;
-constexpr auto kMax = 0xf303;
+constexpr auto kMax16 = 0xf328;
+constexpr auto kMax = 0xf328;
 #define ICON_FA_ArrowRotateLeft "\xef\x83\xa2"	// U+f0e2
 constexpr auto kArrowRotateLeft = "\xef\x83\xa2";	// U+f0e2
 #define ICON_FA_ArrowRotateRight "\xef\x80\x9e"	// U+f01e
@@ -18,8 +18,10 @@ constexpr auto kArrowUpArrowDown = "\xee\x82\x99";	// U+e099
 constexpr auto kBars = "\xef\x83\x89";	// U+f0c9
 #define ICON_FA_CircleX "\xee\x84\xae"	// U+e12e
 constexpr auto kCircleX = "\xee\x84\xae";	// U+e12e
-#define ICON_FA_Copy "\xef\x83\x85"	// U+f0c5
-constexpr auto kCopy = "\xef\x83\x85";	// U+f0c5
+#define ICON_FA_Clipboard "\xef\x8c\xa8"	// U+f328
+constexpr auto kClipboard = "\xef\x8c\xa8";	// U+f328
+#define ICON_FA_Clone "\xef\x89\x8d"	// U+f24d
+constexpr auto kClone = "\xef\x89\x8d";	// U+f24d
 #define ICON_FA_EyeSlash "\xef\x81\xb0"	// U+f070
 constexpr auto kEyeSlash = "\xef\x81\xb0";	// U+f070
 #define ICON_FA_FloppyDisk "\xef\x83\x87"	// U+f0c7
@@ -30,6 +32,8 @@ constexpr auto kFolderOpen = "\xef\x81\xbc";	// U+f07c
 constexpr auto kMagnifyingGlass = "\xef\x80\x82";	// U+f002
 #define ICON_FA_Notdef "\xee\x87\xbe"	// U+e1fe
 constexpr auto kNotdef = "\xee\x87\xbe";	// U+e1fe
+#define ICON_FA_Paste "\xef\x83\xaa"	// U+f0ea
+constexpr auto kPaste = "\xef\x83\xaa";	// U+f0ea
 #define ICON_FA_Pencil "\xef\x8c\x83"	// U+f303
 constexpr auto kPencil = "\xef\x8c\x83";	// U+f303
 #define ICON_FA_TriangleExclamation "\xef\x81\xb1"	// U+f071

@@ -86,22 +86,40 @@ circle-x:
     - solid
   unicode: e12e
   voted: false
-copy:
+clipboard:
   aliases:
     unicodes:
+      composite:
+        - 1f4cb
       secondary:
-        - 10f0c5
+        - 10f328
   changes:
-    - 2.0.0
     - 5.0.0
-    - 5.10.2
     - 6.0.0-beta1
-  label: Copy
+  label: Clipboard
   search:
     terms: []
   styles:
     - solid
-  unicode: f0c5
+  unicode: f328
+  voted: false
+clone:
+  aliases:
+    unicodes:
+      secondary:
+        - 10f24d
+  changes:
+    - 4.4.0
+    - 5.0.0
+    - 5.11.0
+    - 6.0.0-beta1
+    - 6.0.0
+  label: Clone
+  search:
+    terms: []
+  styles:
+    - solid
+  unicode: f24d
   voted: false
 eye-slash:
   aliases:
@@ -192,6 +210,24 @@ notdef:
   styles:
     - solid
   unicode: e1fe
+  voted: false
+paste:
+  aliases:
+    names:
+      - file-clipboard
+    unicodes:
+      secondary:
+        - 10f0ea
+  changes:
+    - 2.0.0
+    - 5.0.0
+    - 6.0.0-beta1
+  label: Paste
+  search:
+    terms: []
+  styles:
+    - solid
+  unicode: f0ea
   voted: false
 pencil:
   aliases:
