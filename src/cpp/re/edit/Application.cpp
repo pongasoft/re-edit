@@ -26,8 +26,34 @@
 #include <fstream>
 #include <imgui.h>
 #include <imgui_internal.h>
+#include <efsw/efsw.hpp>
 
 namespace re::edit {
+
+class UpdateListener : public efsw::FileWatchListener
+{
+public:
+  void handleFileAction( efsw::WatchID watchid, const std::string& dir, const std::string& filename, efsw::Action action, std::string oldFilename ) override
+  {
+    switch( action )
+    {
+      case efsw::Actions::Add:
+        std::cout << "DIR (" << dir << ") FILE (" << filename << ") has event Added" << std::endl;
+        break;
+      case efsw::Actions::Delete:
+        std::cout << "DIR (" << dir << ") FILE (" << filename << ") has event Delete" << std::endl;
+        break;
+      case efsw::Actions::Modified:
+        std::cout << "DIR (" << dir << ") FILE (" << filename << ") has event Modified" << std::endl;
+        break;
+      case efsw::Actions::Moved:
+        std::cout << "DIR (" << dir << ") FILE (" << filename << ") has event Moved from (" << oldFilename << ")" << std::endl;
+        break;
+      default:
+        std::cout << "Should never happen!" << std::endl;
+    }
+  }
+};
 
 namespace impl {
 
@@ -136,6 +162,12 @@ bool Application::init(lua::Config const &iConfig,
 
     fAppContext.initPanels(fRoot / "GUI2D" / "device_2D.lua",
                            fRoot / "GUI2D" / "hdgui_2D.lua");
+
+    static auto fileWatcher = std::make_unique<efsw::FileWatcher>();
+    static auto listener = std::make_unique<UpdateListener>();
+
+    fileWatcher->addWatch(fRoot.string(), listener.get(), true);
+    fileWatcher->watch();
   }
   catch(...)
   {

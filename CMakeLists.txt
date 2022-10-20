@@ -72,14 +72,17 @@ set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 add_subdirectory(external/glfw/glfw-3.3.8 EXCLUDE_FROM_ALL)
 
-# Include stb
+# Include stb (for loading png images)
 add_subdirectory(external/nothings/stb EXCLUDE_FROM_ALL)
 
 # Including Dear ImGui
 add_subdirectory(external/ocornut/imgui EXCLUDE_FROM_ALL)
 
-# Include nativefiledialog
+# Include nativefiledialog (open native file dialog)
 add_subdirectory(external/btzy/nativefiledialog-extended EXCLUDE_FROM_ALL)
+
+# Include efsw (cross platform filesystem watcher)
+add_subdirectory(external/SpartanJ/efsw EXCLUDE_FROM_ALL)
 
 # Using RE SDK version 4.3.0
 set(RE_SDK_VERSION 4.3.0)
@@ -161,7 +164,7 @@ endif()
 # Build the static library
 add_library("${target}_lib" "${re-edit_BUILD_SOURCES}")
 target_include_directories("${target}_lib" PUBLIC "external/misc" "${RE_EDIT_FONTS_DIR}/includes" "${RE_EDIT_FONTS_DIR}/src")
-target_link_libraries("${target}_lib" PUBLIC imgui stb-image re-mock nfd)
+target_link_libraries("${target}_lib" PUBLIC imgui stb-image re-mock nfd efsw)
 target_compile_definitions("${target}_lib" PUBLIC ENABLE_RE_EDIT_INTERNAL_ASSERT=1)
 
 # Build the executable

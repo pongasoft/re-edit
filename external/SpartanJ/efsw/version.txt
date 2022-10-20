@@ -1,0 +1,2 @@
+Version "master" (no tag available) f3914e475cc8cec461ac05060470c6510ee81246
+Donwloaded from https://github.com/SpartanJ/efsw on 2022/10/20
