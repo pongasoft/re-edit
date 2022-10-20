@@ -184,7 +184,7 @@ std::vector<FilmStrip::File> FilmStripMgr::scanDirectory(fs::path const &iDirect
     for(const auto &ent: iter)
     {
       std::cmatch m;
-      auto filename = ent.path().filename().string();
+      auto filename = ent.path().filename().u8string();
       if(std::regex_search(filename.c_str(), m, FILENAME_REGEX))
       {
         if(ent.exists(errorCode))
