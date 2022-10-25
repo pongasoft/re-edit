@@ -23,6 +23,53 @@
 #include <imgui.h>
 #include <misc/cpp/imgui_stdlib.h>
 
+namespace re::edit {
+
+//------------------------------------------------------------------------
+// Editable::checkForErrors
+//------------------------------------------------------------------------
+bool Editable::checkForErrors(re::edit::AppContext &iCtx)
+{
+  bool res;
+
+  if(fEdited)
+  {
+    fUserError.clear();
+    findErrors(iCtx, fUserError);
+    res = fUserError.hasErrors();
+    resetEdited();
+  }
+  else
+    res = fUserError.hasErrors();
+
+  return res;
+}
+
+//------------------------------------------------------------------------
+// Editable::errorView
+//------------------------------------------------------------------------
+bool Editable::errorView()
+{
+  if(hasErrors())
+  {
+    ImGui::TextColored(ImVec4(1,0,0,1), ReGui::kErrorIcon);
+    if(ImGui::IsItemHovered())
+    {
+      ImGui::BeginTooltip();
+      ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
+      for(auto const &error: getErrors())
+        ImGui::TextUnformatted(error.c_str());
+      ImGui::PopTextWrapPos();
+      ImGui::EndTooltip();
+    }
+    return true;
+  }
+
+  return false;
+}
+
+}
+
 namespace re::edit::widget {
 
 //------------------------------------------------------------------------
@@ -42,6 +89,7 @@ std::string toUIText(std::string const &s)
 }
 
 }
+
 
 namespace re::edit::widget::attribute {
 
@@ -170,10 +218,10 @@ void Value::editView(AppContext &iCtx)
                             iCtx.addUndoAttributeChange(&fValueSwitch);
                             fValueSwitch.fValue = p->path();
                             fValueSwitch.fProvided = true;
-                            fValueSwitch.fEdited = true;
+                            fValueSwitch.markEdited();
                             fValues.fValue.clear();
                             fValues.fValue.resize(p->stepCount());
-                            fValues.fEdited = true;
+                            fValues.markEdited();
                           },
                           [this](auto &iCtx) { editValueView(iCtx); },
                           [this](auto &iCtx) { tooltipView(iCtx); });
@@ -195,7 +243,7 @@ void Value::editView(AppContext &iCtx)
                                  iCtx.addUndoAttributeChange(&fValues);
                                  fValues.fValue[iIndex] = p->path();
                                  fValues.fProvided = true;
-                                 fValues.fEdited = true;
+                                 fValues.markEdited();
                                });
     ImGui::Unindent();
   }
@@ -210,7 +258,7 @@ void Value::editView(AppContext &iCtx)
                       iCtx.addUndoAttributeChange(&fValue);
                       fValue.fValue = p->path();
                       fValue.fProvided = true;
-                      fValue.fEdited = true;
+                      fValue.markEdited();
                     },
                     [this](auto &iCtx) { fValue.editPropertyView(iCtx); },
                     [this](auto &iCtx) { fValue.tooltipPropertyView(iCtx); });
@@ -227,7 +275,7 @@ void Value::editView(AppContext &iCtx)
     }
   }
 
-  fEdited |= fValue.fEdited || fValueSwitch.fEdited || fValues.fEdited;
+  fEdited |= fValue.isEdited() || fValueSwitch.isEdited() || fValues.isEdited();
 
   ImGui::EndGroup();
 }
@@ -328,22 +376,31 @@ std::string Value::toString() const
 }
 
 //------------------------------------------------------------------------
-// Value::checkForErrors
+// Value::findErrors
 //------------------------------------------------------------------------
-Attribute::error_t Value::checkForErrors(AppContext &iCtx) const
+void Value::findErrors(AppContext &iCtx, UserError &oErrors) const
 {
   if(fUseSwitch)
   {
     if(!fValueSwitch.fProvided)
-      return "Either value or value_switch required";
+      oErrors.add("Either value or value_switch required");
   }
   else
   {
     if(!fValue.fProvided)
-      return "Either value or value_switch required";
+      oErrors.add("Either value or value_switch required");
   }
+}
 
-  return kNoError;
+//------------------------------------------------------------------------
+// Value::markEdited
+//------------------------------------------------------------------------
+void Value::markEdited()
+{
+  fEdited = true;
+  fValue.markEdited();
+  fValueSwitch.markEdited();
+  fValues.markEdited();
 }
 
 //------------------------------------------------------------------------
@@ -404,10 +461,10 @@ void Visibility::editView(AppContext &iCtx)
                      iCtx.addUndoAttributeChange(&fSwitch);
                      fSwitch.fValue = p->path();
                      fSwitch.fProvided = true;
-                     fSwitch.fEdited = true;
+                     fSwitch.markEdited();
                      fValues.fValue = {0};
                      fValues.fProvided = true;
-                     fValues.fEdited = true;
+                     fValues.markEdited();
                    },
                    [this](auto &iCtx) { fSwitch.editPropertyView(iCtx); },
                    [this](auto &iCtx) { fSwitch.tooltipPropertyView(iCtx); });
@@ -424,7 +481,7 @@ void Visibility::editView(AppContext &iCtx)
                          iCtx.addUndoAttributeChange(&fValues);
                          fValues.fValue.emplace_back(0);
                          fValues.fProvided = true;
-                         fValues.fEdited = true;
+                         fValues.markEdited();
                        },
                        [this, &iCtx](int iIndex, int iValue) { // onUpdate
                          iCtx.addOrMergeUndoCurrentWidgetChange(&fValues.fValue[iIndex],
@@ -432,13 +489,13 @@ void Visibility::editView(AppContext &iCtx)
                                                                 iValue,
                                                                 fmt::printf("Update %s.%s[%d]", iCtx.getCurrentWidget()->getName(), fValues.fName, iIndex));
                          fValues.fValue[iIndex] = iValue;
-                         fValues.fEdited = true;
+                         fValues.markEdited();
                        },
                        [this, &iCtx](int iIndex) { // onDelete
                          iCtx.addUndoAttributeChange(&fValues);
                          fValues.fValue.erase(fValues.fValue.begin() + iIndex);
                          fValues.fProvided = false;
-                         fValues.fEdited = true;
+                         fValues.markEdited();
                        }
       );
       ImGui::Unindent();
@@ -446,41 +503,48 @@ void Visibility::editView(AppContext &iCtx)
   }
   ImGui::PopID();
 
-  fEdited |= fSwitch.fEdited || fValues.fEdited;
+  fEdited |= fSwitch.isEdited() || fValues.isEdited();
 }
 
 //------------------------------------------------------------------------
-// Visibility::checkForErrors
+// Visibility::findErrors
 //------------------------------------------------------------------------
-Attribute::error_t Visibility::checkForErrors(AppContext &iCtx) const
+void Visibility::findErrors(AppContext &iCtx, UserError &oErrors) const
 {
-  static const Attribute::error_t kNotADiscretePropertyError = "The property must be a discrete property";
-  static const Attribute::error_t kEmptyList = "You must provide at least 1 value";
-
   auto property = iCtx.findProperty(fSwitch.fValue);
   if(property)
   {
     auto const stepCount = property->stepCount();
 
     if(stepCount == 0)
-      return kNotADiscretePropertyError;
+      oErrors.add("The property must be a discrete property");
 
     if(fValues.fValue.empty())
-      return kEmptyList;
-    
+      oErrors.add("You must provide at least 1 value");
+
+    int i = 0;
     for(auto v: fValues.fValue)
     {
       if(v < 0 || v >= stepCount)
-        return "Invalid value (outside of bound)";
+        oErrors.add("Invalid value [%d] (%d outside of bound)", i, v);
+      i++;
     }
   }
   else
   {
     if(fSwitch.fProvided)
-      return "Invalid property (missing from motherboard)";
+      oErrors.add("Invalid property (missing from motherboard)");
   }
+}
 
-  return kNoError;
+//------------------------------------------------------------------------
+// Visibility::markEdited
+//------------------------------------------------------------------------
+void Visibility::markEdited()
+{
+  fEdited = true;
+  fSwitch.markEdited();
+  fValues.markEdited();
 }
 
 //------------------------------------------------------------------------
@@ -736,26 +800,25 @@ void PropertyPath::menuView(AppContext &iCtx,
 //------------------------------------------------------------------------
 // PropertyPath::menuView
 //------------------------------------------------------------------------
-Attribute::error_t PropertyPath::checkForErrors(AppContext &iCtx) const
+void PropertyPath::findErrors(AppContext &iCtx, UserError &oErrors) const
 {
   if(fProvided)
   {
     auto property = iCtx.findProperty(fValue);
     if(!property)
-      return "Invalid property (missing from motherboard)";
+      oErrors.add("Invalid property (missing from motherboard)");
     if(fFilter)
     {
       auto properties = iCtx.findProperties(fFilter);
       if(std::find(properties.begin(), properties.end(), property) == properties.end())
-      return "Invalid property (wrong type)";
+        oErrors.add("Invalid property (wrong type)");
     }
   }
   else
   {
     if(fRequired)
-      return "Required";
+      oErrors.add("Required");
   }
-  return kNoError;
 }
 
 //------------------------------------------------------------------------
@@ -926,9 +989,9 @@ void PropertyPathList::editView(AppContext &iCtx)
 }
 
 //------------------------------------------------------------------------
-// PropertyPathList::checkForErrors
+// PropertyPathList::findErrors
 //------------------------------------------------------------------------
-Attribute::error_t PropertyPathList::checkForErrors(AppContext &iCtx) const
+void PropertyPathList::findErrors(AppContext &iCtx, UserError &oErrors) const
 {
   auto properties = iCtx.findProperties(fFilter);
 
@@ -937,16 +1000,14 @@ Attribute::error_t PropertyPathList::checkForErrors(AppContext &iCtx) const
     auto property = iCtx.findProperty(p);
 
     if(!property)
-      return "Invalid property (missing from motherboard)";
+      oErrors.add("Invalid property (missing from motherboard)");
 
     if(!properties.empty())
     {
       if(std::find(properties.begin(), properties.end(), property) == properties.end())
-        return "Invalid property (wrong type)";
+        oErrors.add("Invalid property (wrong type)");
     }
   }
-
-  return kNoError;
 }
 
 //------------------------------------------------------------------------
@@ -1004,22 +1065,18 @@ void Index::editView(AppContext &iCtx)
 
   // sanity check as the following line will have no effect unless valueAtt is processed first
   RE_EDIT_INTERNAL_ASSERT(valueAtt->fId < fId);
-  fEdited |= valueAtt->fEdited;
+  fEdited |= valueAtt->isEdited();
 }
 
 //------------------------------------------------------------------------
-// Index::checkForErrors
+// Index::findErrors
 //------------------------------------------------------------------------
-Attribute::error_t Index::checkForErrors(AppContext &iCtx) const
+void Index::findErrors(AppContext &iCtx, UserError &oErrors) const
 {
-  static constexpr auto kIndexNotInRangeError = "Must be in range [0, stepCount - 1]";
-
   auto valueAtt = iCtx.getCurrentWidget()->findAttributeByIdAndType<PropertyPath>(fValueAttributeId);
   auto property = iCtx.findProperty(valueAtt->fValue);
   if(property && (fValue < 0 || fValue >= property->stepCount()))
-    return kIndexNotInRangeError;
-  else
-    return kNoError;
+    oErrors.add("%d is not in range [0, %d]", fValue, property->stepCount() - 1);
 }
 
 //------------------------------------------------------------------------
@@ -1048,11 +1105,10 @@ void UserSampleIndex::editView(AppContext &iCtx)
 }
 
 //------------------------------------------------------------------------
-// UserSampleIndex::checkForErrors
+// UserSampleIndex::findErrors
 //------------------------------------------------------------------------
-Attribute::error_t UserSampleIndex::checkForErrors(AppContext &iCtx) const
+void UserSampleIndex::findErrors(AppContext &iCtx, UserError &oErrors) const
 {
-  static constexpr auto kNoUserSamplesError = "No user sample defined";
   static constexpr auto kInvalidUserSampleIndex = "Must be an integer in the range [0,  user_sample-count - 1] "
                                                   "where user_sample-count is the number of user samples in "
                                                   "motherboard_def.lua";
@@ -1060,24 +1116,23 @@ Attribute::error_t UserSampleIndex::checkForErrors(AppContext &iCtx) const
   auto count = iCtx.getUserSamplesCount();
 
   if(count < 1)
-    return kNoUserSamplesError;
+    oErrors.add("No user sample defined");
 
   if(fValue >= count)
-    return kInvalidUserSampleIndex;
-
-  return kNoError;
+    oErrors.add("%d is not an integer in the range [0,  %d] "
+                "(%d is the number of user samples in motherboard_def.lua)",
+                fValue, count - 1, count - 1);
 }
 
 //------------------------------------------------------------------------
-// Values::checkForErrors
+// Values::findErrors
 //------------------------------------------------------------------------
-Attribute::error_t Values::checkForErrors(AppContext &iCtx) const
+void Values::findErrors(AppContext &iCtx, UserError &oErrors) const
 {
-  static constexpr Attribute::error_t kEmptyListError = "The list must contain at least one entry";
   if(fValue.empty())
-    return kEmptyListError;
+    oErrors.add("The list must contain at least one entry");
   else
-    return PropertyPathList::checkForErrors(iCtx);
+    PropertyPathList::findErrors(iCtx, oErrors);
 }
 
 //------------------------------------------------------------------------
@@ -1149,18 +1204,14 @@ void ValueTemplates::editView(AppContext &iCtx)
 
   // sanity check as the following line will have no effect unless valueAtt is processed first
   RE_EDIT_INTERNAL_ASSERT(valueAtt->fId < fId);
-  fEdited |= valueAtt->fEdited;
+  fEdited |= valueAtt->isEdited();
 }
 
 //------------------------------------------------------------------------
-// ValueTemplates::checkForErrors
+// ValueTemplates::findErrors
 //------------------------------------------------------------------------
-Attribute::error_t ValueTemplates::checkForErrors(AppContext &iCtx) const
+void ValueTemplates::findErrors(AppContext &iCtx, UserError &oErrors) const
 {
-  static const Attribute::error_t kInvalidSizeError =
-    "May contain one entry, or the same number of entries as the number of entries in values";
-  static const Attribute::error_t kOneEntryMaxError = "Only 1 value max allowed";
-
   if(fValue.size() > 1)
   {
     auto valueAtt = iCtx.getCurrentWidget()->findAttributeByIdAndType<Value>(fValueAttributeId);
@@ -1168,13 +1219,11 @@ Attribute::error_t ValueTemplates::checkForErrors(AppContext &iCtx) const
     {
       auto property = iCtx.findProperty(valueAtt->fValueSwitch.fValue);
       if(property && property->stepCount() != fValue.size())
-        return kInvalidSizeError;
+        oErrors.add("May contain one entry, or the same number of entries as the number of entries in values (%d)", fValue.size());
     }
     else
-      return kOneEntryMaxError;
+      oErrors.add("Only 1 value max allowed");
   }
-
-  return kNoError;
 }
 
 //------------------------------------------------------------------------

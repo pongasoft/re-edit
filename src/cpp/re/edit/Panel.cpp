@@ -55,7 +55,6 @@ Panel::Panel(PanelType iType) :
   fDisableSampleDropOnPanel{ fType == PanelType::kFront ? std::optional<bool>(false) : std::nullopt}
 {
   setDeviceHeightRU(1);
-  fGraphics.fHitBoundariesEnabled = false;
 }
 
 //------------------------------------------------------------------------
@@ -92,73 +91,77 @@ void Panel::draw(AppContext &iCtx)
   ImVec2 backgroundScreenPosition;
   auto const cp = ImGui::GetCursorScreenPos();
   auto &io = ImGui::GetIO();
-  if(fGraphics.hasTexture())
-  {
-    auto texture = fGraphics.getTexture();
-    ImVec2 clickableArea = ImGui::GetContentRegionAvail();
-    auto backgroundSize = texture->frameSize() * iCtx.fZoom;
-    clickableArea = {std::max(clickableArea.x, backgroundSize.x), std::max(clickableArea.y, backgroundSize.y)};
+  auto texture = fGraphics.findTexture();
+  ImVec2 clickableArea = ImGui::GetContentRegionAvail();
+  auto backgroundSize = getSize() * iCtx.fZoom;
+  clickableArea = {std::max(clickableArea.x, backgroundSize.x), std::max(clickableArea.y, backgroundSize.y)};
 
+  if(texture)
     iCtx.TextureItem(texture);
-    backgroundScreenPosition = ImGui::GetItemRectMin(); // accounts for scrollbar!
+  else
+    iCtx.RectFilledItem(ImVec2{}, getSize(), iCtx.getUserPreferences().fWidgetErrorColor);
 
-    // we use an invisible button to capture mouse events
-    ImGui::SetCursorScreenPos(cp); // TextureItem moves the cursor so we restore it
-    ImGui::InvisibleButton("canvas", clickableArea, ImGuiButtonFlags_MouseButtonLeft);
+  backgroundScreenPosition = ImGui::GetItemRectMin(); // accounts for scrollbar!
 
-    auto const mousePos = (ImGui::GetMousePos() - backgroundScreenPosition) / iCtx.fZoom; // accounts for scrollbars
-    if(fShiftMouseDrag)
-    {
-      if(ImGui::IsMouseReleased(ImGuiMouseButton_Left))
-      {
-        fShiftMouseDrag = std::nullopt;
-      }
-      else
-      {
-        fShiftMouseDrag->fCurrentPosition = mousePos;
-        if(fShiftMouseDrag->fInitialPosition.x != fShiftMouseDrag->fCurrentPosition.x ||
-          fShiftMouseDrag->fInitialPosition.y != fShiftMouseDrag->fCurrentPosition.y)
-        {
-          selectWidgets(iCtx, fShiftMouseDrag->fInitialPosition, fShiftMouseDrag->fCurrentPosition);
-        }
-      }
+  // we use an invisible button to capture mouse events
+  ImGui::SetCursorScreenPos(cp); // TextureItem moves the cursor so we restore it
+  ImGui::InvisibleButton("canvas", clickableArea, ImGuiButtonFlags_MouseButtonLeft);
 
-    } else if(fMouseDrag)
+  auto const mousePos = (ImGui::GetMousePos() - backgroundScreenPosition) / iCtx.fZoom; // accounts for scrollbars
+  if(fShiftMouseDrag)
+  {
+    if(ImGui::IsMouseReleased(ImGuiMouseButton_Left))
     {
-      if(ImGui::IsMouseReleased(ImGuiMouseButton_Left))
-      {
-        fMouseDrag = std::nullopt;
-        endMoveWidgets(iCtx, mousePos);
-      }
-      else
-      {
-        bool shouldMoveWidgets = false;
-        auto grid = ImGui::GetIO().KeyAlt ? ImVec2{1.0f, 1.0f} : iCtx.fGrid;
-        fMouseDrag->fCurrentPosition = mousePos;
-        if(std::abs(fMouseDrag->fLastUpdatePosition.x - fMouseDrag->fCurrentPosition.x) >= grid.x)
-        {
-          fMouseDrag->fLastUpdatePosition.x = fMouseDrag->fCurrentPosition.x;
-          shouldMoveWidgets = true;
-        }
-        if(std::abs(fMouseDrag->fLastUpdatePosition.y - fMouseDrag->fCurrentPosition.y) >= grid.y)
-        {
-          fMouseDrag->fLastUpdatePosition.y = fMouseDrag->fCurrentPosition.y;
-          shouldMoveWidgets = true;
-        }
-        if(shouldMoveWidgets)
-          moveWidgets(iCtx, fMouseDrag->fLastUpdatePosition);
-      }
-    } else if(ImGui::IsItemClicked(ImGuiMouseButton_Left))
+      fShiftMouseDrag = std::nullopt;
+    }
+    else
     {
-      if(io.KeyShift)
-        fShiftMouseDrag = MouseDrag{mousePos, mousePos, mousePos};
-      else
+      fShiftMouseDrag->fCurrentPosition = mousePos;
+      if(fShiftMouseDrag->fInitialPosition.x != fShiftMouseDrag->fCurrentPosition.x ||
+         fShiftMouseDrag->fInitialPosition.y != fShiftMouseDrag->fCurrentPosition.y)
       {
-        fMouseDrag = MouseDrag{mousePos, mousePos, mousePos};
-        selectWidget(iCtx, mousePos, ReGui::IsSingleSelectKey(io));
+        selectWidgets(iCtx, fShiftMouseDrag->fInitialPosition, fShiftMouseDrag->fCurrentPosition);
       }
     }
+
   }
+  else if(fMouseDrag)
+  {
+    if(ImGui::IsMouseReleased(ImGuiMouseButton_Left))
+    {
+      fMouseDrag = std::nullopt;
+      endMoveWidgets(iCtx, mousePos);
+    }
+    else
+    {
+      bool shouldMoveWidgets = false;
+      auto grid = ImGui::GetIO().KeyAlt ? ImVec2{1.0f, 1.0f} : iCtx.fGrid;
+      fMouseDrag->fCurrentPosition = mousePos;
+      if(std::abs(fMouseDrag->fLastUpdatePosition.x - fMouseDrag->fCurrentPosition.x) >= grid.x)
+      {
+        fMouseDrag->fLastUpdatePosition.x = fMouseDrag->fCurrentPosition.x;
+        shouldMoveWidgets = true;
+      }
+      if(std::abs(fMouseDrag->fLastUpdatePosition.y - fMouseDrag->fCurrentPosition.y) >= grid.y)
+      {
+        fMouseDrag->fLastUpdatePosition.y = fMouseDrag->fCurrentPosition.y;
+        shouldMoveWidgets = true;
+      }
+      if(shouldMoveWidgets)
+        moveWidgets(iCtx, fMouseDrag->fLastUpdatePosition);
+    }
+  }
+  else if(ImGui::IsItemClicked(ImGuiMouseButton_Left))
+  {
+    if(io.KeyShift)
+      fShiftMouseDrag = MouseDrag{mousePos, mousePos, mousePos};
+    else
+    {
+      fMouseDrag = MouseDrag{mousePos, mousePos, mousePos};
+      selectWidget(iCtx, mousePos, ReGui::IsSingleSelectKey(io));
+    }
+  }
+
   ImGui::SetCursorScreenPos(cp); // InvisibleButton moves the cursor so we restore it
 
   // always draw decals first
@@ -206,7 +209,7 @@ void Panel::draw(AppContext &iCtx)
       });
     }
 
-    auto frameSize = fGraphics.getSize();
+    auto frameSize = getSize();
     auto color = ImGui::GetColorU32({1,1,0,0.5});
     iCtx.drawLine({0, min.y}, {frameSize.x, min.y}, color);
     iCtx.drawLine({min.x, 0}, {min.x, frameSize.y}, color);
@@ -375,7 +378,8 @@ int Panel::addWidget(AppContext &iCtx, std::shared_ptr<Widget> iWidget, bool iMa
   else
     fWidgetsOrder.emplace_back(id);
 
-  iWidget->checkForErrors(iCtx, true);
+  iWidget->markEdited();
+  fEdited = true;
 
   fWidgets[id] = std::move(iWidget);
 
@@ -412,6 +416,8 @@ std::shared_ptr<Widget> Panel::replaceWidget(int iWidgetId, std::shared_ptr<Widg
 
   iWidget->init(iWidgetId);
   iWidget->fSelected = fWidgets[iWidgetId]->isSelected();
+  iWidget->markEdited();
+  fEdited = true;
   std::swap(fWidgets[iWidgetId], iWidget);
   fSelectedWidgets = std::nullopt;
   return iWidget;
@@ -635,12 +641,48 @@ std::vector<std::shared_ptr<Widget>> Panel::getSelectedWidgets() const
 }
 
 //------------------------------------------------------------------------
-// PanelState::checkForWidgetErrors
+// PanelState::markEdited
 //------------------------------------------------------------------------
-void Panel::checkForWidgetErrors(AppContext &iCtx)
+void Panel::markEdited()
 {
+  fEdited = true;
+  fGraphics.markEdited();
   for(auto &[n, widget]: fWidgets)
-    widget->checkForErrors(iCtx);
+    widget->markEdited();
+}
+
+//------------------------------------------------------------------------
+// PanelState::resetEdited
+//------------------------------------------------------------------------
+void Panel::resetEdited()
+{
+  fEdited = false;
+  fGraphics.resetEdited();
+  for(auto &[n, widget]: fWidgets)
+    widget->resetEdited();
+}
+
+//------------------------------------------------------------------------
+// PanelState::checkForErrors
+//------------------------------------------------------------------------
+bool Panel::checkForErrors(AppContext &iCtx)
+{
+  if(fEdited)
+  {
+    fUserError.clear();
+    if(fGraphics.checkForErrors(iCtx))
+      addAllErrors("graphics", fGraphics);
+
+    for(auto &[n, widget]: fWidgets)
+    {
+      if(widget->checkForErrors(iCtx))
+        addAllErrors(widget->getName(), *widget);
+    }
+
+    fEdited = false;
+  }
+
+  return hasErrors();
 }
 
 //------------------------------------------------------------------------
@@ -699,6 +741,8 @@ void Panel::editView(AppContext &iCtx)
 //------------------------------------------------------------------------
 void Panel::editNoSelectionView(AppContext &iCtx)
 {
+  fEdited = false;
+
   ImGui::PushID("Panel");
 
   if(ReGui::MenuButton())
@@ -713,15 +757,21 @@ void Panel::editNoSelectionView(AppContext &iCtx)
   ImGui::SameLine();
   ImGui::Text("%s panel", toString(fType));
 
+  errorViewSameLine();
+
   fGraphics.editView(iCtx);
+  fEdited |= fGraphics.isEdited();
+  fGraphics.errorViewSameLine();
 
   if(fCableOrigin)
   {
     if(ImGui::TreeNode("Cable Origin"))
     {
       fShowCableOrigin = true;
-      ReGui::InputInt("x", &fCableOrigin->x, 1, 5);
-      ReGui::InputInt("y", &fCableOrigin->y, 1, 5);
+      if(ReGui::InputInt("x", &fCableOrigin->x, 1, 5))
+        fEdited = true;
+      if(ReGui::InputInt("y", &fCableOrigin->y, 1, 5))
+        fEdited = true;
       ImGui::TreePop();
     }
     else
@@ -735,6 +785,7 @@ void Panel::editNoSelectionView(AppContext &iCtx)
       bool b = *fDisableSampleDropOnPanel;
       if(ImGui::Checkbox("disable_sample_drop_on_panel", &b))
       {
+        fEdited = true;
         fDisableSampleDropOnPanel = b;
       }
       ImGui::TreePop();
@@ -765,6 +816,8 @@ void Panel::editNoSelectionView(AppContext &iCtx)
 //------------------------------------------------------------------------
 void Panel::editSingleSelectionView(AppContext &iCtx, std::shared_ptr<Widget> const &iWidget)
 {
+  fEdited = false;
+
   if(ReGui::MenuButton())
     ImGui::OpenPopup("Menu");
 
@@ -783,11 +836,12 @@ void Panel::editSingleSelectionView(AppContext &iCtx, std::shared_ptr<Widget> co
     ImGui::Text(ReGui::kHiddenWidgetIcon);
   }
 
-  ImGui::SameLine();
-  if(!iWidget->errorView(iCtx))
-    ImGui::NewLine();
+  iWidget->errorViewSameLine();
 
   iWidget->editView(iCtx);
+
+  if(iWidget->isEdited())
+    fEdited = true;
 }
 
 
@@ -796,6 +850,8 @@ void Panel::editSingleSelectionView(AppContext &iCtx, std::shared_ptr<Widget> co
 //------------------------------------------------------------------------
 void Panel::editMultiSelectionView(AppContext &iCtx, std::vector<std::shared_ptr<Widget>> const &iSelectedWidgets)
 {
+  fEdited = false;
+
   if(ReGui::MenuButton())
     ImGui::OpenPopup("Menu");
 
@@ -828,6 +884,7 @@ void Panel::editMultiSelectionView(AppContext &iCtx, std::vector<std::shared_ptr
 
   if(ReGui::InputInt("x", &editedMin.x, 1, 5))
   {
+    fEdited = true;
     if(iCtx.beginUndoTx("Move Widgets", this))
     {
       for(auto &widget: getSelectedWidgets())
@@ -838,6 +895,7 @@ void Panel::editMultiSelectionView(AppContext &iCtx, std::vector<std::shared_ptr
 
   if(ReGui::InputInt("y", &editedMin.y, 1, 5))
   {
+    fEdited = true;
     if(iCtx.beginUndoTx("Move Widgets", this))
     {
       for(auto &widget: getSelectedWidgets())
@@ -849,6 +907,7 @@ void Panel::editMultiSelectionView(AppContext &iCtx, std::vector<std::shared_ptr
   auto delta = editedMin - min;
   if(delta.x != 0 || delta.y != 0)
   {
+    fEdited = true;
     for(auto &w: iSelectedWidgets)
       w->move(delta);
   }
@@ -860,6 +919,7 @@ void Panel::editMultiSelectionView(AppContext &iCtx, std::vector<std::shared_ptr
 
     if(ImGui::Button("Top", bigButtonSize))
     {
+      fEdited = true;
       iCtx.beginUndoTx("Align Widgets Top");
       for(auto &w: iSelectedWidgets)
       {
@@ -872,6 +932,7 @@ void Panel::editMultiSelectionView(AppContext &iCtx, std::vector<std::shared_ptr
 
     if(ImGui::Button("Left", smallButtonSize))
     {
+      fEdited = true;
       iCtx.beginUndoTx("Align Widgets Left");
       for(auto &w: iSelectedWidgets)
       {
@@ -886,6 +947,7 @@ void Panel::editMultiSelectionView(AppContext &iCtx, std::vector<std::shared_ptr
 
     if(ImGui::Button("Right", smallButtonSize))
     {
+      fEdited = true;
       iCtx.beginUndoTx("Align Widgets Right");
       for(auto &w: iSelectedWidgets)
       {
@@ -898,6 +960,7 @@ void Panel::editMultiSelectionView(AppContext &iCtx, std::vector<std::shared_ptr
 
     if(ImGui::Button("Bottom", bigButtonSize))
     {
+      fEdited = true;
       iCtx.beginUndoTx("Align Widgets Bottom");
       for(auto &w: iSelectedWidgets)
       {
@@ -1036,9 +1099,7 @@ void Panel::MultiSelectionList::editView(AppContext &iCtx)
         ImGui::SameLine();
         ImGui::Text(ReGui::kHiddenWidgetIcon);
       }
-      ImGui::SameLine();
-      if(!widget->errorView(iCtx))
-        ImGui::NewLine();
+      widget->errorViewSameLine();
     }
   }
   ImGui::EndChild();
@@ -1239,6 +1300,7 @@ void Panel::setDeviceHeightRU(int iDeviceHeightRU)
 {
   fDeviceHeightRU = iDeviceHeightRU;
   auto h = isPanelOfType(fType, kPanelTypeAnyUnfolded) ? toPixelHeight(fDeviceHeightRU) : kFoldedDevicePixelHeight;
+  fSize.y = static_cast<float>(h);
   fGraphics.fFilter = [h](FilmStrip const &f) {
     return f.width() == kDevicePixelWidth && f.height() == h;
   };
@@ -1335,5 +1397,19 @@ void Panel::selectWidgets(AppContext &iCtx, ImVec2 const &iPosition1, ImVec2 con
     }
   }
 }
+
+//------------------------------------------------------------------------
+// Panel::reloadTextures
+//------------------------------------------------------------------------
+void Panel::reloadTextures()
+{
+  fGraphics.fDNZTexture = nullptr;
+  for(auto &[id, w]: fWidgets)
+  {
+    w->fGraphics->fDNZTexture = nullptr;
+  }
+  markEdited();
+}
+
 
 }

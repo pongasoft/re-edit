@@ -140,6 +140,8 @@ bool Application::init(lua::Config const &iConfig,
 {
   try
   {
+    AppContext::kCurrent = &fAppContext;
+
     fAppContext.fFontManager = std::make_shared<FontManager>(iNativeFontManager);
     fAppContext.fTextureManager = std::move(iTextureManager);
     fAppContext.fUserPreferences = std::make_shared<UserPreferences>();
@@ -158,16 +160,15 @@ bool Application::init(lua::Config const &iConfig,
 
     fAppContext.fTextureManager->init(fRoot / "GUI2D");
     fAppContext.fTextureManager->scanDirectory();
-    fAppContext.fTextureManager->findTextureKeys([](auto const &) { return true; }); // forces preloading the textures to get their sizes
 
     fAppContext.initPanels(fRoot / "GUI2D" / "device_2D.lua",
                            fRoot / "GUI2D" / "hdgui_2D.lua");
 
-    static auto fileWatcher = std::make_unique<efsw::FileWatcher>();
-    static auto listener = std::make_unique<UpdateListener>();
-
-    fileWatcher->addWatch(fRoot.string(), listener.get(), true);
-    fileWatcher->watch();
+//    static auto fileWatcher = std::make_unique<efsw::FileWatcher>();
+//    static auto listener = std::make_unique<UpdateListener>();
+//
+//    fileWatcher->addWatch(fRoot.string(), listener.get(), true);
+//    fileWatcher->watch();
   }
   catch(...)
   {
@@ -182,30 +183,44 @@ bool Application::init(lua::Config const &iConfig,
 //------------------------------------------------------------------------
 // Application::newFrame
 //------------------------------------------------------------------------
-void Application::newFrame()
+bool Application::newFrame() noexcept
 {
-  if(fNewLayoutRequested)
+  try
   {
-    ImGui::LoadIniSettingsFromMemory(fNewLayoutRequested->c_str(), fNewLayoutRequested->size());
-    fNewLayoutRequested = std::nullopt;
-  }
-
-  if(fAppContext.fFontManager->hasFontChangeRequest())
-  {
-    auto oldDpiScale = fAppContext.fFontManager->getCurrentFontDpiScale();
-    fAppContext.fFontManager->applyFontChangeRequest();
-    auto newDpiScale = fAppContext.fFontManager->getCurrentFontDpiScale();
-
-    if(oldDpiScale != newDpiScale)
+    if(fNewLayoutRequested)
     {
-      auto scaleFactor = newDpiScale;
-      ImGuiStyle newStyle{};
-      ImGui::StyleColorsDark(&newStyle);
-      newStyle.ScaleAllSizes(scaleFactor);
-      ImGui::GetStyle() = newStyle;
+      ImGui::LoadIniSettingsFromMemory(fNewLayoutRequested->c_str(), fNewLayoutRequested->size());
+      fNewLayoutRequested = std::nullopt;
     }
 
-    fRecomputeDimensionsRequested = true;
+    if(fAppContext.fFontManager->hasFontChangeRequest())
+    {
+      auto oldDpiScale = fAppContext.fFontManager->getCurrentFontDpiScale();
+      fAppContext.fFontManager->applyFontChangeRequest();
+      auto newDpiScale = fAppContext.fFontManager->getCurrentFontDpiScale();
+
+      if(oldDpiScale != newDpiScale)
+      {
+        auto scaleFactor = newDpiScale;
+        ImGuiStyle newStyle{};
+        ImGui::StyleColorsDark(&newStyle);
+        newStyle.ScaleAllSizes(scaleFactor);
+        ImGui::GetStyle() = newStyle;
+      }
+
+      fRecomputeDimensionsRequested = true;
+    }
+
+    return true;
+  }
+  catch(...)
+  {
+    if(!fException)
+      fException = std::current_exception();
+    return impl::executeCatchAllExceptions([e = std::current_exception()] {
+      RE_EDIT_LOG_ERROR("Unrecoverable exception detected: %s", impl::what(e));
+      ImGui::ErrorCheckEndFrameRecover(nullptr);
+    });
   }
 }
 
@@ -255,6 +270,13 @@ bool Application::doRender()
   {
     fAppContext.fItemWidth = 40 * ImGui::CalcTextSize("W").x;
     fRecomputeDimensionsRequested = false;
+  }
+
+  if(fReloadTexturesRequested)
+  {
+    fAppContext.reloadTextures();
+    fAppContext.fTextureManager->scanDirectory();
+    fReloadTexturesRequested = false;
   }
 
   if(fAppContext.fUndoManager->hasUndoHistory())
@@ -332,6 +354,11 @@ bool Application::doRender()
 //    {
 //      RE_EDIT_INTERNAL_ASSERT(false, "do you see me?");
 //    }
+
+    if(ImGui::Button("Rescan"))
+    {
+      fReloadTexturesRequested = true;
+    }
 
     ImGui::PushID("Rendering");
 

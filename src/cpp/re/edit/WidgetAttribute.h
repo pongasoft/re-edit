@@ -43,17 +43,40 @@ using attribute_list_t = std::vector<attribute_t>;
 
 class Widget;
 
-namespace widget {
-
-class Attribute
+class Editable
 {
 public:
-  using error_t = char const *;
-  inline static error_t kNoError{};
+  virtual ~Editable() = default;
 
+  virtual bool checkForErrors(AppContext &iCtx);
+
+  constexpr bool isEdited() const { return fEdited; }
+
+//  inline UserError const &getUserError() const { return fUserError; }
+  inline UserError::error_t const &getErrors() const { return fUserError.getErrors(); }
+  inline void addAllErrors(std::string const &iPrefix, Editable const &iOther) { fUserError.addAll(iPrefix, iOther.fUserError); }
+  inline bool hasErrors() const { return fUserError.hasErrors(); };
+
+  virtual void markEdited() { fEdited = true; }
+  virtual void resetEdited() { fEdited = false; }
+  bool errorView();
+  inline void errorViewSameLine() { if(hasErrors()) { ImGui::SameLine(); errorView(); } }
+
+protected:
+  virtual void findErrors(AppContext &iCtx, UserError &oErrors) const { }
+
+protected:
+  bool fEdited{};
+  UserError fUserError{};
+};
+
+namespace widget {
+
+class Attribute : public Editable
+{
 public:
   explicit Attribute(char const *iName) : fName{iName} {}
-  virtual ~Attribute() = default;
+  ~Attribute() override = default;
   virtual void hdgui2D(AppContext &iCtx, attribute_list_t &oAttributes) const {}
 //  virtual Kind getKind() const = 0;
 
@@ -61,9 +84,6 @@ public:
   virtual void editView(AppContext &iCtx) {}
   virtual void init(AppContext &iCtx) {}
   virtual std::string toString() const;
-  void clearError() { fError = kNoError; };
-  virtual error_t checkForErrors(AppContext &iCtx) const { return kNoError; }
-  virtual void resetEdited() { fEdited = false; }
 
   template<typename T, typename... ConstructorArgs>
   static std::unique_ptr<T> build(char const *iName, bool iRequired, typename T::value_t const &iDefaultValue, ConstructorArgs&& ...iArgs);
@@ -87,8 +107,6 @@ public:
   int fId{-1};
   char const *fName;
   bool fRequired{};
-  bool fEdited{};
-  error_t fError{};
 };
 
 namespace attribute {
@@ -120,6 +138,7 @@ class CompositeAttribute : public Attribute
 {
 public:
   explicit CompositeAttribute(char const *iName) : Attribute{iName} {}
+  void markEdited() override = 0;
   void resetEdited() override = 0;
 };
 
@@ -177,7 +196,7 @@ public:
 
   std::unique_ptr<Attribute> clone() const override { return Attribute::clone<PropertyPath>(*this); }
 
-  error_t checkForErrors(AppContext &iCtx) const override;
+  void findErrors(AppContext &iCtx, UserError &oErrors) const override;
 
 //  bool eq(Attribute const *iAttribute) const override
 //  {
@@ -239,7 +258,7 @@ public:
                           Property::Filter const &iFilter,
                           std::function<void(int iIndex, const Property *)> const &iOnSelect) const;
 
-  error_t checkForErrors(AppContext &iCtx) const override;
+  void findErrors(AppContext &iCtx, UserError &oErrors) const override;
 
   std::unique_ptr<Attribute> clone() const override { return Attribute::clone<PropertyPathList>(*this); }
 
@@ -292,7 +311,9 @@ public:
   void editValueView(AppContext &iCtx);
   void tooltipView(AppContext &iCtx);
 
-  error_t checkForErrors(AppContext &iCtx) const override;
+  void findErrors(AppContext &iCtx, UserError &oErrors) const override;
+
+  void markEdited() override;
   void resetEdited() override;
 //  std::string getPropertyInfo(AppContext &iCtx);
 
@@ -331,8 +352,9 @@ public:
   void hdgui2D(AppContext &iCtx, attribute_list_t &oAttributes) const override;
   void editView(AppContext &iCtx) override;
 
-  error_t checkForErrors(AppContext &iCtx) const override;
+  void findErrors(AppContext &iCtx, UserError &oErrors) const override;
 
+  void markEdited() override;
   void resetEdited() override;
 
   void reset() override;
@@ -432,7 +454,7 @@ public:
     PropertyPathList{iName, std::move(iFilter)}
   {}
 
-  error_t checkForErrors(AppContext &iCtx) const override;
+  void findErrors(AppContext &iCtx, UserError &oErrors) const override;
 
   std::unique_ptr<Attribute> clone() const override { return Attribute::clone<Values>(*this); }
 
@@ -450,7 +472,7 @@ public:
   std::string getValueAsLua() const override;
   void editView(AppContext &iCtx) override;
 
-  error_t checkForErrors(AppContext &iCtx) const override;
+  void findErrors(AppContext &iCtx, UserError &oErrors) const override;
 
   std::unique_ptr<Attribute> clone() const override { return Attribute::clone<ValueTemplates>(*this); }
 
@@ -495,7 +517,7 @@ public:
 
   void editView(AppContext &iCtx) override;
 
-  error_t checkForErrors(AppContext &iCtx) const override;
+  void findErrors(AppContext &iCtx, UserError &oErrors) const override;
 
   std::unique_ptr<Attribute> clone() const override { return Attribute::clone<Index>(*this); }
 
@@ -515,7 +537,7 @@ public:
 
   void editView(AppContext &iCtx) override;
 
-  error_t checkForErrors(AppContext &iCtx) const override;
+  void findErrors(AppContext &iCtx, UserError &oErrors) const override;
 
   std::unique_ptr<Attribute> clone() const override { return Attribute::clone<UserSampleIndex>(*this); }
 

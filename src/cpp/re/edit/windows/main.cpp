@@ -197,32 +197,37 @@ int main(int argc, char **argv)
     glfwPollEvents();
 
     // Before New Frame
-    application.newFrame();
-
-    // Start the Dear ImGui frame
-    ImGui_ImplOpenGL3_NewFrame();
-    ImGui_ImplGlfw_NewFrame();
-    ImGui::NewFrame();
-
-    int display_w, display_h;
-    glfwGetFramebufferSize(window, &display_w, &display_h);
-    glViewport(0, 0, display_w, display_h);
-    glClearColor(application.clear_color[0] * application.clear_color[3],
-                 application.clear_color[1] * application.clear_color[3],
-                 application.clear_color[2] * application.clear_color[3],
-                 application.clear_color[3]);
-    glClear(GL_COLOR_BUFFER_BIT);
-
-    // Main rendering
-    if(!application.render())
+    if(!application.newFrame())
     {
       glfwSetWindowShouldClose(window, GLFW_TRUE);
     }
     else
     {
-      // Rendering
-      ImGui::Render();
-      ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+      // Start the Dear ImGui frame
+      ImGui_ImplOpenGL3_NewFrame();
+      ImGui_ImplGlfw_NewFrame();
+      ImGui::NewFrame();
+
+      int display_w, display_h;
+      glfwGetFramebufferSize(window, &display_w, &display_h);
+      glViewport(0, 0, display_w, display_h);
+      glClearColor(application.clear_color[0] * application.clear_color[3],
+                   application.clear_color[1] * application.clear_color[3],
+                   application.clear_color[2] * application.clear_color[3],
+                   application.clear_color[3]);
+      glClear(GL_COLOR_BUFFER_BIT);
+
+      // Main rendering
+      if(!application.render())
+      {
+        glfwSetWindowShouldClose(window, GLFW_TRUE);
+      }
+      else
+      {
+        // Rendering
+        ImGui::Render();
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+      }
     }
 
     glfwSwapBuffers(window);

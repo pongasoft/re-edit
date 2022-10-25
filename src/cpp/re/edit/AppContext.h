@@ -83,6 +83,8 @@ public:
 public:
   AppContext();
 
+  static AppContext &GetCurrent() { return *kCurrent; }
+
   ImVec2 getPanelSize() const;
   void renderAddWidgetMenuView(ImVec2 const &iPosition = {});
   PanelState *getPanelState(PanelType iType) const;
@@ -132,6 +134,7 @@ public: // Texture
                    ImU32 iTextureColor = ReGui::kWhiteColorU32) const;
 
   void drawRect(ImVec2 const &iPosition, ImVec2 const &iSize, ImU32 iColor) const;
+  void RectFilledItem(ImVec2 const &iPosition, ImVec2 const &iSize, ImU32 iColor, float iRounding = 0.0f, ImDrawFlags iFlags = 0) const;
   void drawRectFilled(ImVec2 const &iPosition, ImVec2 const &iSize, ImU32 iColor, float iRounding = 0.0f, ImDrawFlags iFlags = 0) const;
   void drawLine(const ImVec2& iP1, const ImVec2& iP2, ImU32 iColor, float iThickness = 1.0f) const;
 
@@ -225,6 +228,7 @@ public:
 protected:
   void init(lua::Config const &iConfig);
   std::string getLuaConfig() const;
+  void reloadTextures();
 
   void initPanels(fs::path const &iDevice2DFile, fs::path const &iHDGui2DFile);
   void onNativeWindowFontDpiScaleChange(float iFontDpiScale);
@@ -265,6 +269,8 @@ protected:
   int fNativeWindowWidth{1280};
   int fNativeWindowHeight{720};
   std::optional<std::exception_ptr> fInitException{};
+
+  inline static AppContext *kCurrent{};
 };
 
 //------------------------------------------------------------------------

@@ -19,6 +19,7 @@
 #include "AppContext.h"
 #include "Widget.h"
 #include "PanelState.h"
+#include "imgui_internal.h"
 
 namespace re::edit {
 
@@ -43,6 +44,8 @@ void AppContext::initPanels(fs::path const &iDevice2DFile, fs::path const &iHDGu
   fFoldedFrontPanel->initPanel(*this, d2d->folded_front(), hdg->folded_front());
   fBackPanel->initPanel(*this, d2d->back(), hdg->back());
   fFoldedBackPanel->initPanel(*this, d2d->folded_back(), hdg->folded_back());
+
+  fCurrentPanelState = fFrontPanel.get();
 }
 
 //------------------------------------------------------------------------
@@ -161,6 +164,30 @@ void AppContext::drawRect(ImVec2 const &iPosition, ImVec2 const &iSize, ImU32 iC
   auto drawList = ImGui::GetWindowDrawList();
   drawList->AddRect(pos, {pos.x + (iSize.x * fZoom), pos.y + (iSize.y * fZoom)}, iColor);
 }
+
+//------------------------------------------------------------------------
+// AppContext::RectFilledItem
+//------------------------------------------------------------------------
+void AppContext::RectFilledItem(ImVec2 const &iPosition,
+                                ImVec2 const &iSize,
+                                ImU32 iColor,
+                                float iRounding,
+                                ImDrawFlags iFlags) const
+{
+  auto const cp = ImGui::GetCursorScreenPos() + iPosition * fZoom;
+
+  const ImRect rect{cp, cp + iSize};
+
+  ImGui::SetCursorScreenPos(cp);
+  ImGui::ItemSize(rect);
+  if(!ImGui::ItemAdd(rect, 0))
+      return;
+
+  ImGui::SetCursorScreenPos(cp);
+  auto drawList = ImGui::GetWindowDrawList();
+  drawList->AddRectFilled(cp, {cp.x + (iSize.x * fZoom), cp.y + (iSize.y * fZoom)}, iColor, iRounding, iFlags);
+}
+
 
 //------------------------------------------------------------------------
 // AppContext::drawRectFilled
@@ -353,6 +380,17 @@ void AppContext::onNativeWindowFontDpiScaleChange(float iFontDpiScale)
 void AppContext::onNativeWindowFontScaleChange(float iFontScale)
 {
   fFontManager->setFontScale(iFontScale);
+}
+
+//------------------------------------------------------------------------
+// AppContext::reloadTextures
+//------------------------------------------------------------------------
+void AppContext::reloadTextures()
+{
+  fFrontPanel->reloadTextures();
+  fFoldedFrontPanel->reloadTextures();
+  fBackPanel->reloadTextures();
+  fFoldedBackPanel->reloadTextures();
 }
 
 ////------------------------------------------------------------------------

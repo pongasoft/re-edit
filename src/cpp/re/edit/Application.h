@@ -57,7 +57,7 @@ public:
   inline void onNativeWindowFontScaleChange(float iFontScale) { fAppContext.onNativeWindowFontScaleChange(iFontScale); }
 //  inline void onNativeWindowPositionChange(int x, int y, float iFontScale, float iFontDpiScale) { fAppContext.onNativeWindowPositionChange(x, y, iFontScale, iFontDpiScale); }
 
-  void newFrame();
+  bool newFrame() noexcept;
   bool render() noexcept;
   void renderMainMenu();
   void renderSavePopup();
@@ -88,6 +88,7 @@ private:
   bool fSavingRequested{};
   bool fNeedsSaving{};
   bool fRecomputeDimensionsRequested{};
+  bool fReloadTexturesRequested{};
   std::optional<std::string> fNewLayoutRequested{};
   std::optional<std::exception_ptr> fException{};
 };

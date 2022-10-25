@@ -96,6 +96,8 @@ void PanelState::initPanel(AppContext &iCtx,
             graphics->getFilmStrip()->overrideNumFrames(node->fNumFrames);
           widget->setTexture(std::move(graphics));
         }
+        else
+          widget->setTextureKey(node->getKey());
       }
 
       if(node->hasSize())
@@ -141,7 +143,7 @@ bool PanelState::renderTab(AppContext &iCtx)
   if(ImGui::BeginTabItem(fPanel.getName()))
   {
     fPanel.computeIsHidden(iCtx);
-    fPanel.checkForWidgetErrors(iCtx);
+    fPanel.checkForErrors(iCtx);
 
     int zoom = static_cast<int>(fZoom * 5);
     if(ImGui::SliderInt("zoom", &zoom, 1, 10))
@@ -194,6 +196,11 @@ bool PanelState::renderTab(AppContext &iCtx)
 //------------------------------------------------------------------------
 void PanelState::render(AppContext &iCtx)
 {
+  // when this panel becomes current, we force a check for widget errors as things may have changed (like
+  // removed images, motherboard...)
+  if(iCtx.fCurrentPanelState != iCtx.fPreviousPanelState)
+    fPanel.markEdited();
+
   iCtx.fZoom = fZoom * iCtx.fFontManager->getCurrentFontDpiScale();
   renderPanel(iCtx, iCtx.fCurrentPanelState != iCtx.fPreviousPanelState);
   renderPanelWidgets(iCtx);

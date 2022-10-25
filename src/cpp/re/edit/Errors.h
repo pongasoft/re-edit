@@ -21,8 +21,34 @@
 
 #include <re/mock/Errors.h>
 #include "LoggingManager.h"
+#include <string>
+#include <vector>
 
 namespace re::edit {
+
+struct UserError
+{
+  using error_t = std::vector<std::string>;
+
+  inline error_t const &getErrors() const { return fErrors; }
+
+  inline bool hasErrors() const { return !fErrors.empty(); };
+
+  inline void clear() { fErrors.clear(); }
+
+  inline void add(std::string iError) { fErrors.emplace_back(std::move(iError)); }
+
+  inline void addAll(std::string const &iPrefix, UserError const &iOther) {
+    for(auto const &error: iOther.getErrors())
+      add(re::mock::fmt::printf("%s | %s", iPrefix, error));
+  }
+
+  template<typename ... Args>
+  inline void add(std::string const &iFormat, Args ... args) { fErrors.emplace_back(re::mock::fmt::printf(iFormat, args...)); }
+
+private:
+  error_t fErrors;
+};
 
 //! log_info
 template<typename ... Args>

@@ -17,9 +17,7 @@
  */
 
 #include "FilmStrip.h"
-#include <sys/stat.h>
 #include "Errors.h"
-#include <re/mock/fmt.h>
 #include <regex>
 
 namespace re::edit {
@@ -34,6 +32,7 @@ FilmStrip::FilmStrip(std::shared_ptr<File> iFile, char const *iErrorMessage) :
   fData{},
   fErrorMessage{iErrorMessage}
 {
+  RE_MOCK_LOG_WARNING("%p | Error: FilmStrip::FilmStrip(%s) : %s", this, fFile->fKey, iErrorMessage);
 }
 
 //------------------------------------------------------------------------
@@ -45,7 +44,14 @@ FilmStrip::FilmStrip(std::shared_ptr<File> iFile, int iWidth, int iHeight, std::
   fHeight{iHeight},
   fData{std::move(iData)},
   fErrorMessage{}
-{}
+{
+  RE_MOCK_LOG_INFO("%p | FilmStrip::FilmStrip(%s)", this, fFile->fKey);
+}
+
+FilmStrip::~FilmStrip()
+{
+  RE_MOCK_LOG_INFO("%p | ~FilmStrip::FilmStrip(%s)", this, fFile->fKey);
+}
 
 //------------------------------------------------------------------------
 // FilmStrip::Data::~Data
@@ -93,7 +99,7 @@ void FilmStrip::overrideNumFrames(int iNumFrames)
 //------------------------------------------------------------------------
 // FilmStripMgr::findFilmStrip
 //------------------------------------------------------------------------
-std::shared_ptr<FilmStrip> FilmStripMgr::findFilmStrip(std::string const &iKey) const
+std::shared_ptr<FilmStrip> FilmStripMgr::findFilmStrip(FilmStrip::key_t const &iKey) const
 {
   auto iterFS = fFilmStrips.find(iKey);
   if(iterFS != fFilmStrips.end())
@@ -114,9 +120,9 @@ std::shared_ptr<FilmStrip> FilmStripMgr::findFilmStrip(std::string const &iKey) 
 //------------------------------------------------------------------------
 // FilmStripMgr::findKeys
 //------------------------------------------------------------------------
-std::vector<std::string> FilmStripMgr::findKeys(FilmStrip::Filter const &iFilter) const
+std::vector<FilmStrip::key_t> FilmStripMgr::findKeys(FilmStrip::Filter const &iFilter) const
 {
-  std::vector<std::string> res{};
+  std::vector<FilmStrip::key_t> res{};
   res.reserve(fKeys.size());
   for(auto &key: fKeys)
   {
@@ -130,7 +136,7 @@ std::vector<std::string> FilmStripMgr::findKeys(FilmStrip::Filter const &iFilter
 //------------------------------------------------------------------------
 // FilmStripMgr::getFilmStrip
 //------------------------------------------------------------------------
-std::shared_ptr<FilmStrip> FilmStripMgr::getFilmStrip(std::string const &iKey) const
+std::shared_ptr<FilmStrip> FilmStripMgr::getFilmStrip(FilmStrip::key_t const &iKey) const
 {
   auto fs = findFilmStrip(iKey);
   RE_EDIT_ASSERT(fs != nullptr);
@@ -140,18 +146,20 @@ std::shared_ptr<FilmStrip> FilmStripMgr::getFilmStrip(std::string const &iKey) c
 //------------------------------------------------------------------------
 // FilmStripMgr::scanDirectory
 //------------------------------------------------------------------------
-size_t FilmStripMgr::scanDirectory()
+std::set<FilmStrip::key_t> FilmStripMgr::scanDirectory()
 {
   auto files = scanDirectory(fDirectory);
+  std::set<FilmStrip::key_t> previousKeys{fKeys.begin(), fKeys.end()};
   fKeys.clear();
   for(auto const &file: files)
   {
     fKeys.emplace_back(file.fKey);
+    previousKeys.erase(file.fKey);
     auto previousFile = fFiles.find(file.fKey);
     if(previousFile != fFiles.end())
     {
       // the file has been modified on disk
-      if(file.fLastModifiedTime > previousFile->second->fLastModifiedTime)
+      if(file.fLastModifiedTime != previousFile->second->fLastModifiedTime)
       {
         // this will trigger a "reload"
         fFilmStrips.erase(file.fKey);
@@ -163,7 +171,17 @@ size_t FilmStripMgr::scanDirectory()
       fFiles[file.fKey] = std::make_shared<FilmStrip::File>(file);
     }
   }
-  return fFiles.size();
+
+  // remove the ones that got deleted
+  for(auto &k: previousKeys)
+  {
+    fFiles.erase(k);
+    fFilmStrips.erase(k);
+  }
+
+  RE_EDIT_LOG_INFO("Scan complete: %ld textures (%ld removed)", fFiles.size(), previousKeys.size());
+
+  return previousKeys;
 }
 
 //------------------------------------------------------------------------

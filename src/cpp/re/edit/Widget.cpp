@@ -176,21 +176,8 @@ void Widget::draw(AppContext &iCtx)
   if(iCtx.fBorderRendering == AppContext::EBorderRendering::kHitBoundaries)
     fGraphics->drawHitBoundaries(iCtx, ReGui::GetColorU32(kHitBoundariesColor));
 
-  if(fError)
+  if(hasErrors())
     iCtx.drawRectFilled(fGraphics->fPosition, fGraphics->getSize(), iCtx.getUserPreferences().fWidgetErrorColor);
-}
-
-//------------------------------------------------------------------------
-// Widget::hasAttributeErrors
-//------------------------------------------------------------------------
-bool Widget::hasAttributeErrors() const
-{
-  for(auto &att: fAttributes)
-  {
-    if(att->fError)
-      return true;
-  }
-  return false;
 }
 
 //------------------------------------------------------------------------
@@ -205,53 +192,46 @@ void Widget::init(AppContext &iCtx)
 }
 
 //------------------------------------------------------------------------
-// Widget::checkForErrors
+// Widget::markEdited
 //------------------------------------------------------------------------
-bool Widget::checkForErrors(AppContext &iCtx, bool iForceCheck)
+void Widget::markEdited()
 {
-  fError = false;
+  fEdited = true;
 
-  iCtx.setCurrentWidget(this);
   for(auto &att: fAttributes)
-  {
-    if(iForceCheck || att->fEdited)
-    {
-      auto error = att->checkForErrors(iCtx);
-      fError |= error != widget::Attribute::kNoError;
-      att->fError = error;
-      att->resetEdited();
-    }
-    else
-      fError |= att->fError != widget::Attribute::kNoError;
-  }
-  iCtx.setCurrentWidget(nullptr);
-  return fError;
+    att->markEdited();
 }
 
 //------------------------------------------------------------------------
-// Widget::errorView
+// Widget::resetEdited
 //------------------------------------------------------------------------
-bool Widget::errorView(AppContext &iCtx)
+void Widget::resetEdited()
 {
-  if(fError)
+  fEdited = false;
+
+  for(auto &att: fAttributes)
+    att->resetEdited();
+}
+
+//------------------------------------------------------------------------
+// Widget::checkForErrors
+//------------------------------------------------------------------------
+bool Widget::checkForErrors(AppContext &iCtx)
+{
+  if(fEdited)
   {
-    ImGui::TextColored(ImVec4(1,0,0,1), ReGui::kErrorIcon);
-    if(ImGui::IsItemHovered())
+    fUserError.clear();
+    iCtx.setCurrentWidget(this);
+    for(auto &att: fAttributes)
     {
-      ImGui::BeginTooltip();
-      ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
-      for(auto &att: fAttributes)
-      {
-        if(att->fError)
-          ImGui::Text("%s | %s", att->fName, att->fError);
-      }
-      ImGui::PopTextWrapPos();
-      ImGui::EndTooltip();
+      if(att->checkForErrors(iCtx))
+        addAllErrors(att->fName, *att);
     }
-    return true;
+    iCtx.setCurrentWidget(nullptr);
+    fEdited = false;
   }
 
-  return false;
+  return hasErrors();
 }
 
 //------------------------------------------------------------------------
@@ -259,11 +239,24 @@ bool Widget::errorView(AppContext &iCtx)
 //------------------------------------------------------------------------
 void Widget::editView(AppContext &iCtx)
 {
+  fEdited = false;
+
   iCtx.setCurrentWidget(this);
 
   ImGui::PushID("Widget");
 
   auto editedName = fName;
+
+  ImGui::PushID("ResetName");
+  if(ReGui::ResetButton())
+  {
+    iCtx.addOrMergeUndoWidgetChange(this, nullptr, fName, editedName,
+                                    fmt::printf("Rename %s %s widget", fName, toString(fType)));
+    computeDefaultWidgetName();
+  }
+  ImGui::PopID();
+
+  ImGui::SameLine();
 
   if(ImGui::InputText("name", &editedName))
   {
@@ -274,29 +267,17 @@ void Widget::editView(AppContext &iCtx)
 
   fGraphics->editPositionView(iCtx);
 
-  if(ImGui::TreeNode("Attributes"))
+  for(auto &att: fAttributes)
   {
-    for(auto &att: fAttributes)
-    {
-      ImGui::PushID(att->fName);
-      att->editView(iCtx);
-      if(att->fError)
-      {
-        ImGui::SameLine();
-        ImGui::TextColored(ImVec4(1,0,0,1), ReGui::kErrorIcon);
-        if(ImGui::IsItemHovered())
-        {
-          ImGui::BeginTooltip();
-          ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
-          ImGui::TextUnformatted(att->fError);
-          ImGui::PopTextWrapPos();
-          ImGui::EndTooltip();
-        }
-      }
-      ImGui::PopID();
-    }
-    ImGui::TreePop();
+    ImGui::PushID(att->fName);
+    att->editView(iCtx);
+    if(att->isEdited())
+      fEdited = true;
+    att->errorViewSameLine();
+    ImGui::PopID();
   }
+
+  ImGui::Separator();
 
   if(!isPanelDecal())
   {
@@ -829,6 +810,8 @@ std::unique_ptr<Widget> Widget::static_decoration()
   w ->blend_mode()
     ->visibility()
     ;
+  // 1 frames
+  w->fGraphics->fFilter = [](FilmStrip const &iFilmStrip) { return iFilmStrip.numFrames() == 1; };
   return w;
 }
 

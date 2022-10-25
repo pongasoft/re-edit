@@ -36,6 +36,39 @@ struct HitBoundaries
 
 }
 
+namespace re::edit::panel {
+
+class Graphics : public Editable
+{
+public:
+  Graphics() = default;
+
+  std::string device2D() const;
+
+  inline Texture const *findTexture() const {
+    if(!fDNZTexture)
+      fDNZTexture = AppContext::GetCurrent().findTexture(getTextureKey());
+    if(fDNZTexture)
+      return fDNZTexture.get();
+    return nullptr;
+  }
+
+  inline Texture::key_t getTextureKey() const { return fTextureKey; }
+  void setTextureKey(Texture::key_t const &iTextureKey) { fTextureKey = iTextureKey; fDNZTexture = nullptr; fEdited = true; }
+  inline void setTexture(std::shared_ptr<Texture> iTexture) { fTextureKey = iTexture->key(); fDNZTexture = std::move(iTexture); fEdited = true; }
+
+  void reset();
+  void editView(AppContext &iCtx);
+  void findErrors(AppContext &iCtx, UserError &oErrors) const override;
+
+public:
+  Texture::key_t fTextureKey{};
+  mutable std::shared_ptr<Texture> fDNZTexture{};
+  FilmStrip::Filter fFilter{};
+};
+
+}
+
 namespace re::edit::widget::attribute {
 
 namespace impl {
@@ -76,7 +109,14 @@ public:
     return true;
   }
 
-  constexpr ImVec2 getSize() const { return hasTexture() ? getTexture()->frameSize() : fSize; }
+  inline ImVec2 getSize() const {
+    if(hasTexture())
+    {
+      auto texture = findTexture();
+      return texture ? texture->frameSize() : kNoGraphics;
+    }
+    return std::get<ImVec2>(fTexture);
+  }
   constexpr ImVec2 getPosition() const { return fPosition; }
   constexpr ImVec2 getTopLeft() const { return fPosition; }
   constexpr ImVec2 getBottomRight() const { return fPosition + getSize(); }
@@ -88,10 +128,23 @@ public:
 
   constexpr void move(ImVec2 const &iDelta) { fPosition = fPosition + iDelta; fEdited = true; }
 
-  inline bool hasTexture() const { return getTexture() != nullptr; }
-  inline Texture const *getTexture() const { return fTexture.get(); }
-  void setTexture(std::shared_ptr<Texture> iTexture) { fTexture = std::move(iTexture); fEdited = true; }
-  void setSize(ImVec2 const &iSize) { fSize = iSize; fEdited = true; }
+  inline bool hasTexture() const { return std::holds_alternative<Texture::key_t>(fTexture); }
+  inline bool hasSize() const { return std::holds_alternative<ImVec2>(fTexture); }
+
+  inline Texture const *findTexture() const {
+    if(hasTexture())
+    {
+      if(!fDNZTexture)
+        fDNZTexture = AppContext::GetCurrent().findTexture(getTextureKey());
+      if(fDNZTexture)
+        return fDNZTexture.get();
+    }
+    return nullptr;
+  }
+  inline Texture::key_t getTextureKey() const { return std::get<Texture::key_t>(fTexture); }
+  void setTextureKey(Texture::key_t const &iTextureKey) { fTexture = iTextureKey; fDNZTexture = nullptr; fEdited = true; }
+  inline void setTexture(std::shared_ptr<Texture> iTexture) { fTexture = iTexture->key(); fDNZTexture = std::move(iTexture); fEdited = true; }
+  void setSize(ImVec2 const &iSize) { fTexture = iSize; fDNZTexture = nullptr; fEdited = true; }
 
   void reset() override;
 
@@ -104,13 +157,17 @@ public:
                 std::function<void(std::string const &)> const &iOnTextureUpdate,
                 std::function<void(ImVec2 const &)> const &iOnSizeUpdate);
 
-  error_t checkForErrors(AppContext &iCtx) const override;
+  void findErrors(AppContext &iCtx, UserError &oErrors) const override;
 
   void draw(AppContext &iCtx, ImU32 iBorderColor, bool iXRay) const;
   void drawBorder(AppContext &iCtx, ImU32 iBorderColor) const;
   void drawHitBoundaries(AppContext &iCtx, ImU32 iColor) const;
 
-  std::unique_ptr<Attribute> clone() const override { return Attribute::clone<Graphics>(*this); }
+  std::unique_ptr<Attribute> clone() const override {
+    auto g = std::make_unique<Graphics>(*this);
+    g->fDNZTexture = nullptr;
+    return g;
+  }
 
 //  bool eq(Attribute const *iAttribute) const override
 //  {
@@ -128,8 +185,8 @@ public:
   ImVec2 fPosition{};
   HitBoundaries fHitBoundaries{};
   bool fHitBoundariesEnabled{true};
-  std::shared_ptr<Texture> fTexture{};
-  ImVec2 fSize{100, 100};
+  std::variant<ImVec2, Texture::key_t> fTexture{kNoGraphics};
+  mutable std::shared_ptr<Texture> fDNZTexture{};
   FilmStrip::Filter fFilter{};
   int fFrameNumber{};
 };

@@ -42,6 +42,104 @@ bool operator!=(HitBoundaries const &lhs, HitBoundaries const &rhs)
 }
 
 }
+
+namespace re::edit::panel {
+
+//------------------------------------------------------------------------
+// Graphics::device2D
+//------------------------------------------------------------------------
+std::string Graphics::device2D() const
+{
+  auto texture = findTexture();
+  std::string path;
+  if(texture)
+    path = fmt::printf("path = \"%s\"", texture->key());
+  return fmt::printf("{ { %s } }", path);
+}
+
+//------------------------------------------------------------------------
+// Graphics::reset
+//------------------------------------------------------------------------
+void Graphics::reset()
+{
+  fTextureKey = "";
+  fDNZTexture = nullptr;
+  fEdited = true;
+}
+
+//------------------------------------------------------------------------
+// Graphics::editView
+//------------------------------------------------------------------------
+void Graphics::editView(AppContext &iCtx)
+{
+  if(ReGui::ResetButton())
+  {
+    reset();
+  }
+  ImGui::SameLine();
+
+  auto key = getTextureKey();
+  if(ImGui::BeginCombo("graphics", key.c_str()))
+  {
+    auto textureKeys = fFilter ? iCtx.findTextureKeys(fFilter) : iCtx.getTextureKeys();
+    for(auto &p: textureKeys)
+    {
+      auto const isSelected = p == key;
+      if(ImGui::Selectable(p.c_str(), isSelected))
+      {
+        fTextureKey = p;
+        fDNZTexture = nullptr;
+        fEdited = true;
+      }
+      if(isSelected)
+        ImGui::SetItemDefaultFocus();
+    }
+    ImGui::EndCombo();
+  }
+
+  if(ImGui::IsItemHovered())
+  {
+    ImGui::BeginTooltip();
+    ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
+    auto texture = findTexture();
+    if(texture)
+    {
+      if(texture->isValid())
+        ImGui::TextUnformatted(fmt::printf("%dx%d | %d frames",
+                                           static_cast<int>(texture->frameWidth()),
+                                           static_cast<int>(texture->frameHeight()),
+                                           texture->numFrames()).c_str());
+      else
+        ImGui::TextUnformatted(fmt::printf("%s", texture->getFilmStrip()->errorMessage()).c_str());
+    }
+    else
+    {
+      ImGui::TextUnformatted("Missing png");
+    }
+    ImGui::PopTextWrapPos();
+    ImGui::EndTooltip();
+  }
+
+}
+
+//------------------------------------------------------------------------
+// Graphics::findErrors
+//------------------------------------------------------------------------
+void Graphics::findErrors(AppContext &iCtx, UserError &oErrors) const
+{
+  auto texture = findTexture();
+  if(!texture)
+    oErrors.add("Missing png");
+  else
+  {
+    if(!texture->isValid())
+      oErrors.add("Invalid png: %s", texture->getFilmStrip()->errorMessage());
+  }
+}
+
+
+}
+
 namespace re::edit::widget::attribute {
 
 namespace impl {
@@ -63,9 +161,10 @@ constexpr ImU32 computeTextureColor(bool iXRay)
 //------------------------------------------------------------------------
 void Graphics::draw(AppContext &iCtx, ImU32 iBorderColor, bool iXRay) const
 {
-  if(hasTexture())
+  auto texture = hasTexture() ? findTexture() : nullptr;
+  if(texture)
   {
-    iCtx.drawTexture(getTexture(), fPosition, fFrameNumber, iBorderColor, impl::computeTextureColor(iXRay));
+    iCtx.drawTexture(texture, fPosition, fFrameNumber, iBorderColor, impl::computeTextureColor(iXRay));
   }
   else
   {
@@ -119,15 +218,14 @@ void Graphics::editView(AppContext &iCtx,
 {
   if(ReGui::ResetButton())
   {
-    if(iCtx.getCurrentWidget())
-      iCtx.addUndoAttributeReset(this);
+    iCtx.addUndoAttributeReset(this);
     reset();
   }
   ImGui::SameLine();
 
   ImGui::BeginGroup();
-  auto const *texture = getTexture();
-  auto key = texture ? texture->key() : "";
+
+  auto key = hasTexture() ? getTextureKey() : "";
   if(ImGui::BeginCombo(fName, key.c_str()))
   {
     auto textureKeys = iFilter ? iCtx.findTextureKeys(iFilter) : iCtx.getTextureKeys();
@@ -144,21 +242,32 @@ void Graphics::editView(AppContext &iCtx,
     ImGui::EndCombo();
   }
 
-  if(texture && ImGui::IsItemHovered())
+  if(hasTexture() && ImGui::IsItemHovered())
   {
     ImGui::BeginTooltip();
     ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
-    ImGui::TextUnformatted(re::mock::fmt::printf("%dx%d | %d frames",
-                                                 static_cast<int>(texture->frameWidth()),
-                                                 static_cast<int>(texture->frameHeight()),
-                                                 texture->numFrames()).c_str());
+    auto texture = findTexture();
+    if(texture)
+    {
+      if(texture->isValid())
+        ImGui::TextUnformatted(fmt::printf("%dx%d | %d frames",
+                                           static_cast<int>(texture->frameWidth()),
+                                           static_cast<int>(texture->frameHeight()),
+                                           texture->numFrames()).c_str());
+      else
+        ImGui::TextUnformatted(fmt::printf("%s", texture->getFilmStrip()->errorMessage()).c_str());
+    }
+    else
+    {
+      ImGui::TextUnformatted("Missing png");
+    }
     ImGui::PopTextWrapPos();
     ImGui::EndTooltip();
   }
 
-  if(!texture)
+  if(hasSize())
   {
-    auto editedSize = fSize;
+    auto editedSize = std::get<ImVec2>(fTexture);
     ImGui::Indent();
     if(ReGui::InputInt("w", &editedSize.x, 1, 5))
     {
@@ -182,13 +291,39 @@ void Graphics::editPositionView(AppContext &iCtx)
 {
   auto editedPosition = fPosition;
 
-  if(ReGui::InputInt("x", &editedPosition.x, 1, 5))
+  ImGui::PushID("ResetX");
+  if(ReGui::ResetButton())
   {
-    iCtx.addOrMergeUndoCurrentWidgetChange(&fPosition.x, fPosition, editedPosition,
+    editedPosition.x = 0;
+    iCtx.addOrMergeUndoCurrentWidgetChange(nullptr, fPosition, editedPosition,
                                            fmt::printf("Move %s", iCtx.getCurrentWidget()->getName()));
     fPosition = editedPosition;
     fEdited = true;
   }
+  ImGui::PopID();
+
+  ImGui::SameLine();
+
+  if(ReGui::InputInt("x", &editedPosition.x, 1, 5))
+  {
+    iCtx.addOrMergeUndoCurrentWidgetChange(nullptr, fPosition, editedPosition,
+                                           fmt::printf("Move %s", iCtx.getCurrentWidget()->getName()));
+    fPosition = editedPosition;
+    fEdited = true;
+  }
+
+  ImGui::PushID("ResetY");
+  if(ReGui::ResetButton())
+  {
+    editedPosition.y = 0;
+    iCtx.addOrMergeUndoCurrentWidgetChange(&fPosition.y, fPosition, editedPosition,
+                                           fmt::printf("Move %s", iCtx.getCurrentWidget()->getName()));
+    fPosition = editedPosition;
+    fEdited = true;
+  }
+  ImGui::PopID();
+
+  ImGui::SameLine();
 
   if(ReGui::InputInt("y", &editedPosition.y, 1, 5))
   {
@@ -198,9 +333,10 @@ void Graphics::editPositionView(AppContext &iCtx)
     fEdited = true;
   }
 
-  if(hasTexture())
+  auto texture = findTexture();
+  if(texture)
   {
-    auto numFrames = getTexture()->numFrames();
+    auto numFrames = texture->numFrames();
     if(numFrames > 1)
       ImGui::SliderInt("Frame", &fFrameNumber, 0, numFrames - 1);
   }
@@ -214,22 +350,15 @@ void Graphics::editView(AppContext &iCtx)
   editView(iCtx,
            fFilter,
            [this, &iCtx](auto &k) {
-             auto currentWidget = iCtx.getCurrentWidget();
-             if(currentWidget)
-               iCtx.addUndoCurrentWidgetChange(fmt::printf("Change %s graphics", currentWidget->getName()));
-             fTexture = iCtx.getTexture(k);
+             iCtx.addUndoCurrentWidgetChange(fmt::printf("Change %s graphics", iCtx.getCurrentWidget()->getName()));
+             setTextureKey(k);
              fFrameNumber = 0;
-             fEdited = true;
            },
            [this, &iCtx](auto &s) {
-             auto currentWidget = iCtx.getCurrentWidget();
-             if(currentWidget)
-               iCtx.addOrMergeUndoCurrentWidgetChange(&fSize, fSize, s,
-                                                      fmt::printf("Change %s size", currentWidget->getName()));
-             fSize = s;
-             fTexture = nullptr;
+             iCtx.addOrMergeUndoCurrentWidgetChange(&fTexture, getSize(), s,
+                                                    fmt::printf("Change %s size", iCtx.getCurrentWidget()->getName()));
+             setSize(s);
              fFrameNumber = 0;
-             fEdited = true;
            }
   );
   ImGui::Indent();
@@ -271,8 +400,9 @@ void Graphics::editHitBoundariesView(AppContext &iCtx)
 //------------------------------------------------------------------------
 void Graphics::reset()
 {
-  fSize = fTexture ? fTexture->frameSize() : ImVec2{100, 100};
-  fTexture = nullptr;
+  auto texture = findTexture();
+  fTexture = texture ? texture->frameSize() : kNoGraphics;
+  fDNZTexture = nullptr;
   fHitBoundaries = {};
   fEdited = true;
 }
@@ -280,22 +410,31 @@ void Graphics::reset()
 //------------------------------------------------------------------------
 // Graphics::checkForErrors
 //------------------------------------------------------------------------
-Attribute::error_t Graphics::checkForErrors(AppContext &iCtx) const
+void Graphics::findErrors(AppContext &iCtx, UserError &oErrors) const
 {
-  static const Attribute::error_t kOutOfBoundError = "Out of bound";
-
   auto max = iCtx.getPanelSize();
   auto p = getTopLeft();
   if(p.x < 0 || p.y < 0 || p.x > max.x || p.y > max.y)
   {
-    return kOutOfBoundError;
+    oErrors.add("Out of bound");
   }
   p = getBottomRight();
   if(p.x < 0 || p.y < 0 || p.x > max.x || p.y > max.y)
   {
-    return kOutOfBoundError;
+    oErrors.add("Out of bound");
   }
-  return Attribute::kNoError;
+
+  if(hasTexture())
+  {
+    auto texture = findTexture();
+    if(!texture)
+      oErrors.add("Missing png");
+    else
+    {
+      if(!texture->isValid())
+        oErrors.add("Invalid png: %s", texture->getFilmStrip()->errorMessage());
+    }
+  }
 }
 
 //------------------------------------------------------------------------
@@ -330,7 +469,7 @@ void Graphics::hdgui2D(std::string const &iNodeName, attribute_list_t &oAttribut
 //------------------------------------------------------------------------
 std::string Graphics::device2D() const
 {
-  auto texture = getTexture();
+  auto texture = findTexture();
   std::string path;
   if(texture)
   {
@@ -365,7 +504,7 @@ bool Graphics::copyFrom(Attribute const *iFromAttribute)
   {
     fHitBoundaries = fromAttribute->fHitBoundaries;
     fTexture = fromAttribute->fTexture;
-    fSize = fromAttribute->fSize;
+    fDNZTexture = fromAttribute->fDNZTexture;
     fEdited = true;
     return true;
   }

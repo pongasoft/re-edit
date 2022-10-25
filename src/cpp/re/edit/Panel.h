@@ -72,7 +72,7 @@ static constexpr WidgetDef kAllWidgetDefs[] {
   { WidgetType::kPanelDecal,        "panel_decal",         Widget::panel_decal,         kPanelTypeAny },
 };
 
-class Panel
+class Panel : public Editable
 {
 public:
   static char const *toString(PanelType iType);
@@ -82,7 +82,7 @@ public:
 
   char const *getName() const;
   constexpr std::string const &getNodeName() const { return fNodeName; };
-  constexpr ImVec2 getSize() const { return fGraphics.getSize(); }
+  constexpr ImVec2 getSize() const { return fSize; }
   constexpr PanelType getType() const { return fType; }
 
   void setDeviceHeightRU(int iDeviceHeightRU);
@@ -90,6 +90,10 @@ public:
   void draw(AppContext &iCtx);
   void editView(AppContext &iCtx);
   void editOrderView(AppContext &iCtx);
+  void markEdited() override;
+  void resetEdited() override;
+
+  bool checkForErrors(AppContext &iCtx) override;
 
   inline void setBackground(std::shared_ptr<Texture> iBackground) { fGraphics.setTexture(std::move(iBackground)); }
   inline void setCableOrigin(ImVec2 const &iPosition) { fCableOrigin = iPosition; }
@@ -127,6 +131,7 @@ protected:
   void editNoSelectionView(AppContext &iCtx);
   void editSingleSelectionView(AppContext &iCtx, std::shared_ptr<Widget> const &iWidget);
   void editMultiSelectionView(AppContext &iCtx, std::vector<std::shared_ptr<Widget>> const &iSelectedWidgets);
+  void reloadTextures();
 
   std::shared_ptr<PanelWidgets> freezeWidgets() const;
   std::shared_ptr<PanelWidgets> thawWidgets(std::shared_ptr<PanelWidgets> const &iPanelWidgets);
@@ -141,7 +146,6 @@ private:
   void moveWidgets(AppContext &iCtx, ImVec2 const &iPosition);
   void endMoveWidgets(AppContext &iCtx, ImVec2 const &iPosition);
   void computeIsHidden(AppContext &iCtx);
-  void checkForWidgetErrors(AppContext &iCtx);
   void renderAddWidgetMenu(AppContext &iCtx, ImVec2 const &iPosition = {});
   bool renderSelectedWidgetsMenu(AppContext &iCtx,
                                  std::vector<std::shared_ptr<Widget>> const &iSelectedWidgets,
@@ -174,8 +178,9 @@ private:
 private:
   PanelType fType;
   int fDeviceHeightRU{1};
+  ImVec2 fSize{kDevicePixelWidth, toPixelHeight(1)};
   std::string fNodeName;
-  widget::attribute::Graphics fGraphics{};
+  re::edit::panel::Graphics fGraphics{};
   std::optional<ImVec2> fCableOrigin;
   std::optional<bool> fDisableSampleDropOnPanel{};
   bool fShowCableOrigin{};

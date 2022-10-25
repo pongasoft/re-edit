@@ -35,13 +35,13 @@ namespace re::edit {
 
 class Panel;
 
-class Widget
+class Widget : public Editable
 {
 public:
   explicit Widget(WidgetType iType);
 
   constexpr std::string const &getName() const { return fName; }
-  void setName(std::string iName) { fName = std::move(iName); }
+  void setName(std::string iName) { fName = std::move(iName); fEdited = true; }
   constexpr int getId() const { return fId; }
   constexpr WidgetType getType() const { return fType; }
 
@@ -49,30 +49,25 @@ public:
   constexpr ImVec2 getTopLeft() const { return fGraphics->getTopLeft(); }
   constexpr ImVec2 getBottomRight() const { return fGraphics->getBottomRight(); }
   constexpr ImVec2 getSize() const { return fGraphics->getSize(); }
-  constexpr void setPosition(ImVec2 const &iPosition) { fGraphics->setPosition(iPosition); }
+  constexpr void setPosition(ImVec2 const &iPosition) { fGraphics->setPosition(iPosition); fEdited |= fGraphics->isEdited(); }
 
   constexpr bool isSelected() const { return fSelected; }
 
   constexpr bool isHidden() const { return fHidden; }
   constexpr bool canBeShown() const { return fHidden && fVisibility && !fVisibility->fSwitch.fValue.empty() && !fVisibility->fValues.fValue.empty(); }
 
-  constexpr bool isError() const { return fError; };
-  constexpr void setError(bool iError) { fError = iError; };
-  bool hasAttributeErrors() const;
-
-  constexpr void setHitBoundaries(HitBoundaries const &iHitBoundaries) { fGraphics->setHitBoundaries(iHitBoundaries); }
+  constexpr void setHitBoundaries(HitBoundaries const &iHitBoundaries) { fGraphics->setHitBoundaries(iHitBoundaries); fEdited |= fGraphics->isEdited(); }
   constexpr void disableHitBoundaries() { fGraphics->fHitBoundariesEnabled = false; }
 
-  constexpr void move(ImVec2 const &iDelta) { fGraphics->move(iDelta); }
+  constexpr void move(ImVec2 const &iDelta) { fGraphics->move(iDelta); fEdited |= fGraphics->isEdited(); }
 
-  inline void setTexture(std::shared_ptr<Texture> iTexture) { fGraphics->setTexture(std::move(iTexture)); }
-  inline void setSize(ImVec2 const &iSize) { fGraphics->setSize(iSize); }
+  inline void setTexture(std::shared_ptr<Texture> iTexture) { fGraphics->setTexture(std::move(iTexture)); fEdited |= fGraphics->isEdited(); }
+  inline void setTextureKey(Texture::key_t const &iTextureKey) { fGraphics->setTextureKey(iTextureKey); fEdited |= fGraphics->isEdited(); }
+  inline void setSize(ImVec2 const &iSize) { fGraphics->setSize(iSize); fEdited |= fGraphics->isEdited(); }
 
   constexpr int getFrameNumber() const { return fGraphics->fFrameNumber; }
   constexpr int &getFrameNumber() { return fGraphics->fFrameNumber; }
   constexpr void setFrameNumber(int iFrameNumber) { fGraphics->fFrameNumber = iFrameNumber; }
-
-  inline Texture const *getTexture() const { return fGraphics->getTexture(); }
 
   inline bool contains(ImVec2 const &iPosition) const { return fGraphics->contains(iPosition); }
   inline bool overlaps(ImVec2 const &iTopLeft, ImVec2 const &iBottomRight) const { return fGraphics->overlaps(iTopLeft, iBottomRight); }
@@ -80,8 +75,10 @@ public:
   void init(AppContext &iCtx);
   void draw(AppContext &iCtx);
   void editView(AppContext &iCtx);
-  bool checkForErrors(AppContext &iCtx, bool iForceCheck = false);
-  bool errorView(AppContext &iCtx);
+  bool checkForErrors(AppContext &iCtx) override;
+  void markEdited() override;
+
+  void resetEdited() override;
 
   std::string hdgui2D(AppContext &iCtx) const;
   std::string device2D() const { return fGraphics->device2D(); }
@@ -172,7 +169,6 @@ private:
   std::string fName{};
   bool fSelected{};
   bool fHidden{};
-  bool fError{};
   std::vector<std::unique_ptr<widget::Attribute>> fAttributes{};
 
   // denormalized access to attributes

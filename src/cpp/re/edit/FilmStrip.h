@@ -22,6 +22,7 @@
 #include <string>
 #include <stb_image.h>
 #include <map>
+#include <set>
 #include <memory>
 #include <vector>
 #include <functional>
@@ -34,12 +35,13 @@ class FilmStrip
 {
 public:
   using Filter = std::function<bool(FilmStrip const &iFilmStrip)>;
+  using key_t = std::string;
 
 public:
   struct File
   {
     fs::path fPath{};
-    std::string fKey{};
+    key_t fKey{};
     long fLastModifiedTime{};
     int fNumFrames{1};
   };
@@ -58,7 +60,7 @@ public:
     data_t *fData{};
   };
 
-  inline std::string const &key() const { return fFile->fKey; };
+  inline key_t const &key() const { return fFile->fKey; };
   constexpr std::string const &errorMessage() const { return fErrorMessage; };
 
   inline bool isValid() const { return fData != nullptr; }
@@ -96,6 +98,8 @@ public:
     };
   }
 
+  ~FilmStrip();
+
 private:
   FilmStrip(std::shared_ptr<File> iFile, char const *iErrorMessage);
   FilmStrip(std::shared_ptr<File> iFile, int iWidth, int iHeight, std::shared_ptr<Data> iData);
@@ -114,20 +118,20 @@ class FilmStripMgr
 {
 public:
   explicit FilmStripMgr(fs::path iDirectory) : fDirectory{std::move(iDirectory)} {}
-  std::shared_ptr<FilmStrip> findFilmStrip(std::string const &iKey) const;
-  std::shared_ptr<FilmStrip> getFilmStrip(std::string const &iKey) const;
+  std::shared_ptr<FilmStrip> findFilmStrip(FilmStrip::key_t const &iKey) const;
+  std::shared_ptr<FilmStrip> getFilmStrip(FilmStrip::key_t const &iKey) const;
 
-  size_t scanDirectory();
-  std::vector<std::string> const &getKeys() const { return fKeys; };
-  std::vector<std::string> findKeys(FilmStrip::Filter const &iFilter) const;
+  std::set<FilmStrip::key_t> scanDirectory();
+  std::vector<FilmStrip::key_t> const &getKeys() const { return fKeys; };
+  std::vector<FilmStrip::key_t> findKeys(FilmStrip::Filter const &iFilter) const;
 
   static std::vector<FilmStrip::File> scanDirectory(fs::path const &iDirectory);
 
 private:
   fs::path fDirectory;
-  mutable std::map<std::string, std::shared_ptr<FilmStrip>> fFilmStrips{};
-  std::map<std::string, std::shared_ptr<FilmStrip::File>> fFiles{};
-  std::vector<std::string> fKeys{};
+  mutable std::map<FilmStrip::key_t, std::shared_ptr<FilmStrip>> fFilmStrips{};
+  std::map<FilmStrip::key_t, std::shared_ptr<FilmStrip::File>> fFiles{};
+  std::vector<FilmStrip::key_t> fKeys{};
 };
 
 }

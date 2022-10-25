@@ -22,11 +22,15 @@
 #include <imgui.h>
 #include "FilmStrip.h"
 #include "ReGui.h"
+#include "Errors.h"
 
 namespace re::edit {
 
 class Texture
 {
+public:
+  using key_t = FilmStrip::key_t;
+
 public:
   class Data
   {
@@ -49,11 +53,15 @@ public:
   explicit Texture(std::shared_ptr<FilmStrip> iFilmStrip) :
     fFilmStrip{std::move(iFilmStrip)}
   {
+    RE_MOCK_LOG_INFO("%p | Texture(%s)", this, key());
   }
 
-  virtual ~Texture() = default;
+  virtual ~Texture()
+  {
+    RE_MOCK_LOG_INFO("%p | ~Texture(%s)", this, key());
+  }
 
-  inline std::string const &key() const { return fFilmStrip->key(); };
+  inline key_t const &key() const { return fFilmStrip->key(); };
 
   inline bool isValid() const { return fFilmStrip->isValid(); }
 
@@ -63,7 +71,7 @@ public:
   constexpr int numFrames() const { return fFilmStrip->numFrames(); }
   constexpr float frameWidth() const { return static_cast<float>(fFilmStrip->frameWidth()); }
   constexpr float frameHeight() const { return static_cast<float>(fFilmStrip->frameHeight()); }
-  constexpr ImVec2 frameSize() const { return {frameWidth(), frameHeight()}; }
+  constexpr ImVec2 frameSize() const { return isValid() ? ImVec2{frameWidth(), frameHeight()} : kNoGraphics; }
 
   std::shared_ptr<FilmStrip> getFilmStrip() const { return fFilmStrip; }
 

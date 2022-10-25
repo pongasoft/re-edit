@@ -92,6 +92,8 @@ constexpr int kFoldedDevicePixelHeight = 150;
 
 constexpr auto kHitBoundariesColor = ImVec4{ 60.0f / 255.0f, 1.0f, 2.0f / 255.0f, 1};
 
+constexpr auto kNoGraphics = ImVec2{100, 100};
+
 constexpr auto kAudioSocketSize = ImVec2{95, 105};
 constexpr auto kCVSocketSize = ImVec2{80, 90};
 constexpr auto kCVTrimKnobSize = ImVec2{100, 100};

@@ -187,23 +187,28 @@ int main(int argc, char **argv)
       renderEncoder->pushDebugGroup(NS::String::string("re-edit", NS::ASCIIStringEncoding));
 
       // Before New Frame
-      application.newFrame();
-
-      // Start the Dear ImGui frame
-      ImGui_ImplMetal_NewFrame(renderPassDescriptor);
-      ImGui_ImplGlfw_NewFrame();
-      ImGui::NewFrame();
-
-      // Main rendering
-      if(!application.render())
+      if(!application.newFrame())
       {
         glfwSetWindowShouldClose(window, GLFW_TRUE);
       }
       else
       {
-        // Rendering
-        ImGui::Render();
-        ImGui_ImplMetal_RenderDrawData(ImGui::GetDrawData(), commandBuffer, renderEncoder);
+        // Start the Dear ImGui frame
+        ImGui_ImplMetal_NewFrame(renderPassDescriptor);
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+
+        // Main rendering
+        if(!application.render())
+        {
+          glfwSetWindowShouldClose(window, GLFW_TRUE);
+        }
+        else
+        {
+          // Rendering
+          ImGui::Render();
+          ImGui_ImplMetal_RenderDrawData(ImGui::GetDrawData(), commandBuffer, renderEncoder);
+        }
       }
 
       renderEncoder->popDebugGroup();

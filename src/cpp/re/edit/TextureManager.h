@@ -40,7 +40,7 @@ public:
 
 //  bool loadFilmStrip(char const *iPath, int iNumFrames = 1) { return fFilmStripMgr.maybeAddFilmStrip(iPath, iNumFrames); }
 
-  void scanDirectory() { fFilmStripMgr->scanDirectory(); }
+  void scanDirectory();
   std::vector<std::string> const &getTextureKeys() const { return fFilmStripMgr->getKeys(); };
   std::vector<std::string> findTextureKeys(FilmStrip::Filter const &iFilter) const { return fFilmStripMgr->findKeys(iFilter); }
 
