@@ -83,7 +83,7 @@ public:
 public:
   AppContext();
 
-  static AppContext &GetCurrent() { return *kCurrent; }
+  static AppContext &GetCurrent() { RE_EDIT_INTERNAL_ASSERT(kCurrent != nullptr); return *kCurrent; }
 
   ImVec2 getPanelSize() const;
   void renderAddWidgetMenuView(ImVec2 const &iPosition = {});
@@ -205,8 +205,8 @@ public: // Undo
 
   void resetUndoMergeKey();
 
-  void undoLastAction() { fUndoManager->undoLastAction(*this); }
-  void redoLastAction() { fUndoManager->redoLastAction(*this); }
+  void undoLastAction() { fUndoManager->undoLastAction(); }
+  void redoLastAction() { fUndoManager->redoLastAction(); }
 
   inline Widget const *getCurrentWidget() const { return fCurrentWidget; }
 

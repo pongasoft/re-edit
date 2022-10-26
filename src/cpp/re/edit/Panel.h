@@ -136,7 +136,7 @@ protected:
   std::shared_ptr<PanelWidgets> freezeWidgets() const;
   std::shared_ptr<PanelWidgets> thawWidgets(std::shared_ptr<PanelWidgets> const &iPanelWidgets);
 
-  std::shared_ptr<UndoAction> createWidgetsUndoAction(AppContext &iCtx, std::string const &iDescription) const;
+  std::shared_ptr<UndoAction> createWidgetsUndoAction(std::string const &iDescription) const;
 
 private:
   void selectWidget(AppContext &iCtx, ImVec2 const &iPosition, bool iMultiSelectKey);

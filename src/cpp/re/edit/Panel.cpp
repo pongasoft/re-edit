@@ -367,7 +367,7 @@ int Panel::addWidget(AppContext &iCtx, std::shared_ptr<Widget> iWidget, bool iMa
   RE_EDIT_INTERNAL_ASSERT(iWidget != nullptr);
 
   if(iCtx.isUndoEnabled())
-    iCtx.addUndoAction(createWidgetsUndoAction(iCtx, fmt::printf("Add %s", re::edit::toString(iWidget->fType))));
+    iCtx.addUndoAction(createWidgetsUndoAction(fmt::printf("Add %s", re::edit::toString(iWidget->fType))));
 
   auto const id = fWidgetCounter++;
 
@@ -398,7 +398,7 @@ int Panel::addWidget(AppContext &iCtx, std::shared_ptr<Widget> iWidget, bool iMa
 void Panel::duplicateWidgets(AppContext &iCtx, std::vector<std::shared_ptr<Widget>> const &iWidgets)
 {
   if(iCtx.isUndoEnabled())
-    iCtx.addUndoAction(createWidgetsUndoAction(iCtx, fmt::printf("Duplicate %d widgets", iWidgets.size())));
+    iCtx.addUndoAction(createWidgetsUndoAction(fmt::printf("Duplicate %d widgets", iWidgets.size())));
 
   iCtx.withUndoDisabled([this, &iCtx, &iWidgets](){
     for(auto const &w: iWidgets)
@@ -429,7 +429,7 @@ std::shared_ptr<Widget> Panel::replaceWidget(int iWidgetId, std::shared_ptr<Widg
 std::pair<std::shared_ptr<Widget>, int> Panel::deleteWidget(AppContext &iCtx, int id)
 {
   if(iCtx.isUndoEnabled())
-    iCtx.addUndoAction(createWidgetsUndoAction(iCtx, fmt::printf("Delete %s", getWidget(id)->getName())));
+    iCtx.addUndoAction(createWidgetsUndoAction(fmt::printf("Delete %s", getWidget(id)->getName())));
 
   std::shared_ptr<Widget> widget{};
   unselectWidget(id);
@@ -460,7 +460,7 @@ std::pair<std::shared_ptr<Widget>, int> Panel::deleteWidget(AppContext &iCtx, in
 void Panel::deleteWidgets(AppContext &iCtx, std::vector<std::shared_ptr<Widget>> const &iWidgets)
 {
   if(iCtx.isUndoEnabled())
-    iCtx.addUndoAction(createWidgetsUndoAction(iCtx, fmt::printf("Delete %d widgets", iWidgets.size())));
+    iCtx.addUndoAction(createWidgetsUndoAction(fmt::printf("Delete %d widgets", iWidgets.size())));
 
   iCtx.withUndoDisabled([this, &iCtx, &iWidgets](){
     for(auto const &w: iWidgets)
@@ -1360,16 +1360,16 @@ std::shared_ptr<Panel::PanelWidgets> Panel::thawWidgets(std::shared_ptr<PanelWid
 //------------------------------------------------------------------------
 // Panel::createWidgetsUndoAction
 //------------------------------------------------------------------------
-std::shared_ptr<UndoAction> Panel::createWidgetsUndoAction(AppContext &iCtx, std::string const &iDescription) const
+std::shared_ptr<UndoAction> Panel::createWidgetsUndoAction(std::string const &iDescription) const
 {
   auto action = std::make_unique<LambdaUndoAction>();
   action->fDescription = iDescription;
   action->fPanelType = fType;
   auto pw = freezeWidgets();
-  action->fLambda = [panelType = this->fType, pw = std::move(pw)](AppContext &iCtx) {
-    auto w = iCtx.getPanel(panelType)->thawWidgets(pw);
-    return std::make_shared<LambdaRedoAction>([panelType, w2 = std::move(w)](AppContext &iCtx) {
-      iCtx.getPanel(panelType)->thawWidgets(w2);
+  action->fLambda = [panelType = this->fType, pw = std::move(pw)]() {
+    auto w = AppContext::GetCurrent().getPanel(panelType)->thawWidgets(pw);
+    return std::make_shared<LambdaRedoAction>([panelType, w2 = std::move(w)]() {
+      AppContext::GetCurrent().getPanel(panelType)->thawWidgets(w2);
     });
   };
   return action;

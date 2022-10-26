@@ -75,13 +75,13 @@ void UndoManager::addUndoAction(std::shared_ptr<UndoAction> iAction)
 //------------------------------------------------------------------------
 // UndoManager::undoLastAction
 //------------------------------------------------------------------------
-void UndoManager::undoLastAction(AppContext &iCtx)
+void UndoManager::undoLastAction()
 {
   auto undoAction = popLastUndoAction();
   if(undoAction)
   {
     undoAction->resetMergeKey();
-    auto redoAction = undoAction->execute(iCtx);
+    auto redoAction = undoAction->execute();
     if(redoAction)
     {
       redoAction->fUndoAction = undoAction;
@@ -93,14 +93,14 @@ void UndoManager::undoLastAction(AppContext &iCtx)
 //------------------------------------------------------------------------
 // UndoManager::redoLastAction
 //------------------------------------------------------------------------
-void UndoManager::redoLastAction(AppContext &iCtx)
+void UndoManager::redoLastAction()
 {
   if(fRedoHistory.empty())
     return;
 
   auto iter = fRedoHistory.end() - 1;
   auto redoAction = *iter;
-  redoAction->execute(iCtx);
+  redoAction->execute();
   fUndoHistory.emplace_back(redoAction->fUndoAction);
   fRedoHistory.erase(iter);
 }
@@ -147,13 +147,13 @@ void UndoManager::clear()
 //------------------------------------------------------------------------
 // CompositeUndoAction::execute
 //------------------------------------------------------------------------
-std::shared_ptr<RedoAction> CompositeUndoAction::execute(AppContext &iCtx)
+std::shared_ptr<RedoAction> CompositeUndoAction::execute()
 {
   auto redo = std::make_shared<CompositeRedoAction>();
 
   for(auto &action: fActions)
   {
-    redo->fActions.emplace_back(action->execute(iCtx));
+    redo->fActions.emplace_back(action->execute());
   }
 
   return redo;
@@ -162,20 +162,20 @@ std::shared_ptr<RedoAction> CompositeUndoAction::execute(AppContext &iCtx)
 //------------------------------------------------------------------------
 // CompositeUndoAction::execute
 //------------------------------------------------------------------------
-void CompositeRedoAction::execute(AppContext &iCtx)
+void CompositeRedoAction::execute()
 {
   // we undo in reverse order
-  std::for_each(fActions.rbegin(), fActions.rend(), [&iCtx](auto &action) { action->execute(iCtx); });
+  std::for_each(fActions.rbegin(), fActions.rend(), [](auto &action) { action->execute(); });
 }
 
 //------------------------------------------------------------------------
 // WidgetUndoAction::execute
 //------------------------------------------------------------------------
-std::shared_ptr<RedoAction> WidgetUndoAction::execute(AppContext &iCtx)
+std::shared_ptr<RedoAction> WidgetUndoAction::execute()
 {
-  auto w = iCtx.getPanel(fPanelType)->replaceWidget(fWidgetId, fWidget);
-  return std::make_shared<LambdaRedoAction>([panelType = this->fPanelType, widgetId = this->fWidgetId, w2 = std::move(w)](AppContext &iCtx) {
-    iCtx.getPanel(panelType)->replaceWidget(widgetId, w2);
+  auto w = AppContext::GetCurrent().getPanel(fPanelType)->replaceWidget(fWidgetId, fWidget);
+  return std::make_shared<LambdaRedoAction>([panelType = this->fPanelType, widgetId = this->fWidgetId, w2 = std::move(w)]() {
+    AppContext::GetCurrent().getPanel(panelType)->replaceWidget(widgetId, w2);
   });
 }
 

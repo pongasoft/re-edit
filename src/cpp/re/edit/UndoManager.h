@@ -26,7 +26,6 @@
 
 namespace re::edit {
 
-class AppContext;
 class Widget;
 class RedoAction;
 
@@ -41,7 +40,7 @@ public:
 class UndoAction
 {
 public:
-  virtual std::shared_ptr<RedoAction> execute(AppContext &iCtx) = 0;
+  virtual std::shared_ptr<RedoAction> execute() = 0;
   constexpr void *getMergeKey() const { return fMergeKey; }
   constexpr void resetMergeKey() { fMergeKey = nullptr; }
 
@@ -55,16 +54,16 @@ public:
 class LambdaUndoAction : public UndoAction
 {
 public:
-  std::shared_ptr<RedoAction> execute(AppContext &iCtx) override { return fLambda(iCtx); }
+  std::shared_ptr<RedoAction> execute() override { return fLambda(); }
 
 public:
-  std::function<std::shared_ptr<RedoAction>(AppContext &)> fLambda{};
+  std::function<std::shared_ptr<RedoAction>()> fLambda{};
 };
 
 class WidgetUndoAction : public UndoAction
 {
 public:
-  std::shared_ptr<RedoAction> execute(AppContext &iCtx) override;
+  std::shared_ptr<RedoAction> execute() override;
 
 public:
   int fWidgetId{-1};
@@ -79,7 +78,7 @@ class MergeableWidgetUndoAction : public WidgetUndoAction, public MergeableUndoV
 class CompositeUndoAction : public UndoAction
 {
 public:
-  std::shared_ptr<RedoAction> execute(AppContext &iCtx) override;
+  std::shared_ptr<RedoAction> execute() override;
   inline void add(std::shared_ptr<UndoAction> iAction) { fActions.emplace_back(std::move(iAction)); }
 
 public:
@@ -89,7 +88,7 @@ public:
 class RedoAction
 {
 public:
-  virtual void execute(AppContext &iCtx) = 0;
+  virtual void execute() = 0;
 
 public:
   std::shared_ptr<UndoAction> fUndoAction{};
@@ -97,13 +96,13 @@ public:
 
 class LambdaRedoAction : public RedoAction
 {
-  using lambda_t = std::function<void(AppContext &)>;
+  using lambda_t = std::function<void()>;
 
 public:
   LambdaRedoAction() = default;
   explicit LambdaRedoAction(lambda_t iLambda) : fLambda{std::move(iLambda)} {}
 
-  void execute(AppContext &iCtx) override { fLambda(iCtx); }
+  void execute() override { fLambda(); }
 
 public:
   lambda_t fLambda{};
@@ -112,7 +111,7 @@ public:
 class CompositeRedoAction : public RedoAction
 {
 public:
-  void execute(AppContext &iCtx) override;
+  void execute() override;
 
 public:
   std::vector<std::shared_ptr<RedoAction>> fActions{};
@@ -125,8 +124,8 @@ public:
   constexpr void enable() { fEnabled = true; }
   constexpr void disable() { fEnabled = false; }
   void addUndoAction(std::shared_ptr<UndoAction> iAction);
-  void undoLastAction(AppContext &iCtx);
-  void redoLastAction(AppContext &iCtx);
+  void undoLastAction();
+  void redoLastAction();
   bool hasUndoHistory() const { return !fUndoHistory.empty(); }
   std::shared_ptr<UndoAction> popLastUndoAction();
   std::shared_ptr<UndoAction> getLastUndoAction() const;
