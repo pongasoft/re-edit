@@ -32,7 +32,7 @@ FilmStrip::FilmStrip(std::shared_ptr<File> iFile, char const *iErrorMessage) :
   fData{},
   fErrorMessage{iErrorMessage}
 {
-  RE_MOCK_LOG_WARNING("%p | Error: FilmStrip::FilmStrip(%s) : %s", this, fFile->fKey, iErrorMessage);
+//  RE_MOCK_LOG_WARNING("%p | Error: FilmStrip::FilmStrip(%s) : %s", this, fFile->fKey, iErrorMessage);
 }
 
 //------------------------------------------------------------------------
@@ -45,12 +45,12 @@ FilmStrip::FilmStrip(std::shared_ptr<File> iFile, int iWidth, int iHeight, std::
   fData{std::move(iData)},
   fErrorMessage{}
 {
-  RE_MOCK_LOG_INFO("%p | FilmStrip::FilmStrip(%s)", this, fFile->fKey);
+//  RE_MOCK_LOG_INFO("%p | FilmStrip::FilmStrip(%s)", this, fFile->fKey);
 }
 
 FilmStrip::~FilmStrip()
 {
-  RE_MOCK_LOG_INFO("%p | ~FilmStrip::FilmStrip(%s)", this, fFile->fKey);
+//  RE_MOCK_LOG_INFO("%p | ~FilmStrip::FilmStrip(%s)", this, fFile->fKey);
 }
 
 //------------------------------------------------------------------------

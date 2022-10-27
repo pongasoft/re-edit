@@ -355,11 +355,6 @@ bool Application::doRender()
 //      RE_EDIT_INTERNAL_ASSERT(false, "do you see me?");
 //    }
 
-    if(ImGui::Button("Rescan"))
-    {
-      fReloadTexturesRequested = true;
-    }
-
     ImGui::PushID("Rendering");
 
     ImGui::PushID("Widget");
@@ -510,6 +505,11 @@ void Application::renderMainMenu()
         ImGui::OpenPopup(savePopupId);
         fSavingRequested = true;
       }
+      if(ImGui::MenuItem("Rescan images"))
+      {
+        fReloadTexturesRequested = true;
+      }
+
       ImGui::EndMenu();
     }
 

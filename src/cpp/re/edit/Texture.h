@@ -53,12 +53,12 @@ public:
   explicit Texture(std::shared_ptr<FilmStrip> iFilmStrip) :
     fFilmStrip{std::move(iFilmStrip)}
   {
-    RE_MOCK_LOG_INFO("%p | Texture(%s)", this, key());
+//    RE_MOCK_LOG_INFO("%p | Texture(%s)", this, key());
   }
 
   virtual ~Texture()
   {
-    RE_MOCK_LOG_INFO("%p | ~Texture(%s)", this, key());
+//    RE_MOCK_LOG_INFO("%p | ~Texture(%s)", this, key());
   }
 
   inline key_t const &key() const { return fFilmStrip->key(); };
