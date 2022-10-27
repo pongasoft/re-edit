@@ -282,9 +282,6 @@ bool Application::doRender()
   if(fAppContext.fUndoManager->hasUndoHistory())
     fNeedsSaving = true;
 
-  if(ImGui::GetIO().WantSaveIniSettings)
-    fNeedsSaving = true;
-
   auto loggingManager = LoggingManager::instance();
 
   fAppContext.fCurrentFrame++;
