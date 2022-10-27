@@ -19,6 +19,7 @@
 #include "Graphics.h"
 #include "Widget.h"
 #include "Errors.h"
+#include "Panel.h"
 
 namespace re::edit {
 
@@ -87,6 +88,12 @@ void Graphics::editView(AppContext &iCtx)
       auto const isSelected = p == key;
       if(ImGui::Selectable(p.c_str(), isSelected))
       {
+        iCtx.addUndoLambda(fTextureKey, p,
+                           "Change background graphics",
+                           [](UndoAction *iAction, auto const &iValue) {
+                             auto panel = AppContext::GetCurrent().getPanel(iAction->fPanelType);
+                             panel->setBackgroundKey(iValue);
+                           });
         fTextureKey = p;
         fDNZTexture = nullptr;
         fEdited = true;
@@ -306,7 +313,7 @@ void Graphics::editPositionView(AppContext &iCtx)
 
   if(ReGui::InputInt("x", &editedPosition.x, 1, 5))
   {
-    iCtx.addOrMergeUndoCurrentWidgetChange(nullptr, fPosition, editedPosition,
+    iCtx.addOrMergeUndoCurrentWidgetChange(&fPosition, fPosition, editedPosition,
                                            fmt::printf("Move %s", iCtx.getCurrentWidget()->getName()));
     fPosition = editedPosition;
     fEdited = true;
@@ -316,7 +323,7 @@ void Graphics::editPositionView(AppContext &iCtx)
   if(ReGui::ResetButton())
   {
     editedPosition.y = 0;
-    iCtx.addOrMergeUndoCurrentWidgetChange(&fPosition.y, fPosition, editedPosition,
+    iCtx.addOrMergeUndoCurrentWidgetChange(nullptr, fPosition, editedPosition,
                                            fmt::printf("Move %s", iCtx.getCurrentWidget()->getName()));
     fPosition = editedPosition;
     fEdited = true;
@@ -327,7 +334,7 @@ void Graphics::editPositionView(AppContext &iCtx)
 
   if(ReGui::InputInt("y", &editedPosition.y, 1, 5))
   {
-    iCtx.addOrMergeUndoCurrentWidgetChange(&fPosition.y, fPosition, editedPosition,
+    iCtx.addOrMergeUndoCurrentWidgetChange(&fPosition, fPosition, editedPosition,
                                            fmt::printf("Move %s", iCtx.getCurrentWidget()->getName()));
     fPosition = editedPosition;
     fEdited = true;
@@ -412,7 +419,7 @@ void Graphics::reset()
 //------------------------------------------------------------------------
 void Graphics::findErrors(AppContext &iCtx, UserError &oErrors) const
 {
-  auto max = iCtx.getPanelSize();
+  auto max = iCtx.getCurrentPanelSize();
   auto p = getTopLeft();
   if(p.x < 0 || p.y < 0 || p.x > max.x || p.y > max.y)
   {

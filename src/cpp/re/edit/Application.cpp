@@ -515,51 +515,58 @@ void Application::renderMainMenu()
 
     if(ImGui::BeginMenu("Edit"))
     {
-      auto const undoAction = fAppContext.fUndoManager->getLastUndoAction();
-      if(undoAction)
+      // Undo
       {
-        fAppContext.resetUndoMergeKey();
-        auto desc = re::mock::fmt::printf(ReGui_Prefix(ReGui_Icon_Undo, "Undo %s"), undoAction->fDescription);
-        if(fAppContext.fCurrentPanelState && fAppContext.fCurrentPanelState->getType() != undoAction->fPanelType)
+        auto const undoAction = fAppContext.fUndoManager->getLastUndoAction();
+        if(undoAction)
         {
-          if(undoAction->fPanelType == PanelType::kUnknown)
-            RE_EDIT_LOG_WARNING("unknown panel type for %s", undoAction->fDescription);
-          else
-            desc = re::mock::fmt::printf("%s (%s)", desc, Panel::toString(undoAction->fPanelType));
+          fAppContext.resetUndoMergeKey();
+          auto desc = re::mock::fmt::printf(ReGui_Prefix(ReGui_Icon_Undo, "Undo %s"), undoAction->fDescription);
+          if(fAppContext.fCurrentPanelState && fAppContext.fCurrentPanelState->getType() != undoAction->fPanelType)
+          {
+            if(undoAction->fPanelType == PanelType::kUnknown)
+              RE_EDIT_LOG_WARNING("unknown panel type for %s", undoAction->fDescription);
+            else
+              desc = re::mock::fmt::printf("%s (%s)", desc, Panel::toString(undoAction->fPanelType));
+          }
+          if(ImGui::MenuItem(desc.c_str()))
+          {
+            fAppContext.undoLastAction();
+          }
         }
-        if(ImGui::MenuItem(desc.c_str()))
+        else
         {
-          fAppContext.undoLastAction();
+          ImGui::BeginDisabled();
+          ImGui::MenuItem(ReGui_Prefix(ReGui_Icon_Undo, "Undo"));
+          ImGui::EndDisabled();
         }
-      }
-      else
-      {
-        ImGui::BeginDisabled();
-        ImGui::MenuItem(ReGui_Prefix(ReGui_Icon_Undo, "Undo"));
-        ImGui::EndDisabled();
       }
 
-      auto const redoAction = fAppContext.fUndoManager->getLastRedoAction();
-      if(redoAction)
+      // Redo
       {
-        auto desc = re::mock::fmt::printf(ReGui_Prefix(ReGui_Icon_Redo, "Redo %s"), redoAction->fUndoAction->fDescription);
-        if(fAppContext.fCurrentPanelState && fAppContext.fCurrentPanelState->getType() != redoAction->fUndoAction->fPanelType)
+        auto const redoAction = fAppContext.fUndoManager->getLastRedoAction();
+        if(redoAction)
         {
-          if(undoAction->fPanelType == PanelType::kUnknown)
-            RE_EDIT_LOG_WARNING("unknown panel type for %s", undoAction->fDescription);
-          else
-            desc = re::mock::fmt::printf("%s (%s)", desc, Panel::toString(undoAction->fPanelType));
+          auto const undoAction = redoAction->fUndoAction;
+          auto desc = re::mock::fmt::printf(ReGui_Prefix(ReGui_Icon_Redo, "Redo %s"), undoAction->fDescription);
+          if(fAppContext.fCurrentPanelState && fAppContext.fCurrentPanelState->getType() != undoAction->fPanelType)
+          {
+            if(undoAction->fPanelType == PanelType::kUnknown)
+              RE_EDIT_LOG_WARNING("unknown panel type for %s", undoAction->fDescription);
+            else
+              desc = re::mock::fmt::printf("%s (%s)", desc, Panel::toString(undoAction->fPanelType));
+          }
+          if(ImGui::MenuItem(desc.c_str()))
+          {
+            fAppContext.redoLastAction();
+          }
         }
-        if(ImGui::MenuItem(desc.c_str()))
+        else
         {
-          fAppContext.redoLastAction();
+          ImGui::BeginDisabled();
+          ImGui::MenuItem(ReGui_Prefix(ReGui_Icon_Redo, "Redo"));
+          ImGui::EndDisabled();
         }
-      }
-      else
-      {
-        ImGui::BeginDisabled();
-        ImGui::MenuItem(ReGui_Prefix(ReGui_Icon_Redo, "Redo"));
-        ImGui::EndDisabled();
       }
 
       ImGui::EndMenu();

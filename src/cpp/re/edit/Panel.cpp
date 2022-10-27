@@ -768,10 +768,21 @@ void Panel::editNoSelectionView(AppContext &iCtx)
     if(ImGui::TreeNode("Cable Origin"))
     {
       fShowCableOrigin = true;
-      if(ReGui::InputInt("x", &fCableOrigin->x, 1, 5))
+      auto cableOrigin = *fCableOrigin;
+      ReGui::InputInt("x", &cableOrigin.x, 1, 5);
+      ReGui::InputInt("y", &cableOrigin.y, 1, 5);
+      if(*fCableOrigin != cableOrigin)
+      {
+        iCtx.addOrMergeUndoLambda(&fCableOrigin, *fCableOrigin, cableOrigin,
+                                  fmt::printf("Update cable_origin"),
+                                  [panelType = fType](UndoAction *iAction, auto const &iValue)
+                                  {
+                                    auto panel = AppContext::GetCurrent().getPanel(panelType);
+                                    panel->setCableOrigin(iValue);
+                                  });
+        fCableOrigin = cableOrigin;
         fEdited = true;
-      if(ReGui::InputInt("y", &fCableOrigin->y, 1, 5))
-        fEdited = true;
+      }
       ImGui::TreePop();
     }
     else
@@ -1362,16 +1373,15 @@ std::shared_ptr<Panel::PanelWidgets> Panel::thawWidgets(std::shared_ptr<PanelWid
 //------------------------------------------------------------------------
 std::shared_ptr<UndoAction> Panel::createWidgetsUndoAction(std::string const &iDescription) const
 {
-  auto action = std::make_unique<LambdaUndoAction>();
+  auto pw = freezeWidgets();
+  auto action = UndoAction::createFromLambda([pw = std::move(pw)](UndoAction *iAction) {
+    auto w = AppContext::GetCurrent().getPanel(iAction->fPanelType)->thawWidgets(pw);
+    return RedoAction::createFromLambda([w2 = std::move(w)](RedoAction *iAction) {
+      AppContext::GetCurrent().getPanel(iAction->fUndoAction->fPanelType)->thawWidgets(w2);
+    });
+  });
   action->fDescription = iDescription;
   action->fPanelType = fType;
-  auto pw = freezeWidgets();
-  action->fLambda = [panelType = this->fType, pw = std::move(pw)]() {
-    auto w = AppContext::GetCurrent().getPanel(panelType)->thawWidgets(pw);
-    return std::make_shared<LambdaRedoAction>([panelType, w2 = std::move(w)]() {
-      AppContext::GetCurrent().getPanel(panelType)->thawWidgets(w2);
-    });
-  };
   return action;
 
 }

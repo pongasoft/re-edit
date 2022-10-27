@@ -123,11 +123,21 @@ Panel *AppContext::getPanel(PanelType iType) const
 }
 
 //------------------------------------------------------------------------
+// AppContext::getCurrentPanel
+//------------------------------------------------------------------------
+Panel *AppContext::getCurrentPanel() const
+{
+  RE_EDIT_INTERNAL_ASSERT(fCurrentPanelState != nullptr);
+  return &fCurrentPanelState->fPanel;
+}
+
+
+//------------------------------------------------------------------------
 // AppContext::getPanelSize
 //------------------------------------------------------------------------
-ImVec2 AppContext::getPanelSize() const
+ImVec2 AppContext::getCurrentPanelSize() const
 {
-  return fCurrentPanelState->fPanel.getSize();
+  return getCurrentPanel()->getSize();
 }
 
 //------------------------------------------------------------------------
