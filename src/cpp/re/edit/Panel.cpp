@@ -796,8 +796,16 @@ void Panel::editNoSelectionView(AppContext &iCtx)
       bool b = *fDisableSampleDropOnPanel;
       if(ImGui::Checkbox("disable_sample_drop_on_panel", &b))
       {
-        fEdited = true;
+        iCtx.addOrMergeUndoLambda(&fDisableSampleDropOnPanel, *fDisableSampleDropOnPanel, b,
+                                  fmt::printf("Update disable_sample_drop_on_panel"),
+                                  [panelType = fType](UndoAction *iAction, auto const &iValue)
+                                  {
+                                    auto panel = AppContext::GetCurrent().getPanel(panelType);
+                                    panel->fDisableSampleDropOnPanel = iValue;
+                                    panel->fEdited = true;
+                                  });
         fDisableSampleDropOnPanel = b;
+        fEdited = true;
       }
       ImGui::TreePop();
     }
