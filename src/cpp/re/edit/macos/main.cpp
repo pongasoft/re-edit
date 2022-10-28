@@ -70,7 +70,7 @@ static void onWindowContentScaleChange(GLFWwindow* iWindow, float iXscale, float
 
 int main(int argc, char **argv)
 {
-  fprintf(stdout, "re-edit - %s | %s\n", re::edit::kFullVersion, re::edit::kGitTag);
+  fprintf(stdout, "re-edit - %s | %s\n", re::edit::kFullVersion, re::edit::kGitVersion);
   // Setup Dear ImGui context
   IMGUI_CHECKVERSION();
   ImGui::CreateContext();

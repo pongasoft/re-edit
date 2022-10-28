@@ -108,7 +108,7 @@ static void printInfo(GLFWwindow *iWindow)
 
 int main(int argc, char **argv)
 {
-  fprintf(stdout, "re-edit - %s | %s\n", re::edit::kFullVersion, re::edit::kGitTag);
+  fprintf(stdout, "re-edit - %s | %s\n", re::edit::kFullVersion, re::edit::kGitVersion);
   SetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE);
 
   const char *glsl_version = "#version 130";
