@@ -11,6 +11,7 @@
 #include "../Application.h"
 #include "MTLManagers.h"
 #include "nfd.h"
+#include <version.h>
 
 
 #define GLFW_INCLUDE_NONE
@@ -69,6 +70,7 @@ static void onWindowContentScaleChange(GLFWwindow* iWindow, float iXscale, float
 
 int main(int argc, char **argv)
 {
+  fprintf(stdout, "re-edit - %s | %s\n", re::edit::kFullVersion, re::edit::kGitTag);
   // Setup Dear ImGui context
   IMGUI_CHECKVERSION();
   ImGui::CreateContext();

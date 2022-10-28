@@ -12,6 +12,7 @@
 #include <shellscalingapi.h>
 #include <winuser.h>
 #include "nfd.h"
+#include <version.h>
 
 #if defined(IMGUI_IMPL_OPENGL_ES2)
 #include <GLES2/gl2.h>
@@ -107,6 +108,7 @@ static void printInfo(GLFWwindow *iWindow)
 
 int main(int argc, char **argv)
 {
+  fprintf(stdout, "re-edit - %s | %s\n", re::edit::kFullVersion, re::edit::kGitTag);
   SetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE);
 
   const char *glsl_version = "#version 130";

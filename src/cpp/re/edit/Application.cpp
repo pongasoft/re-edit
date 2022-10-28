@@ -27,6 +27,7 @@
 #include <imgui.h>
 #include <imgui_internal.h>
 #include <efsw/efsw.hpp>
+#include <version.h>
 
 namespace re::edit {
 
@@ -591,6 +592,9 @@ void Application::renderMainMenu()
       ImGui::Separator();
       ImGui::MenuItem("ImGui Demo", nullptr, &fShowDemoWindow);
       ImGui::MenuItem("ImGui Metrics", nullptr, &fShowMetricsWindow);
+      ImGui::Separator();
+      ImGui::Text("Version: %s", kFullVersion);
+      ImGui::Text("Build: %s", kGitVersion);
       ImGui::EndMenu();
     }
     ImGui::EndMainMenuBar();

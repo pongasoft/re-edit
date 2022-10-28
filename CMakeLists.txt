@@ -2,8 +2,20 @@ cmake_minimum_required(VERSION 3.17)
 
 set(re-edit_VERSION_MAJOR 0)
 set(re-edit_VERSION_MINOR 9)
-set(re-edit_VERSION_PATCH 6)
+set(re-edit_VERSION_PATCH 7)
 set(re-edit_VERSION "${re-edit_VERSION_MAJOR}.${re-edit_VERSION_MINOR}.${re-edit_VERSION_PATCH}")
+
+execute_process(COMMAND git describe --long --dirty --abbrev=10 --tags
+    RESULT_VARIABLE result
+    OUTPUT_VARIABLE re-edit_GIT_VERSION
+    WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
+    OUTPUT_STRIP_TRAILING_WHITESPACE)
+execute_process(COMMAND git describe --tags
+    RESULT_VARIABLE result
+    OUTPUT_VARIABLE re-edit_GIT_TAG
+    WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
+    OUTPUT_STRIP_TRAILING_WHITESPACE)
+message(STATUS "re-edit git version - ${re-edit_GIT_VERSION} | re-edit git tag - ${re-edit_GIT_TAG}")
 
 if(APPLE)
   set(CMAKE_OSX_DEPLOYMENT_TARGET "10.15" CACHE STRING "" FORCE)
@@ -149,6 +161,9 @@ set(re-edit_BUILD_SOURCES
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/WidgetAttribute.h"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/WidgetAttribute.cpp")
 
+set(VERSION_DIR "${CMAKE_BINARY_DIR}/generated")
+configure_file("${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/version.h.in" "${VERSION_DIR}/version.h")
+
 # Fonts
 set(RE_EDIT_FONTS_DIR "${CMAKE_CURRENT_LIST_DIR}/external/fonts")
 
@@ -163,7 +178,7 @@ endif()
 
 # Build the static library
 add_library("${target}_lib" "${re-edit_BUILD_SOURCES}")
-target_include_directories("${target}_lib" PUBLIC "external/misc" "${RE_EDIT_FONTS_DIR}/includes" "${RE_EDIT_FONTS_DIR}/src")
+target_include_directories("${target}_lib" PUBLIC "${VERSION_DIR}" "external/misc" "${RE_EDIT_FONTS_DIR}/includes" "${RE_EDIT_FONTS_DIR}/src")
 target_link_libraries("${target}_lib" PUBLIC imgui stb-image re-mock nfd efsw)
 target_compile_definitions("${target}_lib" PUBLIC ENABLE_RE_EDIT_INTERNAL_ASSERT=1)
 
