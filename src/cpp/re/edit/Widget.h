@@ -48,7 +48,7 @@ public:
   constexpr ImVec2 getPosition() const { return fGraphics->getPosition(); }
   constexpr ImVec2 getTopLeft() const { return fGraphics->getTopLeft(); }
   constexpr ImVec2 getBottomRight() const { return fGraphics->getBottomRight(); }
-  constexpr ImVec2 getSize() const { return fGraphics->getSize(); }
+  inline ImVec2 getSize() const { return fGraphics->getSize(); }
   constexpr void setPosition(ImVec2 const &iPosition) { fGraphics->setPosition(iPosition); fEdited |= fGraphics->isEdited(); }
 
   constexpr bool isSelected() const { return fSelected; }
