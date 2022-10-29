@@ -206,6 +206,19 @@ target_link_libraries(${target} PRIVATE "${target}_lib")
 #  target_setup_universal_binary(stb)
 #endif()
 
+macro(cmake_option_to_python_bool cmake_opt python_opt)
+  if ("${cmake_opt}")
+    set("python_${python_opt}" "True")
+  else ()
+    set("python_${python_opt}" "False")
+  endif ()
+endmacro()
+
+get_property(GENERATOR_IS_MULTI_CONFIG GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
+cmake_option_to_python_bool(${GENERATOR_IS_MULTI_CONFIG} GENERATOR_IS_MULTI_CONFIG)
+
+configure_file(${CMAKE_CURRENT_LIST_DIR}/re-edit.py.in "${CMAKE_BINARY_DIR}/re-edit.py" @ONLY)
+
 #######################################################
 # Install
 #######################################################
@@ -265,3 +278,9 @@ target_link_libraries("${target_test}" gtest_main gmock "${target}_lib")
 target_include_directories("${target_test}" PUBLIC "${re-edit_CPP_SRC_DIR}")
 
 gtest_discover_tests("${target_test}")
+
+add_custom_target("run_tests"
+    COMMAND ${CMAKE_COMMAND} -E echo "Running tests using $<TARGET_FILE:${target_test}>"
+    COMMAND "$<TARGET_FILE:${target_test}>"
+    DEPENDS "${target_test}"
+    )

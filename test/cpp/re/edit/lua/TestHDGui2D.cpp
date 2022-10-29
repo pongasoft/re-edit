@@ -39,7 +39,7 @@ using namespace re::edit::widget::attribute;
 
 std::string getResourceFile(std::string const &iFilename)
 {
-  return re::mock::fmt::path(RE_EDIT_PROJECT_DIR, "test", "resources", "re", "edit", "lua", iFilename);
+  return fs::path(RE_EDIT_PROJECT_DIR) / "test" / "resources" / "re" / "edit" / "lua" / iFilename;
 }
 
 //------------------------------------------------------------------------

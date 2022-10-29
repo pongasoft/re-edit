@@ -25,7 +25,7 @@ namespace re::edit::lua::Test {
 
 inline std::string getResourceFile(std::string const &iFilename)
 {
-  return re::mock::fmt::path(RE_EDIT_PROJECT_DIR, "test", "resources", "re", "edit", "lua", iFilename);
+  return fs::path(RE_EDIT_PROJECT_DIR) / "test" / "resources" / "re" / "edit" / "lua" / iFilename;
 }
 
 inline ::testing::AssertionResult Eq(ImVec2 const &lhs, ImVec2 const &rhs) {
