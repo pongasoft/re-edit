@@ -31,8 +31,6 @@ namespace re::edit {
 //------------------------------------------------------------------------
 int PropertyManager::init(fs::path const &iDirectory)
 {
-  // TODO: this will NOT work if the original device has a different constructor
-  //       since it is instantiated via realtime_controller.lua
   struct NoOpDevice
   {
     explicit NoOpDevice(int /* iSampleRate */) {}
@@ -43,7 +41,8 @@ int PropertyManager::init(fs::path const &iDirectory)
     .device_root_dir(iDirectory)
     .device_resources_dir(iDirectory / "Resources")
     .mdef_file(iDirectory / "motherboard_def.lua")
-    .rtc_file(iDirectory / "realtime_controller.lua")
+    .rtc(Config::skeletonRealtimeController())
+//    .rtc_file(iDirectory / "realtime_controller.lua")
     .rt([](Realtime &rt) { rt = Realtime{}; }); // no object creation at all
 //    .rt([](Realtime &rt) { rt = Realtime::byDefault<NoOpDevice>(); });
 
