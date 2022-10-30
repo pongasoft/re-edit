@@ -157,7 +157,7 @@ bool Application::init(lua::Config const &iConfig,
     io.WantSaveIniSettings = false; // will be "notified" when it changes
     io.ConfigWindowsMoveFromTitleBarOnly = true;
 
-    setDeviceHeightRU(fAppContext.fPropertyManager->init(fRoot));
+    fAppContext.initPropertyManager(fRoot);
 
     fAppContext.fTextureManager->init(fRoot / "GUI2D");
     fAppContext.fTextureManager->scanDirectory();
@@ -173,8 +173,15 @@ bool Application::init(lua::Config const &iConfig,
   }
   catch(...)
   {
-    fException = std::current_exception();
-    fAppContext.fInitException = fException;
+    auto currentException = std::current_exception();
+    fAppContext.fInitException = currentException;
+    fException = Exception {
+      /* .fMessage = */            "Error during initialization",
+      /* .fDisplaySaveButton = */  false,
+      /* .fCloseButtonMessage = */ "Exit",
+      /* .fRecoverable = */        false,
+      /* .fException = */          currentException
+    };
     RE_EDIT_LOG_ERROR("Exception detected during initialization: %s", impl::what(*fAppContext.fInitException));
   }
 
@@ -217,7 +224,15 @@ bool Application::newFrame() noexcept
   catch(...)
   {
     if(!fException)
-      fException = std::current_exception();
+    {
+      fException = Exception {
+        /* .fMessage = */            "Error",
+        /* .fDisplaySaveButton = */  true,
+        /* .fCloseButtonMessage = */ "Exit",
+        /* .fRecoverable = */        false,
+        /* .fException = */          std::current_exception()
+      };
+    }
     return impl::executeCatchAllExceptions([e = std::current_exception()] {
       RE_EDIT_LOG_ERROR("Unrecoverable exception detected: %s", impl::what(e));
       ImGui::ErrorCheckEndFrameRecover(nullptr);
@@ -234,7 +249,14 @@ bool Application::render() noexcept
   {
     try
     {
-      return doRenderException(*fException, fAppContext.fInitException == std::nullopt);
+      auto res = doRenderException();
+      if(fException->fRecoverable)
+      {
+        if(!res)
+          fException = std::nullopt;
+      }
+      else
+        return res;
     }
     catch(...)
     {
@@ -245,20 +267,25 @@ bool Application::render() noexcept
       return false;
     }
   }
-  else
+
+  try
   {
-    try
-    {
-      return doRender();
-    }
-    catch(...)
-    {
-      fException = std::current_exception();
-      return impl::executeCatchAllExceptions([e = std::current_exception()] {
-        RE_EDIT_LOG_ERROR("Unrecoverable exception detected: %s", impl::what(e));
-        ImGui::ErrorCheckEndFrameRecover(nullptr);
-      });
-    }
+    return doRender();
+  }
+  catch(...)
+  {
+    if(!fException)
+      fException = Exception {
+        /* .fMessage = */            "Error during initialization",
+        /* .fDisplaySaveButton = */  true,
+        /* .fCloseButtonMessage = */ "Exit",
+        /* .fRecoverable = */        false,
+        /* .fException = */          std::current_exception()
+      };
+    return impl::executeCatchAllExceptions([e = std::current_exception()] {
+      RE_EDIT_LOG_ERROR("Unrecoverable exception detected: %s", impl::what(e));
+      ImGui::ErrorCheckEndFrameRecover(nullptr);
+    });
   }
 }
 
@@ -278,6 +305,26 @@ bool Application::doRender()
     fAppContext.reloadTextures();
     fAppContext.fTextureManager->scanDirectory();
     fReloadTexturesRequested = false;
+  }
+
+  if(fReloadDeviceRequested)
+  {
+    try
+    {
+      fAppContext.initPropertyManager(fRoot);
+    }
+    catch(...)
+    {
+      fException = Exception {
+        /* .fMessage = */            "Error while reloading rack extension definition",
+        /* .fDisplaySaveButton = */  false,
+        /* .fCloseButtonMessage = */ "Continue",
+        /* .fRecoverable = */        true,
+        /* .fException = */          std::current_exception()
+      };
+      RE_EDIT_LOG_WARNING("Error while reloading rack extension definition %s", impl::what(std::current_exception()));
+    }
+    fReloadDeviceRequested = false;
   }
 
   if(fAppContext.fUndoManager->hasUndoHistory())
@@ -455,18 +502,6 @@ bool Application::doRender()
   return true;
 }
 
-//------------------------------------------------------------------------
-// Application::setDeviceHeightRU
-//------------------------------------------------------------------------
-void Application::setDeviceHeightRU(int iDeviceHeightRU)
-{
-  fDeviceHeightRU = iDeviceHeightRU;
-  fAppContext.fFrontPanel->fPanel.setDeviceHeightRU(iDeviceHeightRU);
-  fAppContext.fFoldedFrontPanel->fPanel.setDeviceHeightRU(iDeviceHeightRU);
-  fAppContext.fBackPanel->fPanel.setDeviceHeightRU(iDeviceHeightRU);
-  fAppContext.fFoldedBackPanel->fPanel.setDeviceHeightRU(iDeviceHeightRU);
-}
-
 static constexpr auto kSavePopupWindow = "Save | Warning";
 
 //------------------------------------------------------------------------
@@ -506,6 +541,10 @@ void Application::renderMainMenu()
       if(ImGui::MenuItem("Rescan images"))
       {
         fReloadTexturesRequested = true;
+      }
+      if(ImGui::MenuItem("Reload RE definition"))
+      {
+        fReloadDeviceRequested = true;
       }
 
       ImGui::EndMenu();
@@ -604,7 +643,7 @@ void Application::renderMainMenu()
 //------------------------------------------------------------------------
 // Application::doRenderException
 //------------------------------------------------------------------------
-bool Application::doRenderException(std::exception_ptr iException, bool iSaveButton)
+bool Application::doRenderException()
 {
   static constexpr auto kExceptionPopup = "Error";
 
@@ -615,14 +654,14 @@ bool Application::doRenderException(std::exception_ptr iException, bool iSaveBut
 
   if(ImGui::BeginPopupModal(kExceptionPopup, nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_HorizontalScrollbar))
   {
-    ImGui::Text("!!! Error !!!");
+    ImGui::Text(fException->fMessage.c_str());
     ImGui::Separator();
     bool copy_to_clipboard = ImGui::Button(ReGui_Prefix(ReGui_Icon_Copy, "Copy to clipboard"));
     if (copy_to_clipboard)
     {
       ImGui::LogToClipboard();
     }
-    std::istringstream stream(impl::what(iException));
+    std::istringstream stream(impl::what(fException->fException));
     std::string line;
     while(std::getline(stream, line, '\n'))
     {
@@ -633,7 +672,7 @@ bool Application::doRenderException(std::exception_ptr iException, bool iSaveBut
       ImGui::LogFinish();
     }
     ImGui::Separator();
-    if(iSaveButton)
+    if(fException->fDisplaySaveButton)
     {
       ImGui::Text("Do you want to try to save before quitting?");
       if(ImGui::Button("OK (try to save)", ImVec2(120, 0)))
@@ -645,7 +684,7 @@ bool Application::doRenderException(std::exception_ptr iException, bool iSaveBut
       ImGui::SetItemDefaultFocus();
       ImGui::SameLine();
     }
-    if(ImGui::Button("Exit", ImVec2(120, 0)))
+    if(ImGui::Button(fException->fCloseButtonMessage, ImVec2(120, 0)))
     {
       shouldContinue = false;
       ImGui::CloseCurrentPopup();
@@ -655,6 +694,7 @@ bool Application::doRenderException(std::exception_ptr iException, bool iSaveBut
   }
 
   return shouldContinue;
+
 }
 
 //------------------------------------------------------------------------

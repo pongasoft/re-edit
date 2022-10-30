@@ -249,6 +249,7 @@ protected:
   void init(lua::Config const &iConfig);
   std::string getLuaConfig() const;
   void reloadTextures();
+  void initPropertyManager(fs::path const &iRoot);
 
   void initPanels(fs::path const &iDevice2DFile, fs::path const &iHDGui2DFile);
   void onNativeWindowFontDpiScaleChange(float iFontDpiScale);

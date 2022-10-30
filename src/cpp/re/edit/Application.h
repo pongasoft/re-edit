@@ -51,8 +51,6 @@ public:
   inline int getNativeWindowWidth() const { return fAppContext.fNativeWindowWidth; }
   inline int getNativeWindowHeight() const { return fAppContext.fNativeWindowHeight; }
 
-  void setDeviceHeightRU(int iDeviceHeightRU);
-
   inline void onNativeWindowFontDpiScaleChange(float iFontDpiScale) { fAppContext.onNativeWindowFontDpiScaleChange(iFontDpiScale); }
   inline void onNativeWindowFontScaleChange(float iFontScale) { fAppContext.onNativeWindowFontScaleChange(iFontScale); }
 //  inline void onNativeWindowPositionChange(int x, int y, float iFontScale, float iFontDpiScale) { fAppContext.onNativeWindowPositionChange(x, y, iFontScale, iFontDpiScale); }
@@ -68,17 +66,25 @@ public:
 
   static void saveFile(fs::path const &iFile, std::string const &iContent);
 
+private:
+  struct Exception
+  {
+    std::string fMessage{};
+    bool fDisplaySaveButton{};
+    char const *fCloseButtonMessage{"Exit"};
+    bool fRecoverable{};
+    std::exception_ptr fException{};
+  };
 public:
   float clear_color[4] = {0.45f, 0.55f, 0.60f, 1.00f};
 
 private:
-  bool doRenderException(std::exception_ptr iException, bool iSaveButton);
+  bool doRenderException();
   bool doRender(); // may throw exception
   std::string hdgui2D();
   std::string device2D() const;
 
 private:
-  int fDeviceHeightRU{1};
   AppContext fAppContext{};
   ReGui::Window fMainWindow{"re-edit", std::nullopt, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_HorizontalScrollbar};
   bool fShowDemoWindow{false};
@@ -89,8 +95,9 @@ private:
   bool fNeedsSaving{};
   bool fRecomputeDimensionsRequested{};
   bool fReloadTexturesRequested{};
+  bool fReloadDeviceRequested{};
   std::optional<std::string> fNewLayoutRequested{};
-  std::optional<std::exception_ptr> fException{};
+  std::optional<Exception> fException{};
 };
 
 }

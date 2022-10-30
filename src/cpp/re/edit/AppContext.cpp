@@ -403,6 +403,20 @@ void AppContext::reloadTextures()
   fFoldedBackPanel->reloadTextures();
 }
 
+//------------------------------------------------------------------------
+// AppContext::initPropertyManager
+//------------------------------------------------------------------------
+void AppContext::initPropertyManager(fs::path const &iRoot)
+{
+  auto propertyManager = std::make_shared<PropertyManager>();
+  auto deviceHeightRU = propertyManager->init(iRoot);
+  fFrontPanel->fPanel.setDeviceHeightRU(deviceHeightRU);
+  fFoldedFrontPanel->fPanel.setDeviceHeightRU(deviceHeightRU);
+  fBackPanel->fPanel.setDeviceHeightRU(deviceHeightRU);
+  fFoldedBackPanel->fPanel.setDeviceHeightRU(deviceHeightRU);
+  fPropertyManager = std::move(propertyManager);
+}
+
 ////------------------------------------------------------------------------
 //// AppContext::onNativeWindowPositionChange
 ////------------------------------------------------------------------------
