@@ -132,6 +132,8 @@ set(re-edit_BUILD_SOURCES
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/Color.h"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/Color.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/Constants.h"
+    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/Dialog.h"
+    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/Dialog.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/Errors.h"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/FilmStrip.h"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/FilmStrip.cpp"

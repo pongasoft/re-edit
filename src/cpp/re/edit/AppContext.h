@@ -294,7 +294,6 @@ protected:
   Widget const *fCurrentWidget{};
   int fNativeWindowWidth{1280};
   int fNativeWindowHeight{720};
-  std::optional<std::exception_ptr> fInitException{};
 
   inline static AppContext *kCurrent{};
 };

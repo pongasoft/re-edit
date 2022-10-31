@@ -170,22 +170,20 @@ bool Application::init(lua::Config const &iConfig,
 //
 //    fileWatcher->addWatch(fRoot.string(), listener.get(), true);
 //    fileWatcher->watch();
+    return true;
   }
   catch(...)
   {
-    auto currentException = std::current_exception();
-    fAppContext.fInitException = currentException;
-    fException = Exception {
-      /* .fMessage = */            "Error during initialization",
-      /* .fDisplaySaveButton = */  false,
-      /* .fCloseButtonMessage = */ "Exit",
-      /* .fRecoverable = */        false,
-      /* .fException = */          currentException
-    };
-    RE_EDIT_LOG_ERROR("Exception detected during initialization: %s", impl::what(*fAppContext.fInitException));
+    fHasException = true;
+    newDialog("Error")
+      .breakOnNoAction()
+      .preContentMessage("Error during initialization")
+      .text(impl::what(std::current_exception()), true)
+      .buttonExit()
+      .postContentMessage("Note: If you think this is an error in the tool, please report it at https://github.com/pongasoft/re-edit-dev/issues");
+    RE_EDIT_LOG_ERROR("Exception detected during initialization: %s", impl::what(std::current_exception()));
+    return false;
   }
-
-  return fAppContext.fInitException == std::nullopt;
 }
 
 //------------------------------------------------------------------------
@@ -197,8 +195,9 @@ bool Application::newFrame() noexcept
   {
     if(fNewLayoutRequested)
     {
-      ImGui::LoadIniSettingsFromMemory(fNewLayoutRequested->c_str(), fNewLayoutRequested->size());
+      auto newLayoutRequest = *fNewLayoutRequested;
       fNewLayoutRequested = std::nullopt;
+      ImGui::LoadIniSettingsFromMemory(newLayoutRequest.c_str(), newLayoutRequest.size());
     }
 
     if(fAppContext.fFontManager->hasFontChangeRequest())
@@ -223,16 +222,14 @@ bool Application::newFrame() noexcept
   }
   catch(...)
   {
-    if(!fException)
-    {
-      fException = Exception {
-        /* .fMessage = */            "Error",
-        /* .fDisplaySaveButton = */  true,
-        /* .fCloseButtonMessage = */ "Exit",
-        /* .fRecoverable = */        false,
-        /* .fException = */          std::current_exception()
-      };
-    }
+    fHasException = true;
+    newDialog("Error")
+      .breakOnNoAction()
+      .preContentMessage("Error in newFrame")
+      .text(impl::what(std::current_exception()), true)
+      .button("Save", [this] { save(); return ReGui::Dialog::Result::kExit; }, true)
+      .buttonExit()
+      .postContentMessage("Note: If you think this is an error in the tool, please report it at https://github.com/pongasoft/re-edit-dev/issues");
     return impl::executeCatchAllExceptions([e = std::current_exception()] {
       RE_EDIT_LOG_ERROR("Unrecoverable exception detected: %s", impl::what(e));
       ImGui::ErrorCheckEndFrameRecover(nullptr);
@@ -245,18 +242,23 @@ bool Application::newFrame() noexcept
 //------------------------------------------------------------------------
 bool Application::render() noexcept
 {
-  if(fException)
+  if(!fDialogs.empty())
   {
     try
     {
-      auto res = doRenderException();
-      if(fException->fRecoverable)
+      auto res = renderDialog();
+      switch(res)
       {
-        if(!res)
-          fException = std::nullopt;
+        case ReGui::Dialog::Result::kContinue:
+          // nothing to do... just continue
+          break;
+        case ReGui::Dialog::Result::kBreak:
+          return true;
+        case ReGui::Dialog::Result::kExit:
+          return false;
+        default:
+          RE_EDIT_FAIL("not reached");
       }
-      else
-        return res;
     }
     catch(...)
     {
@@ -274,14 +276,14 @@ bool Application::render() noexcept
   }
   catch(...)
   {
-    if(!fException)
-      fException = Exception {
-        /* .fMessage = */            "Error during initialization",
-        /* .fDisplaySaveButton = */  true,
-        /* .fCloseButtonMessage = */ "Exit",
-        /* .fRecoverable = */        false,
-        /* .fException = */          std::current_exception()
-      };
+    fHasException = true;
+    newDialog("Error")
+      .breakOnNoAction()
+      .preContentMessage("Error during rendering")
+      .text(impl::what(std::current_exception()), true)
+      .button("Save", [this] { save(); return ReGui::Dialog::Result::kExit; }, true)
+      .buttonExit()
+      .postContentMessage("Note: If you think this is an error in the tool, please report it at https://github.com/pongasoft/re-edit-dev/issues");
     return impl::executeCatchAllExceptions([e = std::current_exception()] {
       RE_EDIT_LOG_ERROR("Unrecoverable exception detected: %s", impl::what(e));
       ImGui::ErrorCheckEndFrameRecover(nullptr);
@@ -302,28 +304,25 @@ bool Application::doRender()
 
   if(fReloadTexturesRequested)
   {
+    fReloadTexturesRequested = false;
     fAppContext.fTextureManager->scanDirectory();
     fAppContext.reloadTextures();
-    fReloadTexturesRequested = false;
   }
 
   if(fReloadDeviceRequested)
   {
+    fReloadDeviceRequested = false;
     try
     {
       fAppContext.reloadDevice(fRoot);
     }
     catch(...)
     {
-      fException = Exception {
-        /* .fMessage = */            "Error while reloading rack extension definition",
-        /* .fDisplaySaveButton = */  false,
-        /* .fCloseButtonMessage = */ "Continue",
-        /* .fRecoverable = */        true,
-        /* .fException = */          std::current_exception()
-      };
+      newDialog("Error")
+        .preContentMessage("Error while reloading rack extension definition")
+        .text(impl::what(std::current_exception()), true)
+        .buttonCancel("Ok");
     }
-    fReloadDeviceRequested = false;
   }
 
   if(fAppContext.fUndoManager->hasUndoHistory())
@@ -493,9 +492,6 @@ bool Application::doRender()
 
   fAppContext.render();
 
-  if(fSavingRequested)
-    renderSavePopup();
-
   fAppContext.fPropertyManager->afterRenderFrame();
 
   return true;
@@ -508,8 +504,6 @@ static constexpr auto kSavePopupWindow = "Save | Warning";
 //------------------------------------------------------------------------
 void Application::renderMainMenu()
 {
-  auto savePopupId = ImGui::GetID(kSavePopupWindow);
-
   if(ImGui::BeginMainMenuBar())
   {
     if(ImGui::BeginMenu("File"))
@@ -534,8 +528,12 @@ void Application::renderMainMenu()
 //      }
       if(ImGui::MenuItem(ReGui_Prefix(ReGui_Icon_Save, "Save")))
       {
-        ImGui::OpenPopup(savePopupId);
-        fSavingRequested = true;
+        newDialog("Save")
+          .preContentMessage("!!! Warning !!!")
+          .text("This is an experimental build. Saving will override hdgui_2d.lua and device_2d.lua\nAre you sure you want to proceed?")
+          .button("Ok", [this] { save(); return ReGui::Dialog::Result::kContinue; })
+          .buttonCancel("Cancel", true)
+          ;
       }
       if(ImGui::MenuItem("Rescan images"))
       {
@@ -640,87 +638,29 @@ void Application::renderMainMenu()
 }
 
 //------------------------------------------------------------------------
-// Application::doRenderException
+// Application::newDialog
 //------------------------------------------------------------------------
-bool Application::doRenderException()
+ReGui::Dialog &Application::newDialog(std::string iTitle)
 {
-  static constexpr auto kExceptionPopup = "Error";
-
-  bool shouldContinue = true;
-
-  if(!ImGui::IsPopupOpen(kExceptionPopup))
-    ImGui::OpenPopup(kExceptionPopup);
-
-  if(ImGui::BeginPopupModal(kExceptionPopup, nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_HorizontalScrollbar))
-  {
-    ImGui::Text(fException->fMessage.c_str());
-    ImGui::Separator();
-    bool copy_to_clipboard = ImGui::Button(ReGui_Prefix(ReGui_Icon_Copy, "Copy to clipboard"));
-    if (copy_to_clipboard)
-    {
-      ImGui::LogToClipboard();
-    }
-    std::istringstream stream(impl::what(fException->fException));
-    std::string line;
-    while(std::getline(stream, line, '\n'))
-    {
-      ImGui::Text("%s", line.c_str());
-    }
-    if (copy_to_clipboard)
-    {
-      ImGui::LogFinish();
-    }
-    ImGui::Separator();
-    if(fException->fDisplaySaveButton)
-    {
-      ImGui::Text("Do you want to try to save before quitting?");
-      if(ImGui::Button("OK (try to save)", ImVec2(120, 0)))
-      {
-        save();
-        shouldContinue = false;
-        ImGui::CloseCurrentPopup();
-      }
-      ImGui::SetItemDefaultFocus();
-      ImGui::SameLine();
-    }
-    if(ImGui::Button(fException->fCloseButtonMessage, ImVec2(120, 0)))
-    {
-      shouldContinue = false;
-      ImGui::CloseCurrentPopup();
-    }
-    ImGui::Text("Note: If you think this is an error in the tool, please report it at https://github.com/pongasoft/re-edit-dev/issues");
-    ImGui::EndPopup();
-  }
-
-  return shouldContinue;
-
+  fDialogs.emplace_back(std::make_unique<ReGui::Dialog>(std::move(iTitle)));
+  return *fDialogs[fDialogs.size() - 1];
 }
 
 //------------------------------------------------------------------------
-// Application::renderSavePopup
+// Application::renderDialog
 //------------------------------------------------------------------------
-void Application::renderSavePopup()
+ReGui::Dialog::Result Application::renderDialog()
 {
-  if(ImGui::BeginPopupModal(kSavePopupWindow, nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+  if(fDialogs.empty())
+    return ReGui::Dialog::Result::kContinue;
+  auto &dialog = fDialogs[fDialogs.size() - 1];
+  auto res = dialog->render();
+  if(!dialog->isOpen())
   {
-    ImGui::Text("!!! Warning !!!");
-    ImGui::Text("This is an experimental build. Saving will override hdgui_2d.lua and device_2d.lua");
-    ImGui::Text("Are you sure you want to proceed?");
-    if(ImGui::Button("OK", ImVec2(120, 0)))
-    {
-      save();
-      fSavingRequested = false;
-      ImGui::CloseCurrentPopup();
-    }
-    ImGui::SameLine();
-    if(ImGui::Button("Cancel", ImVec2(120, 0)))
-    {
-      fSavingRequested = false;
-      ImGui::CloseCurrentPopup();
-    }
-    ImGui::SetItemDefaultFocus();
-    ImGui::EndPopup();
+    auto iter = std::find(fDialogs.begin(), fDialogs.end(), dialog);
+    fDialogs.erase(iter);
   }
+  return res;
 }
 
 //------------------------------------------------------------------------

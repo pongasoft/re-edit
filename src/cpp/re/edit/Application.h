@@ -28,6 +28,7 @@
 #include "lua/Device2D.h"
 #include "PanelState.h"
 #include <optional>
+#include "Dialog.h"
 #include "fs.h"
 
 namespace re::edit {
@@ -58,11 +59,10 @@ public:
   bool newFrame() noexcept;
   bool render() noexcept;
   void renderMainMenu();
-  void renderSavePopup();
   void save();
   void saveConfig();
 
-  constexpr bool hasException() const { return fException != std::nullopt; }
+  constexpr bool hasException() const { return fHasException; }
 
   static void saveFile(fs::path const &iFile, std::string const &iContent);
 
@@ -79,10 +79,11 @@ public:
   float clear_color[4] = {0.45f, 0.55f, 0.60f, 1.00f};
 
 private:
-  bool doRenderException();
   bool doRender(); // may throw exception
+  ReGui::Dialog::Result renderDialog();
   std::string hdgui2D();
   std::string device2D() const;
+  ReGui::Dialog &newDialog(std::string iTitle);
 
 private:
   AppContext fAppContext{};
@@ -91,13 +92,13 @@ private:
   bool fShowMetricsWindow{false};
 
   fs::path fRoot{};
-  bool fSavingRequested{};
   bool fNeedsSaving{};
   bool fRecomputeDimensionsRequested{};
   bool fReloadTexturesRequested{};
   bool fReloadDeviceRequested{};
+  bool fHasException{};
   std::optional<std::string> fNewLayoutRequested{};
-  std::optional<Exception> fException{};
+  std::vector<std::unique_ptr<ReGui::Dialog>> fDialogs{};
 };
 
 }

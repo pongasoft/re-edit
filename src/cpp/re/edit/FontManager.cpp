@@ -144,10 +144,11 @@ void FontManager::loadFontFromFile(char const *iFontFilename, float iSize) const
 void FontManager::applyFontChangeRequest()
 {
   RE_EDIT_INTERNAL_ASSERT(hasFontChangeRequest());
-  fCurrentFontScale = fFontChangeRequest->fFontScale;
-  fCurrentFontDpiScale = fFontChangeRequest->fFontDpiScale;
-  setCurrentFont(fFontChangeRequest->fFontDef);
+  auto fontChangeRequest = *fFontChangeRequest;
   fFontChangeRequest = std::nullopt;
+  fCurrentFontScale = fontChangeRequest.fFontScale;
+  fCurrentFontDpiScale = fontChangeRequest.fFontDpiScale;
+  setCurrentFont(fontChangeRequest.fFontDef);
 }
 
 //------------------------------------------------------------------------
