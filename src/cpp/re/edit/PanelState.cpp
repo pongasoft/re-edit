@@ -140,7 +140,7 @@ void PanelState::initPanel(AppContext &iCtx,
 //------------------------------------------------------------------------
 bool PanelState::renderTab(AppContext &iCtx)
 {
-  if(ImGui::BeginTabItem(fPanel.getName()))
+  if(ImGui::BeginTabItem(fPanel.hasErrors() ? fmt::printf("%s %s", fPanel.getName(), ReGui::kErrorIcon).c_str() : fPanel.getName()))
   {
     fPanel.computeIsHidden(iCtx);
     fPanel.checkForErrors(iCtx);

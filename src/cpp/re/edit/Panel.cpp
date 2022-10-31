@@ -1323,6 +1323,8 @@ void Panel::setDeviceHeightRU(int iDeviceHeightRU)
   fGraphics.fFilter = [h](FilmStrip const &f) {
     return f.width() == kDevicePixelWidth && f.height() == h;
   };
+  fGraphics.markEdited();
+  fEdited = true;
 }
 
 //------------------------------------------------------------------------

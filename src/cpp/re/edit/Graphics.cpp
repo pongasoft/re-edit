@@ -141,6 +141,15 @@ void Graphics::findErrors(AppContext &iCtx, UserError &oErrors) const
   {
     if(!texture->isValid())
       oErrors.add("Invalid png: %s", texture->getFilmStrip()->errorMessage());
+    else
+    {
+      if(fFilter)
+      {
+        auto keys = iCtx.findTextureKeys(fFilter);
+        if(std::find(keys.begin(), keys.end(), texture->key()) == keys.end())
+          oErrors.add("Invalid png (wrong size)");
+      }
+    }
   }
 }
 
@@ -440,6 +449,15 @@ void Graphics::findErrors(AppContext &iCtx, UserError &oErrors) const
     {
       if(!texture->isValid())
         oErrors.add("Invalid png: %s", texture->getFilmStrip()->errorMessage());
+      else
+      {
+        if(fFilter)
+        {
+          auto keys = iCtx.findTextureKeys(fFilter);
+          if(std::find(keys.begin(), keys.end(), texture->key()) == keys.end())
+            oErrors.add("Invalid png (wrong size)");
+        }
+      }
     }
   }
 }

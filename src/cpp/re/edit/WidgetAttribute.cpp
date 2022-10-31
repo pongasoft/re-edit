@@ -807,11 +807,14 @@ void PropertyPath::findErrors(AppContext &iCtx, UserError &oErrors) const
     auto property = iCtx.findProperty(fValue);
     if(!property)
       oErrors.add("Invalid property (missing from motherboard)");
-    if(fFilter)
+    else
     {
-      auto properties = iCtx.findProperties(fFilter);
-      if(std::find(properties.begin(), properties.end(), property) == properties.end())
-        oErrors.add("Invalid property (wrong type)");
+      if(fFilter)
+      {
+        auto properties = iCtx.findProperties(fFilter);
+        if(std::find(properties.begin(), properties.end(), property) == properties.end())
+          oErrors.add("Invalid property (wrong type)");
+      }
     }
   }
   else
@@ -847,6 +850,33 @@ void ObjectPath::editView(AppContext &iCtx)
         ImGui::SetItemDefaultFocus();
     }
     ImGui::EndCombo();
+  }
+}
+
+//------------------------------------------------------------------------
+// ObjectPath::findErrors
+//------------------------------------------------------------------------
+void ObjectPath::findErrors(AppContext &iCtx, UserError &oErrors) const
+{
+  if(fProvided)
+  {
+    auto object = iCtx.findObject(fValue);
+    if(!object)
+      oErrors.add("Invalid (missing from motherboard)");
+    else
+    {
+      if(fFilter)
+      {
+        auto objects = iCtx.findObjects(fFilter);
+        if(std::find(objects.begin(), objects.end(), object) == objects.end())
+          oErrors.add("Invalid (wrong type)");
+      }
+    }
+  }
+  else
+  {
+    if(fRequired)
+      oErrors.add("Required");
   }
 }
 

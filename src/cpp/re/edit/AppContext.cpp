@@ -46,6 +46,8 @@ void AppContext::initPanels(fs::path const &iDevice2DFile, fs::path const &iHDGu
   fFoldedBackPanel->initPanel(*this, d2d->folded_back(), hdg->folded_back());
 
   fCurrentPanelState = fFrontPanel.get();
+  markEdited();
+  checkForErrors();
 }
 
 //------------------------------------------------------------------------
@@ -401,12 +403,13 @@ void AppContext::reloadTextures()
   fFoldedFrontPanel->reloadTextures();
   fBackPanel->reloadTextures();
   fFoldedBackPanel->reloadTextures();
+  checkForErrors();
 }
 
 //------------------------------------------------------------------------
-// AppContext::initPropertyManager
+// AppContext::initDevice
 //------------------------------------------------------------------------
-void AppContext::initPropertyManager(fs::path const &iRoot)
+void AppContext::initDevice(fs::path const &iRoot)
 {
   auto propertyManager = std::make_shared<PropertyManager>();
   auto deviceHeightRU = propertyManager->init(iRoot);
@@ -415,6 +418,50 @@ void AppContext::initPropertyManager(fs::path const &iRoot)
   fBackPanel->fPanel.setDeviceHeightRU(deviceHeightRU);
   fFoldedBackPanel->fPanel.setDeviceHeightRU(deviceHeightRU);
   fPropertyManager = std::move(propertyManager);
+}
+
+//------------------------------------------------------------------------
+// AppContext::reloadDevice
+//------------------------------------------------------------------------
+void AppContext::reloadDevice(fs::path const &iRoot)
+{
+  initDevice(iRoot);
+  checkForErrors();
+}
+
+//------------------------------------------------------------------------
+// AppContext::markEdited
+//------------------------------------------------------------------------
+void AppContext::markEdited()
+{
+  fFrontPanel->fPanel.markEdited();
+  fFoldedFrontPanel->fPanel.markEdited();
+  fBackPanel->fPanel.markEdited();
+  fFoldedBackPanel->fPanel.markEdited();
+}
+
+//------------------------------------------------------------------------
+// AppContext::checkForErrors
+//------------------------------------------------------------------------
+bool AppContext::checkForErrors()
+{
+  auto currentPanel = fCurrentPanelState;
+  auto res = false;
+
+  fCurrentPanelState = fFrontPanel.get();
+  res |= fFrontPanel->fPanel.checkForErrors(*this);
+
+  fCurrentPanelState = fFoldedFrontPanel.get();
+  res |= fFoldedFrontPanel->fPanel.checkForErrors(*this);
+
+  fCurrentPanelState = fBackPanel.get();
+  res |= fBackPanel->fPanel.checkForErrors(*this);
+
+  fCurrentPanelState = fFoldedBackPanel.get();
+  res |= fFoldedBackPanel->fPanel.checkForErrors(*this);
+
+  fCurrentPanelState = currentPanel;
+  return res;
 }
 
 ////------------------------------------------------------------------------

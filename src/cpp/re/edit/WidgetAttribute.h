@@ -405,6 +405,7 @@ public:
     fObjectType{iObjectType},
     fFilter{std::move(iFilter)} {}
   void editView(AppContext &iCtx) override;
+  void findErrors(AppContext &iCtx, UserError &oErrors) const override;
 
   std::unique_ptr<Attribute> clone() const override { return Attribute::clone<ObjectPath>(*this); }
 

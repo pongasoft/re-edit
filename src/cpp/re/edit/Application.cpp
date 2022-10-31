@@ -157,7 +157,7 @@ bool Application::init(lua::Config const &iConfig,
     io.WantSaveIniSettings = false; // will be "notified" when it changes
     io.ConfigWindowsMoveFromTitleBarOnly = true;
 
-    fAppContext.initPropertyManager(fRoot);
+    fAppContext.initDevice(fRoot);
 
     fAppContext.fTextureManager->init(fRoot / "GUI2D");
     fAppContext.fTextureManager->scanDirectory();
@@ -302,8 +302,8 @@ bool Application::doRender()
 
   if(fReloadTexturesRequested)
   {
-    fAppContext.reloadTextures();
     fAppContext.fTextureManager->scanDirectory();
+    fAppContext.reloadTextures();
     fReloadTexturesRequested = false;
   }
 
@@ -311,7 +311,7 @@ bool Application::doRender()
   {
     try
     {
-      fAppContext.initPropertyManager(fRoot);
+      fAppContext.reloadDevice(fRoot);
     }
     catch(...)
     {
@@ -322,7 +322,6 @@ bool Application::doRender()
         /* .fRecoverable = */        true,
         /* .fException = */          std::current_exception()
       };
-      RE_EDIT_LOG_WARNING("Error while reloading rack extension definition %s", impl::what(std::current_exception()));
     }
     fReloadDeviceRequested = false;
   }

@@ -39,7 +39,7 @@ public:
   int init(fs::path const &iDirectory);
 
   std::vector<Object const *> findObjects(Object::Filter const &iFilter) const;
-//  Object const *findObject(std::string const &iObjectPath) const;
+  Object const *findObject(std::string const &iObjectPath) const;
 
   std::vector<Property const *> findProperties(Property::Filter const &iFilter) const;
   std::vector<std::string> findPropertyNames(Property::Filter const &iFilter) const;

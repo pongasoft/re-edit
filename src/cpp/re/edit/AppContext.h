@@ -96,6 +96,7 @@ public: // UserPreferences
   inline UserPreferences &getUserPreferences() { return *fUserPreferences; }
 
 public: // Properties
+  inline Object const *findObject(std::string const &iObjectPath) const { return fPropertyManager->findObject(iObjectPath); };
   inline std::vector<Object const *> findObjects(Object::Filter const &iFilter) const { return fPropertyManager->findObjects(iFilter); }
 
   inline std::vector<Property const *> findProperties(Property::Filter const &iFilter) const { return fPropertyManager->findProperties(iFilter); };
@@ -249,7 +250,10 @@ protected:
   void init(lua::Config const &iConfig);
   std::string getLuaConfig() const;
   void reloadTextures();
-  void initPropertyManager(fs::path const &iRoot);
+  void markEdited();
+  bool checkForErrors();
+  void initDevice(fs::path const &iRoot);
+  void reloadDevice(fs::path const &iRoot);
 
   void initPanels(fs::path const &iDevice2DFile, fs::path const &iHDGui2DFile);
   void onNativeWindowFontDpiScaleChange(float iFontDpiScale);

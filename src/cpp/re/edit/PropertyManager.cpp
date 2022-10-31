@@ -96,6 +96,18 @@ std::vector<Object const *> PropertyManager::findObjects(Object::Filter const &i
 }
 
 //------------------------------------------------------------------------
+// PropertyManager::findObject
+//------------------------------------------------------------------------
+Object const *PropertyManager::findObject(std::string const &iObjectPath) const
+{
+  auto iter = fObjects.find(iObjectPath);
+  if(iter != fObjects.end())
+    return &iter->second;
+  else
+    return nullptr;
+}
+
+//------------------------------------------------------------------------
 // PropertyManager::findProperties
 //------------------------------------------------------------------------
 std::vector<Property const *> PropertyManager::findProperties(Property::Filter const &iFilter) const
