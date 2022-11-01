@@ -301,8 +301,9 @@ public:
     bool fEndRequired;
   };
 public:
-  Window(char const *iName, std::optional<bool> iVisible, ImGuiWindowFlags iFlags = 0) :
-    fName{iName},
+  Window(char const *iKey, std::optional<bool> iVisible, ImGuiWindowFlags iFlags = 0) :
+    fKey{iKey},
+    fName{iKey},
     fVisible{iVisible == std::nullopt || *iVisible},
     fDisableClosingWidget{iVisible == std::nullopt},
     fFlags{iFlags} {}
@@ -311,16 +312,18 @@ public:
 
   constexpr bool isVisible() const { return fVisible; }
   constexpr void setIsVisible(bool iVisible) { fVisible = iVisible; }
+  void setName(std::string const &iName);
 
   [[nodiscard]] Lifecycle begin(ImGuiWindowFlags flags = 0);
 
   void menuItem()
   {
-    ImGui::MenuItem(fName, nullptr, &fVisible);
+    ImGui::MenuItem(fName.c_str(), nullptr, &fVisible);
   }
 
 private:
-  char const *fName;
+  char const *fKey;
+  std::string fName;
   bool fVisible;
   bool fDisableClosingWidget;
   ImGuiWindowFlags fFlags;

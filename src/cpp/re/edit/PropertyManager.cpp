@@ -29,7 +29,7 @@ namespace re::edit {
 //------------------------------------------------------------------------
 // PropertyManager::init
 //------------------------------------------------------------------------
-int PropertyManager::init(fs::path const &iDirectory)
+Info PropertyManager::init(fs::path const &iDirectory)
 {
   struct NoOpDevice
   {
@@ -75,7 +75,7 @@ int PropertyManager::init(fs::path const &iDirectory)
   fDevice->disableRTCNotify();
   fDevice->disableRTCBindings();
 
-  return fDevice->getDeviceInfo().fDeviceHeightRU;
+  return fDevice->getDeviceInfo();
 }
 
 //------------------------------------------------------------------------

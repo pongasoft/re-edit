@@ -157,7 +157,8 @@ bool Application::init(lua::Config const &iConfig,
     io.WantSaveIniSettings = false; // will be "notified" when it changes
     io.ConfigWindowsMoveFromTitleBarOnly = true;
 
-    fAppContext.initDevice(fRoot);
+    auto info = fAppContext.initDevice(fRoot);
+    fMainWindow.setName(info.fMediumName);
 
     fAppContext.fTextureManager->init(fRoot / "GUI2D");
     fAppContext.fTextureManager->scanDirectory();
@@ -314,7 +315,8 @@ bool Application::doRender()
     fReloadDeviceRequested = false;
     try
     {
-      fAppContext.reloadDevice(fRoot);
+      auto info = fAppContext.reloadDevice(fRoot);
+      fMainWindow.setName(info.fMediumName);
     }
     catch(...)
     {
@@ -626,6 +628,12 @@ void Application::renderMainMenu()
       ImGui::Separator();
       ImGui::MenuItem("ImGui Demo", nullptr, &fShowDemoWindow);
       ImGui::MenuItem("ImGui Metrics", nullptr, &fShowMetricsWindow);
+      if(ImGui::MenuItem("imgui.ini"))
+      {
+        newDialog("imgui.ini")
+        .text(ImGui::SaveIniSettingsToMemory(), true)
+        .buttonOk();
+      }
       ImGui::Separator();
       ImGui::Text("Version: %s", kFullVersion);
       ImGui::Text("Build: %s", kGitVersion);

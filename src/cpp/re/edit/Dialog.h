@@ -71,6 +71,7 @@ public:
   Dialog &text(std::string iText, bool iCopyToClipboard = false);
   Dialog &button(std::string iLabel, Button::action_t iAction, bool iDefaultFocus = false);
   Dialog &buttonCancel(std::string iLabel = "Cancel", bool iDefaultFocus = false) { return button(std::move(iLabel), []{ return Result::kContinue;}, iDefaultFocus); }
+  Dialog &buttonOk(std::string iLabel = "Ok", bool iDefaultFocus = false) { return button(std::move(iLabel), []{ return Result::kContinue;}, iDefaultFocus); }
   Dialog &buttonExit(std::string iLabel = "Exit", bool iDefaultFocus = false) { return button(std::move(iLabel), []{ return Result::kExit;}, iDefaultFocus); }
 
   bool isOpen() const;

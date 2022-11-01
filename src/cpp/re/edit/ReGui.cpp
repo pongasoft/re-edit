@@ -45,9 +45,18 @@ Window::Lifecycle Window::begin(ImGuiWindowFlags flags)
       flags |= ImGuiWindowFlags_AlwaysAutoResize;
       fSizeToFitRequested--;
     }
-    return Lifecycle{ImGui::Begin(fName, fDisableClosingWidget ? nullptr : &fVisible, fFlags | flags)};
+    return Lifecycle{ImGui::Begin(fName.c_str(), fDisableClosingWidget ? nullptr : &fVisible, fFlags | flags)};
   }
   else
     return {};
+}
+
+//------------------------------------------------------------------------
+// Window::iName
+//------------------------------------------------------------------------
+void Window::setName(std::string const &iName)
+{
+  std::string key = fKey;
+  fName = key == iName ? key : fmt::printf("%s###%s", iName, fKey);
 }
 }

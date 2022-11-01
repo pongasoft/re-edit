@@ -409,24 +409,26 @@ void AppContext::reloadTextures()
 //------------------------------------------------------------------------
 // AppContext::initDevice
 //------------------------------------------------------------------------
-void AppContext::initDevice(fs::path const &iRoot)
+re::mock::Info AppContext::initDevice(fs::path const &iRoot)
 {
   auto propertyManager = std::make_shared<PropertyManager>();
-  auto deviceHeightRU = propertyManager->init(iRoot);
-  fFrontPanel->fPanel.setDeviceHeightRU(deviceHeightRU);
-  fFoldedFrontPanel->fPanel.setDeviceHeightRU(deviceHeightRU);
-  fBackPanel->fPanel.setDeviceHeightRU(deviceHeightRU);
-  fFoldedBackPanel->fPanel.setDeviceHeightRU(deviceHeightRU);
+  auto info = propertyManager->init(iRoot);
+  fFrontPanel->fPanel.setDeviceHeightRU(info.fDeviceHeightRU);
+  fFoldedFrontPanel->fPanel.setDeviceHeightRU(info.fDeviceHeightRU);
+  fBackPanel->fPanel.setDeviceHeightRU(info.fDeviceHeightRU);
+  fFoldedBackPanel->fPanel.setDeviceHeightRU(info.fDeviceHeightRU);
   fPropertyManager = std::move(propertyManager);
+  return info;
 }
 
 //------------------------------------------------------------------------
 // AppContext::reloadDevice
 //------------------------------------------------------------------------
-void AppContext::reloadDevice(fs::path const &iRoot)
+re::mock::Info AppContext::reloadDevice(fs::path const &iRoot)
 {
-  initDevice(iRoot);
+  auto info = initDevice(iRoot);
   checkForErrors();
+  return info;
 }
 
 //------------------------------------------------------------------------

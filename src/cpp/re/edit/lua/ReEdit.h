@@ -33,7 +33,7 @@ Pos=0,18
 Size=1280,702
 Collapsed=0
 
-[Window][re-edit]
+[Window][###re-edit]
 Pos=0,18
 Size=389,367
 Collapsed=0
@@ -109,7 +109,7 @@ Pos=0,18
 Size=1280,702
 Collapsed=0
 
-[Window][re-edit]
+[Window][###re-edit]
 Pos=0,18
 Size=486,228
 Collapsed=0
