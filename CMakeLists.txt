@@ -109,7 +109,7 @@ endif()
 
 # Adding dependency on re-mock
 option(RE_MOCK_SUPPORT_FOR_AUDIO_FILE "" ON)
-# using re-mock 0af4eeab34b7b2cecdabd5d853ec1cfd3ecb654a
+set(re-mock_GIT_TAG "0af4eeab34b7b2cecdabd5d853ec1cfd3ecb654a" CACHE STRING "re-mock git tag")
 add_subdirectory(../../pongasoft/re-mock re-mock EXCLUDE_FROM_ALL)
 
 # Defines the location of the sources

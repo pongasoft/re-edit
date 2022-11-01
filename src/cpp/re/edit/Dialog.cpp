@@ -103,8 +103,25 @@ Dialog::Result Dialog::render()
 //------------------------------------------------------------------------
 Dialog &Dialog::text(std::string iText, bool iCopyToClipboard)
 {
-  auto content = std::make_unique<TextContent>();
-  content->fText = std::move(iText);
+  return lambda([text = std::move(iText)]() {
+                  std::istringstream stream(text);
+                  std::string line;
+                  while(std::getline(stream, line, '\n'))
+                  {
+                    ImGui::TextUnformatted(line.c_str());
+                  }
+                },
+                iCopyToClipboard);
+}
+
+
+//------------------------------------------------------------------------
+// Dialog::lambda
+//------------------------------------------------------------------------
+Dialog &Dialog::lambda(std::function<void()> iLambda, bool iCopyToClipboard)
+{
+  auto content = std::make_unique<LamdaContent>();
+  content->fLambda = std::move(iLambda);
   content->fCopyToClipboard = iCopyToClipboard;
   fContent.emplace_back(std::move(content));
   return *this;
@@ -142,9 +159,9 @@ bool Dialog::isOpen() const
 }
 
 //------------------------------------------------------------------------
-// Dialog::TextContent::render
+// Dialog::LamdaContent::render
 //------------------------------------------------------------------------
-void Dialog::TextContent::render()
+void Dialog::LamdaContent::render()
 {
   ImGui::PushID(this);
   bool copy_to_clipboard = fCopyToClipboard ? ImGui::Button(ReGui_Prefix(ReGui_Icon_Copy, "Copy to clipboard")) : false;
@@ -152,17 +169,13 @@ void Dialog::TextContent::render()
   {
     ImGui::LogToClipboard();
   }
-  std::istringstream stream(fText);
-  std::string line;
-  while(std::getline(stream, line, '\n'))
-  {
-    ImGui::TextUnformatted(line.c_str());
-  }
+  if(fLambda)
+    fLambda();
   if(copy_to_clipboard)
   {
     ImGui::LogFinish();
   }
   ImGui::PopID();
-}
 
+}
 }

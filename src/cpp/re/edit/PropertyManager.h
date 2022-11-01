@@ -37,6 +37,7 @@ public:
 //  void init(std::string const &iMotherboardDefLuaFilename);
   // return the size of the device in RU
   mock::Info init(fs::path const &iDirectory);
+  re::mock::Info const &getDeviceInfo() const;
 
   std::vector<Object const *> findObjects(Object::Filter const &iFilter) const;
   Object const *findObject(std::string const &iObjectPath) const;

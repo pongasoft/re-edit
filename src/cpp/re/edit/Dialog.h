@@ -52,12 +52,12 @@ public:
     virtual void render() = 0;
   };
 
-  class TextContent : public Content
+  class LamdaContent : public Content
   {
   public:
     void render() override;
 
-    std::string fText{};
+    std::function<void()> fLambda{};
     bool fCopyToClipboard{};
   };
 
@@ -69,6 +69,7 @@ public:
   Dialog &preContentMessage(std::string iMessage) { fPreContentMessage = std::move(iMessage); return *this; }
   Dialog &postContentMessage(std::string iMessage) { fPostContentMessage = std::move(iMessage); return *this; }
   Dialog &text(std::string iText, bool iCopyToClipboard = false);
+  Dialog &lambda(std::function<void()> iLambda, bool iCopyToClipboard = false);
   Dialog &button(std::string iLabel, Button::action_t iAction, bool iDefaultFocus = false);
   Dialog &buttonCancel(std::string iLabel = "Cancel", bool iDefaultFocus = false) { return button(std::move(iLabel), []{ return Result::kContinue;}, iDefaultFocus); }
   Dialog &buttonOk(std::string iLabel = "Ok", bool iDefaultFocus = false) { return button(std::move(iLabel), []{ return Result::kContinue;}, iDefaultFocus); }

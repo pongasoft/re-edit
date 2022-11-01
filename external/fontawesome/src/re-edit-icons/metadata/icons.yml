@@ -161,6 +161,16 @@ floppy-disk:
     - solid
   unicode: f0c7
   voted: false
+folder-image:
+  changes:
+    - 6.0.0-beta1
+  label: Folder Image
+  search:
+    terms: []
+  styles:
+    - solid
+  unicode: e18a
+  voted: false
 folder-open:
   aliases:
     unicodes:
@@ -200,6 +210,22 @@ magnifying-glass:
   styles:
     - solid
   unicode: f002
+  voted: false
+microchip:
+  aliases:
+    unicodes:
+      secondary:
+        - 10f2db
+  changes:
+    - 4.7.0
+    - 5.0.0
+    - 6.0.0-beta1
+  label: Microchip
+  search:
+    terms: []
+  styles:
+    - solid
+  unicode: f2db
   voted: false
 notdef:
   changes:

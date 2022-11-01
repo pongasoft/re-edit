@@ -29,3 +29,7 @@ icons:
       - solid
   - clone:
       - solid
+  - microchip:
+      - solid
+  - folder-image:
+      - solid

@@ -79,6 +79,14 @@ Info PropertyManager::init(fs::path const &iDirectory)
 }
 
 //------------------------------------------------------------------------
+// PropertyManager::getDeviceInfo
+//------------------------------------------------------------------------
+re::mock::Info const &PropertyManager::getDeviceInfo() const
+{
+  return fDevice->getDeviceInfo();
+}
+
+//------------------------------------------------------------------------
 // PropertyManager::findObjects
 //------------------------------------------------------------------------
 std::vector<Object const *> PropertyManager::findObjects(Object::Filter const &iFilter) const
@@ -416,6 +424,7 @@ void PropertyManager::editView(Property const *iProperty)
       break;
   }
 }
+
 
 
 }

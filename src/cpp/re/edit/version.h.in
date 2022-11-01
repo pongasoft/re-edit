@@ -25,6 +25,8 @@ namespace re::edit {
 constexpr auto kFullVersion = "@re-edit_VERSION@";
 constexpr auto kGitVersion = "@re-edit_GIT_VERSION@";
 constexpr auto kGitTag = "@re-edit_GIT_TAG@";
+constexpr auto kArchiveArchitecture = "@re-edit_ARCHIVE_ARCHITECTURE@";
+constexpr auto kReMockVersion = "@re-mock_GIT_TAG@";
 
 }
 

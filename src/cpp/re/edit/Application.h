@@ -84,6 +84,7 @@ private:
   std::string hdgui2D();
   std::string device2D() const;
   ReGui::Dialog &newDialog(std::string iTitle);
+  void about() const;
 
 private:
   AppContext fAppContext{};

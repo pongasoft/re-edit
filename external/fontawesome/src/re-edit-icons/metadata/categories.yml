@@ -54,6 +54,7 @@ coding:
   icons:
     - bars
     - folder-open
+    - microchip
   label: Coding
 communication:
   icons: []
@@ -76,6 +77,7 @@ design:
 devices-hardware:
   icons:
     - floppy-disk
+    - microchip
   label: Devices + Hardware
 disaster:
   icons: []
@@ -99,6 +101,7 @@ files:
   icons:
     - clone
     - floppy-disk
+    - folder-image
     - folder-open
     - paste
   label: Files
@@ -176,6 +179,7 @@ photos-images:
   icons:
     - clone
     - eye-slash
+    - folder-image
   label: Photos + Images
 political:
   icons: []

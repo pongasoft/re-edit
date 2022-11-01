@@ -506,6 +506,16 @@ void Application::renderMainMenu()
 {
   if(ImGui::BeginMainMenuBar())
   {
+    if(ImGui::BeginMenu("re-edit"))
+    {
+      if(ImGui::MenuItem("About"))
+      {
+        newDialog("About")
+          .lambda([this]() { about(); }, true)
+          .buttonOk();
+      }
+      ImGui::EndMenu();
+    }
     if(ImGui::BeginMenu("File"))
     {
 //      if(ImGui::MenuItem(ReGui_Prefix(ReGui_Icon_Open, "Load")))
@@ -535,11 +545,12 @@ void Application::renderMainMenu()
           .buttonCancel("Cancel", true)
           ;
       }
-      if(ImGui::MenuItem("Rescan images"))
+      ImGui::Separator();
+      if(ImGui::MenuItem(ReGui_Prefix(ReGui_Icon_RescanImages, "Rescan images")))
       {
         fReloadTexturesRequested = true;
       }
-      if(ImGui::MenuItem("Reload RE definition"))
+      if(ImGui::MenuItem(ReGui_Prefix(ReGui_Icon_ReloadMotherboard, "Reload motherboard")))
       {
         fReloadDeviceRequested = true;
       }
@@ -639,6 +650,9 @@ void Application::renderMainMenu()
       ImGui::Text("Build: %s", kGitVersion);
       ImGui::EndMenu();
     }
+//    ImGui::Separator();
+//    ImGui::TextUnformatted(fAppContext.fPropertyManager->getDeviceInfo().fMediumName.c_str());
+//    ImGui::TextUnformatted(fAppContext.fPropertyManager->getDeviceInfo().fVersionNumber.c_str());
     ImGui::EndMainMenuBar();
   }
 }
@@ -753,6 +767,65 @@ void Application::saveConfig()
   s << fmt::printf("re_edit[\"imgui.ini\"] = [==[\n%s\n]==]\n", ImGui::SaveIniSettingsToMemory());
 
   saveFile(fRoot / "re-edit.lua", s.str());
+}
+
+//------------------------------------------------------------------------
+// Application::about
+//------------------------------------------------------------------------
+void Application::about() const
+{
+  ImGui::SetNextItemOpen(true, ImGuiCond_Appearing);
+  if(ImGui::TreeNodeEx("re-edit", ImGuiTreeNodeFlags_Framed))
+  {
+    ImGui::Text("Version:      %s", kFullVersion);
+    ImGui::Text("Git Version:  %s", kGitVersion);
+    ImGui::Text("Git Tag:      %s", kGitTag);
+    ImGui::Text("Architecture: %s", kArchiveArchitecture);
+    ImGui::Text("re-mock:      %s", kReMockVersion);
+    ImGui::TreePop();
+  }
+
+  constexpr auto boolToString = [](bool b) { return b ? "true" : "false"; };
+  constexpr auto deviceTypeToString = [](re::mock::DeviceType t) {
+    switch(t)
+    {
+      case mock::DeviceType::kUnknown:
+        return "unknown";
+      case mock::DeviceType::kInstrument:
+        return "instrument";
+      case mock::DeviceType::kCreativeFX:
+        return "creative_fx";
+      case mock::DeviceType::kStudioFX:
+        return "studio_fx";
+      case mock::DeviceType::kHelper:
+        return "helper";
+      case mock::DeviceType::kNotePlayer:
+        return "note_player";
+    }
+  };
+
+
+  ImGui::SetNextItemOpen(true, ImGuiCond_Appearing);
+  if(ImGui::TreeNodeEx("Rack Extension", ImGuiTreeNodeFlags_Framed))
+  {
+    auto const &info = fAppContext.fPropertyManager->getDeviceInfo();
+    ImGui::Text("long_name:                       %s", info.fLongName.c_str());
+    ImGui::Text("medium_name:                     %s", info.fMediumName.c_str());
+    ImGui::Text("short_name:                      %s", info.fShortName.c_str());
+    ImGui::Text("product_id:                      %s", info.fProductId.c_str());
+    ImGui::Text("manufacturer:                    %s", info.fManufacturer.c_str());
+    ImGui::Text("version_number:                  %s", info.fVersionNumber.c_str());
+    ImGui::Text("device_type:                     %s", deviceTypeToString(info.fDeviceType));
+    ImGui::Text("supports_patches:                %s", boolToString(info.fSupportPatches));
+    ImGui::Text("default_patch:                   %s", info.fDefaultPatch.c_str());
+    ImGui::Text("accepts_notes:                   %s", boolToString(info.fAcceptNotes));
+    ImGui::Text("auto_create_note_lane:           %s", boolToString(info.fAutoCreateNoteLane));
+    ImGui::Text("supports_performance_automation: %s", boolToString(info.fSupportsPerformanceAutomation));
+    ImGui::Text("device_height_ru:                %d", info.fDeviceHeightRU);
+    ImGui::TreePop();
+  }
+
+
 }
 
 }
