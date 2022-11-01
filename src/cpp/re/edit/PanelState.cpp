@@ -43,6 +43,8 @@ void PanelState::initPanel(AppContext &iCtx,
 
   iCtx.disableUndo();
 
+  auto currentPanelState = iCtx.fCurrentPanelState;
+
   iCtx.fCurrentPanelState = this;
 
   // handle background
@@ -132,7 +134,7 @@ void PanelState::initPanel(AppContext &iCtx,
 
   iCtx.enableUndo();
 
-  iCtx.fCurrentPanelState = nullptr;
+  iCtx.fCurrentPanelState = currentPanelState;
 }
 
 //------------------------------------------------------------------------
@@ -140,7 +142,8 @@ void PanelState::initPanel(AppContext &iCtx,
 //------------------------------------------------------------------------
 bool PanelState::renderTab(AppContext &iCtx)
 {
-  if(ImGui::BeginTabItem(fPanel.hasErrors() ? fmt::printf("%s %s", fPanel.getName(), ReGui::kErrorIcon).c_str() : fPanel.getName()))
+  auto flags = fPanel.hasErrors() ? ImGuiTabItemFlags_UnsavedDocument : ImGuiTabItemFlags_None;
+  if(ImGui::BeginTabItem(fPanel.getName(), nullptr, flags))
   {
     fPanel.computeIsHidden(iCtx);
     fPanel.checkForErrors(iCtx);

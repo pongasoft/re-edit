@@ -31,7 +31,9 @@ AppContext::AppContext() :
   fFoldedFrontPanel(std::make_unique<PanelState>(PanelType::kFoldedFront)),
   fBackPanel(std::make_unique<PanelState>(PanelType::kBack)),
   fFoldedBackPanel(std::make_unique<PanelState>(PanelType::kFoldedBack))
-{}
+{
+  fCurrentPanelState = fFrontPanel.get();
+}
 
 //------------------------------------------------------------------------
 // AppContext::initPanels
@@ -44,8 +46,6 @@ void AppContext::initPanels(fs::path const &iDevice2DFile, fs::path const &iHDGu
   fFoldedFrontPanel->initPanel(*this, d2d->folded_front(), hdg->folded_front());
   fBackPanel->initPanel(*this, d2d->back(), hdg->back());
   fFoldedBackPanel->initPanel(*this, d2d->folded_back(), hdg->folded_back());
-
-  fCurrentPanelState = fFrontPanel.get();
   markEdited();
   checkForErrors();
 }

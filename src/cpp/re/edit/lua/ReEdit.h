@@ -68,7 +68,7 @@ Pos=60,60
 Size=400,400
 Collapsed=0
 
-[Window][Save | Warning]
+[Window][Dialog]
 Pos=374,310
 Size=532,100
 Collapsed=0
@@ -144,7 +144,7 @@ Pos=60,60
 Size=400,400
 Collapsed=0
 
-[Window][Save | Warning]
+[Window][Dialog]
 Pos=374,310
 Size=532,100
 Collapsed=0

@@ -497,8 +497,6 @@ bool Application::doRender()
   return true;
 }
 
-static constexpr auto kSavePopupWindow = "Save | Warning";
-
 //------------------------------------------------------------------------
 // Application::renderMainMenu
 //------------------------------------------------------------------------
