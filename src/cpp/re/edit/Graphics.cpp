@@ -527,9 +527,10 @@ bool Graphics::copyFrom(Attribute const *iFromAttribute)
   auto fromAttribute = dynamic_cast<Graphics const *>(iFromAttribute);
   if(fromAttribute)
   {
+    fPosition = fromAttribute->fPosition;
     fHitBoundaries = fromAttribute->fHitBoundaries;
     fTexture = fromAttribute->fTexture;
-    fDNZTexture = fromAttribute->fDNZTexture;
+    fDNZTexture = nullptr;
     fEdited = true;
     return true;
   }

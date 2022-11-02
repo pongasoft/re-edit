@@ -951,6 +951,19 @@ std::unique_ptr<Widget> Widget::clone() const
   return std::unique_ptr<Widget>(new Widget(*this));
 }
 
+//------------------------------------------------------------------------
+// Widget::copyFrom
+//------------------------------------------------------------------------
+void Widget::copyFrom(Widget const &iWidget)
+{
+  for(auto &att: fAttributes)
+  {
+    auto otherAtt = iWidget.findAttributeByName(att->fName);
+    if(otherAtt)
+      att->copyFrom(otherAtt);
+  }
+}
+
 ////------------------------------------------------------------------------
 //// Widget::eq
 ////------------------------------------------------------------------------

@@ -429,8 +429,16 @@ bool Value::copyFrom(Attribute const *iAttribute)
     fEdited = true;
     return true;
   }
-  else
-    return false;
+
+  auto pathAttribute = dynamic_cast<PropertyPath const *>(iAttribute);
+  if(pathAttribute)
+  {
+    reset();
+    fValue = *pathAttribute;
+    return true;
+  }
+
+  return false;
 }
 
 //------------------------------------------------------------------------
@@ -822,6 +830,24 @@ void PropertyPath::findErrors(AppContext &iCtx, UserError &oErrors) const
     if(fRequired)
       oErrors.add("Required");
   }
+}
+
+//------------------------------------------------------------------------
+// PropertyPath::copyFrom
+//------------------------------------------------------------------------
+bool PropertyPath::copyFrom(Attribute const *iFromAttribute)
+{
+  if(SingleAttribute::copyFrom(iFromAttribute))
+    return true;
+
+  auto valueAttribute = dynamic_cast<Value const *>(iFromAttribute);
+  if(valueAttribute)
+  {
+    if(!valueAttribute->fUseSwitch)
+      return copyFrom(&valueAttribute->fValue);
+  }
+
+  return false;
 }
 
 //------------------------------------------------------------------------

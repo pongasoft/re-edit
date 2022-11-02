@@ -31,6 +31,7 @@ public:
   explicit PanelState(PanelType iPanelType);
 
   constexpr PanelType getType() const { return fPanel.getType(); }
+  std::vector<WidgetDef> const &getAllowedWidgets() const { return fWidgetDefs; }
 
   void initPanel(AppContext &iCtx,
                  std::shared_ptr<lua::panel_nodes> const &iPanelNodes,

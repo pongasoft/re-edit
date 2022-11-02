@@ -19,6 +19,7 @@
 #include <re/mock/fmt.h>
 #include "Errors.h"
 #include "Panel.h"
+#include "PanelState.h"
 #include "ReGui.h"
 #include "Constants.h"
 #include "LoggingManager.h"
@@ -406,6 +407,21 @@ void Panel::duplicateWidgets(AppContext &iCtx, std::vector<std::shared_ptr<Widge
   });
 }
 
+
+//------------------------------------------------------------------------
+// Panel::transmuteWidget
+//------------------------------------------------------------------------
+std::shared_ptr<Widget> Panel::transmuteWidget(AppContext &iCtx, std::shared_ptr<Widget> const &iWidget, WidgetDef const &iNewDef)
+{
+  if(iCtx.isUndoEnabled())
+    iCtx.addUndoAction(createWidgetsUndoAction(fmt::printf("Change %s type", iWidget->getName())));
+
+  auto newWidget = iNewDef.fFactory();
+  newWidget->copyFrom(*iWidget);
+  newWidget->setName(iWidget->getName());
+  return replaceWidget(iWidget->getId(), std::move(newWidget));
+}
+
 //------------------------------------------------------------------------
 // Panel::replaceWidget
 //------------------------------------------------------------------------
@@ -418,6 +434,21 @@ std::shared_ptr<Widget> Panel::replaceWidget(int iWidgetId, std::shared_ptr<Widg
   iWidget->fSelected = fWidgets[iWidgetId]->isSelected();
   iWidget->markEdited();
   fEdited = true;
+  if(iWidget->isPanelDecal() != fWidgets[iWidgetId]->isPanelDecal())
+  {
+    if(iWidget->isPanelDecal())
+    {
+      auto iter = std::find(fWidgetsOrder.begin(), fWidgetsOrder.end(), iWidgetId);
+      fWidgetsOrder.erase(iter);
+      fDecalsOrder.emplace_back(iWidgetId);
+    }
+    else
+    {
+      auto iter = std::find(fDecalsOrder.begin(), fDecalsOrder.end(), iWidgetId);
+      fDecalsOrder.erase(iter);
+      fWidgetsOrder.emplace_back(iWidgetId);
+    }
+  }
   std::swap(fWidgets[iWidgetId], iWidget);
   fSelectedWidgets = std::nullopt;
   return iWidget;
@@ -847,7 +878,19 @@ void Panel::editSingleSelectionView(AppContext &iCtx, std::shared_ptr<Widget> co
   }
 
   ImGui::SameLine();
-  ImGui::Text("%s", re::edit::toString(iWidget->getType()));
+  auto type = re::edit::toString(iWidget->getType());
+  if(ImGui::BeginCombo("type", type))
+  {
+    for(auto const &def: iCtx.getPanelState(fType)->getAllowedWidgets())
+    {
+      if(ImGui::Selectable(def.fName, iWidget->getType() == def.fType))
+      {
+        if(iWidget->getType() != def.fType)
+          transmuteWidget(iCtx, iWidget, def);
+      }
+    }
+    ImGui::EndCombo();
+  }
 
   if(iWidget->isHidden())
   {

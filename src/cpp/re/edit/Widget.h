@@ -85,6 +85,7 @@ public:
 
   std::unique_ptr<Widget> copy() const;
   std::unique_ptr<Widget> clone() const;
+  void copyFrom(Widget const &iWidget);
 //  bool eq(Widget *iWidget) const;
 
   static std::unique_ptr<Widget> panel_decal();

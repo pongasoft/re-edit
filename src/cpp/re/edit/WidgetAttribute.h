@@ -196,6 +196,8 @@ public:
 
   std::unique_ptr<Attribute> clone() const override { return Attribute::clone<PropertyPath>(*this); }
 
+  bool copyFrom(Attribute const *iFromAttribute) override;
+
   void findErrors(AppContext &iCtx, UserError &oErrors) const override;
 
 //  bool eq(Attribute const *iAttribute) const override
