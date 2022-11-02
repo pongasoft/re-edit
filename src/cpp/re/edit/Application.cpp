@@ -175,15 +175,12 @@ bool Application::init(lua::Config const &iConfig,
   }
   catch(...)
   {
-    fHasException = true;
-    newDialog("Error")
-      .breakOnNoAction()
-      .preContentMessage("Error during initialization")
-      .text(impl::what(std::current_exception()), true)
-      .buttonExit()
-      .postContentMessage("Note: If you think this is an error in the tool, please report it at https://github.com/pongasoft/re-edit-dev/issues");
-    RE_EDIT_LOG_ERROR("Exception detected during initialization: %s", impl::what(std::current_exception()));
-    return false;
+    auto cont = newExceptionDialog("Error during initialization", false, std::current_exception());
+    cont &= impl::executeCatchAllExceptions([e = std::current_exception()] {
+      RE_EDIT_LOG_ERROR("Unrecoverable exception detected: %s", impl::what(e));
+      ImGui::ErrorCheckEndFrameRecover(nullptr);
+    });
+    return cont;
   }
 }
 
@@ -223,18 +220,12 @@ bool Application::newFrame() noexcept
   }
   catch(...)
   {
-    fHasException = true;
-    newDialog("Error")
-      .breakOnNoAction()
-      .preContentMessage("Error in newFrame")
-      .text(impl::what(std::current_exception()), true)
-      .button("Save", [this] { save(); return ReGui::Dialog::Result::kExit; }, true)
-      .buttonExit()
-      .postContentMessage("Note: If you think this is an error in the tool, please report it at https://github.com/pongasoft/re-edit-dev/issues");
-    return impl::executeCatchAllExceptions([e = std::current_exception()] {
+    auto cont = newExceptionDialog("Error during newFrame", true, std::current_exception());
+    cont &= impl::executeCatchAllExceptions([e = std::current_exception()] {
       RE_EDIT_LOG_ERROR("Unrecoverable exception detected: %s", impl::what(e));
       ImGui::ErrorCheckEndFrameRecover(nullptr);
     });
+    return cont;
   }
 }
 
@@ -243,7 +234,7 @@ bool Application::newFrame() noexcept
 //------------------------------------------------------------------------
 bool Application::render() noexcept
 {
-  if(!fDialogs.empty())
+  if(hasDialog())
   {
     try
     {
@@ -263,11 +254,12 @@ bool Application::render() noexcept
     }
     catch(...)
     {
-      impl::executeCatchAllExceptions([e = std::current_exception()] {
-        RE_EDIT_LOG_ERROR("Unrecoverable exception detected: %s... bailing out", impl::what(e));
+      auto cont = newExceptionDialog("Error during dialog rendering", true, std::current_exception());
+      cont &= impl::executeCatchAllExceptions([e = std::current_exception()] {
+        RE_EDIT_LOG_ERROR("Unrecoverable exception detected: %s", impl::what(e));
         ImGui::ErrorCheckEndFrameRecover(nullptr);
       });
-      return false;
+      return cont;
     }
   }
 
@@ -277,18 +269,12 @@ bool Application::render() noexcept
   }
   catch(...)
   {
-    fHasException = true;
-    newDialog("Error")
-      .breakOnNoAction()
-      .preContentMessage("Error during rendering")
-      .text(impl::what(std::current_exception()), true)
-      .button("Save", [this] { save(); return ReGui::Dialog::Result::kExit; }, true)
-      .buttonExit()
-      .postContentMessage("Note: If you think this is an error in the tool, please report it at https://github.com/pongasoft/re-edit-dev/issues");
-    return impl::executeCatchAllExceptions([e = std::current_exception()] {
+    auto cont = newExceptionDialog("Error during rendering", true, std::current_exception());
+    cont &= impl::executeCatchAllExceptions([e = std::current_exception()] {
       RE_EDIT_LOG_ERROR("Unrecoverable exception detected: %s", impl::what(e));
       ImGui::ErrorCheckEndFrameRecover(nullptr);
     });
+    return cont;
   }
 }
 
@@ -660,10 +646,49 @@ void Application::renderMainMenu()
 //------------------------------------------------------------------------
 // Application::newDialog
 //------------------------------------------------------------------------
-ReGui::Dialog &Application::newDialog(std::string iTitle)
+ReGui::Dialog &Application::newDialog(std::string iTitle, bool iHighPriority)
 {
-  fDialogs.emplace_back(std::make_unique<ReGui::Dialog>(std::move(iTitle)));
-  return *fDialogs[fDialogs.size() - 1];
+  auto dialog = std::make_unique<ReGui::Dialog>(std::move(iTitle));
+  if(iHighPriority)
+  {
+    fCurrentDialog = std::move(dialog);
+    return *fCurrentDialog;
+  }
+  else
+  {
+    fDialogs.emplace_back(std::move(dialog));
+    return *fDialogs[fDialogs.size() - 1];
+  }
+}
+
+
+//------------------------------------------------------------------------
+// Application::newExceptionDialog
+//------------------------------------------------------------------------
+bool Application::newExceptionDialog(std::string iMessage, bool iSaveButton, std::exception_ptr const &iException)
+{
+  if(!fHasException)
+  {
+    fHasException = true;
+    auto &dialog =
+      newDialog("Error", true)
+        .breakOnNoAction()
+        .preContentMessage(std::move(iMessage))
+        .text(impl::what(iException), true);
+
+    if(iSaveButton)
+      dialog.button("Save", [this] { save(); return ReGui::Dialog::Result::kExit; }, true);
+
+    dialog.buttonExit()
+      .postContentMessage("Note: If you think this is an error in the tool, please report it at https://github.com/pongasoft/re-edit-dev/issues");
+
+    return true;
+  }
+  else
+  {
+    RE_EDIT_LOG_ERROR("Error while handling error... aborting | %s", impl::what(iException));
+    return false;
+  }
 }
 
 //------------------------------------------------------------------------
@@ -671,15 +696,17 @@ ReGui::Dialog &Application::newDialog(std::string iTitle)
 //------------------------------------------------------------------------
 ReGui::Dialog::Result Application::renderDialog()
 {
-  if(fDialogs.empty())
-    return ReGui::Dialog::Result::kContinue;
-  auto &dialog = fDialogs[fDialogs.size() - 1];
-  auto res = dialog->render();
-  if(!dialog->isOpen())
+  if(!fCurrentDialog)
   {
-    auto iter = std::find(fDialogs.begin(), fDialogs.end(), dialog);
-    fDialogs.erase(iter);
+    if(fDialogs.empty())
+      return ReGui::Dialog::Result::kContinue;
+    fCurrentDialog = std::move(fDialogs[0]);
+    fDialogs.erase(fDialogs.begin());
   }
+
+  auto res = fCurrentDialog->render();
+  if(!fCurrentDialog->isOpen())
+    fCurrentDialog = nullptr;
   return res;
 }
 

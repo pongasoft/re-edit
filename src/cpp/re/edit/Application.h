@@ -83,8 +83,10 @@ private:
   ReGui::Dialog::Result renderDialog();
   std::string hdgui2D();
   std::string device2D() const;
-  ReGui::Dialog &newDialog(std::string iTitle);
+  ReGui::Dialog &newDialog(std::string iTitle, bool iHighPriority = false);
+  bool newExceptionDialog(std::string iMessage, bool iSaveButton, std::exception_ptr const &iException);
   void about() const;
+  inline bool hasDialog() const { return fCurrentDialog != nullptr || !fDialogs.empty(); }
 
 private:
   AppContext fAppContext{};
@@ -100,6 +102,7 @@ private:
   bool fHasException{};
   std::optional<std::string> fNewLayoutRequested{};
   std::vector<std::unique_ptr<ReGui::Dialog>> fDialogs{};
+  std::unique_ptr<ReGui::Dialog> fCurrentDialog{};
 };
 
 }

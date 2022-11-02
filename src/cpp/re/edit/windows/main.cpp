@@ -31,6 +31,10 @@
 //#pragma comment(lib, "legacy_stdio_definitions")
 //#endif
 
+namespace re::edit::impl {
+std::string what(std::exception_ptr const &p);
+}
+
 //! glfw_error_callback
 static void glfw_error_callback(int error, const char *description)
 {
@@ -106,7 +110,7 @@ static void printInfo(GLFWwindow *iWindow)
   fprintf(stdout, "GL_MAX_TEXTURE_SIZE = %d\n", value);
 }
 
-int main(int argc, char **argv)
+int doMain(int argc, char **argv)
 {
   fprintf(stdout, "re-edit - %s | %s\n", re::edit::kFullVersion, re::edit::kGitVersion);
   SetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE);
@@ -246,4 +250,17 @@ int main(int argc, char **argv)
   glfwTerminate();
 
   return application.hasException() ? 1 : 0;
+}
+
+int main(int argc, char **argv)
+{
+  try
+  {
+    return doMain(argc, argv);
+  }
+  catch(...)
+  {
+    RE_EDIT_LOG_ERROR("Unrecoverable error detected... aborting: %s", re::edit::impl::what(std::current_exception()));
+    return 1;
+  }
 }
