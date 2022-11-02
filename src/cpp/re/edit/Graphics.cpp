@@ -354,7 +354,12 @@ void Graphics::editPositionView(AppContext &iCtx)
   {
     auto numFrames = texture->numFrames();
     if(numFrames > 1)
-      ImGui::SliderInt("Frame", &fFrameNumber, 0, numFrames - 1);
+    {
+      if(ReGui::ResetButton())
+        fFrameNumber = 0;
+      ImGui::SameLine();
+      ImGui::SliderInt("frame", &fFrameNumber, 0, numFrames - 1);
+    }
   }
 }
 
