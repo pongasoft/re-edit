@@ -61,6 +61,9 @@ public:
   void renderMainMenu();
   void save();
   void saveConfig();
+  void maybeExit();
+  inline bool running() { return !fExitRequested; }
+  inline void abort() { fExitRequested = true; };
 
   constexpr bool hasException() const { return fHasException; }
 
@@ -84,9 +87,11 @@ private:
   std::string hdgui2D();
   std::string device2D() const;
   ReGui::Dialog &newDialog(std::string iTitle, bool iHighPriority = false);
-  bool newExceptionDialog(std::string iMessage, bool iSaveButton, std::exception_ptr const &iException);
+  void newExceptionDialog(std::string iMessage, bool iSaveButton, std::exception_ptr const &iException);
   void about() const;
   inline bool hasDialog() const { return fCurrentDialog != nullptr || !fDialogs.empty(); }
+  template<typename F>
+  void executeCatchAllExceptions(F f) noexcept;
 
 private:
   AppContext fAppContext{};
@@ -96,6 +101,7 @@ private:
 
   fs::path fRoot{};
   bool fNeedsSaving{};
+  bool fExitRequested{};
   bool fRecomputeDimensionsRequested{};
   bool fReloadTexturesRequested{};
   bool fReloadDeviceRequested{};

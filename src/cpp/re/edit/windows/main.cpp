@@ -75,6 +75,15 @@ static void onWindowSizeChange(GLFWwindow* iWindow, int iWidth, int iHeight)
   application->setNativeWindowSize(static_cast<int>(iWidth / scale), static_cast<int>(iHeight /scale));
 }
 
+//! onWindowClose
+static void onWindowClose(GLFWwindow* iWindow)
+{
+  auto application = reinterpret_cast<re::edit::Application *>(glfwGetWindowUserPointer(iWindow));
+  application->maybeExit();
+  if(application->running())
+    glfwSetWindowShouldClose(iWindow, GLFW_FALSE);
+}
+
 static void printInfo(GLFWwindow *iWindow)
 {
 //  auto glfwMonitor = glfwGetWindowMonitor(iWindow);
@@ -189,11 +198,12 @@ int doMain(int argc, char **argv)
   glfwSetWindowUserPointer(window, &application);
   glfwSetWindowContentScaleCallback(window, onWindowContentScaleChange);
   glfwSetWindowSizeCallback(window, onWindowSizeChange);
+  glfwSetWindowCloseCallback(window, onWindowClose);
 
   application.onNativeWindowFontDpiScaleChange(getFontDpiScale(window));
 
   // Main loop
-  while(!glfwWindowShouldClose(window))
+  while(application.running())
   {
     // Poll and handle events (inputs, window resize, etc.)
     // You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to tell if dear imgui wants to use your inputs.
@@ -203,11 +213,7 @@ int doMain(int argc, char **argv)
     glfwPollEvents();
 
     // Before New Frame
-    if(!application.newFrame())
-    {
-      glfwSetWindowShouldClose(window, GLFW_TRUE);
-    }
-    else
+    if(application.newFrame())
     {
       // Start the Dear ImGui frame
       ImGui_ImplOpenGL3_NewFrame();
@@ -224,11 +230,7 @@ int doMain(int argc, char **argv)
       glClear(GL_COLOR_BUFFER_BIT);
 
       // Main rendering
-      if(!application.render())
-      {
-        glfwSetWindowShouldClose(window, GLFW_TRUE);
-      }
-      else
+      if(application.render())
       {
         // Rendering
         ImGui::Render();

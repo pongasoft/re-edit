@@ -72,6 +72,15 @@ static void onWindowContentScaleChange(GLFWwindow* iWindow, float iXscale, float
   application->onNativeWindowFontScaleChange(iXscale);
 }
 
+//! onWindowClose
+static void onWindowClose(GLFWwindow* iWindow)
+{
+  auto application = reinterpret_cast<re::edit::Application *>(glfwGetWindowUserPointer(iWindow));
+  application->maybeExit();
+  if(application->running())
+    glfwSetWindowShouldClose(iWindow, GLFW_FALSE);
+}
+
 int doMain(int argc, char **argv)
 {
   fprintf(stdout, "re-edit - %s | %s\n", re::edit::kFullVersion, re::edit::kGitVersion);
@@ -161,9 +170,10 @@ int doMain(int argc, char **argv)
   glfwSetWindowUserPointer(window, &application);
   glfwSetWindowContentScaleCallback(window, onWindowContentScaleChange);
   glfwSetWindowSizeCallback(window, onWindowSizeChange);
+  glfwSetWindowCloseCallback(window, onWindowClose);
 
   // Main loop
-  while(!glfwWindowShouldClose(window))
+  while(application.running())
   {
     NS::AutoreleasePool *pPool = NS::AutoreleasePool::alloc()->init();
 
@@ -193,11 +203,7 @@ int doMain(int argc, char **argv)
       renderEncoder->pushDebugGroup(NS::String::string("re-edit", NS::ASCIIStringEncoding));
 
       // Before New Frame
-      if(!application.newFrame())
-      {
-        glfwSetWindowShouldClose(window, GLFW_TRUE);
-      }
-      else
+      if(application.newFrame())
       {
         // Start the Dear ImGui frame
         ImGui_ImplMetal_NewFrame(renderPassDescriptor);
@@ -205,11 +211,7 @@ int doMain(int argc, char **argv)
         ImGui::NewFrame();
 
         // Main rendering
-        if(!application.render())
-        {
-          glfwSetWindowShouldClose(window, GLFW_TRUE);
-        }
-        else
+        if(application.render())
         {
           // Rendering
           ImGui::Render();

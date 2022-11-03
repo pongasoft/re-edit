@@ -82,24 +82,23 @@ std::string what(std::exception_ptr const &p)
   return "No Error";
 }
 
+}
+
 //------------------------------------------------------------------------
-// impl::executeCatchAllExceptions
+// Application::executeCatchAllExceptions
 //------------------------------------------------------------------------
 template<typename F>
-bool executeCatchAllExceptions(F f) noexcept
+void Application::executeCatchAllExceptions(F f) noexcept
 {
   try
   {
     f();
-    return true;
   }
   catch(...)
   {
-    fprintf(stderr, "ABORT| Unrecoverable exception detected: %s", what(std::current_exception()).c_str());
-    return false;
+    fprintf(stderr, "ABORT| Unrecoverable exception detected: %s", impl::what(std::current_exception()).c_str());
+    abort();
   }
-}
-
 }
 
 //------------------------------------------------------------------------
@@ -171,17 +170,17 @@ bool Application::init(lua::Config const &iConfig,
 //
 //    fileWatcher->addWatch(fRoot.string(), listener.get(), true);
 //    fileWatcher->watch();
-    return true;
   }
   catch(...)
   {
-    auto cont = newExceptionDialog("Error during initialization", false, std::current_exception());
-    cont &= impl::executeCatchAllExceptions([e = std::current_exception()] {
+    newExceptionDialog("Error during initialization", false, std::current_exception());
+    executeCatchAllExceptions([e = std::current_exception()] {
       RE_EDIT_LOG_ERROR("Unrecoverable exception detected: %s", impl::what(e));
       ImGui::ErrorCheckEndFrameRecover(nullptr);
     });
-    return cont;
   }
+
+  return running();
 }
 
 //------------------------------------------------------------------------
@@ -215,18 +214,17 @@ bool Application::newFrame() noexcept
 
       fRecomputeDimensionsRequested = true;
     }
-
-    return true;
   }
   catch(...)
   {
-    auto cont = newExceptionDialog("Error during newFrame", true, std::current_exception());
-    cont &= impl::executeCatchAllExceptions([e = std::current_exception()] {
+    newExceptionDialog("Error during newFrame", true, std::current_exception());
+    executeCatchAllExceptions([e = std::current_exception()] {
       RE_EDIT_LOG_ERROR("Unrecoverable exception detected: %s", impl::what(e));
       ImGui::ErrorCheckEndFrameRecover(nullptr);
     });
-    return cont;
   }
+
+  return running();
 }
 
 //------------------------------------------------------------------------
@@ -245,37 +243,41 @@ bool Application::render() noexcept
           // nothing to do... just continue
           break;
         case ReGui::Dialog::Result::kBreak:
-          return true;
+          return running();
         case ReGui::Dialog::Result::kExit:
-          return false;
+          fExitRequested = true;
+          return running();
         default:
           RE_EDIT_FAIL("not reached");
       }
     }
     catch(...)
     {
-      auto cont = newExceptionDialog("Error during dialog rendering", true, std::current_exception());
-      cont &= impl::executeCatchAllExceptions([e = std::current_exception()] {
+      newExceptionDialog("Error during dialog rendering", true, std::current_exception());
+      executeCatchAllExceptions([e = std::current_exception()] {
         RE_EDIT_LOG_ERROR("Unrecoverable exception detected: %s", impl::what(e));
         ImGui::ErrorCheckEndFrameRecover(nullptr);
       });
-      return cont;
     }
   }
 
-  try
+  if(running())
   {
-    return doRender();
+    try
+    {
+      return doRender();
+    }
+    catch(...)
+    {
+      newExceptionDialog("Error during rendering", true, std::current_exception());
+      executeCatchAllExceptions([e = std::current_exception()] {
+        RE_EDIT_LOG_ERROR("Unrecoverable exception detected: %s", impl::what(e));
+        ImGui::ErrorCheckEndFrameRecover(nullptr);
+      });
+    }
   }
-  catch(...)
-  {
-    auto cont = newExceptionDialog("Error during rendering", true, std::current_exception());
-    cont &= impl::executeCatchAllExceptions([e = std::current_exception()] {
-      RE_EDIT_LOG_ERROR("Unrecoverable exception detected: %s", impl::what(e));
-      ImGui::ErrorCheckEndFrameRecover(nullptr);
-    });
-    return cont;
-  }
+
+  return running();
 }
 
 //------------------------------------------------------------------------
@@ -500,6 +502,10 @@ void Application::renderMainMenu()
           .lambda([this]() { about(); }, true)
           .buttonOk();
       }
+      if(ImGui::MenuItem("Quit"))
+      {
+        maybeExit();
+      }
       ImGui::EndMenu();
     }
     if(ImGui::BeginMenu("File"))
@@ -672,7 +678,7 @@ ReGui::Dialog &Application::newDialog(std::string iTitle, bool iHighPriority)
 //------------------------------------------------------------------------
 // Application::newExceptionDialog
 //------------------------------------------------------------------------
-bool Application::newExceptionDialog(std::string iMessage, bool iSaveButton, std::exception_ptr const &iException)
+void Application::newExceptionDialog(std::string iMessage, bool iSaveButton, std::exception_ptr const &iException)
 {
   if(!fHasException)
   {
@@ -688,13 +694,11 @@ bool Application::newExceptionDialog(std::string iMessage, bool iSaveButton, std
 
     dialog.buttonExit()
       .postContentMessage("Note: If you think this is an error in the tool, please report it at https://github.com/pongasoft/re-edit-dev/issues");
-
-    return true;
   }
   else
   {
     RE_EDIT_LOG_ERROR("Error while handling error... aborting | %s", impl::what(iException));
-    return false;
+    abort();
   }
 }
 
@@ -715,6 +719,27 @@ ReGui::Dialog::Result Application::renderDialog()
   if(!fCurrentDialog->isOpen())
     fCurrentDialog = nullptr;
   return res;
+}
+
+
+//------------------------------------------------------------------------
+// Application::maybeExit
+//------------------------------------------------------------------------
+void Application::maybeExit()
+{
+  if(fExitRequested)
+    return;
+
+  if(fNeedsSaving)
+  {
+    newDialog("Quit")
+      .postContentMessage("You have unsaved changes, do you want to save them before quitting?")
+      .button("Yes", [this] { save(); fExitRequested = true; return ReGui::Dialog::Result::kExit; })
+      .button("No", [this] { fExitRequested = true; return ReGui::Dialog::Result::kExit; })
+      .buttonCancel("Cancel", true);
+  }
+  else
+    fExitRequested = true;
 }
 
 //------------------------------------------------------------------------
