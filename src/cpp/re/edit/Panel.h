@@ -159,7 +159,7 @@ private:
   class MultiSelectionList
   {
   public:
-    MultiSelectionList(Panel &iPanel, std::vector<int> &iList) : fPanel{iPanel}, fList{iList} {}
+    MultiSelectionList(Panel &iPanel, char const *iType, std::vector<int> &iList) : fPanel{iPanel}, fType{iType}, fList{iList} {}
     void handleClick(std::shared_ptr<Widget> const &iWidget, bool iRangeSelectKey, bool iMultiSelectKey);
     void editView(AppContext &iCtx);
     void moveSelectionUp();
@@ -172,6 +172,7 @@ private:
 
   public:
     Panel &fPanel;
+    char const *fType;
     std::vector<int> &fList;
     std::optional<int> fLastSelected{};
   };
@@ -193,8 +194,8 @@ private:
   std::optional<MouseDrag> fShiftMouseDrag{};
   std::optional<ImVec2> fPopupLocation{};
   int fWidgetCounter{1}; // used for unique id
-  MultiSelectionList fWidgetsSelectionList{*this, fWidgetsOrder};
-  MultiSelectionList fDecalsSelectionList{*this, fDecalsOrder};
+  MultiSelectionList fWidgetsSelectionList{*this, "widget", fWidgetsOrder};
+  MultiSelectionList fDecalsSelectionList{*this, "decal", fDecalsOrder};
   mutable std::optional<std::vector<std::shared_ptr<Widget>>> fSelectedWidgets{};
 };
 

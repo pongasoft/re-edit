@@ -1173,16 +1173,27 @@ void Panel::MultiSelectionList::editView(AppContext &iCtx)
 void Panel::MultiSelectionList::moveSelectionUp()
 {
   auto selectedWidgets = getSelectedWidgets();
+  std::vector<int> list{fList.begin(), fList.end()};
+  int changesCount = 0;
 
   for(auto &w: selectedWidgets)
   {
-    auto iter = std::find(fList.begin(), fList.end(), w->getId());
+    auto iter = std::find(list.begin(), list.end(), w->getId());
 
     // already at the top
-    if(iter == fList.begin())
+    if(iter == list.begin())
       break; // abort loop
 
     std::swap(*(iter - 1), *iter);
+    changesCount++;
+  }
+
+  if(changesCount > 0)
+  {
+    auto &ctx = AppContext::GetCurrent();
+    if(ctx.isUndoEnabled())
+      ctx.addUndoAction(fPanel.createWidgetsUndoAction(fmt::printf("Move %d %s%s up", changesCount, fType, changesCount > 1 ? "s" : "")));
+    fList = std::move(list);
   }
 
 }
@@ -1193,19 +1204,30 @@ void Panel::MultiSelectionList::moveSelectionUp()
 void Panel::MultiSelectionList::moveSelectionDown()
 {
   auto selectedWidgets = getSelectedWidgets();
+  std::vector<int> list{fList.begin(), fList.end()};
+  int changesCount = 0;
 
   // we need to iterate backward
   for(auto i = selectedWidgets.rbegin(); i != selectedWidgets.rend(); i++)
   {
     auto widget = *i;
 
-    auto iter = std::find(fList.begin(), fList.end(), widget->getId());
+    auto iter = std::find(list.begin(), list.end(), widget->getId());
 
     // already at the bottom
-    if(iter + 1 == fList.end())
+    if(iter + 1 == list.end())
       break; // abort loop
 
     std::swap(*(iter + 1), *iter);
+    changesCount++;
+  }
+
+  if(changesCount > 0)
+  {
+    auto &ctx = AppContext::GetCurrent();
+    if(ctx.isUndoEnabled())
+      ctx.addUndoAction(fPanel.createWidgetsUndoAction(fmt::printf("Move %d %s%s down", changesCount, fType, changesCount > 1 ? "s" : "")));
+    fList = std::move(list);
   }
 
 }
