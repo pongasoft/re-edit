@@ -64,7 +64,7 @@ std::string Graphics::device2D() const
 void Graphics::reset()
 {
   fTextureKey = "";
-  fDNZTexture = nullptr;
+  fDNZTexture.reset();
   fEdited = true;
 }
 
@@ -95,7 +95,7 @@ void Graphics::editView(AppContext &iCtx)
                              panel->setBackgroundKey(iValue);
                            });
         fTextureKey = p;
-        fDNZTexture = nullptr;
+        fDNZTexture.reset();
         fEdited = true;
       }
       if(isSelected)
@@ -180,7 +180,7 @@ void Graphics::draw(AppContext &iCtx, ImU32 iBorderColor, bool iXRay) const
   auto texture = hasTexture() ? findTexture() : nullptr;
   if(texture)
   {
-    iCtx.drawTexture(texture, fPosition, fFrameNumber, iBorderColor, impl::computeTextureColor(iXRay));
+    iCtx.drawTexture(texture.get(), fPosition, fFrameNumber, iBorderColor, impl::computeTextureColor(iXRay));
   }
   else
   {
@@ -423,7 +423,7 @@ void Graphics::reset()
 {
   auto texture = findTexture();
   fTexture = texture ? texture->frameSize() : kNoGraphics;
-  fDNZTexture = nullptr;
+  fDNZTexture.reset();
   fHitBoundaries = {};
   fEdited = true;
 }
@@ -535,7 +535,7 @@ bool Graphics::copyFrom(Attribute const *iFromAttribute)
     fPosition = fromAttribute->fPosition;
     fHitBoundaries = fromAttribute->fHitBoundaries;
     fTexture = fromAttribute->fTexture;
-    fDNZTexture = nullptr;
+    fDNZTexture.reset();
     fEdited = true;
     return true;
   }

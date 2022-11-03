@@ -600,6 +600,13 @@ void Application::renderMainMenu()
         }
       }
 
+      ImGui::BeginDisabled(!fAppContext.fUndoManager->hasHistory());
+      if(ImGui::MenuItem("Clear Undo History"))
+      {
+        fAppContext.fUndoManager->clear();
+      }
+      ImGui::EndDisabled();
+
       ImGui::EndMenu();
     }
 

@@ -85,8 +85,8 @@ std::shared_ptr<Texture> TextureManager::findHDTexture(std::string const &iKey) 
 //------------------------------------------------------------------------
 void TextureManager::scanDirectory()
 {
-  auto previousKeys = fFilmStripMgr->scanDirectory();
-  for(auto &k: previousKeys)
+  auto keys = fFilmStripMgr->scanDirectory();
+  for(auto &k: keys)
     fTextures.erase(k);
 }
 

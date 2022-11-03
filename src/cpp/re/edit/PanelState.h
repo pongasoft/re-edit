@@ -47,7 +47,6 @@ protected:
   void renderPanel(AppContext &iCtx, bool iSetScroll);
   void renderPanelWidgets(AppContext &iCtx);
   void renderProperties(AppContext &iCtx);
-  void reloadTextures() { fPanel.reloadTextures(); }
 
 public:
   Panel fPanel;

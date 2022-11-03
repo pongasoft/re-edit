@@ -399,10 +399,7 @@ void AppContext::onNativeWindowFontScaleChange(float iFontScale)
 //------------------------------------------------------------------------
 void AppContext::reloadTextures()
 {
-  fFrontPanel->reloadTextures();
-  fFoldedFrontPanel->reloadTextures();
-  fBackPanel->reloadTextures();
-  fFoldedBackPanel->reloadTextures();
+  markEdited();
   checkForErrors();
 }
 

@@ -133,7 +133,6 @@ protected:
   void editNoSelectionView(AppContext &iCtx);
   void editSingleSelectionView(AppContext &iCtx, std::shared_ptr<Widget> const &iWidget);
   void editMultiSelectionView(AppContext &iCtx, std::vector<std::shared_ptr<Widget>> const &iSelectedWidgets);
-  void reloadTextures();
 
   std::shared_ptr<PanelWidgets> freezeWidgets() const;
   std::shared_ptr<PanelWidgets> thawWidgets(std::shared_ptr<PanelWidgets> const &iPanelWidgets);

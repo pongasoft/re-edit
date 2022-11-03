@@ -166,7 +166,9 @@ public:
   void addUndoAction(std::shared_ptr<UndoAction> iAction);
   void undoLastAction();
   void redoLastAction();
-  bool hasUndoHistory() const { return !fUndoHistory.empty(); }
+  inline bool hasUndoHistory() const { return !fUndoHistory.empty(); }
+  inline bool hasRedoHistory() const { return !fRedoHistory.empty(); }
+  inline bool hasHistory() const { return hasUndoHistory() || hasRedoHistory(); }
   std::shared_ptr<UndoAction> popLastUndoAction();
   std::shared_ptr<UndoAction> getLastUndoAction() const;
   std::shared_ptr<RedoAction> getLastRedoAction() const;

@@ -150,6 +150,7 @@ std::set<FilmStrip::key_t> FilmStripMgr::scanDirectory()
 {
   auto files = scanDirectory(fDirectory);
   std::set<FilmStrip::key_t> previousKeys{fKeys.begin(), fKeys.end()};
+  std::set<FilmStrip::key_t> modifiedKeys{};
   fKeys.clear();
   for(auto const &file: files)
   {
@@ -164,6 +165,7 @@ std::set<FilmStrip::key_t> FilmStripMgr::scanDirectory()
         // this will trigger a "reload"
         fFilmStrips.erase(file.fKey);
         fFiles[file.fKey] = std::make_shared<FilmStrip::File>(file);
+        modifiedKeys.emplace(file.fKey);
       }
     }
     else
@@ -175,11 +177,17 @@ std::set<FilmStrip::key_t> FilmStripMgr::scanDirectory()
   // remove the ones that got deleted
   for(auto &k: previousKeys)
   {
-    fFiles.erase(k);
+    // this will trigger a "reload" which will fail
+    fFiles[k]->fLastModifiedTime = 0;
     fFilmStrips.erase(k);
   }
 
-  RE_EDIT_LOG_INFO("Scan complete: %ld textures (%ld removed)", fFiles.size(), previousKeys.size());
+  RE_EDIT_LOG_INFO("Scan complete: %ld textures (%ld modified, %ld removed)", fFiles.size(), modifiedKeys.size(), previousKeys.size());
+
+  if(!modifiedKeys.empty())
+  {
+    previousKeys.insert(modifiedKeys.begin(), modifiedKeys.end());
+  }
 
   return previousKeys;
 }

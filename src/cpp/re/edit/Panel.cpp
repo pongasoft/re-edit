@@ -98,7 +98,7 @@ void Panel::draw(AppContext &iCtx)
   clickableArea = {std::max(clickableArea.x, backgroundSize.x), std::max(clickableArea.y, backgroundSize.y)};
 
   if(texture)
-    iCtx.TextureItem(texture);
+    iCtx.TextureItem(texture.get());
   else
     iCtx.RectFilledItem(ImVec2{}, getSize(), iCtx.getUserPreferences().fWidgetErrorColor);
 
@@ -1418,6 +1418,7 @@ std::shared_ptr<Panel::PanelWidgets> Panel::thawWidgets(std::shared_ptr<PanelWid
   fWidgetsOrder = iPanelWidgets->fWidgetsOrder;
   fDecalsOrder = iPanelWidgets->fDecalsOrder;
   fSelectedWidgets = std::nullopt;
+  markEdited();
   return ws;
 }
 
@@ -1460,19 +1461,5 @@ void Panel::selectWidgets(AppContext &iCtx, ImVec2 const &iPosition1, ImVec2 con
     }
   }
 }
-
-//------------------------------------------------------------------------
-// Panel::reloadTextures
-//------------------------------------------------------------------------
-void Panel::reloadTextures()
-{
-  fGraphics.fDNZTexture = nullptr;
-  for(auto &[id, w]: fWidgets)
-  {
-    w->fGraphics->fDNZTexture = nullptr;
-  }
-  markEdited();
-}
-
 
 }
