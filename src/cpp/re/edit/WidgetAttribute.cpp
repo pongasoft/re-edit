@@ -1014,9 +1014,8 @@ void PropertyPathList::editView(AppContext &iCtx)
 
   if(fStringListEditView)
   {
-    // Always center this window when appearing
-    ImVec2 center = ImGui::GetMainViewport()->GetCenter();
-    ImGui::SetNextWindowPos(center, ImGuiCond_Once, ImVec2(0.5f, 0.5f));
+    // Always center this window
+    ReGui::CenterNextWindow();
 
     if(ImGui::BeginPopupModal(popupTitleName.c_str(), nullptr, ImGuiWindowFlags_AlwaysAutoResize))
     {

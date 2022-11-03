@@ -68,21 +68,11 @@ Pos=60,60
 Size=400,400
 Collapsed=0
 
-[Window][Dialog]
-Pos=374,310
-Size=532,100
-Collapsed=0
-
 [Window][Log]
 Pos=0,571
 Size=1280,149
 Collapsed=0
 DockId=0x0000000A,0
-
-[Window][values Editor]
-Pos=266,171
-Size=748,378
-Collapsed=0
 
 [Window][Debug]
 Pos=357,308
@@ -144,21 +134,11 @@ Pos=60,60
 Size=400,400
 Collapsed=0
 
-[Window][Dialog]
-Pos=374,310
-Size=532,100
-Collapsed=0
-
 [Window][Log]
 Pos=430,527
 Size=850,193
 Collapsed=0
 DockId=0x0000000A,0
-
-[Window][values Editor]
-Pos=266,171
-Size=748,378
-Collapsed=0
 
 [Window][Debug]
 Pos=357,308

@@ -42,7 +42,10 @@ Dialog::Result Dialog::render()
   auto title = fDialogID.c_str();
 
   if(!ImGui::IsPopupOpen(title))
+  {
     ImGui::OpenPopup(title);
+    ReGui::CenterNextWindow();
+  }
 
   auto needsSeparator = false;
 
@@ -92,8 +95,15 @@ Dialog::Result Dialog::render()
       needsSameLine = true;
     }
 
+    auto loggingManager = LoggingManager::instance();
+    if(loggingManager->isShowDebug())
+    {
+      loggingManager->debug("dialog.ItemRectMin", "%fx%f", ImGui::GetWindowWidth(), ImGui::GetWindowHeight());
+    }
+
     ImGui::EndPopup();
   }
+
 
   return res;
 }

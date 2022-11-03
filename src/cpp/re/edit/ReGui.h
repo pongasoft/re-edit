@@ -257,6 +257,16 @@ inline void DefaultHeaderColumn(int iColumn)
 }
 
 //------------------------------------------------------------------------
+// ReGui::CenterNextWindow
+//------------------------------------------------------------------------
+inline void CenterNextWindow(ImGuiCond iFlags = ImGuiCond_Appearing)
+{
+  static ImVec2 mid = {0.5f, 0.5f};
+  const auto center = ImGui::GetMainViewport()->GetCenter();
+  ImGui::SetNextWindowPos(center, iFlags, mid);
+}
+
+//------------------------------------------------------------------------
 // ReGui::AnySpecialKey
 //------------------------------------------------------------------------
 inline bool AnySpecialKey()
