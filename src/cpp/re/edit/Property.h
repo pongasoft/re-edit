@@ -37,7 +37,17 @@ namespace re::edit {
 
 struct Object
 {
-  using Filter = std::function<bool(Object const &iObject)>;
+  struct Filter
+  {
+    using type = std::function<bool(Object const &iObject)>;
+
+    Filter() = default;
+    Filter(type iAction, std::string iDescription) : fAction{std::move(iAction)}, fDescription{std::move(iDescription)} {}
+    explicit operator bool() const { return fAction.operator bool(); }
+    bool operator()(Object const &o) const { return fAction(o); }
+    type fAction{};
+    std::string fDescription{};
+  };
 
   constexpr re::mock::JboxObjectType type() const { return fInfo.fType; };
   constexpr TJBox_ObjectRef ref() const { return fInfo.fObjectRef; };
@@ -48,8 +58,19 @@ struct Object
 
 struct Property
 {
-  using Filter = std::function<bool(Property const &iProperty)>;
   using Comparator = std::function<bool(Property const *iLeft, Property const *iRight)>;
+
+  struct Filter
+  {
+    using type = std::function<bool(Property const &iProperty)>;
+
+    Filter() = default;
+    Filter(type iAction, std::string iDescription) : fAction{std::move(iAction)}, fDescription{std::move(iDescription)} {}
+    explicit operator bool() const { return fAction.operator bool(); }
+    bool operator()(Property const &p) const { return fAction(p); }
+    type fAction{};
+    std::string fDescription{};
+  };
 
   constexpr TJBox_PropertyRef const &ref() const { return fInfo.fPropertyRef; };
   constexpr Object const &parent() const { return fParent; };

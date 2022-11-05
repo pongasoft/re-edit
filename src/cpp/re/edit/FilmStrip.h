@@ -28,14 +28,26 @@
 #include <functional>
 #include <imgui.h>
 #include "fs.h"
+#include "Constants.h"
 
 namespace re::edit {
 
 class FilmStrip
 {
 public:
-  using Filter = std::function<bool(FilmStrip const &iFilmStrip)>;
   using key_t = std::string;
+
+  struct Filter
+  {
+    using type = std::function<bool(FilmStrip const &iFilmStrip)>;
+
+    Filter() = default;
+    Filter(type iAction, std::string iDescription) : fAction{std::move(iAction)}, fDescription{std::move(iDescription)} {}
+    explicit operator bool() const { return fAction.operator bool(); }
+    bool operator()(FilmStrip const &f) const { return fAction(f); }
+    type fAction{};
+    std::string fDescription{};
+  };
 
 public:
   struct File
@@ -78,12 +90,12 @@ public:
 
   static std::unique_ptr<FilmStrip> load(std::shared_ptr<File> const &iFile);
 
-  static constexpr auto bySizeFilter(ImVec2 const &iSize) {
-    return [&iSize](FilmStrip const &iFilmStrip) {
+  static inline auto bySizeFilter(ImVec2 const &iSize) {
+    return Filter([iSize](FilmStrip const &iFilmStrip) {
       return iFilmStrip.frameWidth() == static_cast<int>(iSize.x) &&
              iFilmStrip.frameHeight() == static_cast<int>(iSize.y) &&
              iFilmStrip.numFrames() == 1;
-    };
+    }, fmt::printf("Size must be %dx%d (1 frame)", static_cast<int>(iSize.x), static_cast<int>(iSize.y)));
   }
 
   static Filter orFilter(Filter iFilter1, Filter iFilter2) {
@@ -93,9 +105,9 @@ public:
     if(!iFilter2)
       return iFilter1;
 
-    return [f1 = std::move(iFilter1), f2 = std::move(iFilter2)](FilmStrip const &iFilmStrip) {
+    return {[f1 = std::move(iFilter1.fAction), f2 = std::move(iFilter2.fAction)](FilmStrip const &iFilmStrip) {
       return f1(iFilmStrip) || f2(iFilmStrip);
-    };
+    }, fmt::printf("%s or %s", iFilter1.fDescription, iFilter2.fDescription)};
   }
 
   ~FilmStrip();

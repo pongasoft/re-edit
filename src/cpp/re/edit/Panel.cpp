@@ -1385,9 +1385,7 @@ void Panel::setDeviceHeightRU(int iDeviceHeightRU)
   fDeviceHeightRU = iDeviceHeightRU;
   auto h = isPanelOfType(fType, kPanelTypeAnyUnfolded) ? toPixelHeight(fDeviceHeightRU) : kFoldedDevicePixelHeight;
   fSize.y = static_cast<float>(h);
-  fGraphics.fFilter = [h](FilmStrip const &f) {
-    return f.width() == kDevicePixelWidth && f.height() == h;
-  };
+  fGraphics.fFilter = FilmStrip::bySizeFilter({kDevicePixelWidth, fSize.y});
   fGraphics.markEdited();
   fEdited = true;
 }

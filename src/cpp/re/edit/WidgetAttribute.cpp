@@ -599,7 +599,7 @@ std::string Visibility::toString() const
                                fValues.toString());
 }
 
-static constexpr auto kIsDiscreteFilter = [](const Property &p) { return p.isDiscrete(); };
+static const Property::Filter kIsDiscreteFilter{[](const Property &p) { return p.isDiscrete(); }, "Must be a discrete (stepped) number property"};
 
 //------------------------------------------------------------------------
 // Visibility::Visibility
@@ -1297,13 +1297,13 @@ void ReadOnly::editView(AppContext &iCtx)
 //------------------------------------------------------------------------
 void ReadOnly::onChanged(AppContext &iCtx)
 {
-  static const auto kReadWriteValueFilter = [](const Property &p) {
-    return (p.type() == kJBox_Boolean || p.type() == kJBox_Number) && kDocGuiOwnerFilter(p);
-  };
-  static const auto kReadOnlyValueFilter = [](const Property &p) {
-    return (p.type() == kJBox_Boolean || p.type() == kJBox_Number)
+  static const Property::Filter kReadWriteValueFilter{[](const Property &p) {
+    return (p.type() == kJBox_Boolean || p.type() == kJBox_Number || p.type() == kJBox_String) && kDocGuiOwnerFilter(p);
+  }, "Must be a number, string, or boolean, document_owner or gui_owner property (read_only is false)"};
+  static const Property::Filter kReadOnlyValueFilter{[](const Property &p) {
+    return (p.type() == kJBox_Boolean || p.type() == kJBox_Number || p.type() == kJBox_String)
            && p.owner() == mock::PropertyOwner::kRTOwner;
-  };
+  }, "Must be a number, string, or boolean, rt_owner property (read_only is true)"};
 
   auto valueAtt = iCtx.getCurrentWidget()->findAttributeByIdAndType<Value>(fValueAttributeId);
   if(fValue)

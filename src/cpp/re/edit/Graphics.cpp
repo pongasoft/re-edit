@@ -147,7 +147,7 @@ void Graphics::findErrors(AppContext &iCtx, UserError &oErrors) const
       {
         auto keys = iCtx.findTextureKeys(fFilter);
         if(std::find(keys.begin(), keys.end(), texture->key()) == keys.end())
-          oErrors.add("Invalid png (wrong size)");
+          oErrors.add(fFilter.fDescription);
       }
     }
   }
@@ -460,7 +460,7 @@ void Graphics::findErrors(AppContext &iCtx, UserError &oErrors) const
         {
           auto keys = iCtx.findTextureKeys(fFilter);
           if(std::find(keys.begin(), keys.end(), texture->key()) == keys.end())
-            oErrors.add("Invalid png (wrong size)");
+            oErrors.add(fFilter.fDescription);
         }
       }
     }
@@ -598,7 +598,7 @@ inline bool ends_with(std::string const &s, std::string const &iSuffix)
 //------------------------------------------------------------------------
 void Background::editView(AppContext &iCtx)
 {
-  static const auto kBackgroundFilter = [](FilmStrip const &f) { return f.numFrames() == 1; };
+  static const FilmStrip::Filter kBackgroundFilter{[](FilmStrip const &f) { return f.numFrames() == 1; }, "Must have exactly 1 frame"};
 
   if(ReGui::ResetButton())
     reset();
