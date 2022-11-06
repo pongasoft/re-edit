@@ -32,7 +32,7 @@ FilmStrip::FilmStrip(std::shared_ptr<File> iFile, char const *iErrorMessage) :
   fData{},
   fErrorMessage{iErrorMessage}
 {
-//  RE_MOCK_LOG_WARNING("%p | Error: FilmStrip::FilmStrip(%s) : %s", this, fFile->fKey, iErrorMessage);
+//  RE_MOCK_LOG_INFO("%p | Error: FilmStrip::FilmStrip(%s) : %s", this, fFile->fKey, iErrorMessage);
 }
 
 //------------------------------------------------------------------------
@@ -48,6 +48,9 @@ FilmStrip::FilmStrip(std::shared_ptr<File> iFile, int iWidth, int iHeight, std::
 //  RE_MOCK_LOG_INFO("%p | FilmStrip::FilmStrip(%s)", this, fFile->fKey);
 }
 
+//------------------------------------------------------------------------
+// FilmStrip::~FilmStrip
+//------------------------------------------------------------------------
 FilmStrip::~FilmStrip()
 {
 //  RE_MOCK_LOG_INFO("%p | ~FilmStrip::FilmStrip(%s)", this, fFile->fKey);
@@ -138,9 +141,20 @@ std::vector<FilmStrip::key_t> FilmStripMgr::findKeys(FilmStrip::Filter const &iF
 //------------------------------------------------------------------------
 std::shared_ptr<FilmStrip> FilmStripMgr::getFilmStrip(FilmStrip::key_t const &iKey) const
 {
-  auto fs = findFilmStrip(iKey);
-  RE_EDIT_ASSERT(fs != nullptr);
-  return fs;
+  auto iterFS = fFilmStrips.find(iKey);
+  if(iterFS != fFilmStrips.end())
+    return iterFS->second;
+
+  auto iterFile = fFiles.find(iKey);
+  if(iterFile == fFiles.end())
+  {
+    fFiles[iKey] = std::make_shared<FilmStrip::File>(FilmStrip::File::from(iKey, fDirectory));
+    iterFile = fFiles.find(iKey);
+  }
+
+  std::shared_ptr<FilmStrip> filmStrip = FilmStrip::load(iterFile->second);
+  fFilmStrips[iKey] = filmStrip;
+  return filmStrip;
 }
 
 //------------------------------------------------------------------------
@@ -235,4 +249,29 @@ std::vector<FilmStrip::File> FilmStripMgr::scanDirectory(fs::path const &iDirect
 }
 
 
+//------------------------------------------------------------------------
+// FilmStripMgr::from
+//------------------------------------------------------------------------
+FilmStrip::File FilmStrip::File::from(key_t const &iKey, fs::path const &iDirectory)
+{
+  static const std::regex KEY_REGEX{"(([0-9]+)_?frames)?$", std::regex_constants::icase};
+
+  auto path = iDirectory / fmt::printf("%s.png", iKey);
+
+  std::cmatch m;
+  std::regex_search(iKey.c_str(), m, KEY_REGEX);
+  auto inferredNumFrames = m[2].matched ? std::stoi(m[2].str()) : 1;
+
+  std::error_code errorCode;
+  auto lastWriteTime = fs::last_write_time(path, errorCode);
+  if(!errorCode)
+  {
+    return {path, iKey, static_cast<long>(lastWriteTime.time_since_epoch().count()), inferredNumFrames};
+  }
+  else
+  {
+    RE_EDIT_LOG_ERROR("Error with file [%s]: (%d | %s)", path, errorCode.value(), errorCode.message());
+    return {path, iKey, 0, inferredNumFrames};
+  }
+}
 }

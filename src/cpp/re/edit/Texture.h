@@ -50,16 +50,8 @@ public:
   };
 
 public:
-  explicit Texture(std::shared_ptr<FilmStrip> iFilmStrip) :
-    fFilmStrip{std::move(iFilmStrip)}
-  {
-//    RE_MOCK_LOG_INFO("%p | Texture(%s)", this, key());
-  }
-
-  virtual ~Texture()
-  {
-//    RE_MOCK_LOG_INFO("%p | ~Texture(%s)", this, key());
-  }
+  Texture() = default;
+  virtual ~Texture() = default;
 
   inline key_t const &key() const { return fFilmStrip->key(); };
 
@@ -104,6 +96,9 @@ public:
   }
 
   void addData(std::unique_ptr<Data> iData) { fData.emplace_back(std::move(iData)); }
+  void clearData() { fData.clear(); }
+
+  friend class TextureManager;
 
 protected:
   void doDraw(bool iAddItem,

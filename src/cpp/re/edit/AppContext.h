@@ -120,8 +120,7 @@ public: // Texture
   inline std::vector<std::string> const &getTextureKeys() const { return fTextureManager->getTextureKeys(); };
   inline std::vector<std::string> findTextureKeys(FilmStrip::Filter const &iFilter) const { return fTextureManager->findTextureKeys(iFilter); }
   inline std::shared_ptr<Texture> getTexture(std::string const &iKey) const { return fTextureManager->getTexture(iKey); };
-  inline std::shared_ptr<Texture> findTexture(std::string const &iKey) const { return fTextureManager->findTexture(iKey); }
-  inline std::shared_ptr<Texture> findHDTexture(std::string const &iKey) const { return fTextureManager->findHDTexture(iKey); }
+  inline std::shared_ptr<Texture> getHDTexture(std::string const &iKey) const { return fTextureManager->getHDTexture(iKey); }
 
   void TextureItem(Texture const *iTexture,
                    ImVec2 const &iPosition = {0,0},

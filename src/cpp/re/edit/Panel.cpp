@@ -92,13 +92,13 @@ void Panel::draw(AppContext &iCtx)
   ImVec2 backgroundScreenPosition;
   auto const cp = ImGui::GetCursorScreenPos();
   auto &io = ImGui::GetIO();
-  auto texture = fGraphics.findTexture();
+  auto texture = fGraphics.hasValidTexture() ? fGraphics.getTexture() : nullptr;
   ImVec2 clickableArea = ImGui::GetContentRegionAvail();
   auto backgroundSize = getSize() * iCtx.fZoom;
   clickableArea = {std::max(clickableArea.x, backgroundSize.x), std::max(clickableArea.y, backgroundSize.y)};
 
   if(texture)
-    iCtx.TextureItem(texture.get());
+    iCtx.TextureItem(texture);
   else
     iCtx.RectFilledItem(ImVec2{}, getSize(), iCtx.getUserPreferences().fWidgetErrorColor);
 

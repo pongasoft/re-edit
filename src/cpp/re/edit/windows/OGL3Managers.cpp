@@ -39,18 +39,26 @@ OGL3TextureManager::OGL3TextureManager(int iMaxTextureSize) :
 //------------------------------------------------------------------------
 // OGL3TextureManager::createTexture
 //------------------------------------------------------------------------
-std::unique_ptr<Texture> OGL3TextureManager::createTexture(std::shared_ptr<FilmStrip> const &iFilmStrip) const
+std::unique_ptr<Texture> OGL3TextureManager::createTexture() const
 {
-  RE_EDIT_ASSERT(iFilmStrip->isValid());
+  return std::make_unique<OGL3Texture>();
+}
 
-  auto texture = std::make_unique<OGL3Texture>(iFilmStrip);
+//------------------------------------------------------------------------
+// OGL3TextureManager::populateTexture
+//------------------------------------------------------------------------
+void OGL3TextureManager::populateTexture(std::shared_ptr<Texture> const &iTexture) const
+{
+  RE_EDIT_ASSERT(iTexture->isValid());
 
-  auto const width = iFilmStrip->width();
+  auto filmStrip = iTexture->getFilmStrip();
+
+  auto const width = filmStrip->width();
   RE_EDIT_ASSERT(width < fMaxTextureSize);
 
-  auto height = iFilmStrip->height();
+  auto height = filmStrip->height();
 
-  auto pixels = iFilmStrip->data();
+  auto pixels = filmStrip->data();
 
   do
   {
@@ -75,15 +83,12 @@ std::unique_ptr<Texture> OGL3TextureManager::createTexture(std::shared_ptr<FilmS
 
     auto ogl3Data = std::make_unique<OGL3Texture::OGL3Data>(textureID, static_cast<float>(h));
 
-    texture->addData(std::move(ogl3Data));
+    iTexture->addData(std::move(ogl3Data));
 
     height -= h;
     pixels += 4 * width * h;
   }
   while(height != 0);
-
-
-  return texture;
 }
 
 //------------------------------------------------------------------------

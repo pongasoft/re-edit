@@ -51,16 +51,24 @@ MTLTextureManager::MTLTextureManager(MTL::Device *iDevice) :
 //------------------------------------------------------------------------
 // MTLTextureManager::createTexture
 //------------------------------------------------------------------------
-std::unique_ptr<Texture> MTLTextureManager::createTexture(std::shared_ptr<FilmStrip> const &iFilmStrip) const
+std::unique_ptr<Texture> MTLTextureManager::createTexture() const
 {
-  RE_EDIT_ASSERT(iFilmStrip->isValid());
+  return std::make_unique<MTLTexture>();
+}
 
-  auto const width = iFilmStrip->width();
-  auto height = iFilmStrip->height();
+//------------------------------------------------------------------------
+// MTLTextureManager::populateTexture
+//------------------------------------------------------------------------
+void MTLTextureManager::populateTexture(std::shared_ptr<Texture> const &iTexture) const
+{
+  RE_EDIT_ASSERT(iTexture->isValid());
 
-  auto texture = std::make_unique<MTLTexture>(iFilmStrip);
+  auto filmStrip = iTexture->getFilmStrip();
 
-  auto pixels = iFilmStrip->data();
+  auto const width = filmStrip->width();
+  auto height = filmStrip->height();
+
+  auto pixels = filmStrip->data();
 
   do
   {
@@ -77,22 +85,13 @@ std::unique_ptr<Texture> MTLTextureManager::createTexture(std::shared_ptr<FilmSt
     auto region = MTL::Region::Make2D(0, 0, width, h);
     mtlData->getMTLTexture()->replaceRegion(region, 0, pixels, 4 * width);
 
-    texture->addData(std::move(mtlData));
+    iTexture->addData(std::move(mtlData));
 
     height -= h;
     pixels += 4 * width * h;
   }
   while(height != 0);
 
-  return texture;
-}
-
-//------------------------------------------------------------------------
-// MTLTexture::MTLTexture
-//------------------------------------------------------------------------
-MTLTexture::MTLTexture(std::shared_ptr<FilmStrip> iFilmStrip) :
-  Texture{std::move(iFilmStrip)}
-{
 }
 
 //------------------------------------------------------------------------

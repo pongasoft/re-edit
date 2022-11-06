@@ -36,48 +36,24 @@ void TextureManager::init(fs::path iDirectory)
 //------------------------------------------------------------------------
 std::shared_ptr<Texture> TextureManager::getTexture(std::string const &iKey) const
 {
-  auto texture = findTexture(iKey);
-  RE_EDIT_ASSERT(texture != nullptr, "No texture with key [%s]", iKey);
+  if(iKey.empty())
+    return nullptr;
+
+  auto iter = fTextures.find(iKey);
+  if(iter != fTextures.end())
+    return iter->second;
+
+  std::shared_ptr<Texture> texture = updateTexture(createTexture(), fFilmStripMgr->getFilmStrip(iKey));
+  fTextures[iKey] = texture;
   return texture;
 }
 
 //------------------------------------------------------------------------
-// TextureManager::findTexture
+// TextureManager::getHDTexture
 //------------------------------------------------------------------------
-std::shared_ptr<Texture> TextureManager::findTexture(std::string const &iKey) const
+std::shared_ptr<Texture> TextureManager::getHDTexture(std::string const &iKey) const
 {
-  RE_EDIT_INTERNAL_ASSERT(fFilmStripMgr != nullptr);
-
-  // get the filmstrip associated to the key
-  auto filmStrip = fFilmStripMgr->findFilmStrip(iKey);
-
-  if(!filmStrip)
-    return nullptr;
-
-  // do we already have a GPU texture associated to this path?
-  auto iter = fTextures.find(iKey);
-  if(iter != fTextures.end())
-  {
-    auto texture = iter->second;
-
-    // same filmstrip
-    if(texture->getFilmStrip() == filmStrip)
-    {
-      return texture; // nothing has changed
-    }
-  }
-
-  // create a new texture
-  fTextures[filmStrip->key()] = filmStrip->isValid() ? createTexture(filmStrip) : std::make_unique<Texture>(filmStrip);
-  return fTextures.at(filmStrip->key());
-}
-
-//------------------------------------------------------------------------
-// TextureManager::findHDTexture
-//------------------------------------------------------------------------
-std::shared_ptr<Texture> TextureManager::findHDTexture(std::string const &iKey) const
-{
-  return findTexture(iKey + "-HD");
+  return getTexture(iKey + "-HD");
 }
 
 //------------------------------------------------------------------------
@@ -87,7 +63,28 @@ void TextureManager::scanDirectory()
 {
   auto keys = fFilmStripMgr->scanDirectory();
   for(auto &k: keys)
-    fTextures.erase(k);
+  {
+    auto iter = fTextures.find(k);
+    if(iter != fTextures.end())
+    {
+      updateTexture(iter->second, fFilmStripMgr->getFilmStrip(k));
+    }
+  }
+}
+
+//------------------------------------------------------------------------
+// TextureManager::updateTexture
+//------------------------------------------------------------------------
+std::shared_ptr<Texture> TextureManager::updateTexture(std::shared_ptr<Texture> const &iTexture,
+                                                       std::shared_ptr<FilmStrip> const &iFilmStrip) const
+{
+  iTexture->fFilmStrip = iFilmStrip;
+  iTexture->clearData();
+
+  if(iFilmStrip->isValid())
+    populateTexture(iTexture);
+
+  return iTexture;
 }
 
 //------------------------------------------------------------------------

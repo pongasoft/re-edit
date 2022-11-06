@@ -56,6 +56,8 @@ public:
     key_t fKey{};
     long fLastModifiedTime{};
     int fNumFrames{1};
+
+    static File from(key_t const &iKey, fs::path const &iDirectory);
   };
 
 public:
@@ -119,8 +121,8 @@ private:
 private:
   std::shared_ptr<File> fFile;
   int fNumFrames{0};
-  int fWidth{};
-  int fHeight{};
+  int fWidth{100};
+  int fHeight{100};
   std::shared_ptr<Data> fData{};
 
   std::string fErrorMessage;
@@ -142,7 +144,7 @@ public:
 private:
   fs::path fDirectory;
   mutable std::map<FilmStrip::key_t, std::shared_ptr<FilmStrip>> fFilmStrips{};
-  std::map<FilmStrip::key_t, std::shared_ptr<FilmStrip::File>> fFiles{};
+  mutable std::map<FilmStrip::key_t, std::shared_ptr<FilmStrip::File>> fFiles{};
   std::vector<FilmStrip::key_t> fKeys{};
 };
 

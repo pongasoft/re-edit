@@ -36,7 +36,7 @@ public:
   };
 
 public:
-  explicit OGL3Texture(std::shared_ptr<FilmStrip> iFilmStrip) : Texture(std::move(iFilmStrip)) {}
+  OGL3Texture() = default;
   ~OGL3Texture() override = default;
 };
 
@@ -47,7 +47,8 @@ public:
   ~OGL3TextureManager() override = default;
 
 protected:
-  std::unique_ptr<Texture> createTexture(std::shared_ptr<FilmStrip> const &iFilmStrip) const override;
+  std::unique_ptr<Texture> createTexture() const override;
+  void populateTexture(std::shared_ptr<Texture> const &iTexture) const override;
 
 private:
   int fMaxTextureSize;

@@ -35,8 +35,7 @@ public:
   void init(fs::path iDirectory);
 
   std::shared_ptr<Texture> getTexture(std::string const &iKey) const;
-  std::shared_ptr<Texture> findTexture(std::string const &iKey) const;
-  std::shared_ptr<Texture> findHDTexture(std::string const &iKey) const;
+  std::shared_ptr<Texture> getHDTexture(std::string const &iKey) const;
 
 //  bool loadFilmStrip(char const *iPath, int iNumFrames = 1) { return fFilmStripMgr.maybeAddFilmStrip(iPath, iNumFrames); }
 
@@ -45,7 +44,9 @@ public:
   std::vector<std::string> findTextureKeys(FilmStrip::Filter const &iFilter) const { return fFilmStripMgr->findKeys(iFilter); }
 
 protected:
-  virtual std::unique_ptr<Texture> createTexture(std::shared_ptr<FilmStrip> const &iFilmStrip) const = 0;
+  virtual std::unique_ptr<Texture> createTexture() const = 0;
+  virtual void populateTexture(std::shared_ptr<Texture> const &iTexture) const = 0;
+  std::shared_ptr<Texture> updateTexture(std::shared_ptr<Texture> const &iTexture, std::shared_ptr<FilmStrip> const &iFilmStrip) const;
 
 private:
   std::unique_ptr<FilmStripMgr> fFilmStripMgr{};

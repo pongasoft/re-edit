@@ -51,14 +51,7 @@ void PanelState::initPanel(AppContext &iCtx,
   {
     auto node = iPanelNodes->findNodeByName(iPanel->fGraphicsNode);
     if(node && node->hasKey())
-    {
-      auto background = iCtx.fTextureManager->findTexture(node->getKey());
-      if(background)
-        fPanel.setBackground(std::move(background));
-      else
-        RE_EDIT_LOG_WARNING ("Could not locate background texture [%s] for panel [%s]", iPanel->fGraphicsNode,
-                             fPanel.getName());
-    }
+      fPanel.setBackgroundKey(node->getKey());
   }
 
   // Cable origin
@@ -91,15 +84,11 @@ void PanelState::initPanel(AppContext &iCtx,
     {
       if(node->hasKey())
       {
-        auto graphics = iCtx.fTextureManager->findTexture(node->getKey());
-        if(graphics)
-        {
-          if(graphics->numFrames() != node->fNumFrames)
-            graphics->getFilmStrip()->overrideNumFrames(node->fNumFrames);
-          widget->setTexture(std::move(graphics));
-        }
+        auto key = node->getKey();
+        if(!key.empty())
+          widget->setTextureKey(key);
         else
-          widget->setTextureKey(node->getKey());
+          RE_EDIT_LOG_WARNING("Empty node path for widget %s", node->fName);
       }
 
       if(node->hasSize())
@@ -121,10 +110,10 @@ void PanelState::initPanel(AppContext &iCtx,
   {
     auto widget = Widget::panel_decal();
     widget->setPosition(node.fPosition);
-
-    auto graphics = iCtx.fTextureManager->findTexture(node.fKey);
-    if(graphics)
-      widget->setTexture(std::move(graphics));
+    if(!node.fKey.empty())
+      widget->setTextureKey(node.fKey);
+    else
+      RE_EDIT_LOG_WARNING("Empty node path for decal %s", node.fName ? *node.fName : "anonymous");
 
     if(node.fName)
       widget->setName(*node.fName);

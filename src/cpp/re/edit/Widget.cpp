@@ -974,6 +974,7 @@ std::unique_ptr<Widget> Widget::panel_decal()
 
   auto w = std::make_unique<Widget>(WidgetType::kPanelDecal);
   w->fGraphics->fFilter = kGraphicsFilter;
+  w->fGraphics->fSizeEnabled = false;
   return w;
 }
 

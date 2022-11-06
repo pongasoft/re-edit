@@ -61,7 +61,6 @@ public:
 
   constexpr void move(ImVec2 const &iDelta) { fGraphics->move(iDelta); fEdited |= fGraphics->isEdited(); }
 
-  inline void setTexture(std::shared_ptr<Texture> iTexture) { fGraphics->setTexture(std::move(iTexture)); fEdited |= fGraphics->isEdited(); }
   inline void setTextureKey(Texture::key_t const &iTextureKey) { fGraphics->setTextureKey(iTextureKey); fEdited |= fGraphics->isEdited(); }
   inline void setSize(ImVec2 const &iSize) { fGraphics->setSize(iSize); fEdited |= fGraphics->isEdited(); }
 

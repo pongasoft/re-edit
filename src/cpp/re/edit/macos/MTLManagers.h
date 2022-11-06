@@ -38,7 +38,7 @@ public:
   };
 
 public:
-  explicit MTLTexture(std::shared_ptr<FilmStrip> iFilmStrip);
+  MTLTexture() = default;
   ~MTLTexture() override = default;
 
   inline static int kMaxTextureHeight = 16384;
@@ -51,7 +51,8 @@ public:
   ~MTLTextureManager() override = default;
 
 protected:
-  std::unique_ptr<Texture> createTexture(std::shared_ptr<FilmStrip> const &iFilmStrip) const override;
+  std::unique_ptr<Texture> createTexture() const override;
+  void populateTexture(std::shared_ptr<Texture> const &iTexture) const override;
 
 private:
   MTL::Device *fDevice;
