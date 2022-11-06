@@ -30,7 +30,7 @@ struct gfx_node
   std::string fName{};
   ImVec2 fPosition{};
   std::variant<std::monostate, std::string, ImVec2> fKeyOrSize{};
-  int fNumFrames{1};
+  std::optional<int> fNumFrames{};
 
   bool hasKey() const { return std::holds_alternative<std::string>(fKeyOrSize); }
   std::string getKey() const { return std::get<std::string>(fKeyOrSize); }
@@ -50,6 +50,8 @@ struct panel_nodes
 {
   std::map<std::string, gfx_node> fNodes{};
   std::vector<gfx_decal_node> fDecalNodes{};
+
+  std::map<std::string, int> getNumFrames() const;
 
   std::optional<gfx_node> findNodeByName(std::string const &iName) const;
 };

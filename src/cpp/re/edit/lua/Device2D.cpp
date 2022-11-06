@@ -70,7 +70,7 @@ std::shared_ptr<panel_nodes> Device2D::createPanelNodes(char const *iPanelName)
   auto def = std::make_shared<panel_nodes>();
   if(lua_getglobal(L, iPanelName) == LUA_TTABLE)
   {
-    processLuaTable({}, decalNames, *def.get());
+    processLuaTable({}, decalNames, *def);
   }
   lua_pop(L, 1);
   return def;
@@ -196,4 +196,31 @@ std::optional<gfx_node> panel_nodes::findNodeByName(std::string const &iName) co
   else
     return std::nullopt;
 }
+
+//------------------------------------------------------------------------
+// panel_nodes::getNumFrames
+//------------------------------------------------------------------------
+std::map<std::string, int> panel_nodes::getNumFrames() const
+{
+  std::map<std::string, int> numFrames{};
+  for(auto &[k, node]: fNodes)
+  {
+    if(node.hasKey())
+    {
+      auto key = node.getKey();
+      if(!key.empty() && node.fNumFrames)
+      {
+        auto numFrame2 = numFrames.find(key);
+        if(numFrame2 != numFrames.end())
+        {
+          if(*node.fNumFrames != numFrame2->second)
+            RE_EDIT_LOG_WARNING("Inconsistent number of frames for %s : %d and %d", key, numFrame2->second, *node.fNumFrames);
+        }
+        numFrames[key] = *node.fNumFrames;
+      }
+    }
+  }
+  return numFrames;
+}
+
 }

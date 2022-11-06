@@ -88,6 +88,25 @@ std::shared_ptr<Texture> TextureManager::updateTexture(std::shared_ptr<Texture> 
 }
 
 //------------------------------------------------------------------------
+// TextureManager::overrideNumFrames
+//------------------------------------------------------------------------
+void TextureManager::overrideNumFrames(std::map<std::string, int> const &iNumFrames) const
+{
+  for(auto &[k, numFrames]: iNumFrames)
+  {
+    getTexture(k)->fFilmStrip->overrideNumFrames(numFrames);
+  }
+}
+
+//------------------------------------------------------------------------
+// TextureManager::overrideNumFrames
+//------------------------------------------------------------------------
+void TextureManager::overrideNumFrames(std::string const &iKey, int iNumFrames) const
+{
+  getTexture(iKey)->fFilmStrip->overrideNumFrames(iNumFrames);
+}
+
+//------------------------------------------------------------------------
 // Texture::doDraw
 //------------------------------------------------------------------------
 void Texture::doDraw(bool iAddItem,

@@ -227,11 +227,46 @@ void Graphics::editView(AppContext &iCtx,
                         std::function<void(std::string const &)> const &iOnTextureUpdate,
                         std::function<void(ImVec2 const &)> const &iOnSizeUpdate)
 {
-  if(ReGui::ResetButton())
+  if(ReGui::MenuButton())
+    ImGui::OpenPopup("Menu");
+
+  auto numFramesPopup = ImGui::GetID("NumFrames_popup");
+
+  if(ImGui::BeginPopup("Menu"))
   {
-    iCtx.addUndoAttributeReset(this);
-    reset();
+    if(ImGui::MenuItem(ReGui_Prefix(ReGui_Icon_Reset, "Reset")))
+    {
+      iCtx.addUndoAttributeReset(this);
+      reset();
+    }
+
+    ImGui::BeginDisabled(hasSize());
+    if(ImGui::MenuItem("Change number of frames"))
+      ImGui::OpenPopup(numFramesPopup);
+    ImGui::EndDisabled();
+
+    ImGui::EndPopup();
   }
+
+  if(ImGui::BeginPopup("NumFrames_popup"))
+  {
+    auto texture = getTexture();
+    auto numFrames = texture->numFrames();
+    if(ImGui::InputInt("frames", &numFrames, 1, 10))
+    {
+      iCtx.addOrMergeUndoLambda(&fTexture, texture->numFrames(), numFrames,
+                                fmt::printf("Change number of frames (%s)", texture->key()),
+                                [key = texture->key()](UndoAction *iAction, auto const &iValue) {
+                                  AppContext::GetCurrent().overrideTextureNumFrames(key, iValue);
+                                });
+      iCtx.overrideTextureNumFrames(texture->key(), numFrames);
+      fEdited = true;
+    }
+    if(ImGui::Button("Ok"))
+      ImGui::CloseCurrentPopup();
+    ImGui::EndPopup();
+  }
+
   ImGui::SameLine();
 
   ImGui::BeginGroup();

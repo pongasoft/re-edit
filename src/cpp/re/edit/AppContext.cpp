@@ -42,10 +42,25 @@ void AppContext::initPanels(fs::path const &iDevice2DFile, fs::path const &iHDGu
 {
   auto d2d = lua::Device2D::fromFile(iDevice2DFile);
   auto hdg = lua::HDGui2D::fromFile(iHDGui2DFile);
-  fFrontPanel->initPanel(*this, d2d->front(), hdg->front());
-  fFoldedFrontPanel->initPanel(*this, d2d->folded_front(), hdg->folded_front());
-  fBackPanel->initPanel(*this, d2d->back(), hdg->back());
-  fFoldedBackPanel->initPanel(*this, d2d->folded_back(), hdg->folded_back());
+  auto merge = [](std::map<std::string, int> &m1, std::map<std::string, int> const &m2) {
+    for(auto &[k, numFrame]: m2)
+    {
+      auto numFrame2 = m1.find(k);
+      if(numFrame2 != m1.end())
+      {
+        if(numFrame != numFrame2->second)
+          RE_EDIT_LOG_WARNING("Inconsistent number of frames for %s : %d and %d", k, numFrame2->second, numFrame);
+      }
+      else
+        m1[k] = numFrame;
+    }
+  };
+  std::map<std::string, int> numFrames{};
+  merge(numFrames, fFrontPanel->initPanel(*this, d2d->front(), hdg->front()));
+  merge(numFrames, fFoldedFrontPanel->initPanel(*this, d2d->folded_front(), hdg->folded_front()));
+  merge(numFrames, fBackPanel->initPanel(*this, d2d->back(), hdg->back()));
+  merge(numFrames, fFoldedBackPanel->initPanel(*this, d2d->folded_back(), hdg->folded_back()));
+  fTextureManager->overrideNumFrames(numFrames);
   markEdited();
   checkForErrors();
 }

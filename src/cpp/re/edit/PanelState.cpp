@@ -34,12 +34,12 @@ PanelState::PanelState(PanelType iPanelType) :
 //------------------------------------------------------------------------
 // PanelState::initPanel
 //------------------------------------------------------------------------
-void PanelState::initPanel(AppContext &iCtx,
-                           std::shared_ptr<lua::panel_nodes> const &iPanelNodes,
-                           std::shared_ptr<lua::jbox_panel> const &iPanel)
+std::map<std::string, int> PanelState::initPanel(AppContext &iCtx,
+                                                 std::shared_ptr<lua::panel_nodes> const &iPanelNodes,
+                                                 std::shared_ptr<lua::jbox_panel> const &iPanel)
 {
   if(iPanelNodes == nullptr || iPanel == nullptr)
-    return;
+    return {};
 
   iCtx.disableUndo();
 
@@ -124,6 +124,8 @@ void PanelState::initPanel(AppContext &iCtx,
   iCtx.enableUndo();
 
   iCtx.fCurrentPanelState = currentPanelState;
+
+  return iPanelNodes->getNumFrames();
 }
 
 //------------------------------------------------------------------------

@@ -33,9 +33,9 @@ public:
   constexpr PanelType getType() const { return fPanel.getType(); }
   std::vector<WidgetDef> const &getAllowedWidgets() const { return fWidgetDefs; }
 
-  void initPanel(AppContext &iCtx,
-                 std::shared_ptr<lua::panel_nodes> const &iPanelNodes,
-                 std::shared_ptr<lua::jbox_panel> const &iPanel);
+  std::map<std::string, int> initPanel(AppContext &iCtx,
+                                       std::shared_ptr<lua::panel_nodes> const &iPanelNodes,
+                                       std::shared_ptr<lua::jbox_panel> const &iPanel);
 
   bool renderTab(AppContext &iCtx);
   void render(AppContext &iCtx);

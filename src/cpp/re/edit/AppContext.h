@@ -121,6 +121,7 @@ public: // Texture
   inline std::vector<std::string> findTextureKeys(FilmStrip::Filter const &iFilter) const { return fTextureManager->findTextureKeys(iFilter); }
   inline std::shared_ptr<Texture> getTexture(std::string const &iKey) const { return fTextureManager->getTexture(iKey); };
   inline std::shared_ptr<Texture> getHDTexture(std::string const &iKey) const { return fTextureManager->getHDTexture(iKey); }
+  void overrideTextureNumFrames(std::string const &iKey, int iNumFrames) { fTextureManager->overrideNumFrames(iKey, iNumFrames); markEdited(); }
 
   void TextureItem(Texture const *iTexture,
                    ImVec2 const &iPosition = {0,0},

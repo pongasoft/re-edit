@@ -90,11 +90,8 @@ std::unique_ptr<FilmStrip> FilmStrip::load(std::shared_ptr<File> const &iFile)
 //------------------------------------------------------------------------
 void FilmStrip::overrideNumFrames(int iNumFrames)
 {
-  if(fNumFrames != 0 && fNumFrames != iNumFrames)
-    RE_EDIT_LOG_WARNING("Mismatch number of frames [%d] and [%d] for [%s]", iNumFrames, fNumFrames, fFile->fKey);
-
-  if(numFrames() != 1 && iNumFrames != 1)
-    RE_EDIT_LOG_WARNING("Mismatch number of frames [%d] and [%d] for [%s]", iNumFrames, numFrames(), fFile->fKey);
+  if(iNumFrames < 1)
+    iNumFrames = 1;
 
   fNumFrames = iNumFrames;
 }

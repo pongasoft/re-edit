@@ -53,7 +53,7 @@ TEST(Device2D, All)
     ASSERT_EQ("bg", n.fName);
     ASSERT_TRUE(Eq(offset, n.fPosition));
     ASSERT_EQ("front_bg", std::get<std::string>(n.fKeyOrSize));
-    ASSERT_EQ(1, n.fNumFrames);
+    ASSERT_EQ(std::nullopt, n.fNumFrames);
   }
 
   offset += {200, 100};
@@ -65,7 +65,7 @@ TEST(Device2D, All)
     ASSERT_EQ("Label", n.fName);
     ASSERT_TRUE(Eq(offset, n.fPosition));
     ASSERT_EQ("Label_path", std::get<std::string>(n.fKeyOrSize));
-    ASSERT_EQ(1, n.fNumFrames);
+    ASSERT_EQ(std::nullopt, n.fNumFrames);
   }
 
   // Knob1
@@ -95,7 +95,7 @@ TEST(Device2D, All)
     ASSERT_EQ("Knob3", n.fName);
     ASSERT_TRUE(Eq(knob3Offset, n.fPosition));
     ASSERT_TRUE(Eq(ImVec2{5, 15}, std::get<ImVec2>(n.fKeyOrSize)));
-    ASSERT_EQ(1, n.fNumFrames);
+    ASSERT_EQ(std::nullopt, n.fNumFrames);
   }
 
   // Decal1_path
@@ -128,7 +128,7 @@ TEST(Device2D, All)
     ASSERT_EQ("Panel_folded_back_bg", n.fName);
     ASSERT_TRUE(Eq(offset, n.fPosition));
     ASSERT_EQ("Panel_folded_back", std::get<std::string>(n.fKeyOrSize));
-    ASSERT_EQ(1, n.fNumFrames);
+    ASSERT_EQ(std::nullopt, n.fNumFrames);
   }
 
   // DeviceName
@@ -138,7 +138,7 @@ TEST(Device2D, All)
     ASSERT_EQ("DeviceName", n.fName);
     ASSERT_TRUE(Eq(deviceNameOffset, n.fPosition));
     ASSERT_EQ("Tape_Horizontal_1frames", std::get<std::string>(n.fKeyOrSize));
-    ASSERT_EQ(1, n.fNumFrames);
+    ASSERT_EQ(std::nullopt, n.fNumFrames);
   }
 
   // CableOrigin
@@ -149,7 +149,7 @@ TEST(Device2D, All)
     ASSERT_TRUE(Eq(cableOriginOffset, n.fPosition));
     ASSERT_FALSE(n.hasSize());
     ASSERT_FALSE(n.hasKey());
-    ASSERT_EQ(1, n.fNumFrames);
+    ASSERT_EQ(std::nullopt, n.fNumFrames);
   }
 
   // Decal_path

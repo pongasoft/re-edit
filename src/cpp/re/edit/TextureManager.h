@@ -42,6 +42,8 @@ public:
   void scanDirectory();
   std::vector<std::string> const &getTextureKeys() const { return fFilmStripMgr->getKeys(); };
   std::vector<std::string> findTextureKeys(FilmStrip::Filter const &iFilter) const { return fFilmStripMgr->findKeys(iFilter); }
+  void overrideNumFrames(std::map<std::string, int> const &iNumFrames) const;
+  void overrideNumFrames(std::string const &iKey, int iNumFrames) const;
 
 protected:
   virtual std::unique_ptr<Texture> createTexture() const = 0;
