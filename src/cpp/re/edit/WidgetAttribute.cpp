@@ -187,16 +187,16 @@ bool DiscretePropertyValueList::contains(int iValue) const
 //------------------------------------------------------------------------
 // Value::hdgui2D
 //------------------------------------------------------------------------
-void Value::hdgui2D(AppContext &iCtx, attribute_list_t &oAttributes) const
+void Value::hdgui2D(attribute_list_t &oAttributes) const
 {
   if(fUseSwitch)
   {
-    fValueSwitch.hdgui2D(iCtx, oAttributes);
-    fValues.hdgui2D(iCtx, oAttributes);
+    fValueSwitch.hdgui2D(oAttributes);
+    fValues.hdgui2D(oAttributes);
   }
   else
   {
-    fValue.hdgui2D(iCtx, oAttributes);
+    fValue.hdgui2D(oAttributes);
   }
 }
 
@@ -444,12 +444,12 @@ bool Value::copyFrom(Attribute const *iAttribute)
 //------------------------------------------------------------------------
 // Visibility::hdgui2D
 //------------------------------------------------------------------------
-void Visibility::hdgui2D(AppContext &iCtx, attribute_list_t &oAttributes) const
+void Visibility::hdgui2D(attribute_list_t &oAttributes) const
 {
   if(!fSwitch.fValue.empty())
   {
-    fSwitch.hdgui2D(iCtx, oAttributes);
-    fValues.hdgui2D(iCtx, oAttributes);
+    fSwitch.hdgui2D(oAttributes);
+    fValues.hdgui2D(oAttributes);
   }
 }
 

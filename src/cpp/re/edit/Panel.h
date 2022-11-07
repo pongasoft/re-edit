@@ -115,7 +115,7 @@ public:
   std::pair<std::shared_ptr<Widget>, int> deleteWidget(AppContext &iCtx, int id);
   void deleteWidgets(AppContext &iCtx, std::vector<std::shared_ptr<Widget>> const &iWidgets);
 
-  std::string hdgui2D(AppContext &iCtx) const;
+  std::string hdgui2D() const;
   std::string device2D() const;
 
   friend class PanelState;

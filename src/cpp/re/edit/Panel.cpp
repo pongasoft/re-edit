@@ -846,7 +846,7 @@ void Panel::editNoSelectionView(AppContext &iCtx)
   {
     auto windowSize = ImGui::GetWindowSize();
     ImGui::PushTextWrapPos(windowSize.x);
-    ImGui::TextUnformatted(hdgui2D(iCtx).c_str());
+    ImGui::TextUnformatted(hdgui2D().c_str());
     ImGui::PopTextWrapPos();
     ImGui::TreePop();
   }
@@ -1307,7 +1307,7 @@ char const *Panel::getName() const
 //------------------------------------------------------------------------
 // Panel::hdgui2D
 //------------------------------------------------------------------------
-std::string Panel::hdgui2D(AppContext &iCtx) const
+std::string Panel::hdgui2D() const
 {
   auto panelName = toString(fType);
 
@@ -1321,7 +1321,7 @@ std::string Panel::hdgui2D(AppContext &iCtx) const
   {
     auto const &w = fWidgets.at(id);
     s << fmt::printf("-- %s\n", w->getName());
-    s << fmt::printf("%s[#%s + 1] = %s\n", arrayName, arrayName, w->hdgui2D(iCtx));
+    s << fmt::printf("%s[#%s + 1] = %s\n", arrayName, arrayName, w->hdgui2D());
   }
 
   char const *options = "";

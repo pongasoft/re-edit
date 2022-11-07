@@ -20,13 +20,15 @@
 #include "Widget.h"
 #include "PanelState.h"
 #include "imgui_internal.h"
+#include "Application.h"
 
 namespace re::edit {
 
 //------------------------------------------------------------------------
 // AppContext::AppContext
 //------------------------------------------------------------------------
-AppContext::AppContext() :
+AppContext::AppContext(fs::path iRoot) :
+  fRoot{std::move(iRoot)},
   fFrontPanel(std::make_unique<PanelState>(PanelType::kFront)),
   fFoldedFrontPanel(std::make_unique<PanelState>(PanelType::kFoldedFront)),
   fBackPanel(std::make_unique<PanelState>(PanelType::kBack)),
@@ -92,6 +94,78 @@ void AppContext::render()
   RE_EDIT_INTERNAL_ASSERT(fCurrentPanelState != nullptr);
   fCurrentPanelState->render(*this);
   fPreviousPanelState = fCurrentPanelState;
+
+  int flags = fNeedsSaving ?  ImGuiWindowFlags_UnsavedDocument : ImGuiWindowFlags_None;
+
+  if(auto l = fMainWindow.begin(flags))
+  {
+    renderTabs();
+
+    ImGui::PushID("Rendering");
+
+    ImGui::PushID("Widget");
+    ImGui::AlignTextToFramePadding();
+    ImGui::Text("Widget          ");
+    ImGui::SameLine();
+    ReGui::TextRadioButton("None  ", &fWidgetRendering, AppContext::EWidgetRendering::kNone);
+    ImGui::SameLine();
+    ReGui::TextRadioButton("Normal", &fWidgetRendering, AppContext::EWidgetRendering::kNormal);
+    ImGui::SameLine();
+    ReGui::TextRadioButton("X-Ray ", &fWidgetRendering, AppContext::EWidgetRendering::kXRay);
+    ImGui::PopID();
+
+    ImGui::PushID("Border");
+    ImGui::AlignTextToFramePadding();
+    ImGui::Text("Border          ");
+    ImGui::SameLine();
+    ReGui::TextRadioButton("None  ", &fBorderRendering, AppContext::EBorderRendering::kNone);
+    ImGui::SameLine();
+    ReGui::TextRadioButton("Normal", &fBorderRendering, AppContext::EBorderRendering::kNormal);
+    ImGui::SameLine();
+    ReGui::TextRadioButton("Hit B.", &fBorderRendering, AppContext::EBorderRendering::kHitBoundaries);
+    ImGui::PopID();
+
+    ImGui::PushID("SizeOnly");
+    ImGui::AlignTextToFramePadding();
+    ImGui::Text("No Graphics     ");
+    ImGui::SameLine();
+    ReGui::TextRadioButton("None  ", &fNoGraphicsRendering, AppContext::ENoGraphicsRendering::kNone);
+    ImGui::SameLine();
+    ReGui::TextRadioButton("Border", &fNoGraphicsRendering, AppContext::ENoGraphicsRendering::kBorder);
+    ImGui::SameLine();
+    ReGui::TextRadioButton("Fill  ", &fNoGraphicsRendering, AppContext::ENoGraphicsRendering::kFill);
+    ImGui::PopID();
+
+    ImGui::PushID("Custom Display");
+    ImGui::AlignTextToFramePadding();
+    ImGui::Text("Custom Display  ");
+    ImGui::SameLine();
+    ReGui::TextRadioButton("None  ", &fCustomDisplayRendering, AppContext::ECustomDisplayRendering::kNone);
+    ImGui::SameLine();
+    ReGui::TextRadioButton("Main  ", &fCustomDisplayRendering, AppContext::ECustomDisplayRendering::kMain);
+    ImGui::SameLine();
+    ReGui::TextRadioButton("SD Bg.", &fCustomDisplayRendering, AppContext::ECustomDisplayRendering::kBackgroundSD);
+    ImGui::SameLine();
+    ReGui::TextRadioButton("HD Bg.", &fCustomDisplayRendering, AppContext::ECustomDisplayRendering::kBackgroundHD);
+    ImGui::PopID();
+
+    ImGui::PushID("Sample Drop Zone");
+    ImGui::AlignTextToFramePadding();
+    ImGui::Text("Sample Drop Zone");
+    ImGui::SameLine();
+    ReGui::TextRadioButton("None  ", &fSampleDropZoneRendering, AppContext::ESampleDropZoneRendering::kNone);
+    ImGui::SameLine();
+    ReGui::TextRadioButton("Fill  ", &fSampleDropZoneRendering, AppContext::ESampleDropZoneRendering::kFill);
+    ImGui::PopID();
+
+    ImGui::PopID();
+    ImGui::Separator();
+
+    ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate,
+                ImGui::GetIO().Framerate);
+
+  }
+
 }
 
 //------------------------------------------------------------------------
@@ -421,26 +495,35 @@ void AppContext::reloadTextures()
 //------------------------------------------------------------------------
 // AppContext::initDevice
 //------------------------------------------------------------------------
-re::mock::Info AppContext::initDevice(fs::path const &iRoot)
+void AppContext::initDevice()
 {
   auto propertyManager = std::make_shared<PropertyManager>();
-  auto info = propertyManager->init(iRoot);
+  auto info = propertyManager->init(fRoot);
   fFrontPanel->fPanel.setDeviceHeightRU(info.fDeviceHeightRU);
   fFoldedFrontPanel->fPanel.setDeviceHeightRU(info.fDeviceHeightRU);
   fBackPanel->fPanel.setDeviceHeightRU(info.fDeviceHeightRU);
   fFoldedBackPanel->fPanel.setDeviceHeightRU(info.fDeviceHeightRU);
   fPropertyManager = std::move(propertyManager);
-  return info;
+  fMainWindow.setName(info.fMediumName);
+}
+
+//------------------------------------------------------------------------
+// AppContext::initGUI2D
+//------------------------------------------------------------------------
+void AppContext::initGUI2D()
+{
+  fTextureManager->init(fRoot / "GUI2D");
+  fTextureManager->scanDirectory();
+  initPanels(fRoot / "GUI2D" / "device_2D.lua", fRoot / "GUI2D" / "hdgui_2D.lua");
 }
 
 //------------------------------------------------------------------------
 // AppContext::reloadDevice
 //------------------------------------------------------------------------
-re::mock::Info AppContext::reloadDevice(fs::path const &iRoot)
+void AppContext::reloadDevice()
 {
-  auto info = initDevice(iRoot);
+  initDevice();
   checkForErrors();
-  return info;
 }
 
 //------------------------------------------------------------------------
@@ -476,6 +559,284 @@ bool AppContext::checkForErrors()
 
   fCurrentPanelState = currentPanel;
   return res;
+}
+
+//------------------------------------------------------------------------
+// AppContext::renderMainMenu
+//------------------------------------------------------------------------
+void AppContext::renderMainMenu()
+{
+  if(ImGui::BeginMainMenuBar())
+  {
+    if(ImGui::BeginMenu("Edit"))
+    {
+      // Undo
+      {
+        auto const undoAction = fUndoManager->getLastUndoAction();
+        if(undoAction)
+        {
+          resetUndoMergeKey();
+          auto desc = re::mock::fmt::printf(ReGui_Prefix(ReGui_Icon_Undo, "Undo %s"), undoAction->fDescription);
+          if(fCurrentPanelState && fCurrentPanelState->getType() != undoAction->fPanelType)
+          {
+            if(undoAction->fPanelType == PanelType::kUnknown)
+              RE_EDIT_LOG_WARNING("unknown panel type for %s", undoAction->fDescription);
+            else
+              desc = re::mock::fmt::printf("%s (%s)", desc, Panel::toString(undoAction->fPanelType));
+          }
+          if(ImGui::MenuItem(desc.c_str()))
+          {
+            undoLastAction();
+          }
+        }
+        else
+        {
+          ImGui::BeginDisabled();
+          ImGui::MenuItem(ReGui_Prefix(ReGui_Icon_Undo, "Undo"));
+          ImGui::EndDisabled();
+        }
+      }
+
+      // Redo
+      {
+        auto const redoAction = fUndoManager->getLastRedoAction();
+        if(redoAction)
+        {
+          auto const undoAction = redoAction->fUndoAction;
+          auto desc = re::mock::fmt::printf(ReGui_Prefix(ReGui_Icon_Redo, "Redo %s"), undoAction->fDescription);
+          if(fCurrentPanelState && fCurrentPanelState->getType() != undoAction->fPanelType)
+          {
+            if(undoAction->fPanelType == PanelType::kUnknown)
+              RE_EDIT_LOG_WARNING("unknown panel type for %s", undoAction->fDescription);
+            else
+              desc = re::mock::fmt::printf("%s (%s)", desc, Panel::toString(undoAction->fPanelType));
+          }
+          if(ImGui::MenuItem(desc.c_str()))
+          {
+            redoLastAction();
+          }
+        }
+        else
+        {
+          ImGui::BeginDisabled();
+          ImGui::MenuItem(ReGui_Prefix(ReGui_Icon_Redo, "Redo"));
+          ImGui::EndDisabled();
+        }
+      }
+
+      ImGui::BeginDisabled(!fUndoManager->hasHistory());
+      if(ImGui::MenuItem("Clear Undo History"))
+      {
+        fUndoManager->clear();
+      }
+      ImGui::EndDisabled();
+
+      ImGui::EndMenu();
+    }
+
+    if(ImGui::BeginMenu("File"))
+    {
+//      if(ImGui::MenuItem(ReGui_Prefix(ReGui_Icon_Open, "Load")))
+//      {
+//        nfdchar_t *outPath;
+//        nfdresult_t result = NFD_PickFolder(&outPath, nullptr);
+//        if(result == NFD_OKAY)
+//        {
+//          RE_EDIT_LOG_INFO("Success %s", outPath);
+//          NFD_FreePath(outPath);
+//        }
+//        else if(result == NFD_CANCEL)
+//        {
+//          RE_EDIT_LOG_INFO("Cancel");
+//        }
+//        else
+//        {
+//          RE_EDIT_LOG_ERROR("Error: %s\n", NFD_GetError());
+//        }
+//      }
+      if(ImGui::MenuItem(ReGui_Prefix(ReGui_Icon_Save, "Save")))
+      {
+        Application::GetCurrent().newDialog("Save")
+          .preContentMessage("!!! Warning !!!")
+          .text("This is an experimental build. Saving will override hdgui_2d.lua and device_2d.lua\nAre you sure you want to proceed?")
+          .button("Ok", [this] { save(); return ReGui::Dialog::Result::kContinue; })
+          .buttonCancel("Cancel", true)
+          ;
+      }
+      ImGui::Separator();
+      if(ImGui::MenuItem(ReGui_Prefix(ReGui_Icon_RescanImages, "Rescan images")))
+      {
+        fReloadTexturesRequested = true;
+      }
+      if(ImGui::MenuItem(ReGui_Prefix(ReGui_Icon_ReloadMotherboard, "Reload motherboard")))
+      {
+        fReloadDeviceRequested = true;
+      }
+
+      ImGui::EndMenu();
+    }
+
+    if(ImGui::BeginMenu("Window"))
+    {
+      fPanelWindow.menuItem();
+      fPanelWidgetsWindow.menuItem();
+      fWidgetsWindow.menuItem();
+      fPropertiesWindow.menuItem();
+      ImGui::Separator();
+      if(ImGui::MenuItem("Horizontal Layout"))
+        fNewLayoutRequested = lua::kDefaultHorizontalLayout;
+      if(ImGui::MenuItem("Vertical Layout"))
+        fNewLayoutRequested = lua::kDefaultVerticalLayout;
+      ImGui::EndMenu();
+    }
+    ImGui::EndMainMenuBar();
+  }
+}
+
+//------------------------------------------------------------------------
+// AppContext::beforeRenderFrame
+//------------------------------------------------------------------------
+void AppContext::beforeRenderFrame()
+{
+  fCurrentFrame++;
+  fPropertyManager->beforeRenderFrame();
+
+  if(fRecomputeDimensionsRequested)
+  {
+    fItemWidth = 40 * ImGui::CalcTextSize("W").x;
+    fRecomputeDimensionsRequested = false;
+  }
+
+  if(fReloadTexturesRequested)
+  {
+    fReloadTexturesRequested = false;
+    fTextureManager->scanDirectory();
+    reloadTextures();
+  }
+
+  if(fReloadDeviceRequested)
+  {
+    fReloadDeviceRequested = false;
+    try
+    {
+      reloadDevice();
+    }
+    catch(...)
+    {
+      Application::GetCurrent().newDialog("Error")
+        .preContentMessage("Error while reloading rack extension definition")
+        .text(Application::what(std::current_exception()), true)
+        .buttonCancel("Ok");
+    }
+  }
+
+  if(fUndoManager->hasUndoHistory())
+    fNeedsSaving = true;
+}
+
+//------------------------------------------------------------------------
+// AppContext::newFrame
+//------------------------------------------------------------------------
+void AppContext::newFrame()
+{
+  if(fNewLayoutRequested)
+  {
+    auto newLayoutRequest = *fNewLayoutRequested;
+    fNewLayoutRequested = std::nullopt;
+    ImGui::LoadIniSettingsFromMemory(newLayoutRequest.c_str(), newLayoutRequest.size());
+  }
+
+  if(fFontManager->hasFontChangeRequest())
+  {
+    auto oldDpiScale = fFontManager->getCurrentFontDpiScale();
+    fFontManager->applyFontChangeRequest();
+    auto newDpiScale = fFontManager->getCurrentFontDpiScale();
+
+    if(oldDpiScale != newDpiScale)
+    {
+      auto scaleFactor = newDpiScale;
+      ImGuiStyle newStyle{};
+      ImGui::StyleColorsDark(&newStyle);
+      newStyle.ScaleAllSizes(scaleFactor);
+      ImGui::GetStyle() = newStyle;
+    }
+
+    fRecomputeDimensionsRequested = true;
+  }
+
+}
+
+//------------------------------------------------------------------------
+// AppContext::afterRenderFrame
+//------------------------------------------------------------------------
+void AppContext::afterRenderFrame()
+{
+  fPropertyManager->afterRenderFrame();
+}
+
+//------------------------------------------------------------------------
+// AppContext::save
+//------------------------------------------------------------------------
+void AppContext::save()
+{
+  Application::saveFile(fRoot / "GUI2D" / "device_2D.lua", device2D());
+  Application::saveFile(fRoot / "GUI2D" / "hdgui_2D.lua", hdgui2D());
+  saveConfig();
+//  fAppContext->fUndoManager->clear();
+  fNeedsSaving = false;
+  ImGui::GetIO().WantSaveIniSettings = false;
+}
+
+//------------------------------------------------------------------------
+// AppContext::hdgui2D
+//------------------------------------------------------------------------
+std::string AppContext::hdgui2D() const
+{
+  std::stringstream s{};
+  s << "format_version = \"2.0\"\n\n";
+  s << fFrontPanel->fPanel.hdgui2D();
+  s << "\n";
+  s << fBackPanel->fPanel.hdgui2D();
+  s << "\n";
+  s << fFoldedFrontPanel->fPanel.hdgui2D();
+  s << "\n";
+  s << fFoldedBackPanel->fPanel.hdgui2D();
+  return s.str();
+}
+
+//------------------------------------------------------------------------
+// Application::saveConfig
+//------------------------------------------------------------------------
+void AppContext::saveConfig()
+{
+  std::stringstream s{};
+
+  s << "format_version = \"1.0\"\n\n";
+  s << "re_edit = {}\n";
+
+  s << getLuaConfig() << "\n";
+
+  s << fmt::printf("re_edit[\"imgui.ini\"] = [==[\n%s\n]==]\n", ImGui::SaveIniSettingsToMemory());
+
+  Application::saveFile(fRoot / "re-edit.lua", s.str());
+}
+
+
+//------------------------------------------------------------------------
+// AppContext::device2D
+//------------------------------------------------------------------------
+std::string AppContext::device2D() const
+{
+  std::stringstream s{};
+  s << "format_version = \"2.0\"\n\n";
+  s << fFrontPanel->fPanel.device2D();
+  s << "\n";
+  s << fBackPanel->fPanel.device2D();
+  s << "\n";
+  s << fFoldedFrontPanel->fPanel.device2D();
+  s << "\n";
+  s << fFoldedBackPanel->fPanel.device2D();
+  return s.str();
 }
 
 ////------------------------------------------------------------------------

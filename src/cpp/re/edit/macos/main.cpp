@@ -31,10 +31,6 @@
 
 #include "QuartzCore/QuartzCore.hpp"
 
-namespace re::edit::impl {
-std::string what(std::exception_ptr const &p);
-}
-
 static void glfw_error_callback(int error, const char *description)
 {
   fprintf(stderr, "Glfw Error %d: %s\n", error, description);
@@ -249,7 +245,7 @@ int main(int argc, char **argv)
   }
   catch(...)
   {
-    RE_EDIT_LOG_ERROR("Unrecoverable error detected... aborting: %s", re::edit::impl::what(std::current_exception()));
+    RE_EDIT_LOG_ERROR("Unrecoverable error detected... aborting: %s", re::edit::Application::what(std::current_exception()));
     return 1;
   }
 }

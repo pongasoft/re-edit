@@ -498,9 +498,9 @@ void Graphics::findErrors(AppContext &iCtx, UserError &oErrors) const
 //------------------------------------------------------------------------
 // Graphics::hdgui2D
 //------------------------------------------------------------------------
-void Graphics::hdgui2D(AppContext &iCtx, attribute_list_t &oAttributes) const
+void Graphics::hdgui2D(attribute_list_t &oAttributes) const
 {
-  hdgui2D(iCtx.getCurrentWidget()->getName(), oAttributes);
+  hdgui2D(AppContext::GetCurrent().getCurrentWidget()->getName(), oAttributes);
 }
 
 //------------------------------------------------------------------------

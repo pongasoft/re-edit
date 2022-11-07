@@ -36,7 +36,12 @@ namespace re::edit {
 class Application
 {
 public:
-  Application() = default;
+  Application();
+
+  static Application &GetCurrent() { RE_EDIT_INTERNAL_ASSERT(kCurrent != nullptr); return *kCurrent; }
+
+  inline AppContext &getAppContext() { return *fAppContext; }
+  inline AppContext const &getAppContext() const { return *fAppContext; }
 
   std::optional<lua::Config> parseArgs(std::vector<std::string> iArgs);
 
@@ -45,70 +50,53 @@ public:
             std::shared_ptr<NativeFontManager> iNativeFontManager);
 
   inline void setNativeWindowSize(int iWidth, int iHeight) {
-    fAppContext.fNativeWindowWidth = iWidth;
-    fAppContext.fNativeWindowHeight = iHeight;
+    fAppContext->fNativeWindowWidth = iWidth;
+    fAppContext->fNativeWindowHeight = iHeight;
   }
 
-  inline int getNativeWindowWidth() const { return fAppContext.fNativeWindowWidth; }
-  inline int getNativeWindowHeight() const { return fAppContext.fNativeWindowHeight; }
+  inline int getNativeWindowWidth() const { return fAppContext->fNativeWindowWidth; }
+  inline int getNativeWindowHeight() const { return fAppContext->fNativeWindowHeight; }
 
-  inline void onNativeWindowFontDpiScaleChange(float iFontDpiScale) { fAppContext.onNativeWindowFontDpiScaleChange(iFontDpiScale); }
-  inline void onNativeWindowFontScaleChange(float iFontScale) { fAppContext.onNativeWindowFontScaleChange(iFontScale); }
+  inline void onNativeWindowFontDpiScaleChange(float iFontDpiScale) { fAppContext->onNativeWindowFontDpiScaleChange(iFontDpiScale); }
+  inline void onNativeWindowFontScaleChange(float iFontScale) { fAppContext->onNativeWindowFontScaleChange(iFontScale); }
 //  inline void onNativeWindowPositionChange(int x, int y, float iFontScale, float iFontDpiScale) { fAppContext.onNativeWindowPositionChange(x, y, iFontScale, iFontDpiScale); }
 
   bool newFrame() noexcept;
   bool render() noexcept;
   void renderMainMenu();
-  void save();
-  void saveConfig();
   void maybeExit();
-  inline bool running() { return !fExitRequested; }
+  inline bool running() const { return !fExitRequested; }
   inline void abort() { fExitRequested = true; };
+  ReGui::Dialog &newDialog(std::string iTitle, bool iHighPriority = false);
+  void newExceptionDialog(std::string iMessage, bool iSaveButton, std::exception_ptr const &iException);
 
   constexpr bool hasException() const { return fHasException; }
 
   static void saveFile(fs::path const &iFile, std::string const &iContent);
+  static std::string what(std::exception_ptr const &p);
 
-private:
-  struct Exception
-  {
-    std::string fMessage{};
-    bool fDisplaySaveButton{};
-    char const *fCloseButtonMessage{"Exit"};
-    bool fRecoverable{};
-    std::exception_ptr fException{};
-  };
 public:
   float clear_color[4] = {0.45f, 0.55f, 0.60f, 1.00f};
 
 private:
   bool doRender(); // may throw exception
   ReGui::Dialog::Result renderDialog();
-  std::string hdgui2D();
-  std::string device2D() const;
-  ReGui::Dialog &newDialog(std::string iTitle, bool iHighPriority = false);
-  void newExceptionDialog(std::string iMessage, bool iSaveButton, std::exception_ptr const &iException);
   void about() const;
   inline bool hasDialog() const { return fCurrentDialog != nullptr || !fDialogs.empty(); }
   template<typename F>
   void executeCatchAllExceptions(F f) noexcept;
 
 private:
-  AppContext fAppContext{};
-  ReGui::Window fMainWindow{"re-edit", std::nullopt, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_HorizontalScrollbar};
+  std::shared_ptr<AppContext> fAppContext{};
   bool fShowDemoWindow{false};
   bool fShowMetricsWindow{false};
 
-  fs::path fRoot{};
-  bool fNeedsSaving{};
   bool fExitRequested{};
-  bool fRecomputeDimensionsRequested{};
-  bool fReloadTexturesRequested{};
-  bool fReloadDeviceRequested{};
   bool fHasException{};
-  std::optional<std::string> fNewLayoutRequested{};
   std::vector<std::unique_ptr<ReGui::Dialog>> fDialogs{};
   std::unique_ptr<ReGui::Dialog> fCurrentDialog{};
+
+  inline static Application *kCurrent{};
 };
 
 }

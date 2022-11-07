@@ -81,9 +81,9 @@ public:
   };
 
 public:
-  AppContext();
+  explicit AppContext(fs::path iRoot);
 
-  static AppContext &GetCurrent() { RE_EDIT_INTERNAL_ASSERT(kCurrent != nullptr); return *kCurrent; }
+  static AppContext &GetCurrent();
 
   ImVec2 getCurrentPanelSize() const;
   void renderAddWidgetMenuView(ImVec2 const &iPosition = {});
@@ -252,16 +252,26 @@ protected:
   void reloadTextures();
   void markEdited();
   bool checkForErrors();
-  re::mock::Info initDevice(fs::path const &iRoot);
-  re::mock::Info reloadDevice(fs::path const &iRoot);
+  void initDevice();
+  void initGUI2D();
+  void reloadDevice();
+  void save();
+  void saveConfig();
+  std::string hdgui2D() const;
+  std::string device2D() const;
 
   void initPanels(fs::path const &iDevice2DFile, fs::path const &iHDGui2DFile);
   void onNativeWindowFontDpiScaleChange(float iFontDpiScale);
   void onNativeWindowFontScaleChange(float iFontScale);
   inline void setCurrentWidget(Widget const *iWidget) { fCurrentWidget = iWidget; }
+  void newFrame();
+  void beforeRenderFrame();
+  void afterRenderFrame();
+  void renderMainMenu();
   void renderTabs();
   void render();
   void populateWidgetUndoAction(WidgetUndoAction *iAction, Widget const *iWidget);
+  constexpr bool needsSaving() const { return fNeedsSaving; }
 
   template<typename T, typename F>
   void addOrMergeUndoAction(void *iMergeKey,
@@ -274,6 +284,8 @@ protected:
   static std::string computeResetDescription(Widget const *iWidget, widget::Attribute const *iAttribute);
 
 protected:
+  fs::path fRoot;
+  ReGui::Window fMainWindow{"re-edit", std::nullopt, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_HorizontalScrollbar};
   std::shared_ptr<TextureManager> fTextureManager{};
   std::shared_ptr<FontManager> fFontManager{};
   std::shared_ptr<UserPreferences> fUserPreferences{};
@@ -292,10 +304,13 @@ protected:
   PanelState *fCurrentPanelState{};
   PanelState *fPreviousPanelState{};
   Widget const *fCurrentWidget{};
+  bool fNeedsSaving{};
   int fNativeWindowWidth{1280};
   int fNativeWindowHeight{720};
-
-  inline static AppContext *kCurrent{};
+  bool fRecomputeDimensionsRequested{};
+  bool fReloadTexturesRequested{};
+  bool fReloadDeviceRequested{};
+  std::optional<std::string> fNewLayoutRequested{};
 };
 
 //------------------------------------------------------------------------

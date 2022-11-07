@@ -285,7 +285,7 @@ void Widget::editView(AppContext &iCtx)
     {
       auto size = ImGui::GetWindowSize();
       ImGui::PushTextWrapPos(size.x);
-      ImGui::TextUnformatted(hdgui2D(iCtx).c_str());
+      ImGui::TextUnformatted(hdgui2D().c_str());
       ImGui::PopTextWrapPos();
       ImGui::TreePop();
     }
@@ -308,9 +308,9 @@ void Widget::editView(AppContext &iCtx)
 //------------------------------------------------------------------------
 // Widget::hdgui2D
 //------------------------------------------------------------------------
-std::string Widget::hdgui2D(AppContext &iCtx) const
+std::string Widget::hdgui2D() const
 {
-  iCtx.setCurrentWidget(this);
+  AppContext::GetCurrent().setCurrentWidget(this);
 
   if(isPanelDecal())
     return "";
@@ -318,15 +318,16 @@ std::string Widget::hdgui2D(AppContext &iCtx) const
   attribute_list_t atts{};
 
   for(auto &att: fAttributes)
-    att->hdgui2D(iCtx, atts);
+    att->hdgui2D(atts);
 
   std::vector<std::string> l{};
   std::transform(atts.begin(), atts.end(), std::back_inserter(l), [](auto &att) {
     return re::mock::fmt::printf("  %s = %s", att.fName, att.fValue);
   });
-  return re::mock::fmt::printf("jbox.%s {\n%s\n}", toString(fType), re::mock::stl::join_to_string(l, ",\n"));
 
-  iCtx.setCurrentWidget(nullptr);
+  AppContext::GetCurrent().setCurrentWidget(nullptr);
+
+  return re::mock::fmt::printf("jbox.%s {\n%s\n}", toString(fType), re::mock::stl::join_to_string(l, ",\n"));
 }
 
 //------------------------------------------------------------------------

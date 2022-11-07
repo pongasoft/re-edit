@@ -79,7 +79,7 @@ public:
 
   void resetEdited() override;
 
-  std::string hdgui2D(AppContext &iCtx) const;
+  std::string hdgui2D() const;
   std::string device2D() const { return fGraphics->device2D(); }
 
   std::unique_ptr<Widget> copy() const;

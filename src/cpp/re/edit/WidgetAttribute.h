@@ -77,7 +77,7 @@ class Attribute : public Editable
 public:
   explicit Attribute(char const *iName) : fName{iName} {}
   ~Attribute() override = default;
-  virtual void hdgui2D(AppContext &iCtx, attribute_list_t &oAttributes) const {}
+  virtual void hdgui2D(attribute_list_t &oAttributes) const {}
 //  virtual Kind getKind() const = 0;
 
   virtual void reset() {}
@@ -119,7 +119,7 @@ public:
 
 public:
   explicit SingleAttribute(char const *iName) : Attribute{iName} {}
-  void hdgui2D(AppContext &iCtx, attribute_list_t &oAttributes) const override;
+  void hdgui2D(attribute_list_t &oAttributes) const override;
   void resetView(AppContext &iCtx);
   virtual std::string getValueAsLua() const = 0;
   void reset() override;
@@ -307,7 +307,7 @@ public:
   {
     fRequired = true;
   }
-  void hdgui2D(AppContext &iCtx, attribute_list_t &oAttributes) const override;
+  void hdgui2D(attribute_list_t &oAttributes) const override;
   void editView(AppContext &iCtx) override;
 
   void editValueView(AppContext &iCtx);
@@ -351,7 +351,7 @@ class Visibility : public CompositeAttribute
 {
 public:
   Visibility();
-  void hdgui2D(AppContext &iCtx, attribute_list_t &oAttributes) const override;
+  void hdgui2D(attribute_list_t &oAttributes) const override;
   void editView(AppContext &iCtx) override;
 
   void findErrors(AppContext &iCtx, UserError &oErrors) const override;
@@ -578,7 +578,7 @@ void SingleAttribute<T>::resetView(AppContext &iCtx)
 // SingleAttribute<T>::hdgui2D
 //------------------------------------------------------------------------
 template<typename T>
-void SingleAttribute<T>::hdgui2D(AppContext &iCtx, attribute_list_t &oAttributes) const
+void SingleAttribute<T>::hdgui2D(attribute_list_t &oAttributes) const
 {
   if(fRequired || fProvided)
     oAttributes.emplace_back(attribute_t{fName, getValueAsLua()});

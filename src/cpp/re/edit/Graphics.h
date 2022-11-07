@@ -82,7 +82,7 @@ class Graphics : public Attribute
 public:
   Graphics() : Attribute("graphics") {}
 
-  void hdgui2D(AppContext &iCtx, attribute_list_t &oAttributes) const override;
+  void hdgui2D(attribute_list_t &oAttributes) const override;
   void hdgui2D(std::string const &iNodeName, attribute_list_t &oAttributes) const;
 
   std::string device2D() const;

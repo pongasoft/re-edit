@@ -65,7 +65,7 @@ public:
   void editView(Property const *iProperty);
   void editView(std::string const &iPropertyPath) { editView(findProperty(iPropertyPath)); }
 
-  friend class Application;
+  friend class AppContext;
 
 protected:
   void beforeRenderFrame();
