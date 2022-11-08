@@ -151,6 +151,7 @@ std::shared_ptr<FilmStrip> FilmStripMgr::getFilmStrip(FilmStrip::key_t const &iK
 
   std::shared_ptr<FilmStrip> filmStrip = FilmStrip::load(iterFile->second);
   fFilmStrips[iKey] = filmStrip;
+
   return filmStrip;
 }
 
@@ -243,6 +244,37 @@ std::vector<FilmStrip::File> FilmStripMgr::scanDirectory(fs::path const &iDirect
     RE_EDIT_LOG_ERROR("Could not scan directory [%s]: (%d | %s)", iDirectory.c_str(), errorCode.value(), errorCode.message());
   }
   return res;
+}
+
+//------------------------------------------------------------------------
+// FilmStripMgr::importTexture
+//------------------------------------------------------------------------
+std::shared_ptr<FilmStrip> FilmStripMgr::importTexture(fs::path const &iTexturePath)
+{
+  if(fs::is_regular_file(iTexturePath))
+  {
+    // already there... skipping
+    if(iTexturePath.parent_path() == fDirectory)
+      return nullptr;
+
+    std::error_code errorCode;
+    if(fs::copy_file(iTexturePath, fDirectory / iTexturePath.filename(), fs::copy_options::overwrite_existing, errorCode))
+    {
+      auto key = iTexturePath.filename().u8string();
+      key = key.substr(0, key.size() - 4); // remove .png
+      std::set<FilmStrip::key_t> keys{fKeys.begin(), fKeys.end()};
+      keys.emplace(key);
+      fKeys.clear();
+      std::copy(keys.begin(), keys.end(), std::back_inserter(fKeys));
+      fFilmStrips.erase(key);
+      return getFilmStrip(key); // loads the texture
+    }
+    else
+    {
+      RE_EDIT_LOG_ERROR("Error while copying file [%s]: (%d | %s)", iTexturePath, errorCode.value(), errorCode.message());
+    }
+  }
+  return nullptr;
 }
 
 

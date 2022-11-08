@@ -73,6 +73,23 @@ void TextureManager::scanDirectory()
 }
 
 //------------------------------------------------------------------------
+// TextureManager::importTexture
+//------------------------------------------------------------------------
+std::optional<FilmStrip::key_t> TextureManager::importTexture(fs::path const &iTexturePath)
+{
+  auto filmStrip = fFilmStripMgr->importTexture(iTexturePath);
+  if(filmStrip)
+  {
+    auto iter = fTextures.find(filmStrip->key());
+    if(iter != fTextures.end())
+      updateTexture(iter->second, filmStrip);
+    return filmStrip->key();
+  }
+  else
+    return std::nullopt;
+}
+
+//------------------------------------------------------------------------
 // TextureManager::updateTexture
 //------------------------------------------------------------------------
 std::shared_ptr<Texture> TextureManager::updateTexture(std::shared_ptr<Texture> const &iTexture,

@@ -790,9 +790,11 @@ void Panel::editNoSelectionView(AppContext &iCtx)
 
   errorViewSameLine();
 
+  ImGui::PushID("graphics");
   fGraphics.editView(iCtx);
   fEdited |= fGraphics.isEdited();
   fGraphics.errorViewSameLine();
+  ImGui::PopID();
 
   if(fCableOrigin)
   {

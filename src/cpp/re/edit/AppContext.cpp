@@ -21,8 +21,10 @@
 #include "PanelState.h"
 #include "imgui_internal.h"
 #include "Application.h"
+#include "Utils.h"
 #include <regex>
 #include <efsw/efsw.hpp>
+#include <nfd.h>
 
 namespace re::edit {
 
@@ -962,6 +964,34 @@ void AppContext::disableFileWatcher()
     fRootWatcher->removeWatch(*fRootWatchID);
     fRootListener = nullptr;
     fRootWatchID = std::nullopt;
+  }
+}
+
+//------------------------------------------------------------------------
+// AppContext::importTextureBlocking
+//------------------------------------------------------------------------
+std::optional<FilmStrip::key_t> AppContext::importTextureBlocking()
+{
+  disableFileWatcher();
+  auto deferred = Utils::defer([this] { enableFileWatcher(); });
+
+  nfdchar_t *outPath;
+  nfdfilteritem_t filterItem[] = { { "Image", "png" } };
+  nfdresult_t result = NFD_OpenDialog(&outPath, filterItem, 1, nullptr);
+  if(result == NFD_OKAY)
+  {
+    fs::path texturePath{outPath};
+    NFD_FreePath(outPath);
+    return fTextureManager->importTexture(texturePath);
+  }
+  else if(result == NFD_CANCEL)
+  {
+    return std::nullopt;
+  }
+  else
+  {
+    RE_EDIT_LOG_WARNING("Error while importing images: %s", NFD_GetError());
+    return std::nullopt;
   }
 }
 

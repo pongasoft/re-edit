@@ -138,6 +138,7 @@ public:
   std::set<FilmStrip::key_t> scanDirectory();
   std::vector<FilmStrip::key_t> const &getKeys() const { return fKeys; };
   std::vector<FilmStrip::key_t> findKeys(FilmStrip::Filter const &iFilter) const;
+  std::shared_ptr<FilmStrip> importTexture(fs::path const &iTexturePath);
 
   static std::vector<FilmStrip::File> scanDirectory(fs::path const &iDirectory);
 

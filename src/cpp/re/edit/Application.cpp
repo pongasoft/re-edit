@@ -22,7 +22,6 @@
 #include "Errors.h"
 #include "lua/ReEdit.h"
 #include "LoggingManager.h"
-#include "nfd.h"
 #include <fstream>
 #include <imgui.h>
 #include <imgui_internal.h>

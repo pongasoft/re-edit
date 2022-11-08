@@ -69,16 +69,42 @@ void Graphics::reset()
 //------------------------------------------------------------------------
 void Graphics::editView(AppContext &iCtx)
 {
-  if(ReGui::ResetButton())
+  if(ReGui::MenuButton())
+    ImGui::OpenPopup("Menu");
+
+  if(ImGui::BeginPopup("Menu"))
   {
-    iCtx.addUndoLambda(fTextureKey, std::string{},
-                       "Reset background graphics",
-                       [](UndoAction *iAction, auto const &iValue) {
-                         auto panel = AppContext::GetCurrent().getPanel(iAction->fPanelType);
-                         panel->setBackgroundKey(iValue);
-                       });
-    reset();
+    if(ImGui::MenuItem(ReGui_Prefix(ReGui_Icon_Reset, "Reset")))
+    {
+      iCtx.addUndoLambda(fTextureKey, std::string{},
+                         "Reset background graphics",
+                         [](UndoAction *iAction, auto const &iValue) {
+                           auto panel = AppContext::GetCurrent().getPanel(iAction->fPanelType);
+                           panel->setBackgroundKey(iValue);
+                         });
+      reset();
+    }
+
+    if(ImGui::MenuItem(ReGui_Prefix(ReGui_Icon_RescanImages, "Import")))
+    {
+      auto textureKey = iCtx.importTextureBlocking();
+      if(textureKey)
+      {
+        iCtx.addUndoLambda(fTextureKey, *textureKey,
+                           "Change background graphics",
+                           [](UndoAction *iAction, auto const &iValue) {
+                             auto panel = AppContext::GetCurrent().getPanel(iAction->fPanelType);
+                             panel->setBackgroundKey(iValue);
+                           });
+        fTextureKey = *textureKey;
+        fDNZTexture = iCtx.getTexture(*textureKey);
+        fEdited = true;
+      }
+    }
+
+    ImGui::EndPopup();
   }
+
   ImGui::SameLine();
 
   auto key = getTextureKey();
@@ -244,6 +270,15 @@ void Graphics::editView(AppContext &iCtx,
     if(ImGui::MenuItem("Change number of frames"))
       ImGui::OpenPopup(numFramesPopup);
     ImGui::EndDisabled();
+
+    if(ImGui::MenuItem(ReGui_Prefix(ReGui_Icon_RescanImages, "Import")))
+    {
+      auto textureKey = iCtx.importTextureBlocking();
+      if(textureKey)
+        iOnTextureUpdate(*textureKey);
+      else
+        RE_EDIT_LOG_INFO("Cancelled");
+    }
 
     ImGui::EndPopup();
   }
