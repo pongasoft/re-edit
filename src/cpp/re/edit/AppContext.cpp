@@ -21,8 +21,61 @@
 #include "PanelState.h"
 #include "imgui_internal.h"
 #include "Application.h"
+#include <regex>
+#include <efsw/efsw.hpp>
 
 namespace re::edit {
+
+namespace impl {
+
+class UpdateListener : public efsw::FileWatchListener
+{
+public:
+  UpdateListener(AppContext &iCtx, fs::path iRoot) : fCtx{iCtx}, fRoot{std::move(iRoot)} {}
+
+  void handleFileAction(efsw::WatchID watchid,
+                        const std::string &dir,
+                        const std::string &filename,
+                        efsw::Action action,
+                        std::string oldFilename) override
+  {
+    processFile(fs::path(dir) / filename);
+    if(action == efsw::Actions::Moved)
+      processFile(fs::path(dir) / oldFilename);
+  }
+
+  void processFile(fs::path const &iFile)
+  {
+    static const std::regex FILENAME_REGEX{"(([0-9]+)_?frames)?\\.png$", std::regex_constants::icase};
+
+    if(is_directory(iFile))
+      return;
+
+    if(iFile == fRoot / "motherboard_def.lua" || iFile == fRoot / "info.lua")
+    {
+      // trigger maybe reloadDevice
+      fCtx.maybeReloadDevice(true);
+    }
+    else
+    {
+      if(iFile.parent_path() == fRoot / "GUI2D")
+      {
+        std::cmatch m;
+        if(std::regex_search(iFile.filename().u8string().c_str(), m, FILENAME_REGEX))
+        {
+          // trigger maybe scanDirectory
+          fCtx.maybeReloadTextures(true);
+        }
+      }
+    }
+  }
+
+private:
+  AppContext &fCtx;
+  fs::path fRoot;
+};
+
+}
 
 //------------------------------------------------------------------------
 // AppContext::AppContext
@@ -32,9 +85,18 @@ AppContext::AppContext(fs::path iRoot) :
   fFrontPanel(std::make_unique<PanelState>(PanelType::kFront)),
   fFoldedFrontPanel(std::make_unique<PanelState>(PanelType::kFoldedFront)),
   fBackPanel(std::make_unique<PanelState>(PanelType::kBack)),
-  fFoldedBackPanel(std::make_unique<PanelState>(PanelType::kFoldedBack))
+  fFoldedBackPanel(std::make_unique<PanelState>(PanelType::kFoldedBack)),
+  fRootWatcher{std::make_shared<efsw::FileWatcher>()}
 {
   fCurrentPanelState = fFrontPanel.get();
+}
+
+//------------------------------------------------------------------------
+// AppContext::~AppContext
+//------------------------------------------------------------------------
+AppContext::~AppContext()
+{
+  disableFileWatcher();
 }
 
 //------------------------------------------------------------------------
@@ -160,6 +222,32 @@ void AppContext::render()
 
     ImGui::PopID();
     ImGui::Separator();
+
+    if(maybeReloadTextures())
+    {
+      ImGui::AlignTextToFramePadding();
+      ReGui::TipIcon();ImGui::SameLine();ImGui::TextUnformatted("Detected image changes");
+      ImGui::SameLine();
+      if(ImGui::Button(ReGui_Prefix(ReGui_Icon_RescanImages, "Rescan")))
+        fReloadTexturesRequested = true;
+      ImGui::SameLine();
+      if(ImGui::Button(ReGui_Prefix(ReGui_Icon_Reset, "Dismiss")))
+        maybeReloadTextures(false);
+      ImGui::Separator();
+    }
+
+    if(maybeReloadDevice())
+    {
+      ImGui::AlignTextToFramePadding();
+      ReGui::TipIcon();ImGui::SameLine();ImGui::TextUnformatted("Detected device changes");
+      ImGui::SameLine();
+      if(ImGui::Button(ReGui_Prefix(ReGui_Icon_ReloadMotherboard, "Reload")))
+        fReloadDeviceRequested = true;
+      ImGui::SameLine();
+      if(ImGui::Button(ReGui_Prefix(ReGui_Icon_Reset, "Dismiss")))
+        maybeReloadDevice(false);
+      ImGui::Separator();
+    }
 
     ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate,
                 ImGui::GetIO().Framerate);
@@ -443,6 +531,7 @@ void AppContext::init(lua::Config const &iConfig)
 //  fShowBorder = static_cast<ShowBorder>(iConfig.fShowBorder);
 //  fShowCustomDisplay = static_cast<ShowCustomDisplay>(iConfig.fShowCustomDisplay);
 //  fShowSampleDropZone = static_cast<ShowSampleDropZone>(iConfig.fShowSampleDropZone);
+  enableFileWatcher();
 }
 
 //------------------------------------------------------------------------
@@ -668,9 +757,19 @@ void AppContext::renderMainMenu()
       {
         fReloadTexturesRequested = true;
       }
+      if(fMaybeReloadTextures)
+      {
+        ImGui::SameLine();
+        ImGui::TextUnformatted("\u00b7");
+      }
       if(ImGui::MenuItem(ReGui_Prefix(ReGui_Icon_ReloadMotherboard, "Reload motherboard")))
       {
         fReloadDeviceRequested = true;
+      }
+      if(fMaybeReloadDevice)
+      {
+        ImGui::SameLine();
+        ImGui::TextUnformatted("\u00b7");
       }
 
       ImGui::EndMenu();
@@ -710,6 +809,7 @@ void AppContext::beforeRenderFrame()
   if(fReloadTexturesRequested)
   {
     fReloadTexturesRequested = false;
+    fMaybeReloadTextures = false;
     fTextureManager->scanDirectory();
     reloadTextures();
   }
@@ -717,6 +817,7 @@ void AppContext::beforeRenderFrame()
   if(fReloadDeviceRequested)
   {
     fReloadDeviceRequested = false;
+    fMaybeReloadDevice = false;
     try
     {
       reloadDevice();
@@ -837,6 +938,31 @@ std::string AppContext::device2D() const
   s << "\n";
   s << fFoldedBackPanel->fPanel.device2D();
   return s.str();
+}
+
+//------------------------------------------------------------------------
+// AppContext::enableFileWatcher
+//------------------------------------------------------------------------
+void AppContext::enableFileWatcher()
+{
+  if(!fRootWatchID)
+  {
+    fRootListener = std::make_shared<impl::UpdateListener>(*this, fRoot);
+    fRootWatchID = fRootWatcher->addWatch(fRoot.u8string(), fRootListener.get(), true);
+  }
+}
+
+//------------------------------------------------------------------------
+// AppContext::disableFileWatcher
+//------------------------------------------------------------------------
+void AppContext::disableFileWatcher()
+{
+  if(fRootWatchID)
+  {
+    fRootWatcher->removeWatch(*fRootWatchID);
+    fRootListener = nullptr;
+    fRootWatchID = std::nullopt;
+  }
 }
 
 ////------------------------------------------------------------------------

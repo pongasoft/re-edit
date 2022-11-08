@@ -23,6 +23,7 @@
 #include <string>
 #include <memory>
 #include <exception>
+#include <atomic>
 #include "TextureManager.h"
 #include "FontManager.h"
 #include "UserPreferences.h"
@@ -31,6 +32,11 @@
 #include "Constants.h"
 #include "Errors.h"
 #include "lua/ReEdit.h"
+
+namespace efsw {
+class FileWatcher;
+class FileWatchListener;
+}
 
 namespace re::edit {
 
@@ -82,6 +88,7 @@ public:
 
 public:
   explicit AppContext(fs::path iRoot);
+  ~AppContext();
 
   static AppContext &GetCurrent();
 
@@ -235,6 +242,12 @@ public: // Undo
   friend class Widget;
   friend class Application;
 
+  bool maybeReloadTextures() const { return fMaybeReloadTextures; }
+  bool maybeReloadDevice() const { return fMaybeReloadDevice; }
+
+  void maybeReloadTextures(bool b) { fMaybeReloadTextures = b; }
+  void maybeReloadDevice(bool b) { fMaybeReloadDevice = b; }
+
 public:
   EWidgetRendering fWidgetRendering{EWidgetRendering::kNormal};
   EBorderRendering fBorderRendering{EBorderRendering::kNone};
@@ -273,6 +286,9 @@ protected:
   void populateWidgetUndoAction(WidgetUndoAction *iAction, Widget const *iWidget);
   constexpr bool needsSaving() const { return fNeedsSaving; }
 
+  void enableFileWatcher();
+  void disableFileWatcher();
+
   template<typename T, typename F>
   void addOrMergeUndoAction(void *iMergeKey,
                             T const &iOldValue,
@@ -309,8 +325,14 @@ protected:
   int fNativeWindowHeight{720};
   bool fRecomputeDimensionsRequested{};
   bool fReloadTexturesRequested{};
+  std::atomic<bool> fMaybeReloadTextures{};
   bool fReloadDeviceRequested{};
+  std::atomic<bool> fMaybeReloadDevice{};
   std::optional<std::string> fNewLayoutRequested{};
+
+  std::shared_ptr<efsw::FileWatcher> fRootWatcher{};
+  std::shared_ptr<efsw::FileWatchListener> fRootListener{};
+  std::optional<long> fRootWatchID{};
 };
 
 //------------------------------------------------------------------------

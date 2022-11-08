@@ -52,7 +52,7 @@ bool Editable::errorView()
 {
   if(hasErrors())
   {
-    ImGui::TextColored(ImVec4(1,0,0,1), ReGui::kErrorIcon);
+    ReGui::ErrorIcon();
     if(ImGui::IsItemHovered())
     {
       ImGui::BeginTooltip();

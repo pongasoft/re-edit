@@ -95,7 +95,8 @@ emoji:
   icons: []
   label: Emoji
 energy:
-  icons: []
+  icons:
+    - lightbulb
   label: Energy
 files:
   icons:
@@ -130,7 +131,8 @@ holidays:
   icons: []
   label: Holidays
 household:
-  icons: []
+  icons:
+    - lightbulb
   label: Household
 humanitarian:
   icons: []
@@ -141,13 +143,15 @@ logistics:
 maps:
   icons:
     - eye-slash
+    - lightbulb
     - magnifying-glass
   label: Maps
 maritime:
   icons: []
   label: Maritime
 marketing:
-  icons: []
+  icons:
+    - lightbulb
   label: Marketing
 mathematics:
   icons: []

@@ -98,6 +98,8 @@ constexpr bool ColorIsTransparent(ImU32 iColor)
 }
 
 constexpr ImU32 kWhiteColorU32 = GetColorU32(kWhiteColor);
+constexpr ImU32 kErrorColorU32 = GetColorU32(kErrorColor);
+constexpr ImU32 kTipColorU32 = GetColorU32(kTipColor);
 constexpr ImU32 kTransparentColorU32 = 0;
 
 //------------------------------------------------------------------------
@@ -211,6 +213,7 @@ inline bool MenuToggle(char const *iFalseLabel, char const *iTrueLabel, bool *v)
 
 constexpr auto kHiddenWidgetIcon = fa::kEyeSlash;
 constexpr auto kErrorIcon = fa::kTriangleExclamation;
+constexpr auto kTipIcon = fa::kLightbulb;
 constexpr auto kResetIcon = fa::kCircleX;
 constexpr auto kMenuIcon = fa::kBars;
 
@@ -227,6 +230,7 @@ constexpr auto kMenuIcon = fa::kBars;
 #define ReGui_Icon_Sort ICON_FA_ArrowUpArrowDown
 #define ReGui_Icon_Copy ICON_FA_Clipboard
 #define ReGui_Icon_Duplicate ICON_FA_Clone
+#define ReGui_Icon_Tip ICON_FA_Lightbulb
 
 //------------------------------------------------------------------------
 // ReGui::ResetButton
@@ -242,6 +246,26 @@ inline bool ResetButton()
 inline bool MenuButton()
 {
   return ImGui::Button(kMenuIcon);
+}
+
+//------------------------------------------------------------------------
+// ReGui::ErrorIcon
+//------------------------------------------------------------------------
+inline void ErrorIcon()
+{
+  ImGui::PushStyleColor(ImGuiCol_Text, kErrorColorU32);
+  ImGui::TextUnformatted(ReGui::kErrorIcon);
+  ImGui::PopStyleColor();
+}
+
+//------------------------------------------------------------------------
+// ReGui::TipIcon
+//------------------------------------------------------------------------
+inline void TipIcon()
+{
+  ImGui::PushStyleColor(ImGuiCol_Text, kTipColorU32);
+  ImGui::TextUnformatted(ReGui::kTipIcon);
+  ImGui::PopStyleColor();
 }
 
 //------------------------------------------------------------------------

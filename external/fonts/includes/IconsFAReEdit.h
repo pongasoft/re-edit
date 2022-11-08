@@ -30,6 +30,8 @@ constexpr auto kFloppyDisk = "\xef\x83\x87";	// U+f0c7
 constexpr auto kFolderImage = "\xee\x86\x8a";	// U+e18a
 #define ICON_FA_FolderOpen "\xef\x81\xbc"	// U+f07c
 constexpr auto kFolderOpen = "\xef\x81\xbc";	// U+f07c
+#define ICON_FA_Lightbulb "\xef\x83\xab"	// U+f0eb
+constexpr auto kLightbulb = "\xef\x83\xab";	// U+f0eb
 #define ICON_FA_MagnifyingGlass "\xef\x80\x82"	// U+f002
 constexpr auto kMagnifyingGlass = "\xef\x80\x82";	// U+f002
 #define ICON_FA_Microchip "\xef\x8b\x9b"	// U+f2db

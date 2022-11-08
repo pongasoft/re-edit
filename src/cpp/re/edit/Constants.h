@@ -90,7 +90,6 @@ constexpr int k1UPixelSize = 345;
 constexpr int kDevicePixelWidth = 3770;
 constexpr int kFoldedDevicePixelHeight = 150;
 
-constexpr auto kHitBoundariesColor = ImVec4{ 60.0f / 255.0f, 1.0f, 2.0f / 255.0f, 1};
 
 constexpr auto kNoGraphics = ImVec2{100, 100};
 
@@ -103,7 +102,13 @@ constexpr auto kSampleBrowseGroupSize = ImVec2{290, 110};
 constexpr auto kDeviceNameHorizontal = ImVec2{400, 65};
 constexpr auto kDeviceNameVertical = ImVec2{65, 400};
 
+constexpr float toFloatColor(int iColor) { return static_cast<float>(iColor) / 255.0f; }
+constexpr ImVec4 toFloatColor(int r, int g, int b, int a = 255) { return ImVec4{toFloatColor(r), toFloatColor(g), toFloatColor(b), toFloatColor(a)}; }
+
+constexpr auto kHitBoundariesColor = toFloatColor(60, 255, 2);
 constexpr auto kWhiteColor = ImVec4{1, 1, 1, 1};
+constexpr auto kErrorColor = ImVec4{1,0,0,1};
+constexpr auto kTipColor = toFloatColor(92, 184, 92);
 constexpr auto kXRayColor = ImVec4{1, 1, 1, 0.4};
 
 constexpr int toPixelHeight(int iDeviceHeightRU)
@@ -111,7 +116,6 @@ constexpr int toPixelHeight(int iDeviceHeightRU)
   return k1UPixelSize * static_cast<int>(iDeviceHeightRU);
 }
 
-constexpr float toFloatColor(int iColor) { return static_cast<float>(iColor) / 255.0f; }
 constexpr int toIntColor(float iColor) { return static_cast<int>(iColor * 255.0f); }
 
 namespace fmt {

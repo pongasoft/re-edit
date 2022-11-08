@@ -191,6 +191,25 @@ folder-open:
     - solid
   unicode: f07c
   voted: false
+lightbulb:
+  aliases:
+    unicodes:
+      composite:
+        - 1f4a1
+      secondary:
+        - 10f0eb
+  changes:
+    - 3.0.0
+    - 5.0.0
+    - 5.3.0
+    - 6.0.0-beta1
+  label: Lightbulb
+  search:
+    terms: []
+  styles:
+    - solid
+  unicode: f0eb
+  voted: false
 magnifying-glass:
   aliases:
     names:
