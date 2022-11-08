@@ -107,7 +107,8 @@ files:
     - paste
   label: Files
 film-video:
-  icons: []
+  icons:
+    - film
   label: Film + Video
 food-beverage:
   icons: []
@@ -183,6 +184,7 @@ photos-images:
   icons:
     - clone
     - eye-slash
+    - film
     - folder-image
   label: Photos + Images
 political:

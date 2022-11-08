@@ -267,7 +267,7 @@ void Graphics::editView(AppContext &iCtx,
     }
 
     ImGui::BeginDisabled(hasSize());
-    if(ImGui::MenuItem("Change number of frames"))
+    if(ImGui::MenuItem(ReGui_Prefix(ReGui_Icon_Frames, "Change number of frames")))
       ImGui::OpenPopup(numFramesPopup);
     ImGui::EndDisabled();
 

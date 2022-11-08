@@ -24,6 +24,8 @@ constexpr auto kClipboard = "\xef\x8c\xa8";	// U+f328
 constexpr auto kClone = "\xef\x89\x8d";	// U+f24d
 #define ICON_FA_EyeSlash "\xef\x81\xb0"	// U+f070
 constexpr auto kEyeSlash = "\xef\x81\xb0";	// U+f070
+#define ICON_FA_Film "\xef\x80\x88"	// U+f008
+constexpr auto kFilm = "\xef\x80\x88";	// U+f008
 #define ICON_FA_FloppyDisk "\xef\x83\x87"	// U+f0c7
 constexpr auto kFloppyDisk = "\xef\x83\x87";	// U+f0c7
 #define ICON_FA_FolderImage "\xee\x86\x8a"	// U+e18a
