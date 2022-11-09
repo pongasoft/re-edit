@@ -711,7 +711,6 @@ std::unique_ptr<Widget> Widget::placeholder()
   return w;
 }
 
-
 //------------------------------------------------------------------------
 // Widget::popup_button
 //------------------------------------------------------------------------
@@ -721,10 +720,6 @@ std::unique_ptr<Widget> Widget::popup_button()
     return (p.type() == kJBox_Boolean || p.isDiscrete()) && kDocGuiOwnerFilter(p);
   }, "Must be a discrete (stepped) number or boolean property (document_owner or gui_owner)"};
 
-  static const FilmStrip::Filter kGraphicsFilter{[](FilmStrip const &iFilmStrip) {
-    return iFilmStrip.numFrames() == 2 || iFilmStrip.numFrames() == 4;
-  }, "Must have 2 or 4 frames"};
-
   auto w = std::make_unique<Widget>(WidgetType::kPopupButton);
   w ->value(kValueFilter)
     ->visibility()
@@ -733,8 +728,7 @@ std::unique_ptr<Widget> Widget::popup_button()
     ->show_remote_box()
     ->show_automation_rect()
     ;
-  // 2 or 4 frames
-  w->fGraphics->fFilter = kGraphicsFilter;
+
   return w;
 }
 

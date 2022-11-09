@@ -96,9 +96,14 @@ public:
   static inline auto bySizeFilter(ImVec2 const &iSize) {
     return Filter([iSize](FilmStrip const &iFilmStrip) {
       return iFilmStrip.frameWidth() == static_cast<int>(iSize.x) &&
-             iFilmStrip.frameHeight() == static_cast<int>(iSize.y) &&
-             iFilmStrip.numFrames() == 1;
-    }, fmt::printf("Size must be %dx%d (1 frame)", static_cast<int>(iSize.x), static_cast<int>(iSize.y)));
+             iFilmStrip.frameHeight() == static_cast<int>(iSize.y);
+    }, fmt::printf("Size must be %dx%d", static_cast<int>(iSize.x), static_cast<int>(iSize.y)));
+  }
+
+  static inline auto bySingleFrameFilter() {
+    return Filter([](FilmStrip const &iFilmStrip) {
+      return iFilmStrip.numFrames() == 1;
+    }, "Must have exactly one frame");
   }
 
   static Filter orFilter(Filter iFilter1, Filter iFilter2) {
@@ -111,6 +116,18 @@ public:
     return {[f1 = std::move(iFilter1.fAction), f2 = std::move(iFilter2.fAction)](FilmStrip const &iFilmStrip) {
       return f1(iFilmStrip) || f2(iFilmStrip);
     }, fmt::printf("%s or %s", iFilter1.fDescription, iFilter2.fDescription)};
+  }
+
+  static Filter andFilter(Filter iFilter1, Filter iFilter2) {
+    if(!iFilter1)
+      return iFilter2;
+
+    if(!iFilter2)
+      return iFilter1;
+
+    return {[f1 = std::move(iFilter1.fAction), f2 = std::move(iFilter2.fAction)](FilmStrip const &iFilmStrip) {
+      return f1(iFilmStrip) && f2(iFilmStrip);
+    }, fmt::printf("%s and %s", iFilter1.fDescription, iFilter2.fDescription)};
   }
 
   ~FilmStrip();

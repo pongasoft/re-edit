@@ -31,6 +31,18 @@ namespace re::edit {
 //------------------------------------------------------------------------
 Info PropertyManager::init(fs::path const &iDirectory)
 {
+  static const resource::String kRTC{R"(
+format_version = "1.0"
+rtc_bindings = {
+  { source = "/environment/system_sample_rate", dest = "/global_rtc/init_instance" },
+}
+global_rtc = {
+  init_instance = function(source_property_path, new_value)
+  end,
+}
+rt_input_setup = { notify = { } }
+)"};
+
   struct NoOpDevice
   {
     explicit NoOpDevice(int /* iSampleRate */) {}
@@ -41,7 +53,7 @@ Info PropertyManager::init(fs::path const &iDirectory)
     .device_root_dir(iDirectory)
     .device_resources_dir(iDirectory / "Resources")
     .mdef_file(iDirectory / "motherboard_def.lua")
-    .rtc(Config::skeletonRealtimeController())
+    .rtc(kRTC)
 //    .rtc_file(iDirectory / "realtime_controller.lua")
     .rt([](Realtime &rt) { rt = Realtime{}; }); // no object creation at all
 //    .rt([](Realtime &rt) { rt = Realtime::byDefault<NoOpDevice>(); });
