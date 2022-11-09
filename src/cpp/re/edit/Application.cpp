@@ -314,11 +314,17 @@ void Application::renderMainMenu()
       ImGui::Separator();
       ImGui::MenuItem("ImGui Demo", nullptr, &fShowDemoWindow);
       ImGui::MenuItem("ImGui Metrics", nullptr, &fShowMetricsWindow);
+      if(ImGui::MenuItem("cmake"))
+      {
+        newDialog("cmake")
+        .text(fAppContext->cmake(), true)
+        .buttonOk();
+      }
       if(ImGui::MenuItem("imgui.ini"))
       {
         newDialog("imgui.ini")
-        .text(ImGui::SaveIniSettingsToMemory(), true)
-        .buttonOk();
+          .text(ImGui::SaveIniSettingsToMemory(), true)
+          .buttonOk();
       }
       ImGui::Separator();
       ImGui::Text("Version: %s", kFullVersion);

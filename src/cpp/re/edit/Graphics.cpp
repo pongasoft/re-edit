@@ -558,6 +558,15 @@ void Graphics::hdgui2D(std::string const &iNodeName, attribute_list_t &oAttribut
 }
 
 //------------------------------------------------------------------------
+// Graphics::getUsedTexturePaths
+//------------------------------------------------------------------------
+void Graphics::getUsedTexturePaths(std::set<fs::path> &oPaths) const
+{
+  if(hasTexture())
+    oPaths.emplace(getTexture()->getFilmStrip()->path());
+}
+
+//------------------------------------------------------------------------
 // Graphics::device2D
 //------------------------------------------------------------------------
 std::string Graphics::device2D() const
@@ -617,8 +626,8 @@ bool Background::draw(AppContext &iCtx, Graphics const *iParent, ImU32 iBorderCo
     {
       case AppContext::ECustomDisplayRendering::kBackgroundSD:
       {
-        auto texture = iCtx.getTexture(fValue);
-        if(texture->isValid())
+        auto texture = iCtx.findTexture(fValue);
+        if(texture && texture->isValid())
         {
           auto zoom = iCtx.fZoom * iParent->getSize().x / texture->frameWidth();
           texture->draw(iParent->fPosition, iCtx.fZoom, zoom, 0, iBorderColor, impl::computeTextureColor(xRay));
@@ -629,8 +638,8 @@ bool Background::draw(AppContext &iCtx, Graphics const *iParent, ImU32 iBorderCo
 
       case AppContext::ECustomDisplayRendering::kBackgroundHD:
       {
-        auto texture = iCtx.getHDTexture(fValue);
-        if(texture->isValid())
+        auto texture = iCtx.findHDTexture(fValue);
+        if(texture && texture->isValid())
         {
           iCtx.drawTexture(texture.get(), iParent->fPosition, 0, iBorderColor, impl::computeTextureColor(xRay));
           return true;
@@ -643,6 +652,21 @@ bool Background::draw(AppContext &iCtx, Graphics const *iParent, ImU32 iBorderCo
   }
 
   return false;
+}
+
+//------------------------------------------------------------------------
+// Background::getUsedTexturePaths
+//------------------------------------------------------------------------
+void Background::getUsedTexturePaths(std::set<fs::path> &oPaths) const
+{
+  auto &app = AppContext::GetCurrent();
+
+  auto texture = app.findTexture(fValue);
+  if(texture && texture->isValid())
+    oPaths.emplace(texture->getFilmStrip()->path());
+  auto hdTexture = app.findHDTexture(fValue);
+  if(hdTexture && hdTexture->isValid())
+    oPaths.emplace(hdTexture->getFilmStrip()->path());
 }
 
 namespace impl {

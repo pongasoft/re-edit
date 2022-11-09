@@ -49,11 +49,31 @@ std::shared_ptr<Texture> TextureManager::getTexture(std::string const &iKey) con
 }
 
 //------------------------------------------------------------------------
-// TextureManager::getHDTexture
+// TextureManager::getTexture
 //------------------------------------------------------------------------
-std::shared_ptr<Texture> TextureManager::getHDTexture(std::string const &iKey) const
+std::shared_ptr<Texture> TextureManager::findTexture(std::string const &iKey) const
 {
-  return getTexture(iKey + "-HD");
+  auto iter = fTextures.find(iKey);
+  if(iter != fTextures.end())
+    return iter->second;
+
+  auto filmStrip = fFilmStripMgr->findFilmStrip(iKey);
+  if(filmStrip)
+  {
+    std::shared_ptr<Texture> texture = updateTexture(createTexture(), filmStrip);
+    fTextures[iKey] = texture;
+    return texture;
+  }
+  else
+    return nullptr;
+}
+
+//------------------------------------------------------------------------
+// TextureManager::findHDTexture
+//------------------------------------------------------------------------
+std::shared_ptr<Texture> TextureManager::findHDTexture(std::string const &iKey) const
+{
+  return findTexture(iKey + "-HD");
 }
 
 //------------------------------------------------------------------------
@@ -122,6 +142,7 @@ void TextureManager::overrideNumFrames(std::string const &iKey, int iNumFrames) 
 {
   getTexture(iKey)->fFilmStrip->overrideNumFrames(iNumFrames);
 }
+
 
 //------------------------------------------------------------------------
 // Texture::doDraw

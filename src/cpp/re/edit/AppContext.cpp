@@ -943,6 +943,31 @@ std::string AppContext::device2D() const
 }
 
 //------------------------------------------------------------------------
+// AppContext::cmake
+//------------------------------------------------------------------------
+std::string AppContext::cmake() const
+{
+  std::set<fs::path> texturePaths{};
+  fFrontPanel->fPanel.getUsedTexturePaths(texturePaths);
+  fBackPanel->fPanel.getUsedTexturePaths(texturePaths);
+  fFoldedFrontPanel->fPanel.getUsedTexturePaths(texturePaths);
+  fFoldedBackPanel->fPanel.getUsedTexturePaths(texturePaths);
+
+  std::stringstream s{};
+  s << "set(re_sources_2d\n";
+  s << "    # lua files describing the GUI\n";
+  s << "    \"${RE_2D_SRC_DIR}/device_2D.lua\"\n";
+  s << "    \"${RE_2D_SRC_DIR}/hdgui_2D.lua\"\n";
+  s << "    # Images for the device\n";
+  for(auto &path: texturePaths)
+  {
+    s << fmt::printf("    \"${RE_2D_SRC_DIR}/%s\"\n", path.filename().u8string());
+  }
+  s << "    )";
+  return s.str();
+}
+
+//------------------------------------------------------------------------
 // AppContext::enableFileWatcher
 //------------------------------------------------------------------------
 void AppContext::enableFileWatcher()

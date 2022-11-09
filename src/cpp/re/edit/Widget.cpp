@@ -331,6 +331,17 @@ std::string Widget::hdgui2D() const
 }
 
 //------------------------------------------------------------------------
+// Widget::hdgui2D
+//------------------------------------------------------------------------
+void Widget::getUsedTexturePaths(std::set<fs::path> &oPaths) const
+{
+  AppContext::GetCurrent().setCurrentWidget(this);
+  for(auto &att: fAttributes)
+    att->getUsedTexturePaths(oPaths);
+  AppContext::GetCurrent().setCurrentWidget(nullptr);
+}
+
+//------------------------------------------------------------------------
 // Widget::value
 //------------------------------------------------------------------------
 Widget *Widget::value(Property::Filter iValueFilter, Property::Filter iValueSwitchFilter)

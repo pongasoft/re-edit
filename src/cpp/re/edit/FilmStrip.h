@@ -75,6 +75,7 @@ public:
   };
 
   inline key_t const &key() const { return fFile->fKey; };
+  inline fs::path const &path() const { return fFile->fPath; };
   constexpr std::string const &errorMessage() const { return fErrorMessage; };
 
   inline bool isValid() const { return fData != nullptr; }

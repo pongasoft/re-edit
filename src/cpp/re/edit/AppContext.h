@@ -127,7 +127,8 @@ public: // Texture
   inline std::vector<FilmStrip::key_t> const &getTextureKeys() const { return fTextureManager->getTextureKeys(); };
   inline std::vector<FilmStrip::key_t> findTextureKeys(FilmStrip::Filter const &iFilter) const { return fTextureManager->findTextureKeys(iFilter); }
   inline std::shared_ptr<Texture> getTexture(FilmStrip::key_t const &iKey) const { return fTextureManager->getTexture(iKey); };
-  inline std::shared_ptr<Texture> getHDTexture(FilmStrip::key_t const &iKey) const { return fTextureManager->getHDTexture(iKey); }
+  inline std::shared_ptr<Texture> findTexture(FilmStrip::key_t const &iKey) const { return fTextureManager->findTexture(iKey); };
+  inline std::shared_ptr<Texture> findHDTexture(FilmStrip::key_t const &iKey) const { return fTextureManager->findHDTexture(iKey); }
   void overrideTextureNumFrames(FilmStrip::key_t const &iKey, int iNumFrames) { fTextureManager->overrideNumFrames(iKey, iNumFrames); markEdited(); }
   std::optional<FilmStrip::key_t> importTextureBlocking();
 
@@ -273,6 +274,7 @@ protected:
   void saveConfig();
   std::string hdgui2D() const;
   std::string device2D() const;
+  std::string cmake() const;
 
   void initPanels(fs::path const &iDevice2DFile, fs::path const &iHDGui2DFile);
   void onNativeWindowFontDpiScaleChange(float iFontDpiScale);

@@ -1380,6 +1380,24 @@ std::string Panel::device2D() const
 }
 
 //------------------------------------------------------------------------
+// Panel::getUsedTexturePaths
+//------------------------------------------------------------------------
+void Panel::getUsedTexturePaths(std::set<fs::path> &oPaths) const
+{
+  if(fGraphics.hasTexture())
+    oPaths.emplace(fGraphics.getTexture()->getFilmStrip()->path());
+
+  for(auto &[id, w]: fWidgets)
+  {
+    w->getUsedTexturePaths(oPaths);
+//    if(w->hasTexture())
+//    {
+//      oPaths.emplace(w->getTexture()->getFilmStrip()->path());
+//    }
+  }
+}
+
+//------------------------------------------------------------------------
 // Panel::setDeviceHeightRU
 //------------------------------------------------------------------------
 void Panel::setDeviceHeightRU(int iDeviceHeightRU)
@@ -1483,5 +1501,6 @@ void Panel::selectWidgets(AppContext &iCtx, ImVec2 const &iPosition1, ImVec2 con
     }
   }
 }
+
 
 }

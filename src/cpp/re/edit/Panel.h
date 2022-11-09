@@ -21,6 +21,7 @@
 
 #include "Widget.h"
 #include <vector>
+#include <set>
 #include <optional>
 
 namespace re::edit {
@@ -117,6 +118,7 @@ public:
 
   std::string hdgui2D() const;
   std::string device2D() const;
+  void getUsedTexturePaths(std::set<fs::path> &oPaths) const;
 
   friend class PanelState;
 
