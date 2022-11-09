@@ -412,7 +412,7 @@ void Application::maybeExit()
   if(fExitRequested)
     return;
 
-  if(fAppContext->fNeedsSaving)
+  if(fAppContext->needsSaving())
   {
     newDialog("Quit")
       .postContentMessage("You have unsaved changes, do you want to save them before quitting?")

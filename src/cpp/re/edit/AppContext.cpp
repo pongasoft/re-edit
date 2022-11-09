@@ -159,7 +159,7 @@ void AppContext::render()
   fCurrentPanelState->render(*this);
   fPreviousPanelState = fCurrentPanelState;
 
-  int flags = fNeedsSaving ?  ImGuiWindowFlags_UnsavedDocument : ImGuiWindowFlags_None;
+  int flags = needsSaving() ?  ImGuiWindowFlags_UnsavedDocument : ImGuiWindowFlags_None;
 
   if(auto l = fMainWindow.begin(flags))
   {
@@ -719,6 +719,7 @@ void AppContext::renderMainMenu()
       if(ImGui::MenuItem("Clear Undo History"))
       {
         fUndoManager->clear();
+        fLastSavedUndoAction = nullptr;
       }
       ImGui::EndDisabled();
 
@@ -833,8 +834,7 @@ void AppContext::beforeRenderFrame()
     }
   }
 
-  if(fUndoManager->hasUndoHistory())
-    fNeedsSaving = true;
+  fNeedsSaving = fUndoManager->getLastUndoAction() != fLastSavedUndoAction;
 }
 
 //------------------------------------------------------------------------
@@ -887,6 +887,7 @@ void AppContext::save()
   saveConfig();
 //  fAppContext->fUndoManager->clear();
   fNeedsSaving = false;
+  fLastSavedUndoAction = fUndoManager->getLastUndoAction();
   ImGui::GetIO().WantSaveIniSettings = false;
 }
 

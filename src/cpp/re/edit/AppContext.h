@@ -324,6 +324,7 @@ protected:
   PanelState *fPreviousPanelState{};
   Widget const *fCurrentWidget{};
   bool fNeedsSaving{};
+  std::shared_ptr<UndoAction> fLastSavedUndoAction{};
   int fNativeWindowWidth{1280};
   int fNativeWindowHeight{720};
   bool fRecomputeDimensionsRequested{};
