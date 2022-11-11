@@ -33,7 +33,7 @@ namespace impl {
 class UpdateListener : public efsw::FileWatchListener
 {
 public:
-  UpdateListener(AppContext &iCtx, fs::path iRoot) : fCtx{iCtx}, fRoot{std::move(iRoot)} {}
+  UpdateListener(AppContext &iCtx, fs::path const &iRoot) : fCtx{iCtx}, fRoot{fs::canonical(iRoot)} {}
 
   void handleFileAction(efsw::WatchID watchid,
                         const std::string &dir,
@@ -50,20 +50,28 @@ public:
   {
     static const std::regex FILENAME_REGEX{"(([0-9]+)_?frames)?\\.png$", std::regex_constants::icase};
 
-    if(is_directory(iFile))
+    if(fs::is_directory(iFile))
       return;
 
-    if(iFile == fRoot / "motherboard_def.lua" || iFile == fRoot / "info.lua")
+    std::error_code errorCode;
+    auto file = fs::canonical(iFile, errorCode);
+    if(errorCode)
+    {
+      RE_EDIT_LOG_WARNING("Cannot convert %s to canonical form", iFile);
+      return;
+    }
+
+    if(file == fRoot / "motherboard_def.lua" || file == fRoot / "info.lua")
     {
       // trigger maybe reloadDevice
       fCtx.maybeReloadDevice(true);
     }
     else
     {
-      if(iFile.parent_path() == fRoot / "GUI2D")
+      if(file.parent_path() == fRoot / "GUI2D")
       {
         std::cmatch m;
-        if(std::regex_search(iFile.filename().u8string().c_str(), m, FILENAME_REGEX))
+        if(std::regex_search(file.filename().u8string().c_str(), m, FILENAME_REGEX))
         {
           // trigger maybe scanDirectory
           fCtx.maybeReloadTextures(true);
