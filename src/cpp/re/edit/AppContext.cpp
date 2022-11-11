@@ -884,6 +884,7 @@ void AppContext::save()
 {
   Application::saveFile(fRoot / "GUI2D" / "device_2D.lua", device2D());
   Application::saveFile(fRoot / "GUI2D" / "hdgui_2D.lua", hdgui2D());
+  Application::saveFile(fRoot / "GUI2D" / "gui_2D.cmake", cmake());
   saveConfig();
 //  fAppContext->fUndoManager->clear();
   fNeedsSaving = false;

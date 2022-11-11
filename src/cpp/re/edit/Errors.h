@@ -50,6 +50,13 @@ private:
   error_t fErrors;
 };
 
+//! log_debug
+template<typename ... Args>
+void log_debug(char const *iFile, int iLine, const std::string &format, Args ... args)
+{
+  std::cout << re::mock::fmt::printf("DEBG | %s:%d | %s", iFile, iLine, re::mock::fmt::printf(format, args...)) << std::endl;
+}
+
 //! log_info
 template<typename ... Args>
 void log_info(char const *iFile, int iLine, const std::string &format, Args ... args)
@@ -85,6 +92,9 @@ void log_error(char const *iFile, int iLine, const std::string &format, Args ...
 #define RE_EDIT_INTERNAL_ASSERT(test, ...) (test) == true ? (void)0 : re::mock::Exception::throwException("INTERNAL CHECK FAILED: \"" #test "\"", __FILE__, __LINE__, ##__VA_ARGS__)
 #else
 #define RE_EDIT_INTERNAL_ASSERT(test, ...)
+#endif
+#ifndef NDEBUG
+#define RE_EDIT_LOG_DEBUG(...) re::edit::log_debug(__FILE__, __LINE__, __VA_ARGS__)
 #endif
 #define RE_EDIT_LOG_INFO(...) re::edit::log_info(__FILE__, __LINE__, __VA_ARGS__)
 #define RE_EDIT_LOG_WARNING(...) re::edit::log_warning(__FILE__, __LINE__, __VA_ARGS__)

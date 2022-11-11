@@ -23,6 +23,7 @@
 #include "lua/ReEdit.h"
 #include "LoggingManager.h"
 #include <fstream>
+#include <iterator>
 #include <imgui.h>
 #include <imgui_internal.h>
 #include <version.h>
@@ -314,9 +315,9 @@ void Application::renderMainMenu()
       ImGui::Separator();
       ImGui::MenuItem("ImGui Demo", nullptr, &fShowDemoWindow);
       ImGui::MenuItem("ImGui Metrics", nullptr, &fShowMetricsWindow);
-      if(ImGui::MenuItem("cmake"))
+      if(ImGui::MenuItem("gui_2D.cmake"))
       {
-        newDialog("cmake")
+        newDialog("gui_2D.cmake")
         .text(fAppContext->cmake(), true)
         .buttonOk();
       }
@@ -431,6 +432,28 @@ void Application::saveFile(fs::path const &iFile, std::string const &iContent)
 {
   try
   {
+    // we check if the content has changed as there is no reason to overwrite (which changes the modified time)
+    if(fs::exists(iFile))
+    {
+      try
+      {
+        const auto size = fs::file_size(iFile);
+        std::ifstream originalFile(iFile, std::ios::in | std::ios::binary);
+        std::string originalContent(size, '\0');
+        originalFile.read(originalContent.data(), static_cast<std::streamsize>(size));
+        if(originalContent == iContent)
+        {
+          // no change => no save
+          return;
+        }
+      }
+      catch(...)
+      {
+        // we cannot read the previous file, but it's fine: we will just overwrite it
+        RE_EDIT_LOG_DEBUG("Error while reading file %s: %s", iFile, what(std::current_exception()));
+      }
+    }
+
     // we do it in 2 steps since step 1 is the one that is more likely to fail
     // 1. we save in a new file
     auto tmpFile = iFile.parent_path() / fmt::printf("%s.re_edit.tmp", iFile.filename());

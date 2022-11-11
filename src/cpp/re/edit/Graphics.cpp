@@ -276,8 +276,6 @@ void Graphics::editView(AppContext &iCtx,
       auto textureKey = iCtx.importTextureBlocking();
       if(textureKey)
         iOnTextureUpdate(*textureKey);
-      else
-        RE_EDIT_LOG_INFO("Cancelled");
     }
 
     ImGui::EndPopup();

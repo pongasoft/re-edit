@@ -194,7 +194,7 @@ std::set<FilmStrip::key_t> FilmStripMgr::scanDirectory()
     fFilmStrips.erase(k);
   }
 
-  RE_EDIT_LOG_INFO("Scan complete: %ld textures (%ld modified, %ld removed)", fFiles.size(), modifiedKeys.size(), previousKeys.size());
+  RE_EDIT_LOG_DEBUG("Scan complete: %ld textures (%ld modified, %ld removed)", fFiles.size(), modifiedKeys.size(), previousKeys.size());
 
   if(!modifiedKeys.empty())
   {
