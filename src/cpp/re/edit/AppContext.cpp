@@ -907,6 +907,8 @@ void AppContext::afterRenderFrame()
 //------------------------------------------------------------------------
 void AppContext::save()
 {
+  disableFileWatcher();
+  auto deferred = Utils::defer([this] { enableFileWatcher(); });
   Application::saveFile(fRoot / "GUI2D" / "device_2D.lua", device2D());
   Application::saveFile(fRoot / "GUI2D" / "hdgui_2D.lua", hdgui2D());
   Application::saveFile(fRoot / "GUI2D" / "gui_2D.cmake", cmake());
