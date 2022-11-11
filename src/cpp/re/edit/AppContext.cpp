@@ -123,9 +123,12 @@ void AppContext::initPanels(fs::path const &iDevice2DFile, fs::path const &iHDGu
   };
   std::map<std::string, int> numFrames{};
   merge(numFrames, fFrontPanel->initPanel(*this, d2d->front(), hdg->front()));
-  merge(numFrames, fFoldedFrontPanel->initPanel(*this, d2d->folded_front(), hdg->folded_front()));
   merge(numFrames, fBackPanel->initPanel(*this, d2d->back(), hdg->back()));
-  merge(numFrames, fFoldedBackPanel->initPanel(*this, d2d->folded_back(), hdg->folded_back()));
+  if(fHasFoldedPanels)
+  {
+    merge(numFrames, fFoldedFrontPanel->initPanel(*this, d2d->folded_front(), hdg->folded_front()));
+    merge(numFrames, fFoldedBackPanel->initPanel(*this, d2d->folded_back(), hdg->folded_back()));
+  }
   fTextureManager->overrideNumFrames(numFrames);
   markEdited();
   checkForErrors();
@@ -142,10 +145,14 @@ void AppContext::renderTabs()
       fCurrentPanelState = fFrontPanel.get();
     if(fBackPanel->renderTab(*this))
       fCurrentPanelState = fBackPanel.get();
-    if(fFoldedFrontPanel->renderTab(*this))
-      fCurrentPanelState = fFoldedFrontPanel.get();
-    if(fFoldedBackPanel->renderTab(*this))
-      fCurrentPanelState = fFoldedBackPanel.get();
+    if(fHasFoldedPanels)
+    {
+      if(fFoldedFrontPanel->renderTab(*this))
+        fCurrentPanelState = fFoldedFrontPanel.get();
+      if(fFoldedBackPanel->renderTab(*this))
+        fCurrentPanelState = fFoldedBackPanel.get();
+    }
+
     ImGui::EndTabBar();
   }
 }
@@ -590,10 +597,14 @@ void AppContext::initDevice()
 {
   auto propertyManager = std::make_shared<PropertyManager>();
   auto info = propertyManager->init(fRoot);
+  fHasFoldedPanels = info.fDeviceType != mock::DeviceType::kNotePlayer;
   fFrontPanel->fPanel.setDeviceHeightRU(info.fDeviceHeightRU);
-  fFoldedFrontPanel->fPanel.setDeviceHeightRU(info.fDeviceHeightRU);
   fBackPanel->fPanel.setDeviceHeightRU(info.fDeviceHeightRU);
-  fFoldedBackPanel->fPanel.setDeviceHeightRU(info.fDeviceHeightRU);
+  if(fHasFoldedPanels)
+  {
+    fFoldedFrontPanel->fPanel.setDeviceHeightRU(info.fDeviceHeightRU);
+    fFoldedBackPanel->fPanel.setDeviceHeightRU(info.fDeviceHeightRU);
+  }
   fPropertyManager = std::move(propertyManager);
   fMainWindow.setName(info.fMediumName);
 }
@@ -623,9 +634,12 @@ void AppContext::reloadDevice()
 void AppContext::markEdited()
 {
   fFrontPanel->fPanel.markEdited();
-  fFoldedFrontPanel->fPanel.markEdited();
   fBackPanel->fPanel.markEdited();
-  fFoldedBackPanel->fPanel.markEdited();
+  if(fHasFoldedPanels)
+  {
+    fFoldedFrontPanel->fPanel.markEdited();
+    fFoldedBackPanel->fPanel.markEdited();
+  }
 }
 
 //------------------------------------------------------------------------
@@ -639,14 +653,17 @@ bool AppContext::checkForErrors()
   fCurrentPanelState = fFrontPanel.get();
   res |= fFrontPanel->fPanel.checkForErrors(*this);
 
-  fCurrentPanelState = fFoldedFrontPanel.get();
-  res |= fFoldedFrontPanel->fPanel.checkForErrors(*this);
-
   fCurrentPanelState = fBackPanel.get();
   res |= fBackPanel->fPanel.checkForErrors(*this);
 
-  fCurrentPanelState = fFoldedBackPanel.get();
-  res |= fFoldedBackPanel->fPanel.checkForErrors(*this);
+  if(fHasFoldedPanels)
+  {
+    fCurrentPanelState = fFoldedFrontPanel.get();
+    res |= fFoldedFrontPanel->fPanel.checkForErrors(*this);
+
+    fCurrentPanelState = fFoldedBackPanel.get();
+    res |= fFoldedBackPanel->fPanel.checkForErrors(*this);
+  }
 
   fCurrentPanelState = currentPanel;
   return res;
@@ -903,9 +920,18 @@ std::string AppContext::hdgui2D() const
   s << "\n";
   s << fBackPanel->fPanel.hdgui2D();
   s << "\n";
-  s << fFoldedFrontPanel->fPanel.hdgui2D();
-  s << "\n";
-  s << fFoldedBackPanel->fPanel.hdgui2D();
+  if(fHasFoldedPanels)
+  {
+    s << fFoldedFrontPanel->fPanel.hdgui2D();
+    s << "\n";
+    s << fFoldedBackPanel->fPanel.hdgui2D();
+    s << "\n";
+  }
+  else
+  {
+    s << "-- players don't have folded panels\n";
+  }
+
   return s.str();
 }
 
@@ -938,9 +964,18 @@ std::string AppContext::device2D() const
   s << "\n";
   s << fBackPanel->fPanel.device2D();
   s << "\n";
-  s << fFoldedFrontPanel->fPanel.device2D();
-  s << "\n";
-  s << fFoldedBackPanel->fPanel.device2D();
+
+  if(fHasFoldedPanels)
+  {
+    s << fFoldedFrontPanel->fPanel.device2D();
+    s << "\n";
+    s << fFoldedBackPanel->fPanel.device2D();
+    s << "\n";
+  }
+  else
+    s << "-- players don't have folded panels\n";
+
+
   return s.str();
 }
 
@@ -952,8 +987,11 @@ std::string AppContext::cmake() const
   std::set<fs::path> texturePaths{};
   fFrontPanel->fPanel.getUsedTexturePaths(texturePaths);
   fBackPanel->fPanel.getUsedTexturePaths(texturePaths);
-  fFoldedFrontPanel->fPanel.getUsedTexturePaths(texturePaths);
-  fFoldedBackPanel->fPanel.getUsedTexturePaths(texturePaths);
+  if(fHasFoldedPanels)
+  {
+    fFoldedFrontPanel->fPanel.getUsedTexturePaths(texturePaths);
+    fFoldedBackPanel->fPanel.getUsedTexturePaths(texturePaths);
+  }
 
   std::stringstream s{};
   s << "set(re_sources_2d\n";
