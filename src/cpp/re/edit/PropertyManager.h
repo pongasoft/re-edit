@@ -49,8 +49,8 @@ public:
   bool hasProperty(std::string const &iPropertyPath) const;
   std::string getPropertyInfo(std::string const &iPropertyPath) const;
 
-  int getIntValue(std::string const &iPropertyPath) const;
-  void setIntValue(std::string const &iPropertyPath, int iValue);
+  int getValueAsInt(std::string const &iPropertyPath) const;
+  void setValueAsInt(std::string const &iPropertyPath, int iValue);
 
   constexpr int getUserSamplesCount() const { return fUserSamplesCount; }
 

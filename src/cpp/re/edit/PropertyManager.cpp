@@ -204,21 +204,47 @@ Property const *PropertyManager::findProperty(std::string const &iPropertyPath) 
 }
 
 //------------------------------------------------------------------------
-// PropertyManager::getIntValue
+// PropertyManager::getValueAsInt
 //------------------------------------------------------------------------
-int PropertyManager::getIntValue(std::string const &iPropertyPath) const
+int PropertyManager::getValueAsInt(std::string const &iPropertyPath) const
 {
-  if(hasProperty(iPropertyPath))
-    return fDevice->getNum<int>(iPropertyPath);
+  auto iter = fProperties.find(iPropertyPath);
+  if(iter != fProperties.end())
+  {
+    switch(iter->second.type())
+    {
+      case kJBox_Number:
+        return fDevice->getNum<int>(iPropertyPath);
+      case kJBox_Boolean:
+        return fDevice->getBool(iPropertyPath) ? 1 : 0;
+      default:
+        return 0;
+    }
+  }
   else
     return 0;
 }
 
 //------------------------------------------------------------------------
-// PropertyManager::setIntValue
+// PropertyManager::setValueAsInt
 //------------------------------------------------------------------------
-void PropertyManager::setIntValue(std::string const &iPropertyPath, int iValue)
+void PropertyManager::setValueAsInt(std::string const &iPropertyPath, int iValue)
 {
+  auto iter = fProperties.find(iPropertyPath);
+  if(iter != fProperties.end())
+  {
+    switch(iter->second.type())
+    {
+      case kJBox_Number:
+        fDevice->setNum<int>(iPropertyPath, iValue);
+        break;
+      case kJBox_Boolean:
+        fDevice->setBool(iPropertyPath, iValue != 0);
+        break;
+      default:
+        break;
+    }
+  }
   fDevice->setNum<int>(iPropertyPath, iValue);
 }
 
@@ -398,15 +424,15 @@ void PropertyManager::editView(Property const *iProperty)
     {
       if(iProperty->isDiscrete())
       {
-        int value = getIntValue(iProperty->path());
+        auto value = fDevice->getNum<int>(iProperty->path());
         if(ImGui::SliderInt("value", &value, 0, iProperty->stepCount() - 1))
-          setIntValue(iProperty->path(), value);
+          fDevice->setNum<int>(iProperty->path(), value);
       }
       else
       {
-        auto floatValue = static_cast<float>(fDevice->getNum(iProperty->path()));
+        auto floatValue = fDevice->getNum<float>(iProperty->path());
         if(ImGui::DragFloat("value", &floatValue))
-          fDevice->setNum(iProperty->path(), floatValue);
+          fDevice->setNum<float>(iProperty->path(), floatValue);
       }
       break;
     }

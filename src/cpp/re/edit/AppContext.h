@@ -112,8 +112,8 @@ public: // Properties
   inline std::vector<Property const *> findProperties() const { return findProperties(Property::Filter{}); }
   inline Property const *findProperty(std::string const &iPropertyPath) const { return fPropertyManager->findProperty(iPropertyPath); };
   inline std::string getPropertyInfo(std::string const &iPropertyPath) const { return fPropertyManager->getPropertyInfo(iPropertyPath); }
-  int getPropertyValueAsInt(std::string const &iPropertyPath) const { return fPropertyManager->getIntValue(iPropertyPath); }
-  void setPropertyValueAsInt(std::string const &iPropertyPath, int iValue) { return fPropertyManager->setIntValue(iPropertyPath, iValue); }
+  int getPropertyValueAsInt(std::string const &iPropertyPath) const { return fPropertyManager->getValueAsInt(iPropertyPath); }
+  void setPropertyValueAsInt(std::string const &iPropertyPath, int iValue) { return fPropertyManager->setValueAsInt(iPropertyPath, iValue); }
   void propertyEditView(std::string const &iPropertyPath) { fPropertyManager->editView(iPropertyPath); }
   void addPropertyToWatchlist(std::string const &iPropertyPath, bool iShowProperties = true) {
     fPropertyManager->addToWatchlist(iPropertyPath);
