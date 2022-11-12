@@ -340,7 +340,6 @@ void Graphics::editView(AppContext &iCtx,
   if(hasSize() && fSizeEnabled)
   {
     auto editedSize = std::get<ImVec2>(fTexture);
-    ImGui::Indent();
     if(ReGui::InputInt("w", &editedSize.x, 1, 5))
     {
       iOnSizeUpdate(editedSize);
@@ -350,8 +349,6 @@ void Graphics::editView(AppContext &iCtx,
     {
       iOnSizeUpdate(editedSize);
     }
-
-    ImGui::Unindent();
   }
   ImGui::EndGroup();
 }

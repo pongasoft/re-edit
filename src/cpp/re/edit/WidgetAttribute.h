@@ -210,7 +210,8 @@ public:
                 std::function<void()> const &iOnReset,
                 std::function<void(const Property *)> const &iOnSelect,
                 std::function<void(AppContext &iCtx)> const &iEditPropertyView,
-                std::function<void(AppContext &iCtx)> const &iTooltipPropertyView);
+                std::function<void(AppContext &iCtx)> const &iTooltipPropertyView,
+                ImVec2 *oComboPosition = nullptr);
 
   void editPropertyView(AppContext &iCtx) { editPropertyView(iCtx, fValue) ;}
   void tooltipPropertyView(AppContext &iCtx) { tooltipPropertyView(iCtx, fValue); }

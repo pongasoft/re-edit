@@ -611,7 +611,7 @@ std::unique_ptr<Widget> Widget::cv_trim_knob()
   w ->socket(mock::JboxObjectType::kCVInput, kSocketFilter)
     ->setSize(kCVTrimKnobSize)
     ;
-  w->fGraphics->fFilter = FilmStrip::bySizeFilter(kCVTrimKnobSize);
+  w->fGraphics->fFilter = FilmStrip::bySizeFilter(kCVTrimKnobSize, 20);
   return w;
 }
 

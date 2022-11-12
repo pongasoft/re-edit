@@ -147,6 +147,9 @@ void DiscretePropertyValueList::editView(int iMin,
                                          std::function<void(int iIndex, int iValue)> const &iOnUpdate,
                                          std::function<void(int iIndex)>             const &iOnDelete)
 {
+  auto const offset = ImGui::GetCursorPosX();
+  auto const itemWidth = AppContext::GetCurrent().fItemWidth;
+
   int deleteItemIdx = -1;
   for(int i = 0; i < fValue.size(); i++)
   {
@@ -155,9 +158,13 @@ void DiscretePropertyValueList::editView(int iMin,
       deleteItemIdx = i;
     ImGui::SameLine();
 
+    ImGui::PushItemWidth(itemWidth - (ImGui::GetCursorPosX() - offset));
+
     int editedValue = fValue[i];
     if(ImGui::SliderInt(re::mock::fmt::printf("%s [%d]", fName, i).c_str(), &editedValue, iMin, iMax))
       iOnUpdate(i, editedValue);
+
+    ImGui::PopItemWidth();
 
     ImGui::PopID();
   }
@@ -171,7 +178,9 @@ void DiscretePropertyValueList::editView(int iMin,
     iOnAdd();
 
   ImGui::SameLine();
+  ImGui::PushItemWidth(itemWidth - (ImGui::GetCursorPosX() - offset));
   ImGui::LabelText(fName, "Click + to add");
+  ImGui::PopItemWidth();
 
   ImGui::PopID();
 }
@@ -209,6 +218,7 @@ void Value::editView(AppContext &iCtx)
 
   if(fUseSwitch)
   {
+    ImVec2 p;
     fValueSwitch.editView(iCtx,
                           [this, &iCtx] {
                             iCtx.addUndoAttributeReset(&fValueSwitch);
@@ -224,7 +234,8 @@ void Value::editView(AppContext &iCtx)
                             fValues.markEdited();
                           },
                           [this](auto &iCtx) { editValueView(iCtx); },
-                          [this](auto &iCtx) { tooltipView(iCtx); });
+                          [this](auto &iCtx) { tooltipView(iCtx); },
+                          &p);
     if(ImGui::BeginPopup("Menu"))
     {
       ImGui::Separator();
@@ -236,16 +247,20 @@ void Value::editView(AppContext &iCtx)
       }
       ImGui::EndPopup();
     }
-    ImGui::Indent();
-    fValues.editStaticListView(iCtx,
-                               fValue.fFilter,
-                               [this, &iCtx](int iIndex, const Property *p) { // onSelect
-                                 iCtx.addUndoAttributeChange(&fValues);
-                                 fValues.fValue[iIndex] = p->path();
-                                 fValues.fProvided = true;
-                                 fValues.markEdited();
-                               });
-    ImGui::Unindent();
+    if(fValueSwitch.fProvided)
+    {
+      ImGui::SetCursorPosX(p.x);
+      ImGui::BeginGroup();
+      fValues.editStaticListView(iCtx,
+                                 fValue.fFilter,
+                                 [this, &iCtx](int iIndex, const Property *p) { // onSelect
+                                   iCtx.addUndoAttributeChange(&fValues);
+                                   fValues.fValue[iIndex] = p->path();
+                                   fValues.fProvided = true;
+                                   fValues.markEdited();
+                                 });
+      ImGui::EndGroup();
+    }
   }
   else
   {
@@ -467,6 +482,7 @@ void Visibility::editView(AppContext &iCtx)
 {
   ImGui::PushID(this);
 
+  ImVec2 p;
   fSwitch.editView(iCtx,
                    [this, &iCtx] () {
                      iCtx.addUndoAttributeReset(&fSwitch);
@@ -482,7 +498,8 @@ void Visibility::editView(AppContext &iCtx)
                      fValues.markEdited();
                    },
                    [this](auto &iCtx) { fSwitch.editPropertyView(iCtx); },
-                   [this](auto &iCtx) { fSwitch.tooltipPropertyView(iCtx); });
+                   [this](auto &iCtx) { fSwitch.tooltipPropertyView(iCtx); },
+                   &p);
 
   auto property = iCtx.findProperty(fSwitch.fValue);
   if(property)
@@ -490,7 +507,8 @@ void Visibility::editView(AppContext &iCtx)
     auto stepCount = property->stepCount();
     if(stepCount > 1)
     {
-      ImGui::Indent();
+      ImGui::SetCursorPosX(p.x);
+      ImGui::BeginGroup();
       fValues.editView(0, stepCount - 1,
                        [this, &iCtx]() { // onAdd
                          iCtx.addUndoAttributeChange(&fValues);
@@ -513,7 +531,7 @@ void Visibility::editView(AppContext &iCtx)
                          fValues.markEdited();
                        }
       );
-      ImGui::Unindent();
+      ImGui::EndGroup();
     }
   }
   ImGui::PopID();
@@ -712,11 +730,15 @@ void PropertyPath::editView(AppContext &iCtx,
                             std::function<void()> const &iOnReset,
                             std::function<void(const Property *)> const &iOnSelect,
                             std::function<void(AppContext &iCtx)> const &iEditPropertyView,
-                            std::function<void(AppContext &iCtx)> const &iTooltipPropertyView)
+                            std::function<void(AppContext &iCtx)> const &iTooltipPropertyView,
+                            ImVec2 *oComboPosition)
 {
   menuView(iCtx, iOnReset, iEditPropertyView);
 
   ImGui::SameLine();
+
+  if(oComboPosition)
+    *oComboPosition = ImGui::GetCursorPos();
 
   if(ImGui::BeginCombo(fName, fValue.c_str()))
   {
@@ -1057,18 +1079,27 @@ void PropertyPathList::findErrors(AppContext &iCtx, UserError &oErrors) const
 {
   auto properties = iCtx.findProperties(fFilter);
 
+  auto idx = 0;
+
   for(auto &p: fValue)
   {
-    auto property = iCtx.findProperty(p);
-
-    if(!property)
-      oErrors.add("Invalid property [%s] (missing from motherboard)", p);
-
-    if(!properties.empty())
+    if(p.empty())
+      oErrors.add("Required property [%d]", idx);
+    else
     {
-      if(std::find(properties.begin(), properties.end(), property) == properties.end())
-        oErrors.add("Invalid property [%s] (%s)", p, fFilter.fDescription);
+      auto property = iCtx.findProperty(p);
+
+      if(!property)
+        oErrors.add("Invalid property [%d] (%s | missing from motherboard)", idx, p);
+
+      if(!properties.empty())
+      {
+        if(std::find(properties.begin(), properties.end(), property) == properties.end())
+          oErrors.add("Invalid property [%d] (%s | %s)", idx, p, fFilter.fDescription);
+      }
     }
+
+    idx++;
   }
 }
 
