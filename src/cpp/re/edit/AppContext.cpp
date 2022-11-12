@@ -970,6 +970,12 @@ std::string AppContext::device2D() const
 {
   std::stringstream s{};
   s << "format_version = \"2.0\"\n\n";
+
+  if(!fHasFoldedPanels)
+  {
+    s << "panel_type = \"note_player\"\n";
+  }
+
   s << fFrontPanel->fPanel.device2D();
   s << "\n";
   s << fBackPanel->fPanel.device2D();

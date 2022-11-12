@@ -384,11 +384,18 @@ void Value::findErrors(AppContext &iCtx, UserError &oErrors) const
   {
     if(!fValueSwitch.fProvided)
       oErrors.add("Either value or value_switch required");
+    else
+    {
+      fValueSwitch.findErrors(iCtx, oErrors);
+      fValues.findErrors(iCtx, oErrors);
+    }
   }
   else
   {
     if(!fValue.fProvided)
       oErrors.add("Either value or value_switch required");
+    else
+      fValue.findErrors(iCtx, oErrors);
   }
 }
 
@@ -541,7 +548,7 @@ void Visibility::findErrors(AppContext &iCtx, UserError &oErrors) const
   else
   {
     if(fSwitch.fProvided)
-      oErrors.add("Invalid property (missing from motherboard)");
+      fSwitch.findErrors(iCtx, oErrors);
   }
 }
 
@@ -821,7 +828,7 @@ void PropertyPath::findErrors(AppContext &iCtx, UserError &oErrors) const
       {
         auto properties = iCtx.findProperties(fFilter);
         if(std::find(properties.begin(), properties.end(), property) == properties.end())
-          oErrors.add("Invalid property (wrong type)");
+          oErrors.add("Invalid property (%s)", fFilter.fDescription);
       }
     }
   }
@@ -1055,12 +1062,12 @@ void PropertyPathList::findErrors(AppContext &iCtx, UserError &oErrors) const
     auto property = iCtx.findProperty(p);
 
     if(!property)
-      oErrors.add("Invalid property (missing from motherboard)");
+      oErrors.add("Invalid property [%s] (missing from motherboard)", p);
 
     if(!properties.empty())
     {
       if(std::find(properties.begin(), properties.end(), property) == properties.end())
-        oErrors.add("Invalid property (wrong type)");
+        oErrors.add("Invalid property [%s] (%s)", p, fFilter.fDescription);
     }
   }
 }

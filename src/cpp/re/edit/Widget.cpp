@@ -515,7 +515,7 @@ std::unique_ptr<Widget> Widget::audio_input_socket()
   w ->socket(mock::JboxObjectType::kAudioInput, kSocketFilter)
     ->setSize(kAudioSocketSize)
     ;
-  w->fGraphics->fFilter = FilmStrip::bySizeFilter(kAudioSocketSize);
+  w->fGraphics->fFilter = FilmStrip::bySizeFilter(kAudioSocketSize, 5);
   return w;
 }
 
@@ -524,6 +524,7 @@ std::unique_ptr<Widget> Widget::audio_input_socket()
 //------------------------------------------------------------------------
 std::unique_ptr<Widget> Widget::audio_output_socket()
 {
+  // TODO: "Player devices are allowed to have audio input sockets, but not audio output sockets."
   static const Object::Filter kSocketFilter = {[](const Object &p) {
     return p.type() == mock::JboxObjectType::kAudioOutput;
   }, "Must be an audio output socket"};
@@ -531,7 +532,7 @@ std::unique_ptr<Widget> Widget::audio_output_socket()
   w ->socket(mock::JboxObjectType::kAudioOutput, kSocketFilter)
     ->setSize(kAudioSocketSize)
     ;
-  w->fGraphics->fFilter = FilmStrip::bySizeFilter(kAudioSocketSize);
+  w->fGraphics->fFilter = FilmStrip::bySizeFilter(kAudioSocketSize, 5);
   return w;
 }
 
@@ -540,12 +541,13 @@ std::unique_ptr<Widget> Widget::audio_output_socket()
 //------------------------------------------------------------------------
 std::unique_ptr<Widget> Widget::custom_display()
 {
-  // TODO error message states that can use only custom properties (ex: cannot use audio socket connected)
-  // TODO but I fear that it is not entirely correct... what about sample rate? Need to investigate
+  // TODO: making up the rules as I go along (= run the sdk examples) as this is clearly NOT defined precisely
+  // TODO: For example error message states that can use only custom properties (ex: cannot use audio socket connected)
   static const Property::Filter kValuesFilter{[](const Property &p) {
-    return p.parent().type() == mock::JboxObjectType::kCustomProperties &&
-           (p.type() == kJBox_Boolean || p.type() == kJBox_Number || p.type() == kJBox_String);
-  }, "Must be a number, string or boolean property (only custom_properties are allowed)"};
+    return p.path() == "/environment/player_bypassed" ||
+      ((p.type() == kJBox_Boolean || p.type() == kJBox_Number || p.type() == kJBox_String || p.type() == kJBox_Sample) &&
+       (p.owner() == mock::PropertyOwner::kDocOwner || p.owner() == mock::PropertyOwner::kGUIOwner || p.owner() == mock::PropertyOwner::kRTOwner));
+  }, "Must be a number, string, boolean or sample property (document/gui/rt owner allowed)"};
 
   auto w = std::make_unique<Widget>(WidgetType::kCustomDisplay);
 
@@ -577,7 +579,7 @@ std::unique_ptr<Widget> Widget::cv_input_socket()
   w ->socket(mock::JboxObjectType::kCVInput, kSocketFilter)
     ->setSize(kCVSocketSize)
     ;
-  w->fGraphics->fFilter = FilmStrip::bySizeFilter(kCVSocketSize);
+  w->fGraphics->fFilter = FilmStrip::bySizeFilter(kCVSocketSize, 5);
   return w;
 }
 
@@ -593,7 +595,7 @@ std::unique_ptr<Widget> Widget::cv_output_socket()
   w ->socket(mock::JboxObjectType::kCVOutput, kSocketFilter)
     ->setSize(kCVSocketSize)
     ;
-  w->fGraphics->fFilter = FilmStrip::bySizeFilter(kCVSocketSize);
+  w->fGraphics->fFilter = FilmStrip::bySizeFilter(kCVSocketSize, 5);
   return w;
 }
 
@@ -619,8 +621,8 @@ std::unique_ptr<Widget> Widget::cv_trim_knob()
 //------------------------------------------------------------------------
 std::unique_ptr<Widget> Widget::device_name()
 {
-  static const auto kGraphicsFilter = FilmStrip::orFilter(FilmStrip::bySizeFilter(kDeviceNameHorizontal),
-                                                          FilmStrip::bySizeFilter(kDeviceNameVertical));
+  static const auto kGraphicsFilter = FilmStrip::orFilter(FilmStrip::bySizeFilter(kDeviceNameHorizontal, 5),
+                                                          FilmStrip::bySizeFilter(kDeviceNameVertical, 5));
   auto w = std::make_unique<Widget>(WidgetType::kDeviceName);
   w->setSize(kDeviceNameHorizontal);
   w->fGraphics->fFilter = kGraphicsFilter;
@@ -662,7 +664,7 @@ std::unique_ptr<Widget> Widget::patch_browse_group()
     ->addAttribute(Attribute::build<Bool>("fx_patch", false, false))
     ;
   w->setSize(kPatchBrowseGroupSize);
-  w->fGraphics->fFilter = FilmStrip::bySizeFilter(kPatchBrowseGroupSize);
+  w->fGraphics->fFilter = FilmStrip::bySizeFilter(kPatchBrowseGroupSize, 5);
   return w;
 }
 
@@ -767,7 +769,7 @@ std::unique_ptr<Widget> Widget::sample_browse_group()
     ->tooltip_position()
     ;
   w->setSize(kPatchBrowseGroupSize);
-  w->fGraphics->fFilter = FilmStrip::bySizeFilter(kSampleBrowseGroupSize);
+  w->fGraphics->fFilter = FilmStrip::bySizeFilter(kSampleBrowseGroupSize, 5);
   return w;
 }
 
@@ -833,6 +835,7 @@ std::unique_ptr<Widget> Widget::sequence_meter()
 //------------------------------------------------------------------------
 std::unique_ptr<Widget> Widget::static_decoration()
 {
+  // GUIDefValidation.GUIDefError: RE2DRender: Error in hdgui_2D.lua: Widget type 'static_decoration': Wrong number of frames (2)
   static const FilmStrip::Filter kGraphicsFilter{[](FilmStrip const &f) { return f.numFrames() == 1; }, "Must have exactly 1 frame"};
 
   auto w = std::make_unique<Widget>(WidgetType::kStaticDecoration);
@@ -853,7 +856,9 @@ std::unique_ptr<Widget> Widget::step_button()
     return (p.type() == kJBox_Boolean || p.isDiscrete()) && kDocGuiOwnerFilter(p);
   }, "Must be a discrete (stepped) number or boolean property (document_owner or gui_owner)"};
 
-  static const FilmStrip::Filter kGraphicsFilter{[](FilmStrip const &f) { return f.numFrames() == 2; }, "Must have exactly 2 frame"};
+  static const FilmStrip::Filter kGraphicsFilter{[](FilmStrip const &f) {
+    return f.numFrames() == 2 || f.numFrames() == 4;
+  }, "Must have 2 or 4 frame"};
 
   auto w = std::make_unique<Widget>(WidgetType::kStepButton);
   w ->value(kValueFilter)

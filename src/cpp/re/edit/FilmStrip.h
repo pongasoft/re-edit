@@ -93,6 +93,20 @@ public:
 
   static std::unique_ptr<FilmStrip> load(std::shared_ptr<File> const &iFile);
 
+  static inline auto bySizeFilter(ImVec2 const &iMinSize, ImVec2 const &iMaxSize, std::string iDescription) {
+    return Filter([iMinSize, iMaxSize](FilmStrip const &iFilmStrip) {
+      auto w = iFilmStrip.frameWidth();
+      auto h = iFilmStrip.frameHeight();
+      return w >= static_cast<int>(iMinSize.x) && h >= static_cast<int>(iMinSize.y) &&
+             w <= static_cast<int>(iMaxSize.x) && h <= static_cast<int>(iMaxSize.y);
+    }, std::move(iDescription));
+  }
+
+  static inline auto bySizeFilter(ImVec2 const &iMinSize, float iDelta) {
+    return bySizeFilter(iMinSize, ImVec2{iMinSize.x + iDelta, iMinSize.y + iDelta},
+                        fmt::printf("Size must be roughly %dx%d", static_cast<int>(iMinSize.x), static_cast<int>(iMinSize.y)));
+  }
+
   static inline auto bySizeFilter(ImVec2 const &iSize) {
     return Filter([iSize](FilmStrip const &iFilmStrip) {
       return iFilmStrip.frameWidth() == static_cast<int>(iSize.x) &&
