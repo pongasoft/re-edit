@@ -485,7 +485,7 @@ void Widget::computeDefaultWidgetName()
 std::unique_ptr<Widget> Widget::analog_knob()
 {
   static const Property::Filter kValueFilter{[](const Property &p) {
-    return (p.type() == kJBox_Boolean || p.type() == kJBox_Number) && kDocGuiOwnerFilter(p);
+    return (isOneOf(p.type(), Property::Type::kBoolean | Property::Type::kNumber) && kDocGuiOwnerFilter(p));
   }, "Must be a number or boolean property (document_owner or gui_owner)"};
 
   static const Property::Filter kValueSwitchFilter{[](const Property &p) {
@@ -512,7 +512,7 @@ std::unique_ptr<Widget> Widget::audio_input_socket()
     return p.type() == mock::JboxObjectType::kAudioInput;
   }, "Must be an audio input socket"};
   auto w = std::make_unique<Widget>(WidgetType::kAudioInputSocket);
-  w ->socket(mock::JboxObjectType::kAudioInput, kSocketFilter)
+  w ->socket(Object::Type::kAudioInput, kSocketFilter)
     ->setSize(kAudioSocketSize)
     ;
   w->fGraphics->fFilter = FilmStrip::bySizeFilter(kAudioSocketSize, 5);
@@ -529,7 +529,7 @@ std::unique_ptr<Widget> Widget::audio_output_socket()
     return p.type() == mock::JboxObjectType::kAudioOutput;
   }, "Must be an audio output socket"};
   auto w = std::make_unique<Widget>(WidgetType::kAudioOutputSocket);
-  w ->socket(mock::JboxObjectType::kAudioOutput, kSocketFilter)
+  w ->socket(Object::Type::kAudioOutput, kSocketFilter)
     ->setSize(kAudioSocketSize)
     ;
   w->fGraphics->fFilter = FilmStrip::bySizeFilter(kAudioSocketSize, 5);
@@ -545,8 +545,8 @@ std::unique_ptr<Widget> Widget::custom_display()
   // TODO: For example error message states that can use only custom properties (ex: cannot use audio socket connected)
   static const Property::Filter kValuesFilter{[](const Property &p) {
     return p.path() == "/environment/player_bypassed" ||
-      ((p.type() == kJBox_Boolean || p.type() == kJBox_Number || p.type() == kJBox_String || p.type() == kJBox_Sample) &&
-       (p.owner() == mock::PropertyOwner::kDocOwner || p.owner() == mock::PropertyOwner::kGUIOwner || p.owner() == mock::PropertyOwner::kRTOwner));
+           (isOneOf(p.type(), Property::Type::kBoolean | Property::Type::kNumber | Property::Type::kString | Property::Type::kSample) &&
+            (isOneOf(p.owner(), Property::Owner::kDocOwner | Property::Owner::kGUIOwner | Property::Owner::kRTOwner)));
   }, "Must be a number, string, boolean or sample property (document/gui/rt owner allowed)"};
 
   auto w = std::make_unique<Widget>(WidgetType::kCustomDisplay);
@@ -635,7 +635,7 @@ std::unique_ptr<Widget> Widget::device_name()
 std::unique_ptr<Widget> Widget::momentary_button()
 {
   static const Property::Filter kValueFilter{[](const Property &p) {
-    return (p.type() == kJBox_Boolean || p.isDiscrete()) && kDocGuiOwnerFilter(p);
+    return (p.type() == Property::Type::kBoolean || p.isDiscrete()) && kDocGuiOwnerFilter(p);
   }, "Must be a discrete (stepped) number or boolean property (document_owner or gui_owner)"};
 
   static const FilmStrip::Filter kGraphicsFilter{[](FilmStrip const &iFilmStrip) { return iFilmStrip.numFrames() == 2; },
@@ -689,7 +689,7 @@ std::unique_ptr<Widget> Widget::pitch_wheel()
 {
   // TODO: note that there is currently no way to filter on performance_pitchbend as this information is not available
   static const Property::Filter kValueFilter{[](const Property &p) {
-    return p.type() == kJBox_Number && kDocGuiOwnerFilter(p);
+    return p.type() == Property::Type::kNumber && kDocGuiOwnerFilter(p);
   }, "Must be a number property (document_owner or gui_owner)"};
   auto w = std::make_unique<Widget>(WidgetType::kPitchWheel);
   w ->value(kValueFilter)
@@ -719,7 +719,7 @@ std::unique_ptr<Widget> Widget::placeholder()
 std::unique_ptr<Widget> Widget::popup_button()
 {
   static const Property::Filter kValueFilter{[](const Property &p) {
-    return (p.type() == kJBox_Boolean || p.isDiscrete()) && kDocGuiOwnerFilter(p);
+    return (p.type() == Property::Type::kBoolean || p.isDiscrete()) && kDocGuiOwnerFilter(p);
   }, "Must be a discrete (stepped) number or boolean property (document_owner or gui_owner)"};
 
   auto w = std::make_unique<Widget>(WidgetType::kPopupButton);
@@ -740,7 +740,7 @@ std::unique_ptr<Widget> Widget::popup_button()
 std::unique_ptr<Widget> Widget::radio_button()
 {
   static const Property::Filter kValueFilter{[](const Property &p) {
-    return (p.type() == kJBox_Boolean || p.isDiscrete()) && kDocGuiOwnerFilter(p);
+    return (p.type() == Property::Type::kBoolean || p.isDiscrete()) && kDocGuiOwnerFilter(p);
   }, "Must be a discrete (stepped) number or boolean property (document_owner or gui_owner)"};
 
   static const FilmStrip::Filter kGraphicsFilter{[](FilmStrip const &f) { return f.numFrames() == 2; }, "Must have exactly 2 frames"};
@@ -791,7 +791,7 @@ std::unique_ptr<Widget> Widget::sample_drop_zone()
 std::unique_ptr<Widget> Widget::sequence_fader()
 {
   static const Property::Filter kValueFilter{[](const Property &p) {
-    return (p.type() == kJBox_Boolean || p.type() == kJBox_Number) && kDocGuiOwnerFilter(p);
+    return isOneOf(p.type(), Property::Type::kBoolean | Property::Type::kNumber) && kDocGuiOwnerFilter(p);
   }, "Must be a number or boolean property (document_owner or gui_owner)"};
 
   static const Property::Filter kValueSwitchFilter{[](const Property &p) {
@@ -820,7 +820,7 @@ std::unique_ptr<Widget> Widget::sequence_fader()
 std::unique_ptr<Widget> Widget::sequence_meter()
 {
   static const Property::Filter kValueFilter{[](const Property &p) {
-    return p.type() == kJBox_Boolean || p.type() == kJBox_Number;
+    return isOneOf(p.type(), Property::Type::kBoolean | Property::Type::kNumber);
   }, "Must be a number or boolean property"};
 
   auto w = std::make_unique<Widget>(WidgetType::kSequenceMeter);
@@ -853,7 +853,7 @@ std::unique_ptr<Widget> Widget::static_decoration()
 std::unique_ptr<Widget> Widget::step_button()
 {
   static const Property::Filter kValueFilter{[](const Property &p) {
-    return (p.type() == kJBox_Boolean || p.isDiscrete()) && kDocGuiOwnerFilter(p);
+    return (p.type() == Property::Type::kBoolean || p.isDiscrete()) && kDocGuiOwnerFilter(p);
   }, "Must be a discrete (stepped) number or boolean property (document_owner or gui_owner)"};
 
   static const FilmStrip::Filter kGraphicsFilter{[](FilmStrip const &f) {
@@ -880,7 +880,7 @@ std::unique_ptr<Widget> Widget::step_button()
 std::unique_ptr<Widget> Widget::toggle_button()
 {
   static const Property::Filter kValueFilter{[](const Property &p) {
-    return (p.type() == kJBox_Boolean || p.isDiscrete()) && kDocGuiOwnerFilter(p);
+    return (p.type() == Property::Type::kBoolean || p.isDiscrete()) && kDocGuiOwnerFilter(p);
   }, "Must be a discrete (stepped) number or boolean property (document_owner or gui_owner)"};
 
   static const FilmStrip::Filter kGraphicsFilter{[](FilmStrip const &f) {
@@ -931,7 +931,7 @@ std::unique_ptr<Widget> Widget::up_down_button()
 std::unique_ptr<Widget> Widget::value_display()
 {
   static const Property::Filter kReadWriteValueFilter{[](const Property &p) {
-    return (p.type() == kJBox_Boolean || p.type() == kJBox_Number || p.type() == kJBox_String) && kDocGuiOwnerFilter(p);
+    return isOneOf(p.type(), Property::Type::kBoolean | Property::Type::kNumber | Property::Type::kString) && kDocGuiOwnerFilter(p);
   }, "Must be a number, string, or boolean, document_owner or gui_owner property (read_only is false)"};
   static const Property::Filter kValueSwitchFilter{[](const Property &p) {
     return p.isDiscrete() && kDocGuiOwnerFilter(p);
@@ -960,7 +960,7 @@ std::unique_ptr<Widget> Widget::value_display()
 std::unique_ptr<Widget> Widget::zero_snap_knob()
 {
   static const Property::Filter kValueFilter{[](const Property &p) {
-    return (p.type() == kJBox_Boolean || p.type() == kJBox_Number) && kDocGuiOwnerFilter(p);
+    return isOneOf(p.type(), Property::Type::kBoolean | Property::Type::kNumber) && kDocGuiOwnerFilter(p);
   }, "Must be a number or boolean property (document_owner or gui_owner)"};
   static const Property::Filter kValueSwitchFilter{[](const Property &p) {
     return p.isDiscrete() && kDocGuiOwnerFilter(p);

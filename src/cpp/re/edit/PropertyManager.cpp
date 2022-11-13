@@ -76,7 +76,7 @@ rt_input_setup = { notify = { } }
   {
     auto const parent = objectsByRef.at(info.fPropertyRef.fObject);
     fProperties[info.fPropertyPath] = Property{info, parent};
-    if(info.fValueType == kJBox_Sample && parent.fInfo.fType == mock::JboxObjectType::kUserSamples)
+    if(info.fValueType == Property::Type::kSample && parent.fInfo.fType == Object::Type::kUserSamples)
       fUserSamplesCount++;
   }
 
@@ -213,9 +213,9 @@ int PropertyManager::getValueAsInt(std::string const &iPropertyPath) const
   {
     switch(iter->second.type())
     {
-      case kJBox_Number:
+      case Property::Type::kNumber:
         return fDevice->getNum<int>(iPropertyPath);
-      case kJBox_Boolean:
+      case Property::Type::kBoolean:
         return fDevice->getBool(iPropertyPath) ? 1 : 0;
       default:
         return 0;
@@ -235,10 +235,10 @@ void PropertyManager::setValueAsInt(std::string const &iPropertyPath, int iValue
   {
     switch(iter->second.type())
     {
-      case kJBox_Number:
+      case Property::Type::kNumber:
         fDevice->setNum<int>(iPropertyPath, iValue);
         break;
-      case kJBox_Boolean:
+      case Property::Type::kBoolean:
         fDevice->setBool(iPropertyPath, iValue != 0);
         break;
       default:
@@ -320,27 +320,27 @@ static char const *toOwnerString(PropertyOwner iOwner)
 //------------------------------------------------------------------------
 // ::toTypeString
 //------------------------------------------------------------------------
-static char const *toTypeString(TJBox_ValueType iValueType)
+static char const *toTypeString(Property::Type iValueType)
 {
   switch(iValueType)
   {
-    case kJBox_Nil:
+    case Property::Type::kNil:
       return "Nil";
-    case kJBox_Number:
+    case Property::Type::kNumber:
       return "Number";
-    case kJBox_String:
+    case Property::Type::kString:
       return "String";
-    case kJBox_Boolean:
+    case Property::Type::kBoolean:
       return "Boolean";
-    case kJBox_Sample:
+    case Property::Type::kSample:
       return "Sample";
-    case kJBox_BLOB:
+    case Property::Type::kBlob:
       return "Blob";
-    case kJBox_DSPBuffer:
+    case Property::Type::kDSPBuffer:
       return "DSP Buffer";
-    case kJBox_NativeObject:
+    case Property::Type::kNativeObject:
       return "Native Object";
-    case kJBox_Incompatible:
+    case Property::Type::kIncompatible:
       return "Incompatible";
     default:
       RE_EDIT_FAIL("not reached");
@@ -420,7 +420,7 @@ void PropertyManager::editView(Property const *iProperty)
 
   switch(iProperty->type())
   {
-    case kJBox_Number:
+    case Property::Type::kNumber:
     {
       if(iProperty->isDiscrete())
       {
@@ -436,7 +436,7 @@ void PropertyManager::editView(Property const *iProperty)
       }
       break;
     }
-    case kJBox_String:
+    case Property::Type::kString:
     {
       auto value = iProperty->owner() != mock::PropertyOwner::kRTOwner ? fDevice->getString(iProperty->path()) : fDevice->getRTString(iProperty->path());
       if(ImGui::InputText("value", &value))
@@ -449,7 +449,7 @@ void PropertyManager::editView(Property const *iProperty)
       break;
     }
 
-    case kJBox_Boolean:
+    case Property::Type::kBoolean:
     {
       auto value = fDevice->getBool(iProperty->path());
       if(ReGui::ToggleButton("false", "true", &value))

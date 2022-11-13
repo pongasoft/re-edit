@@ -1336,11 +1336,11 @@ void ReadOnly::editView(AppContext &iCtx)
 void ReadOnly::onChanged(AppContext &iCtx)
 {
   static const Property::Filter kReadWriteValueFilter{[](const Property &p) {
-    return (p.type() == kJBox_Boolean || p.type() == kJBox_Number || p.type() == kJBox_String) && kDocGuiOwnerFilter(p);
+    return isOneOf(p.type(),  Property::Type::kBoolean | Property::Type::kNumber | Property::Type::kString) && kDocGuiOwnerFilter(p);
   }, "Must be a number, string, or boolean, document_owner or gui_owner property (read_only is false)"};
   static const Property::Filter kReadOnlyValueFilter{[](const Property &p) {
-    return (p.type() == kJBox_Boolean || p.type() == kJBox_Number || p.type() == kJBox_String)
-           && p.owner() == mock::PropertyOwner::kRTOwner;
+    return isOneOf(p.type(),  Property::Type::kBoolean | Property::Type::kNumber | Property::Type::kString)
+           && p.owner() == Property::Owner::kRTOwner;
   }, "Must be a number, string, or boolean, rt_owner property (read_only is true)"};
 
   auto valueAtt = iCtx.getCurrentWidget()->findAttributeByIdAndType<Value>(fValueAttributeId);

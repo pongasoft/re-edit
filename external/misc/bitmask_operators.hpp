@@ -99,4 +99,12 @@ constexpr operator^=(E& lhs,E rhs){
     return lhs;
 }
 
+/**
+ * @return `true` if `v` is one of the values in the bitmask */
+template<typename E, typename std::enable_if<enable_bitmask_operators<E>::enable,bool>::type = true>
+constexpr bool isOneOf(E v, E bitmask) {
+  using underlying_t = typename std::underlying_type<E>::type;
+  return static_cast<underlying_t>(v & bitmask) != 0;
+}
+
 #endif

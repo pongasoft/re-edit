@@ -33,10 +33,30 @@ struct enable_bitmask_operators<re::mock::JboxObjectType>{
   static const bool enable=true;
 };
 
+//! Enabling binary operators for re::mock::JboxPropertyType
+template<>
+struct enable_bitmask_operators<re::mock::JboxPropertyType>{
+  static const bool enable=true;
+};
+
+//! Enabling binary operators for re::mock::DeviceType
+template<>
+struct enable_bitmask_operators<re::mock::DeviceType>{
+  static const bool enable=true;
+};
+
+//! Enabling binary operators for re::mock::PropertyOwner
+template<>
+struct enable_bitmask_operators<re::mock::PropertyOwner>{
+  static const bool enable=true;
+};
+
 namespace re::edit {
 
 struct Object
 {
+  using Type = re::mock::JboxObjectType;
+
   struct Filter
   {
     using type = std::function<bool(Object const &iObject)>;
@@ -49,7 +69,7 @@ struct Object
     std::string fDescription{};
   };
 
-  constexpr re::mock::JboxObjectType type() const { return fInfo.fType; };
+  constexpr Type type() const { return fInfo.fType; };
   constexpr TJBox_ObjectRef ref() const { return fInfo.fObjectRef; };
   constexpr std::string const &path() const { return fInfo.fObjectPath; };
 
@@ -59,6 +79,8 @@ struct Object
 struct Property
 {
   using Comparator = std::function<bool(Property const *iLeft, Property const *iRight)>;
+  using Type = re::mock::JboxPropertyType;
+  using Owner = re::mock::PropertyOwner;
 
   struct Filter
   {
@@ -76,9 +98,9 @@ struct Property
   constexpr Object const &parent() const { return fParent; };
   constexpr TJBox_ObjectRef parentRef() const { return fInfo.fPropertyRef.fObject; };
   constexpr std::string const &path() const { return fInfo.fPropertyPath; };
-  constexpr TJBox_ValueType type() const { return fInfo.fValueType; };
+  constexpr Type type() const { return fInfo.fValueType; };
   constexpr int stepCount() const { return fInfo.fStepCount; };
-  constexpr re::mock::PropertyOwner owner() const { return fInfo.fOwner; };
+  constexpr Owner owner() const { return fInfo.fOwner; };
   constexpr TJBox_Tag tag() const { return fInfo.fTag; };
   constexpr re::mock::lua::EPersistence persistence() const { return fInfo.fPersistence; };
 
@@ -89,7 +111,7 @@ struct Property
 };
 
 static constexpr auto kDocGuiOwnerFilter = [](const Property &p) {
-  return p.owner() == mock::PropertyOwner::kDocOwner || p.owner() == mock::PropertyOwner::kGUIOwner;
+  return isOneOf(p.owner(), Property::Owner::kDocOwner | Property::Owner::kGUIOwner);
 };
 
 static constexpr auto kByPathComparator = [](Property const *iLeft, Property const *iRight) {
