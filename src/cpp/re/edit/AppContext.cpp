@@ -33,7 +33,11 @@ namespace impl {
 class UpdateListener : public efsw::FileWatchListener
 {
 public:
-  UpdateListener(AppContext &iCtx, fs::path const &iRoot) : fCtx{iCtx}, fRoot{fs::canonical(iRoot)} {}
+  UpdateListener(AppContext &iCtx, fs::path const &iRoot) :
+    fCtx{iCtx}, fRoot{fs::canonical(iRoot)}
+  {
+    // empty
+  }
 
   void handleFileAction(efsw::WatchID watchid,
                         const std::string &dir,
@@ -91,7 +95,7 @@ private:
 // AppContext::AppContext
 //------------------------------------------------------------------------
 AppContext::AppContext(fs::path iRoot) :
-  fRoot{std::move(iRoot)},
+  fRoot{fs::canonical(iRoot)},
   fFrontPanel(std::make_unique<PanelState>(PanelType::kFront)),
   fFoldedFrontPanel(std::make_unique<PanelState>(PanelType::kFoldedFront)),
   fBackPanel(std::make_unique<PanelState>(PanelType::kBack)),
@@ -1032,6 +1036,7 @@ void AppContext::enableFileWatcher()
   {
     fRootListener = std::make_shared<impl::UpdateListener>(*this, fRoot);
     fRootWatchID = fRootWatcher->addWatch(fRoot.u8string(), fRootListener.get(), true);
+    fRootWatcher->watch();
   }
 }
 
