@@ -467,6 +467,7 @@ std::pair<std::shared_ptr<Widget>, int> Panel::deleteWidget(AppContext &iCtx, in
   // we need to extract the widget from the map before removing it so that we can return it!
   std::swap(fWidgets.at(id), widget);
   fWidgets.erase(id);
+  fEdited = true;
   if(widget->isPanelDecal())
   {
     auto iter = std::find(fDecalsOrder.begin(), fDecalsOrder.end(), id);
