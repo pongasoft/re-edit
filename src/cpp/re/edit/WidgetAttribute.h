@@ -225,6 +225,8 @@ public:
                 std::function<void()> const &iOnReset,
                 std::function<void(AppContext &iCtx)> const &iEditPropertyView = {});
 
+  inline void updateFilter(Property::Filter iFilter) { fFilter = std::move(iFilter); fEdited = true; }
+
   static void editPropertyView(AppContext &iCtx, std::string const &iPropertyPath);
 
   static void tooltipPropertyView(AppContext &iCtx, std::string const &iPropertyPath);
@@ -263,6 +265,8 @@ public:
                           std::function<void(int iIndex, const Property *)> const &iOnSelect) const;
 
   void findErrors(AppContext &iCtx, UserError &oErrors) const override;
+
+  inline void updateFilter(Property::Filter iFilter) { fFilter = std::move(iFilter); fEdited = true; }
 
   std::unique_ptr<Attribute> clone() const override { return Attribute::clone<PropertyPathList>(*this); }
 
@@ -338,6 +342,8 @@ public:
 //  }
 
   bool copyFrom(Attribute const *iAttribute) override;
+
+  void updateFilters(Property::Filter iValueFilter, Property::Filter iValueSwitchFilter);
 
 protected:
   std::string const &findActualPropertyPath(AppContext &iCtx) const;
@@ -505,6 +511,10 @@ public:
 //  {
 //    return Attribute::eq(this, iAttribute, [](auto *l, auto *r) { return l->fValue == r->fValue;});
 //  }
+
+  static inline const Property::Filter kReadWriteValueFilter{ [](const Property &p) {
+    return isOneOf(p.type(),  Property::Type::kBoolean | Property::Type::kNumber | Property::Type::kString) && kDocGuiOwnerFilter(p);
+  }, "Must be a number, string, or boolean, document_owner or gui_owner property (read_only is false)"};
 
 protected:
   void onChanged(AppContext &iCtx);

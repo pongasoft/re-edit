@@ -58,7 +58,7 @@ public:
       return;
 
     std::error_code errorCode;
-    auto file = fs::canonical(iFile, errorCode);
+    auto file = fs::weakly_canonical(iFile, errorCode);
     if(errorCode)
     {
       RE_EDIT_LOG_WARNING("Cannot convert %s to canonical form", iFile);

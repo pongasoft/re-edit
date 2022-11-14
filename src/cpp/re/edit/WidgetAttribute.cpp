@@ -464,6 +464,16 @@ bool Value::copyFrom(Attribute const *iAttribute)
 }
 
 //------------------------------------------------------------------------
+// Value::updateFilters
+//------------------------------------------------------------------------
+void Value::updateFilters(Property::Filter iValueFilter, Property::Filter iValueSwitchFilter)
+{
+  fValue.updateFilter(std::move(iValueFilter));
+  fValues.updateFilter(std::move(iValueSwitchFilter));
+  fEdited = true;
+}
+
+//------------------------------------------------------------------------
 // Visibility::hdgui2D
 //------------------------------------------------------------------------
 void Visibility::hdgui2D(attribute_list_t &oAttributes) const
@@ -1249,6 +1259,9 @@ void ValueTemplates::editView(AppContext &iCtx)
 
   ImGui::SameLine();
 
+  auto const offset = ImGui::GetCursorPosX();
+  auto const itemWidth = AppContext::GetCurrent().fItemWidth;
+
   ImGui::BeginGroup();
   int deleteItemIdx = -1;
   for(int i = 0; i < fValue.size(); i++)
@@ -1257,6 +1270,9 @@ void ValueTemplates::editView(AppContext &iCtx)
     if(ImGui::Button("-"))
       deleteItemIdx = i;
     ImGui::SameLine();
+
+    ImGui::PushItemWidth(itemWidth - (ImGui::GetCursorPosX() - offset));
+
     auto editedValue = fValue[i];
     if(ImGui::InputText(re::mock::fmt::printf("%s [%d]", fName, i).c_str(), &editedValue))
     {
@@ -1268,6 +1284,9 @@ void ValueTemplates::editView(AppContext &iCtx)
       fProvided = true;
       fEdited = true;
     }
+
+    ImGui::PopItemWidth();
+
     ImGui::PopID();
   }
 
@@ -1288,7 +1307,9 @@ void ValueTemplates::editView(AppContext &iCtx)
   }
 
   ImGui::SameLine();
+  ImGui::PushItemWidth(itemWidth - (ImGui::GetCursorPosX() - offset));
   ImGui::LabelText(fName, "Click + to add");
+  ImGui::PopItemWidth();
 
   ImGui::PopID();
   ImGui::EndGroup();
@@ -1335,19 +1356,16 @@ void ReadOnly::editView(AppContext &iCtx)
 //------------------------------------------------------------------------
 void ReadOnly::onChanged(AppContext &iCtx)
 {
-  static const Property::Filter kReadWriteValueFilter{[](const Property &p) {
-    return isOneOf(p.type(),  Property::Type::kBoolean | Property::Type::kNumber | Property::Type::kString) && kDocGuiOwnerFilter(p);
-  }, "Must be a number, string, or boolean, document_owner or gui_owner property (read_only is false)"};
   static const Property::Filter kReadOnlyValueFilter{[](const Property &p) {
     return isOneOf(p.type(),  Property::Type::kBoolean | Property::Type::kNumber | Property::Type::kString)
-           && p.owner() == Property::Owner::kRTOwner;
+           && isOneOf(p.owner(), Property::Owner::kDocOwner | Property::Owner::kGUIOwner | Property::Owner::kRTOwner);
   }, "Must be a number, string, or boolean, rt_owner property (read_only is true)"};
 
   auto valueAtt = iCtx.getCurrentWidget()->findAttributeByIdAndType<Value>(fValueAttributeId);
   if(fValue)
-    valueAtt->fValue.fFilter = kReadOnlyValueFilter;
+    valueAtt->updateFilters(kReadOnlyValueFilter, kReadOnlyValueFilter);
   else
-    valueAtt->fValue.fFilter = kReadWriteValueFilter;
+    valueAtt->updateFilters(kReadWriteValueFilter, kReadWriteValueFilter);
 }
 
 }

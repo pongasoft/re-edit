@@ -928,15 +928,12 @@ std::unique_ptr<Widget> Widget::up_down_button()
 //------------------------------------------------------------------------
 std::unique_ptr<Widget> Widget::value_display()
 {
-  static const Property::Filter kReadWriteValueFilter{[](const Property &p) {
-    return isOneOf(p.type(), Property::Type::kBoolean | Property::Type::kNumber | Property::Type::kString) && kDocGuiOwnerFilter(p);
-  }, "Must be a number, string, or boolean, document_owner or gui_owner property (read_only is false)"};
   static const Property::Filter kValueSwitchFilter{[](const Property &p) {
     return p.isDiscrete() && kDocGuiOwnerFilter(p);
   }, "Must be a discrete (stepped) number property (document_owner or gui_owner)"};
 
   auto w = std::make_unique<Widget>(WidgetType::kValueDisplay);
-  w ->value(kReadWriteValueFilter, kValueSwitchFilter)
+  w ->value(attribute::ReadOnly::kReadWriteValueFilter, kValueSwitchFilter)
     ->addAttribute(Attribute::build<ValueTemplates>("value_templates", false, {}, 1))
     ->visibility()
     ->text_style()
