@@ -239,8 +239,6 @@ bool Widget::checkForErrors(AppContext &iCtx)
 //------------------------------------------------------------------------
 void Widget::editView(AppContext &iCtx)
 {
-  fEdited = false;
-
   iCtx.setCurrentWidget(this);
 
   ImGui::PushID("Widget");

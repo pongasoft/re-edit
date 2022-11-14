@@ -773,8 +773,6 @@ void Panel::editView(AppContext &iCtx)
 //------------------------------------------------------------------------
 void Panel::editNoSelectionView(AppContext &iCtx)
 {
-  fEdited = false;
-
   ImGui::PushID("Panel");
 
   if(ReGui::MenuButton())
@@ -869,8 +867,6 @@ void Panel::editNoSelectionView(AppContext &iCtx)
 //------------------------------------------------------------------------
 void Panel::editSingleSelectionView(AppContext &iCtx, std::shared_ptr<Widget> const &iWidget)
 {
-  fEdited = false;
-
   if(ReGui::MenuButton())
     ImGui::OpenPopup("Menu");
 
@@ -915,8 +911,6 @@ void Panel::editSingleSelectionView(AppContext &iCtx, std::shared_ptr<Widget> co
 //------------------------------------------------------------------------
 void Panel::editMultiSelectionView(AppContext &iCtx, std::vector<std::shared_ptr<Widget>> const &iSelectedWidgets)
 {
-  fEdited = false;
-
   if(ReGui::MenuButton())
     ImGui::OpenPopup("Menu");
 
