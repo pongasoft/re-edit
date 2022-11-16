@@ -124,7 +124,7 @@ public: // Properties
   constexpr int getUserSamplesCount() const { return fPropertyManager->getUserSamplesCount(); }
 
 public: // Texture
-  inline std::vector<FilmStrip::key_t> const &getTextureKeys() const { return fTextureManager->getTextureKeys(); };
+  inline std::vector<FilmStrip::key_t> getTextureKeys() const { return fTextureManager->getTextureKeys(); };
   inline std::vector<FilmStrip::key_t> findTextureKeys(FilmStrip::Filter const &iFilter) const { return fTextureManager->findTextureKeys(iFilter); }
   inline std::shared_ptr<Texture> getTexture(FilmStrip::key_t const &iKey) const { return fTextureManager->getTexture(iKey); };
   inline std::shared_ptr<Texture> findTexture(FilmStrip::key_t const &iKey) const { return fTextureManager->findTexture(iKey); };

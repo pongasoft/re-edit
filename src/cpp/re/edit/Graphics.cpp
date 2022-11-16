@@ -558,7 +558,11 @@ void Graphics::hdgui2D(std::string const &iNodeName, attribute_list_t &oAttribut
 void Graphics::getUsedTexturePaths(std::set<fs::path> &oPaths) const
 {
   if(hasTexture())
-    oPaths.emplace(getTexture()->getFilmStrip()->path());
+  {
+    auto filmStrip = getTexture()->getFilmStrip();
+    if(filmStrip->hasPath())
+      oPaths.emplace(filmStrip->path());
+  }
 }
 
 //------------------------------------------------------------------------
@@ -658,10 +662,18 @@ void Background::getUsedTexturePaths(std::set<fs::path> &oPaths) const
 
   auto texture = app.findTexture(fValue);
   if(texture && texture->isValid())
-    oPaths.emplace(texture->getFilmStrip()->path());
+  {
+    auto filmStrip = texture->getFilmStrip();
+    if(filmStrip->hasPath())
+      oPaths.emplace(filmStrip->path());
+  }
   auto hdTexture = app.findHDTexture(fValue);
   if(hdTexture && hdTexture->isValid())
-    oPaths.emplace(hdTexture->getFilmStrip()->path());
+  {
+    auto filmStrip = hdTexture->getFilmStrip();
+    if(filmStrip->hasPath())
+      oPaths.emplace(filmStrip->path());
+  }
 }
 
 namespace impl {

@@ -578,6 +578,7 @@ std::unique_ptr<Widget> Widget::cv_input_socket()
     ->setSize(kCVSocketSize)
     ;
   w->fGraphics->fFilter = FilmStrip::bySizeFilter(kCVSocketSize, 5);
+  w->setTextureKey(BuiltIn::kCVSocket);
   return w;
 }
 
@@ -594,6 +595,7 @@ std::unique_ptr<Widget> Widget::cv_output_socket()
     ->setSize(kCVSocketSize)
     ;
   w->fGraphics->fFilter = FilmStrip::bySizeFilter(kCVSocketSize, 5);
+  w->setTextureKey(BuiltIn::kCVSocket);
   return w;
 }
 
@@ -610,6 +612,7 @@ std::unique_ptr<Widget> Widget::cv_trim_knob()
     ->setSize(kCVTrimKnobSize)
     ;
   w->fGraphics->fFilter = FilmStrip::bySizeFilter(kCVTrimKnobSize, 20);
+  w->setTextureKey(BuiltIn::kTrimKnob);
   return w;
 }
 

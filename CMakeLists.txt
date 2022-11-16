@@ -129,6 +129,7 @@ set(re-edit_BUILD_SOURCES
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/AppContext.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/Application.h"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/Application.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/BuiltIns.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/Color.h"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/Color.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/Constants.h"

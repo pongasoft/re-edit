@@ -26,11 +26,23 @@
 #include <memory>
 #include <vector>
 #include <functional>
+#include <variant>
 #include <imgui.h>
 #include "fs.h"
 #include "Constants.h"
 
 namespace re::edit {
+
+class FilmStrip;
+
+struct BuiltIn
+{
+  int fNumFrames{1};
+  char const *fCompressedDataBase85{};
+
+  static constexpr char const *kCVSocket = "Cable_Attachment_CV_01_1frames";
+  static constexpr char const *kTrimKnob = "TrimKnob";
+};
 
 class FilmStrip
 {
@@ -50,14 +62,22 @@ public:
   };
 
 public:
-  struct File
+  struct Source
   {
-    fs::path fPath{};
+    using origin_t = std::variant<fs::path, BuiltIn>;
+
+    constexpr bool hasPath() const { return std::holds_alternative<fs::path>(fOrigin); }
+    constexpr fs::path const &getPath() const { return std::get<fs::path>(fOrigin); }
+
+    constexpr bool hasBuiltIn() const { return std::holds_alternative<BuiltIn>(fOrigin); }
+    constexpr BuiltIn const &getBuiltIn() const { return std::get<BuiltIn>(fOrigin); }
+
+    origin_t fOrigin{};
     key_t fKey{};
     long fLastModifiedTime{};
     int fNumFrames{1};
 
-    static File from(key_t const &iKey, fs::path const &iDirectory);
+    static Source from(key_t const &iKey, fs::path const &iDirectory);
   };
 
 public:
@@ -74,15 +94,17 @@ public:
     data_t *fData{};
   };
 
-  inline key_t const &key() const { return fFile->fKey; };
-  inline fs::path const &path() const { return fFile->fPath; };
+  inline key_t const &key() const { return fSource->fKey; };
+  constexpr bool hasPath() const { return fSource->hasPath(); }
+  inline fs::path const &path() const { return fSource->getPath(); };
+
   constexpr std::string const &errorMessage() const { return fErrorMessage; };
 
   inline bool isValid() const { return fData != nullptr; }
 
   constexpr int width() const { return fWidth; }
   constexpr int height() const { return fHeight; }
-  constexpr int numFrames() const { return fNumFrames > 0 ? fNumFrames : fFile->fNumFrames; }
+  constexpr int numFrames() const { return fNumFrames > 0 ? fNumFrames : fSource->fNumFrames; }
 
   constexpr int frameWidth() const { return fWidth; }
   constexpr int frameHeight() const { return fHeight / numFrames(); }
@@ -91,7 +113,7 @@ public:
 
   void overrideNumFrames(int iNumFrames);
 
-  static std::unique_ptr<FilmStrip> load(std::shared_ptr<File> const &iFile);
+  static std::unique_ptr<FilmStrip> load(std::shared_ptr<Source> const &iSource);
 
   static inline auto bySizeFilter(ImVec2 const &iMinSize, ImVec2 const &iMaxSize, std::string iDescription) {
     return Filter([iMinSize, iMaxSize](FilmStrip const &iFilmStrip) {
@@ -144,14 +166,21 @@ public:
     }, fmt::printf("%s and %s", iFilter1.fDescription, iFilter2.fDescription)};
   }
 
+  static inline Filter kAllFilter{[] (FilmStrip const &iFilmStrip) { return true; }, "Match all"};
+
   ~FilmStrip();
 
-private:
-  FilmStrip(std::shared_ptr<File> iFile, char const *iErrorMessage);
-  FilmStrip(std::shared_ptr<File> iFile, int iWidth, int iHeight, std::shared_ptr<Data> iData);
+  friend class FilmStripMgr;
 
 private:
-  std::shared_ptr<File> fFile;
+  FilmStrip(std::shared_ptr<Source> iSource, char const *iErrorMessage);
+  FilmStrip(std::shared_ptr<Source> iSource, int iWidth, int iHeight, std::shared_ptr<Data> iData);
+
+  static std::unique_ptr<FilmStrip> loadBuiltInCompressed(std::shared_ptr<Source> iSource, std::vector<unsigned char> const &iCompressedData);
+  static std::unique_ptr<FilmStrip> loadBuiltInCompressedBase85(std::shared_ptr<Source> const &iSource);
+
+private:
+  std::shared_ptr<Source> fSource;
   int fNumFrames{0};
   int fWidth{100};
   int fHeight{100};
@@ -163,22 +192,25 @@ private:
 class FilmStripMgr
 {
 public:
-  explicit FilmStripMgr(fs::path iDirectory) : fDirectory{std::move(iDirectory)} {}
+  explicit FilmStripMgr(fs::path iDirectory);
   std::shared_ptr<FilmStrip> findFilmStrip(FilmStrip::key_t const &iKey) const;
   std::shared_ptr<FilmStrip> getFilmStrip(FilmStrip::key_t const &iKey) const;
 
   std::set<FilmStrip::key_t> scanDirectory();
-  std::vector<FilmStrip::key_t> const &getKeys() const { return fKeys; };
+  std::vector<FilmStrip::key_t> getKeys() const { return findKeys(FilmStrip::kAllFilter); }
   std::vector<FilmStrip::key_t> findKeys(FilmStrip::Filter const &iFilter) const;
-  std::shared_ptr<FilmStrip> importTexture(fs::path const &iTexturePath);
+  std::optional<FilmStrip::key_t> importTexture(fs::path const &iTexturePath);
 
-  static std::vector<FilmStrip::File> scanDirectory(fs::path const &iDirectory);
+  static std::vector<FilmStrip::Source> scanDirectory(fs::path const &iDirectory);
+
+private:
+  static std::shared_ptr<FilmStrip::Source> toSource(FilmStrip::key_t const &iKey, BuiltIn const &iBuiltIn);
 
 private:
   fs::path fDirectory;
+  std::map<FilmStrip::key_t, BuiltIn> fBuiltIns{};
   mutable std::map<FilmStrip::key_t, std::shared_ptr<FilmStrip>> fFilmStrips{};
-  mutable std::map<FilmStrip::key_t, std::shared_ptr<FilmStrip::File>> fFiles{};
-  std::vector<FilmStrip::key_t> fKeys{};
+  mutable std::map<FilmStrip::key_t, std::shared_ptr<FilmStrip::Source>> fSources{};
 };
 
 }

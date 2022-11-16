@@ -82,14 +82,7 @@ std::shared_ptr<Texture> TextureManager::findHDTexture(std::string const &iKey) 
 void TextureManager::scanDirectory()
 {
   auto keys = fFilmStripMgr->scanDirectory();
-  for(auto &k: keys)
-  {
-    auto iter = fTextures.find(k);
-    if(iter != fTextures.end())
-    {
-      updateTexture(iter->second, fFilmStripMgr->getFilmStrip(k));
-    }
-  }
+  std::for_each(keys.begin(), keys.end(), [this](auto const &k) { updateTexture(k); });
 }
 
 //------------------------------------------------------------------------
@@ -97,16 +90,26 @@ void TextureManager::scanDirectory()
 //------------------------------------------------------------------------
 std::optional<FilmStrip::key_t> TextureManager::importTexture(fs::path const &iTexturePath)
 {
-  auto filmStrip = fFilmStripMgr->importTexture(iTexturePath);
-  if(filmStrip)
+  auto key = fFilmStripMgr->importTexture(iTexturePath);
+  if(key)
   {
-    auto iter = fTextures.find(filmStrip->key());
-    if(iter != fTextures.end())
-      updateTexture(iter->second, filmStrip);
-    return filmStrip->key();
+    updateTexture(*key);
+    return key;
   }
   else
     return std::nullopt;
+}
+
+//------------------------------------------------------------------------
+// TextureManager::updateTexture
+//------------------------------------------------------------------------
+void TextureManager::updateTexture(FilmStrip::key_t const &iKey)
+{
+  auto iter = fTextures.find(iKey);
+  if(iter != fTextures.end())
+  {
+    updateTexture(iter->second, fFilmStripMgr->getFilmStrip(iKey));
+  }
 }
 
 //------------------------------------------------------------------------

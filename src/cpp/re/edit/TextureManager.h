@@ -41,7 +41,7 @@ public:
 //  bool loadFilmStrip(char const *iPath, int iNumFrames = 1) { return fFilmStripMgr.maybeAddFilmStrip(iPath, iNumFrames); }
 
   void scanDirectory();
-  std::vector<std::string> const &getTextureKeys() const { return fFilmStripMgr->getKeys(); };
+  std::vector<std::string> getTextureKeys() const { return fFilmStripMgr->getKeys(); };
   std::vector<std::string> findTextureKeys(FilmStrip::Filter const &iFilter) const { return fFilmStripMgr->findKeys(iFilter); }
   void overrideNumFrames(std::map<std::string, int> const &iNumFrames) const;
   void overrideNumFrames(std::string const &iKey, int iNumFrames) const;
@@ -50,6 +50,7 @@ public:
 protected:
   virtual std::unique_ptr<Texture> createTexture() const = 0;
   virtual void populateTexture(std::shared_ptr<Texture> const &iTexture) const = 0;
+  void updateTexture(FilmStrip::key_t const &iKey);
   std::shared_ptr<Texture> updateTexture(std::shared_ptr<Texture> const &iTexture, std::shared_ptr<FilmStrip> const &iFilmStrip) const;
 
 private:
