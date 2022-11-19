@@ -51,7 +51,7 @@ namespace re::edit::panel {
 //------------------------------------------------------------------------
 std::string Graphics::device2D() const
 {
-  return fmt::printf("{ { %s } }", hasValidTexture() ? fmt::printf("path = \"%s\"", getTexture()->key()) : "");
+  return fmt::printf("{ { %s } }", hasTexture() ? fmt::printf("path = \"%s\"", getTexture()->key()) : "");
 }
 
 //------------------------------------------------------------------------
