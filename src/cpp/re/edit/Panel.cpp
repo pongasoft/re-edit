@@ -1375,21 +1375,24 @@ std::string Panel::device2D() const
 }
 
 //------------------------------------------------------------------------
-// Panel::getUsedTexturePaths
+// Panel::collectUsedTexturePaths
 //------------------------------------------------------------------------
-void Panel::getUsedTexturePaths(std::set<fs::path> &oPaths) const
+void Panel::collectUsedTexturePaths(std::set<fs::path> &oPaths) const
 {
   if(fGraphics.hasTexture())
     oPaths.emplace(fGraphics.getTexture()->getFilmStrip()->path());
 
   for(auto &[id, w]: fWidgets)
-  {
-    w->getUsedTexturePaths(oPaths);
-//    if(w->hasTexture())
-//    {
-//      oPaths.emplace(w->getTexture()->getFilmStrip()->path());
-//    }
-  }
+    w->collectUsedTexturePaths(oPaths);
+}
+
+//------------------------------------------------------------------------
+// Panel::collectUsedTextureBuiltIns
+//------------------------------------------------------------------------
+void Panel::collectUsedTextureBuiltIns(std::set<FilmStrip::key_t> &oKeys) const
+{
+  for(auto &[id, w]: fWidgets)
+    w->collectUsedTextureBuiltIns(oKeys);
 }
 
 //------------------------------------------------------------------------

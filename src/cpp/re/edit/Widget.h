@@ -63,7 +63,8 @@ public:
 
   inline void setTextureKey(Texture::key_t const &iTextureKey) { fGraphics->setTextureKey(iTextureKey); fEdited |= fGraphics->isEdited(); }
   inline void setSize(ImVec2 const &iSize) { fGraphics->setSize(iSize); fEdited |= fGraphics->isEdited(); }
-  void getUsedTexturePaths(std::set<fs::path> &oPaths) const;
+  void collectUsedTexturePaths(std::set<fs::path> &oPaths) const;
+  void collectUsedTextureBuiltIns(std::set<FilmStrip::key_t> &oKeys) const;
 
   constexpr int getFrameNumber() const { return fGraphics->fFrameNumber; }
   constexpr int &getFrameNumber() { return fGraphics->fFrameNumber; }

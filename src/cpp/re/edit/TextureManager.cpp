@@ -101,6 +101,16 @@ std::optional<FilmStrip::key_t> TextureManager::importTexture(fs::path const &iT
 }
 
 //------------------------------------------------------------------------
+// TextureManager::importBuiltIns
+//------------------------------------------------------------------------
+void TextureManager::importBuiltIns(std::set<FilmStrip::key_t> const &iKeys)
+{
+  auto keys = fFilmStripMgr->importBuiltIns(iKeys);
+  std::for_each(keys.begin(), keys.end(), [this](auto const &k) { updateTexture(k); });
+}
+
+
+//------------------------------------------------------------------------
 // TextureManager::updateTexture
 //------------------------------------------------------------------------
 void TextureManager::updateTexture(FilmStrip::key_t const &iKey)

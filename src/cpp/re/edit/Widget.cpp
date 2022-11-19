@@ -329,14 +329,21 @@ std::string Widget::hdgui2D() const
 }
 
 //------------------------------------------------------------------------
+// Widget::collectUsedTexturePaths
+//------------------------------------------------------------------------
+void Widget::collectUsedTexturePaths(std::set<fs::path> &oPaths) const
+{
+  for(auto &att: fAttributes)
+    att->collectUsedTexturePaths(oPaths);
+}
+
+//------------------------------------------------------------------------
 // Widget::hdgui2D
 //------------------------------------------------------------------------
-void Widget::getUsedTexturePaths(std::set<fs::path> &oPaths) const
+void Widget::collectUsedTextureBuiltIns(std::set<FilmStrip::key_t> &oKeys) const
 {
-  AppContext::GetCurrent().setCurrentWidget(this);
   for(auto &att: fAttributes)
-    att->getUsedTexturePaths(oPaths);
-  AppContext::GetCurrent().setCurrentWidget(nullptr);
+    att->collectUsedTextureBuiltIns(oKeys);
 }
 
 //------------------------------------------------------------------------

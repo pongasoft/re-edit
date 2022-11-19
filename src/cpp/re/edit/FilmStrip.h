@@ -97,6 +97,7 @@ public:
   inline key_t const &key() const { return fSource->fKey; };
   constexpr bool hasPath() const { return fSource->hasPath(); }
   inline fs::path const &path() const { return fSource->getPath(); };
+  constexpr bool hasBuiltIn() const { return fSource->hasBuiltIn(); }
 
   constexpr std::string const &errorMessage() const { return fErrorMessage; };
 
@@ -176,7 +177,6 @@ private:
   FilmStrip(std::shared_ptr<Source> iSource, char const *iErrorMessage);
   FilmStrip(std::shared_ptr<Source> iSource, int iWidth, int iHeight, std::shared_ptr<Data> iData);
 
-  static std::unique_ptr<FilmStrip> loadBuiltInCompressed(std::shared_ptr<Source> iSource, std::vector<unsigned char> const &iCompressedData);
   static std::unique_ptr<FilmStrip> loadBuiltInCompressedBase85(std::shared_ptr<Source> const &iSource);
 
 private:
@@ -200,6 +200,7 @@ public:
   std::vector<FilmStrip::key_t> getKeys() const { return findKeys(FilmStrip::kAllFilter); }
   std::vector<FilmStrip::key_t> findKeys(FilmStrip::Filter const &iFilter) const;
   std::optional<FilmStrip::key_t> importTexture(fs::path const &iTexturePath);
+  std::set<FilmStrip::key_t> importBuiltIns(std::set<FilmStrip::key_t> const &iKeys);
 
   static std::vector<FilmStrip::Source> scanDirectory(fs::path const &iDirectory);
 

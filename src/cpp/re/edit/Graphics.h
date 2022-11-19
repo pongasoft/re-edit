@@ -84,7 +84,8 @@ public:
 
   void hdgui2D(attribute_list_t &oAttributes) const override;
   void hdgui2D(std::string const &iNodeName, attribute_list_t &oAttributes) const;
-  void getUsedTexturePaths(std::set<fs::path> &oPaths) const override;
+  void collectUsedTexturePaths(std::set<fs::path> &oPaths) const override;
+  void collectUsedTextureBuiltIns(std::set<FilmStrip::key_t> &oKeys) const override;
 
   std::string device2D() const;
 
@@ -172,7 +173,7 @@ public:
   explicit Background(char const *iName) : String(iName) {}
 
   std::string getValueAsLua() const override;
-  void getUsedTexturePaths(std::set<fs::path> &oPaths) const override;
+  void collectUsedTexturePaths(std::set<fs::path> &oPaths) const override;
 
   void editView(AppContext &iCtx) override;
   bool draw(AppContext &iCtx, Graphics const *iParent, ImU32 iBorderColor, bool xRay) const;

@@ -19,6 +19,7 @@
 #include "FilmStrip.h"
 #include "Errors.h"
 #include <regex>
+#include <fstream>
 
 namespace re::edit {
 
@@ -75,21 +76,27 @@ FilmStrip::Data::~Data()
   fData = nullptr;
 }
 
-//------------------------------------------------------------------------
-// FilmStrip::loadBuiltInCompressed
-//------------------------------------------------------------------------
-std::unique_ptr<FilmStrip> FilmStrip::loadBuiltInCompressed(std::shared_ptr<Source> iSource,
-                                                            std::vector<unsigned char> const &iCompressedData)
-{
-  const unsigned int buf_decompressed_size = impl::stb_decompress_length((const unsigned char*) iCompressedData.data());
-  std::vector<unsigned char> decompressedData(static_cast<size_t>(buf_decompressed_size));
-  impl::stb_decompress(decompressedData.data(), iCompressedData.data(), iCompressedData.size());
+namespace impl {
 
-  int width, height, channels;
-  auto data = stbi_load_from_memory(decompressedData.data(), static_cast<int>(decompressedData.size()), &width, &height, &channels, 4);
-  RE_EDIT_INTERNAL_ASSERT(data != nullptr, "%s", stbi_failure_reason());
-  RE_EDIT_LOG_DEBUG("loadBuiltInCompressed(%s) %dx%d", iSource->fKey, width, height);
-  return std::unique_ptr<FilmStrip>(new FilmStrip(std::move(iSource), width, height, std::make_unique<Data>(data)));
+
+//------------------------------------------------------------------------
+// impl::loadCompressedBase85
+//------------------------------------------------------------------------
+std::vector<unsigned char> loadCompressedBase85(char const *iCompressedBase85)
+{
+  // base85 => compressed binary
+  auto compressedSize = ((strlen(iCompressedBase85) + 4) / 5) * 4;
+  std::vector<unsigned char> compressedData(static_cast<size_t>(compressedSize));
+  impl::Decode85((const unsigned char*) iCompressedBase85, compressedData.data());
+
+  // compressed binary => binary
+  const unsigned int buf_decompressed_size = impl::stb_decompress_length((const unsigned char*) compressedData.data());
+  std::vector<unsigned char> decompressedData(static_cast<size_t>(buf_decompressed_size));
+  impl::stb_decompress(decompressedData.data(), compressedData.data(), compressedData.size());
+
+  return std::move(decompressedData);
+}
+
 }
 
 //------------------------------------------------------------------------
@@ -97,11 +104,12 @@ std::unique_ptr<FilmStrip> FilmStrip::loadBuiltInCompressed(std::shared_ptr<Sour
 //------------------------------------------------------------------------
 std::unique_ptr<FilmStrip> FilmStrip::loadBuiltInCompressedBase85(std::shared_ptr<Source> const &iSource)
 {
-  auto compressedBase85 = iSource->getBuiltIn().fCompressedDataBase85;
-  auto compressedSize = ((strlen(compressedBase85) + 4) / 5) * 4;
-  std::vector<unsigned char> compressedData(static_cast<size_t>(compressedSize));
-  impl::Decode85((const unsigned char*) compressedBase85, compressedData.data());
-  return loadBuiltInCompressed(iSource, compressedData);
+  auto decompressedData = impl::loadCompressedBase85(iSource->getBuiltIn().fCompressedDataBase85);
+  int width, height, channels;
+  auto data = stbi_load_from_memory(decompressedData.data(), static_cast<int>(decompressedData.size()), &width, &height, &channels, 4);
+  RE_EDIT_INTERNAL_ASSERT(data != nullptr, "%s", stbi_failure_reason());
+  RE_EDIT_LOG_DEBUG("loadBuiltInCompressed(%s) %dx%d", iSource->fKey, width, height);
+  return std::unique_ptr<FilmStrip>(new FilmStrip(std::move(iSource), width, height, std::make_unique<Data>(data)));
 }
 
 //------------------------------------------------------------------------
@@ -182,8 +190,9 @@ std::vector<FilmStrip::key_t> FilmStripMgr::findKeys(FilmStrip::Filter const &iF
 {
   std::vector<FilmStrip::key_t> res{};
   res.reserve(fFilmStrips.size());
-  for(auto &[k, fs]: fFilmStrips)
+  for(auto const &[k, source]: fSources)
   {
+    auto fs = getFilmStrip(k);
     if(fs && fs->isValid() && iFilter(*fs))
       res.emplace_back(k);
   }
@@ -335,6 +344,48 @@ std::optional<FilmStrip::key_t> FilmStripMgr::importTexture(fs::path const &iTex
     }
   }
   return std::nullopt;
+}
+
+//------------------------------------------------------------------------
+// FilmStripMgr::importBuiltIns
+//------------------------------------------------------------------------
+std::set<FilmStrip::key_t> FilmStripMgr::importBuiltIns(std::set<FilmStrip::key_t> const &iKeys)
+{
+  std::set<FilmStrip::key_t> modifiedKeys{};
+
+  for(auto &key: iKeys)
+  {
+    auto sourceIter = fSources.find(key);
+    if(sourceIter != fSources.end() && sourceIter->second->hasBuiltIn())
+    {
+      auto path = fDirectory / fmt::printf("%s.png", key);
+      // we make sure that the file has not been created in the meantime
+      if(!fs::exists(path))
+      {
+        auto data = impl::loadCompressedBase85(sourceIter->second->getBuiltIn().fCompressedDataBase85);
+        std::fstream file(path.u8string().c_str(), std::ios::out | std::ios::binary);
+        if(!file)
+        {
+          RE_EDIT_LOG_WARNING("Error writing %s | %s", path.u8string().c_str(), strerror(errno));
+        }
+        else
+        {
+          auto cdata = static_cast<void *>(data.data());
+          file.write(static_cast<char const *>(cdata), static_cast<std::streamsize>(data.size()));
+          if(!file)
+          {
+            RE_EDIT_LOG_WARNING("Error writing %s | %s", path.u8string().c_str(), strerror(errno));
+          }
+        }
+      }
+      fFilmStrips.erase(key);
+      fSources[key] = std::make_shared<FilmStrip::Source>(FilmStrip::Source::from(key, fDirectory));
+
+      modifiedKeys.emplace(key);
+    }
+
+  }
+  return modifiedKeys;
 }
 
 //------------------------------------------------------------------------

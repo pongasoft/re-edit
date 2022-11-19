@@ -78,7 +78,8 @@ public:
   explicit Attribute(char const *iName) : fName{iName} {}
   ~Attribute() override = default;
   virtual void hdgui2D(attribute_list_t &oAttributes) const {}
-  virtual void getUsedTexturePaths(std::set<fs::path> &oPaths) const {}
+  virtual void collectUsedTexturePaths(std::set<fs::path> &oPaths) const {}
+  virtual void collectUsedTextureBuiltIns(std::set<FilmStrip::key_t> &oKeys) const {}
 //  virtual Kind getKind() const = 0;
 
   virtual void reset() {}

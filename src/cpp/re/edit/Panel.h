@@ -118,7 +118,8 @@ public:
 
   std::string hdgui2D() const;
   std::string device2D() const;
-  void getUsedTexturePaths(std::set<fs::path> &oPaths) const;
+  void collectUsedTexturePaths(std::set<fs::path> &oPaths) const;
+  void collectUsedTextureBuiltIns(std::set<FilmStrip::key_t> &oKeys) const;
 
   friend class PanelState;
 

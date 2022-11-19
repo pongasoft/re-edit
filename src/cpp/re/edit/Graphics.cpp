@@ -553,15 +553,28 @@ void Graphics::hdgui2D(std::string const &iNodeName, attribute_list_t &oAttribut
 }
 
 //------------------------------------------------------------------------
-// Graphics::getUsedTexturePaths
+// Graphics::collectUsedTexturePaths
 //------------------------------------------------------------------------
-void Graphics::getUsedTexturePaths(std::set<fs::path> &oPaths) const
+void Graphics::collectUsedTexturePaths(std::set<fs::path> &oPaths) const
 {
   if(hasTexture())
   {
     auto filmStrip = getTexture()->getFilmStrip();
     if(filmStrip->hasPath())
       oPaths.emplace(filmStrip->path());
+  }
+}
+
+//------------------------------------------------------------------------
+// Graphics::collectUsedTextureBuiltIns
+//------------------------------------------------------------------------
+void Graphics::collectUsedTextureBuiltIns(std::set<FilmStrip::key_t> &oKeys) const
+{
+  if(hasTexture())
+  {
+    auto filmStrip = getTexture()->getFilmStrip();
+    if(filmStrip->hasBuiltIn())
+      oKeys.emplace(filmStrip->key());
   }
 }
 
@@ -654,9 +667,9 @@ bool Background::draw(AppContext &iCtx, Graphics const *iParent, ImU32 iBorderCo
 }
 
 //------------------------------------------------------------------------
-// Background::getUsedTexturePaths
+// Background::collectUsedTexturePaths
 //------------------------------------------------------------------------
-void Background::getUsedTexturePaths(std::set<fs::path> &oPaths) const
+void Background::collectUsedTexturePaths(std::set<fs::path> &oPaths) const
 {
   auto &app = AppContext::GetCurrent();
 

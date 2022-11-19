@@ -46,6 +46,7 @@ public:
   void overrideNumFrames(std::map<std::string, int> const &iNumFrames) const;
   void overrideNumFrames(std::string const &iKey, int iNumFrames) const;
   std::optional<FilmStrip::key_t> importTexture(fs::path const &iTexturePath);
+  void importBuiltIns(std::set<FilmStrip::key_t> const &iKeys);
 
 protected:
   virtual std::unique_ptr<Texture> createTexture() const = 0;

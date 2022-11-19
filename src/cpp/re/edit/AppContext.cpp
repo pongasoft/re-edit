@@ -913,6 +913,7 @@ void AppContext::save()
 {
   disableFileWatcher();
   auto deferred = Utils::defer([this] { enableFileWatcher(); });
+  importBuiltIns(); // convert built ins into actual images first (so that cmake() can see them)
   Application::saveFile(fRoot / "GUI2D" / "device_2D.lua", device2D());
   Application::saveFile(fRoot / "GUI2D" / "hdgui_2D.lua", hdgui2D());
   Application::saveFile(fRoot / "GUI2D" / "gui_2D.cmake", cmake());
@@ -1005,12 +1006,12 @@ std::string AppContext::device2D() const
 std::string AppContext::cmake() const
 {
   std::set<fs::path> texturePaths{};
-  fFrontPanel->fPanel.getUsedTexturePaths(texturePaths);
-  fBackPanel->fPanel.getUsedTexturePaths(texturePaths);
+  fFrontPanel->fPanel.collectUsedTexturePaths(texturePaths);
+  fBackPanel->fPanel.collectUsedTexturePaths(texturePaths);
   if(fHasFoldedPanels)
   {
-    fFoldedFrontPanel->fPanel.getUsedTexturePaths(texturePaths);
-    fFoldedBackPanel->fPanel.getUsedTexturePaths(texturePaths);
+    fFoldedFrontPanel->fPanel.collectUsedTexturePaths(texturePaths);
+    fFoldedBackPanel->fPanel.collectUsedTexturePaths(texturePaths);
   }
 
   std::stringstream s{};
@@ -1079,6 +1080,24 @@ std::optional<FilmStrip::key_t> AppContext::importTextureBlocking()
     RE_EDIT_LOG_WARNING("Error while importing images: %s", NFD_GetError());
     return std::nullopt;
   }
+}
+
+//------------------------------------------------------------------------
+// AppContext::importBuiltIns
+//------------------------------------------------------------------------
+void AppContext::importBuiltIns()
+{
+  std::set<FilmStrip::key_t> keys{};
+  fFrontPanel->fPanel.collectUsedTextureBuiltIns(keys);
+  fBackPanel->fPanel.collectUsedTextureBuiltIns(keys);
+  if(fHasFoldedPanels)
+  {
+    fFoldedFrontPanel->fPanel.collectUsedTextureBuiltIns(keys);
+    fFoldedBackPanel->fPanel.collectUsedTextureBuiltIns(keys);
+  }
+
+  if(!keys.empty())
+    fTextureManager->importBuiltIns(keys);
 }
 
 ////------------------------------------------------------------------------

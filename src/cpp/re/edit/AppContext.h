@@ -271,6 +271,7 @@ protected:
   void initGUI2D();
   void reloadDevice();
   void save();
+  void importBuiltIns();
   void saveConfig();
   std::string hdgui2D() const;
   std::string device2D() const;
