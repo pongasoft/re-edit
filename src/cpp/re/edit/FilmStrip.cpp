@@ -147,7 +147,13 @@ FilmStripMgr::FilmStripMgr(fs::path iDirectory) : fDirectory{std::move(iDirector
 {
 #define RE_EDIT_BUILT_IN(key, numFrames) fBuiltIns[key] = { numFrames, BuiltIns::getCompressedDataBase85(key) }; fSources[key] = toSource(key, fBuiltIns[key]);
 
+  RE_EDIT_BUILT_IN(BuiltIn::kAudioSocket, 1);
   RE_EDIT_BUILT_IN(BuiltIn::kCVSocket, 1);
+  RE_EDIT_BUILT_IN(BuiltIn::kPatchBrowseGroup, 1);
+  RE_EDIT_BUILT_IN(BuiltIn::kPlaceholder, 1);
+  RE_EDIT_BUILT_IN(BuiltIn::kSampleBrowseGroup, 1);
+  RE_EDIT_BUILT_IN(BuiltIn::kTapeHorizontal, 1);
+  RE_EDIT_BUILT_IN(BuiltIn::kTapeVertical, 1);
   RE_EDIT_BUILT_IN(BuiltIn::kTrimKnob, 1);
 }
 
