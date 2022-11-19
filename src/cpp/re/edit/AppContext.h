@@ -131,6 +131,7 @@ public: // Texture
   inline std::shared_ptr<Texture> findHDTexture(FilmStrip::key_t const &iKey) const { return fTextureManager->findHDTexture(iKey); }
   void overrideTextureNumFrames(FilmStrip::key_t const &iKey, int iNumFrames) { fTextureManager->overrideNumFrames(iKey, iNumFrames); markEdited(); }
   std::optional<FilmStrip::key_t> importTextureBlocking();
+  std::size_t importTexturesBlocking();
 
   void TextureItem(Texture const *iTexture,
                    ImVec2 const &iPosition = {0,0},

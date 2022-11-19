@@ -785,6 +785,16 @@ void AppContext::renderMainMenu()
           ;
       }
       ImGui::Separator();
+      if(ImGui::MenuItem(ReGui_Prefix(ReGui_Icon_ImportImages, "Import images")))
+      {
+        auto numTextures = importTexturesBlocking();
+        if(numTextures > 0)
+          Application::GetCurrent().newDialog("Import")
+            .text(fmt::printf("%ld images imported successfully", numTextures))
+            .buttonOk();
+            ;
+      }
+      ImGui::Separator();
       if(ImGui::MenuItem(ReGui_Prefix(ReGui_Icon_RescanImages, "Rescan images")))
       {
         fReloadTexturesRequested = true;
@@ -1079,6 +1089,51 @@ std::optional<FilmStrip::key_t> AppContext::importTextureBlocking()
   {
     RE_EDIT_LOG_WARNING("Error while importing images: %s", NFD_GetError());
     return std::nullopt;
+  }
+}
+
+//------------------------------------------------------------------------
+// AppContext::importTexturesBlocking
+//------------------------------------------------------------------------
+std::size_t AppContext::importTexturesBlocking()
+{
+  disableFileWatcher();
+  auto deferred = Utils::defer([this] { enableFileWatcher(); });
+
+  const nfdpathset_t *outPaths;
+  nfdfilteritem_t filterItem[] = { { "Image", "png" } };
+  nfdresult_t result = NFD_OpenDialogMultiple(&outPaths, filterItem, 1, nullptr);
+  if(result == NFD_OKAY)
+  {
+    nfdpathsetsize_t numPaths;
+    NFD_PathSet_GetCount(outPaths, &numPaths);
+    std::vector<fs::path> texturePaths{};
+    texturePaths.reserve(numPaths);
+
+    for(nfdpathsetsize_t i = 0; i < numPaths; ++i)
+    {
+      nfdchar_t *path;
+      NFD_PathSet_GetPath(outPaths, i, &path);
+      texturePaths.emplace_back(path);
+      // free individual path
+      NFD_PathSet_FreePath(path);
+    }
+
+    // free paths (what a shitty api...)
+    NFD_PathSet_Free(outPaths);
+
+    for(auto &texturePath: texturePaths)
+      fTextureManager->importTexture(texturePath);
+    return texturePaths.size();
+  }
+  else if(result == NFD_CANCEL)
+  {
+    return 0;
+  }
+  else
+  {
+    RE_EDIT_LOG_WARNING("Error while importing images: %s", NFD_GetError());
+    return 0;
   }
 }
 

@@ -85,7 +85,7 @@ void Graphics::editView(AppContext &iCtx)
       reset();
     }
 
-    if(ImGui::MenuItem(ReGui_Prefix(ReGui_Icon_RescanImages, "Import")))
+    if(ImGui::MenuItem(ReGui_Prefix(ReGui_Icon_ImportImages, "Import")))
     {
       auto textureKey = iCtx.importTextureBlocking();
       if(textureKey)
@@ -271,7 +271,7 @@ void Graphics::editView(AppContext &iCtx,
       ImGui::OpenPopup(numFramesPopup);
     ImGui::EndDisabled();
 
-    if(ImGui::MenuItem(ReGui_Prefix(ReGui_Icon_RescanImages, "Import")))
+    if(ImGui::MenuItem(ReGui_Prefix(ReGui_Icon_ImportImages, "Import")))
     {
       auto textureKey = iCtx.importTextureBlocking();
       if(textureKey)
