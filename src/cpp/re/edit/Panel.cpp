@@ -149,7 +149,7 @@ void Panel::draw(AppContext &iCtx)
         shouldMoveWidgets = true;
       }
       if(shouldMoveWidgets)
-        moveWidgets(iCtx, fMouseDrag->fLastUpdatePosition);
+        moveWidgets(iCtx, fMouseDrag->fCurrentPosition, grid);
     }
   }
   else if(ImGui::IsItemClicked(ImGuiMouseButton_Left))
@@ -159,6 +159,7 @@ void Panel::draw(AppContext &iCtx)
     else
     {
       fMouseDrag = MouseDrag{mousePos, mousePos, mousePos};
+      fWidgetMove = WidgetMove{mousePos};
       selectWidget(iCtx, mousePos, ReGui::IsSingleSelectKey(io));
     }
   }
@@ -543,13 +544,10 @@ void Panel::selectWidget(AppContext &iCtx, ImVec2 const &iPosition, bool iMultiS
   {
     if(iMultiSelectKey)
     {
-      if(!widget->isSelected())
-        fLastMovePosition = iPosition;
       toggleWidgetSelection(widget->getId(), true);
     }
     else
     {
-      fLastMovePosition = iPosition;
       if(!widget->isSelected())
         selectWidget(widget->getId(), false);
     }
@@ -610,18 +608,56 @@ void Panel::clearSelection()
   fSelectedWidgets = std::nullopt;
 }
 
+namespace impl {
+
+//------------------------------------------------------------------------
+// impl::clampToGrid
+//------------------------------------------------------------------------
+constexpr float clampToGrid(float v, float g)
+{
+  RE_EDIT_INTERNAL_ASSERT(g > 0);
+
+  if(v == 0)
+    return 0;
+
+  if(v < 0)
+    return -clampToGrid(-v, g);
+
+  // This is clearly not the best implementation but can't figure out using
+  // fmod (which would not be constexpr)
+  float res = 0;
+  while(v >= g)
+  {
+    res += g;
+    v -= g;
+  }
+  return res;
+}
+
+//------------------------------------------------------------------------
+// impl::clampToGrid
+//------------------------------------------------------------------------
+constexpr ImVec2 clampToGrid(ImVec2 v, ImVec2 g)
+{
+  return { clampToGrid(v.x, g.x), clampToGrid(v.y, g.y) };
+}
+
+}
+
+
 //------------------------------------------------------------------------
 // Panel::moveWidgets
 //------------------------------------------------------------------------
-void Panel::moveWidgets(AppContext &iCtx, ImVec2 const &iPosition)
+void Panel::moveWidgets(AppContext &iCtx, ImVec2 const &iPosition, ImVec2 const &iGrid)
 {
-  if(fLastMovePosition)
+  if(fWidgetMove)
   {
-    auto delta = iPosition - fLastMovePosition.value();
+    auto totalDelta = impl::clampToGrid(iPosition - fWidgetMove->fInitialPosition, iGrid);
+    auto delta = totalDelta - fWidgetMove->fDelta;
     if(delta.x != 0 || delta.y != 0)
     {
       auto selectedWidgets = getSelectedWidgets();
-      if(iCtx.beginUndoTx(fmt::printf("Move %d widgets", selectedWidgets.size()), &fLastMovePosition))
+      if(iCtx.beginUndoTx(fmt::printf("Move %d widgets", selectedWidgets.size()), &fWidgetMove))
       {
         for(auto &widget: selectedWidgets)
           iCtx.addUndoWidgetChange(widget.get(), fmt::printf("Move %s", widget->getName()));
@@ -632,8 +668,8 @@ void Panel::moveWidgets(AppContext &iCtx, ImVec2 const &iPosition)
       {
         widget->move(delta);
       }
+      fWidgetMove->fDelta = totalDelta;
     }
-    fLastMovePosition = iPosition;
   }
 }
 
@@ -652,7 +688,7 @@ void Panel::endMoveWidgets(AppContext &iCtx, ImVec2 const &iPosition)
 
   iCtx.resetUndoMergeKey();
 
-  fLastMovePosition = std::nullopt;
+  fWidgetMove = std::nullopt;
 }
 
 //------------------------------------------------------------------------

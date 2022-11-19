@@ -156,15 +156,18 @@ bool PanelState::renderTab(AppContext &iCtx)
       auto size = iCtx.fGrid.x;
       if(ReGui::InputInt("grid", &size, kGridStep, kGridFastStep))
       {
-        iCtx.fGrid.x = size;
-        iCtx.fGrid.y = size;
+        iCtx.fGrid.x = std::fmax(size, 1.0f);
+        iCtx.fGrid.y = std::fmax(size, 1.0f);
       }
     }
     else
     {
-      ReGui::InputInt("grid_w", &iCtx.fGrid.x, kGridStep, kGridFastStep);
+      auto grid = iCtx.fGrid;
+      if(ReGui::InputInt("grid_w", &grid.x, kGridStep, kGridFastStep))
+        iCtx.fGrid.x = std::fmax(grid.x, 1.0f);
       ImGui::SameLine();
-      ReGui::InputInt("grid_h", &iCtx.fGrid.y, kGridStep, kGridFastStep);
+      if(ReGui::InputInt("grid_h", &grid.y, kGridStep, kGridFastStep))
+        iCtx.fGrid.y = std::fmax(grid.y, 1.0f);
     }
 
     ImGui::SameLine();

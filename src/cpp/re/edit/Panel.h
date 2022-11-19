@@ -33,6 +33,12 @@ struct MouseDrag
   ImVec2 fCurrentPosition{};
 };
 
+struct WidgetMove
+{
+  ImVec2 fInitialPosition{};
+  ImVec2 fDelta{};
+};
+
 struct WidgetDef
 {
   // Implementation node: using std::function prevents kAllWidgetDefs to be a constexpr
@@ -146,7 +152,7 @@ private:
   void selectWidgets(AppContext &iCtx, ImVec2 const &iPosition1, ImVec2 const &iPosition2);
   std::shared_ptr<Widget> findWidgetOnTopAt(std::vector<int> const &iOrder, ImVec2 const &iPosition) const;
   std::shared_ptr<Widget> findWidgetOnTopAt(ImVec2 const &iPosition) const;
-  void moveWidgets(AppContext &iCtx, ImVec2 const &iPosition);
+  void moveWidgets(AppContext &iCtx, ImVec2 const &iPosition, ImVec2 const &iGrid);
   void endMoveWidgets(AppContext &iCtx, ImVec2 const &iPosition);
   void computeIsHidden(AppContext &iCtx);
   void renderAddWidgetMenu(AppContext &iCtx, ImVec2 const &iPosition = {});
@@ -191,7 +197,7 @@ private:
   std::map<int, std::shared_ptr<Widget>> fWidgets{};
   std::vector<int> fWidgetsOrder{};
   std::vector<int> fDecalsOrder{};
-  std::optional<ImVec2> fLastMovePosition{};
+  std::optional<WidgetMove> fWidgetMove{};
   std::optional<MouseDrag> fMouseDrag{};
   std::optional<MouseDrag> fShiftMouseDrag{};
   std::optional<ImVec2> fPopupLocation{};

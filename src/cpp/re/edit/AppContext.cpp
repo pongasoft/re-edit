@@ -548,7 +548,7 @@ void AppContext::init(lua::Config const &iConfig)
   fPropertiesWindow.setIsVisible(iConfig.fShowProperties);
   fWidgetsWindow.setIsVisible(iConfig.fShowWidgets);
   fFontManager->requestNewFont({"JetBrains Mono Regular", BuiltInFont::kJetBrainsMonoRegular, iConfig.fFontSize});
-  fGrid = iConfig.fGrid;
+  fGrid = ImVec2{std::fmax(iConfig.fGrid.x, 1.0f), std::fmax(iConfig.fGrid.y, 1.0f)};
 //  fShowBorder = static_cast<ShowBorder>(iConfig.fShowBorder);
 //  fShowCustomDisplay = static_cast<ShowCustomDisplay>(iConfig.fShowCustomDisplay);
 //  fShowSampleDropZone = static_cast<ShowSampleDropZone>(iConfig.fShowSampleDropZone);
