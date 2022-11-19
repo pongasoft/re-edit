@@ -375,7 +375,9 @@ Widget *Widget::values(Property::Filter iValuesFilter)
 //------------------------------------------------------------------------
 Widget *Widget::socket(re::mock::JboxObjectType iSocketType, Object::Filter iSocketFilter)
 {
-  return addAttribute(std::make_unique<Socket>(iSocketType, std::move(iSocketFilter)));
+  auto socket = std::make_unique<Socket>(iSocketType, std::move(iSocketFilter));
+  socket->fRequired = true;
+  return addAttribute(std::move(socket));
 }
 
 //------------------------------------------------------------------------
