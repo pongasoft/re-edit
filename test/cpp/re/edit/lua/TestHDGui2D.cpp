@@ -19,6 +19,7 @@
 #include <gtest/gtest.h>
 #include <gtest/gtest-matchers.h>
 #include <re/edit/lua/HDGui2D.h>
+#include <re/edit/Application.h>
 #include <re/mock/fmt.h>
 #include <gmock/gmock-matchers.h>
 #include <ostream>
@@ -352,9 +353,29 @@ inline constexpr auto HasValueTemplates = [](std::optional<std::vector<char cons
     return AttributeToString<ValueTemplates>("value_templates", R"(value_templates={{},false})");
 };
 
+class MockTexture : public Texture
+{
+
+};
+
+class MockTextureManager : public TextureManager
+{
+protected:
+  std::unique_ptr<Texture> createTexture() const override
+  {
+    return std::make_unique<MockTexture>();
+  }
+
+  void populateTexture(std::shared_ptr<Texture> const &iTexture) const override
+  {
+
+  }
+};
 
 TEST(HDGui2D, All)
 {
+  re::edit::Application app{fs::current_path(), std::make_shared<MockTextureManager>()};
+
   auto hdg = HDGui2D::fromFile(getResourceFile("all-hdgui_2D.lua"));
 
   auto front = hdg->front();

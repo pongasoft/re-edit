@@ -37,6 +37,7 @@ class Application
 {
 public:
   Application();
+  Application(fs::path const &iRoot, std::shared_ptr<TextureManager> iTextureManager);
 
   static Application &GetCurrent() { RE_EDIT_INTERNAL_ASSERT(kCurrent != nullptr); return *kCurrent; }
 

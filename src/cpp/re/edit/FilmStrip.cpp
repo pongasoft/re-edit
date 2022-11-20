@@ -108,7 +108,6 @@ std::unique_ptr<FilmStrip> FilmStrip::loadBuiltInCompressedBase85(std::shared_pt
   int width, height, channels;
   auto data = stbi_load_from_memory(decompressedData.data(), static_cast<int>(decompressedData.size()), &width, &height, &channels, 4);
   RE_EDIT_INTERNAL_ASSERT(data != nullptr, "%s", stbi_failure_reason());
-  RE_EDIT_LOG_DEBUG("loadBuiltInCompressed(%s) %dx%d", iSource->fKey, width, height);
   return std::unique_ptr<FilmStrip>(new FilmStrip(std::move(iSource), width, height, std::make_unique<Data>(data)));
 }
 

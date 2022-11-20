@@ -121,6 +121,19 @@ Application::Application()
   Application::kCurrent = this;
 }
 
+
+//------------------------------------------------------------------------
+// Application::Application (used from test)
+//------------------------------------------------------------------------
+Application::Application(fs::path const &iRoot, std::shared_ptr<TextureManager> iTextureManager)
+{
+  RE_EDIT_INTERNAL_ASSERT(Application::kCurrent == nullptr, "Only one instance of Application allowed");
+  Application::kCurrent = this;
+  fAppContext = std::make_shared<AppContext>(iRoot);
+  iTextureManager->init(iRoot);
+  fAppContext->fTextureManager = std::move(iTextureManager);
+}
+
 //------------------------------------------------------------------------
 // Application::init
 //------------------------------------------------------------------------
