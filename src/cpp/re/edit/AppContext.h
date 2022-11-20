@@ -87,7 +87,7 @@ public:
   };
 
 public:
-  explicit AppContext(fs::path iRoot);
+  explicit AppContext(fs::path const &iRoot);
   ~AppContext();
 
   static AppContext &GetCurrent();

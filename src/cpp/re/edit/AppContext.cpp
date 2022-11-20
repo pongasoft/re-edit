@@ -94,7 +94,7 @@ private:
 //------------------------------------------------------------------------
 // AppContext::AppContext
 //------------------------------------------------------------------------
-AppContext::AppContext(fs::path iRoot) :
+AppContext::AppContext(fs::path const &iRoot) :
   fRoot{fs::canonical(iRoot)},
   fFrontPanel(std::make_unique<PanelState>(PanelType::kFront)),
   fFoldedFrontPanel(std::make_unique<PanelState>(PanelType::kFoldedFront)),
@@ -777,12 +777,19 @@ void AppContext::renderMainMenu()
 //      }
       if(ImGui::MenuItem(ReGui_Prefix(ReGui_Icon_Save, "Save")))
       {
-        Application::GetCurrent().newDialog("Save")
-          .preContentMessage("!!! Warning !!!")
-          .text("This is an experimental build. Saving will override hdgui_2d.lua and device_2d.lua\nAre you sure you want to proceed?")
-          .button("Ok", [this] { save(); return ReGui::Dialog::Result::kContinue; })
-          .buttonCancel("Cancel", true)
-          ;
+        if(!fs::exists(fRoot / "re-edit.lua"))
+        {
+          Application::GetCurrent().newDialog("Save")
+            .preContentMessage("!!! Warning !!!")
+            .text("This is an experimental build. Saving will override hdgui_2d.lua and device_2d.lua\nAre you sure you want to proceed?")
+            .button("Ok", [this] { save(); return ReGui::Dialog::Result::kContinue; })
+            .buttonCancel("Cancel", true)
+            ;
+        }
+        else
+        {
+          save();
+        }
       }
       ImGui::Separator();
       if(ImGui::MenuItem(ReGui_Prefix(ReGui_Icon_ImportImages, "Import images")))
