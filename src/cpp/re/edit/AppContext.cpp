@@ -789,10 +789,12 @@ void AppContext::renderMainMenu()
         if(!fs::exists(fRoot / "re-edit.lua"))
         {
           Application::GetCurrent().newDialog("Save")
-            .preContentMessage("!!! Warning !!!")
-            .text("This is an experimental build. Saving will override hdgui_2d.lua and device_2d.lua\nAre you sure you want to proceed?")
-            .button("Ok", [this] { save(); return ReGui::Dialog::Result::kContinue; })
-            .buttonCancel("Cancel", true)
+            .preContentMessage("Warning")
+            .text("This is the first time you save this project.\n"
+                  "Saving will override hdgui_2d.lua and device_2d.lua.\n"
+                  "Are you sure you want to proceed?")
+            .button("Yes (save)", [this] { save(); return ReGui::Dialog::Result::kContinue; })
+            .buttonCancel("No (don't save)", true)
             ;
         }
         else
