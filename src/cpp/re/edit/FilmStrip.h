@@ -41,8 +41,8 @@ struct BuiltIn
   int fNumFrames{1};
   char const *fCompressedDataBase85{};
 
-  static constexpr char const *kAudioSocket = "Cable_Attachment_Audio_01_1frames";
-  static constexpr char const *kCVSocket = "Cable_Attachment_CV_01_1frames";
+  static constexpr char const *kAudioSocket = "SharedAudioJack_3frames";
+  static constexpr char const *kCVSocket = "SharedCVJack_3frames";
   static constexpr char const *kPatchBrowseGroup = "PatchBrowseGroup";
   static constexpr char const *kPlaceholder = "Placeholder";
   static constexpr char const *kSampleBrowseGroup = "SampleBrowseGroup";
