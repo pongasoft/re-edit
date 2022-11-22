@@ -73,7 +73,7 @@ public:
 
   constexpr bool hasException() const { return fHasException; }
 
-  static void saveFile(fs::path const &iFile, std::string const &iContent);
+  static void saveFile(fs::path const &iFile, std::string const &iContent, UserError *oErrors = nullptr);
   static std::string what(std::exception_ptr const &p);
 
 public:

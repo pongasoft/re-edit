@@ -30,6 +30,7 @@
 #include <imgui.h>
 #include "fs.h"
 #include "Constants.h"
+#include "Errors.h"
 
 namespace re::edit {
 
@@ -206,7 +207,7 @@ public:
   std::vector<FilmStrip::key_t> getKeys() const { return findKeys(FilmStrip::kAllFilter); }
   std::vector<FilmStrip::key_t> findKeys(FilmStrip::Filter const &iFilter) const;
   std::optional<FilmStrip::key_t> importTexture(fs::path const &iTexturePath);
-  std::set<FilmStrip::key_t> importBuiltIns(std::set<FilmStrip::key_t> const &iKeys);
+  std::set<FilmStrip::key_t> importBuiltIns(std::set<FilmStrip::key_t> const &iKeys, UserError *oErrors = nullptr);
 
   static std::vector<FilmStrip::Source> scanDirectory(fs::path const &iDirectory);
 

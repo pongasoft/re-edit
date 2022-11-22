@@ -626,9 +626,18 @@ void AppContext::initDevice()
 //------------------------------------------------------------------------
 void AppContext::initGUI2D()
 {
-  fTextureManager->init(fRoot / "GUI2D");
+  auto GUI2D = fRoot / "GUI2D";
+  fTextureManager->init(GUI2D);
   fTextureManager->scanDirectory();
-  initPanels(fRoot / "GUI2D" / "device_2D.lua", fRoot / "GUI2D" / "hdgui_2D.lua");
+  auto device_2D = GUI2D / "device_2D.lua";
+  auto hdgui_2D = GUI2D / "hdgui_2D.lua";
+  if(fs::exists(device_2D) && fs::exists(hdgui_2D))
+    initPanels(device_2D, hdgui_2D);
+  else
+  {
+    markEdited();
+    checkForErrors();
+  }
 }
 
 //------------------------------------------------------------------------
@@ -930,11 +939,21 @@ void AppContext::save()
 {
   disableFileWatcher();
   auto deferred = Utils::defer([this] { enableFileWatcher(); });
-  importBuiltIns(); // convert built ins into actual images first (so that cmake() can see them)
-  Application::saveFile(fRoot / "GUI2D" / "device_2D.lua", device2D());
-  Application::saveFile(fRoot / "GUI2D" / "hdgui_2D.lua", hdgui2D());
-  Application::saveFile(fRoot / "GUI2D" / "gui_2D.cmake", cmake());
-  saveConfig();
+  UserError errors{};
+  auto GUI2D = fRoot / "GUI2D";
+  importBuiltIns(&errors); // convert built ins into actual images first (so that cmake() can see them)
+  Application::saveFile(GUI2D / "device_2D.lua", device2D(), &errors);
+  Application::saveFile(GUI2D / "hdgui_2D.lua", hdgui2D(), &errors);
+  Application::saveFile(GUI2D / "gui_2D.cmake", cmake(), &errors);
+  saveConfig(&errors);
+  if(errors.hasErrors())
+    Application::GetCurrent().newDialog("Error")
+      .preContentMessage("There were some errors during the save operation")
+      .lambda([errors] {
+        for(auto const &error: errors.getErrors())
+          ImGui::BulletText("%s", error.c_str());
+      })
+      .buttonOk();
 //  fAppContext->fUndoManager->clear();
   fNeedsSaving = false;
   fLastSavedUndoAction = fUndoManager->getLastUndoAction();
@@ -970,7 +989,7 @@ std::string AppContext::hdgui2D() const
 //------------------------------------------------------------------------
 // Application::saveConfig
 //------------------------------------------------------------------------
-void AppContext::saveConfig()
+void AppContext::saveConfig(UserError *oErrors)
 {
   std::stringstream s{};
 
@@ -981,7 +1000,7 @@ void AppContext::saveConfig()
 
   s << fmt::printf("re_edit[\"imgui.ini\"] = [==[\n%s\n]==]\n", ImGui::SaveIniSettingsToMemory());
 
-  Application::saveFile(fRoot / "re-edit.lua", s.str());
+  Application::saveFile(fRoot / "re-edit.lua", s.str(), oErrors);
 }
 
 
@@ -1147,7 +1166,7 @@ std::size_t AppContext::importTexturesBlocking()
 //------------------------------------------------------------------------
 // AppContext::importBuiltIns
 //------------------------------------------------------------------------
-void AppContext::importBuiltIns()
+void AppContext::importBuiltIns(UserError *oErrors)
 {
   std::set<FilmStrip::key_t> keys{};
   fFrontPanel->fPanel.collectUsedTextureBuiltIns(keys);
@@ -1159,7 +1178,7 @@ void AppContext::importBuiltIns()
   }
 
   if(!keys.empty())
-    fTextureManager->importBuiltIns(keys);
+    fTextureManager->importBuiltIns(keys, oErrors);
 }
 
 ////------------------------------------------------------------------------

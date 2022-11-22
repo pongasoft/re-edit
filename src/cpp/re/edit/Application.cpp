@@ -441,7 +441,7 @@ void Application::maybeExit()
 //------------------------------------------------------------------------
 // Application::saveFile
 //------------------------------------------------------------------------
-void Application::saveFile(fs::path const &iFile, std::string const &iContent)
+void Application::saveFile(fs::path const &iFile, std::string const &iContent, UserError *oErrors)
 {
   try
   {
@@ -467,10 +467,16 @@ void Application::saveFile(fs::path const &iFile, std::string const &iContent)
       }
     }
 
+    // if the parent directory does not exist, just create it
+    auto dir = iFile.parent_path();
+    if(!fs::exists(dir))
+      fs::create_directories(dir);
+
     // we do it in 2 steps since step 1 is the one that is more likely to fail
     // 1. we save in a new file
-    auto tmpFile = iFile.parent_path() / fmt::printf("%s.re_edit.tmp", iFile.filename());
+    auto tmpFile = dir / fmt::printf("%s.re_edit.tmp", iFile.filename());
     std::ofstream f{tmpFile};
+    f.exceptions(std::ofstream::ios_base::failbit | std::ofstream::ios_base::badbit);
     f << iContent;
     f.close();
     // 2. we rename
@@ -478,7 +484,8 @@ void Application::saveFile(fs::path const &iFile, std::string const &iContent)
   }
   catch(...)
   {
-    RE_EDIT_LOG_ERROR("Error while saving file %s: %s", iFile, what(std::current_exception()));
+    if(oErrors)
+      oErrors->add("Error while saving file %s: %s", iFile, what(std::current_exception()));
   }
 }
 

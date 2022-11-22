@@ -52,11 +52,17 @@ rt_input_setup = { notify = { } }
   auto config = DeviceConfig<NoOpDevice>(Info::from_file(iDirectory / "info.lua"))
     .device_root_dir(iDirectory)
     .device_resources_dir(iDirectory / "Resources")
-    .mdef_file(iDirectory / "motherboard_def.lua")
     .rtc(kRTC)
 //    .rtc_file(iDirectory / "realtime_controller.lua")
     .rt([](Realtime &rt) { rt = Realtime{}; }); // no object creation at all
 //    .rt([](Realtime &rt) { rt = Realtime::byDefault<NoOpDevice>(); });
+
+  auto motherboard_def = iDirectory / "motherboard_def.lua";
+
+  if(fs::exists(motherboard_def))
+    config.mdef_file(motherboard_def);
+  else
+    config.mdef(Config::skeletonMotherboardDef());
 
   fDevice = std::make_shared<rack::Extension>(fRack.newExtension(config.getConfig()));
 

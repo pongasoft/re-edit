@@ -286,11 +286,12 @@ std::set<FilmStrip::key_t> FilmStripMgr::scanDirectory()
 //------------------------------------------------------------------------
 std::vector<FilmStrip::Source> FilmStripMgr::scanDirectory(fs::path const &iDirectory)
 {
-  RE_EDIT_ASSERT(!iDirectory.empty());
-
   static const std::regex FILENAME_REGEX{"(([0-9]+)_?frames)?\\.png$", std::regex_constants::icase};
 
   std::vector<FilmStrip::Source> res{};
+
+  if(!fs::exists(iDirectory))
+    return res;
 
   std::error_code errorCode;
   auto iter = std::filesystem::directory_iterator(iDirectory, errorCode);
@@ -354,7 +355,7 @@ std::optional<FilmStrip::key_t> FilmStripMgr::importTexture(fs::path const &iTex
 //------------------------------------------------------------------------
 // FilmStripMgr::importBuiltIns
 //------------------------------------------------------------------------
-std::set<FilmStrip::key_t> FilmStripMgr::importBuiltIns(std::set<FilmStrip::key_t> const &iKeys)
+std::set<FilmStrip::key_t> FilmStripMgr::importBuiltIns(std::set<FilmStrip::key_t> const &iKeys, UserError *oErrors)
 {
   std::set<FilmStrip::key_t> modifiedKeys{};
 
@@ -371,7 +372,10 @@ std::set<FilmStrip::key_t> FilmStripMgr::importBuiltIns(std::set<FilmStrip::key_
         std::fstream file(path.u8string().c_str(), std::ios::out | std::ios::binary);
         if(!file)
         {
-          RE_EDIT_LOG_WARNING("Error writing %s | %s", path.u8string().c_str(), strerror(errno));
+          if(oErrors)
+            oErrors->add("Error writing %s | %s", path.u8string().c_str(), strerror(errno));
+          else
+            RE_EDIT_LOG_WARNING("Error writing %s | %s", path.u8string().c_str(), strerror(errno));
         }
         else
         {
@@ -379,7 +383,10 @@ std::set<FilmStrip::key_t> FilmStripMgr::importBuiltIns(std::set<FilmStrip::key_
           file.write(static_cast<char const *>(cdata), static_cast<std::streamsize>(data.size()));
           if(!file)
           {
-            RE_EDIT_LOG_WARNING("Error writing %s | %s", path.u8string().c_str(), strerror(errno));
+            if(oErrors)
+              oErrors->add("Error writing %s | %s", path.u8string().c_str(), strerror(errno));
+            else
+              RE_EDIT_LOG_WARNING("Error writing %s | %s", path.u8string().c_str(), strerror(errno));
           }
         }
       }

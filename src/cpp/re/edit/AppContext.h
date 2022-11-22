@@ -272,8 +272,8 @@ protected:
   void initGUI2D();
   void reloadDevice();
   void save();
-  void importBuiltIns();
-  void saveConfig();
+  void importBuiltIns(UserError *oErrors = nullptr);
+  void saveConfig(UserError *oErrors = nullptr);
   std::string hdgui2D() const;
   std::string device2D() const;
   std::string cmake() const;
