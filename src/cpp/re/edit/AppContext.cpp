@@ -944,7 +944,8 @@ void AppContext::save()
   importBuiltIns(&errors); // convert built ins into actual images first (so that cmake() can see them)
   Application::saveFile(GUI2D / "device_2D.lua", device2D(), &errors);
   Application::saveFile(GUI2D / "hdgui_2D.lua", hdgui2D(), &errors);
-  Application::saveFile(GUI2D / "gui_2D.cmake", cmake(), &errors);
+  if(fs::exists(fRoot / "CMakeLists.txt"))
+    Application::saveFile(GUI2D / "gui_2D.cmake", cmake(), &errors);
   saveConfig(&errors);
   if(errors.hasErrors())
     Application::GetCurrent().newDialog("Error")
