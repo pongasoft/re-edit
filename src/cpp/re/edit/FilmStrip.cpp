@@ -154,6 +154,16 @@ FilmStripMgr::FilmStripMgr(fs::path iDirectory) : fDirectory{std::move(iDirector
   RE_EDIT_BUILT_IN(BuiltIn::kTapeHorizontal, 1);
   RE_EDIT_BUILT_IN(BuiltIn::kTapeVertical, 1);
   RE_EDIT_BUILT_IN(BuiltIn::kTrimKnob, 1);
+  RE_EDIT_BUILT_IN(BuiltIn::kRoutingIcon01, 1);
+  RE_EDIT_BUILT_IN(BuiltIn::kRoutingIcon02, 1);
+  RE_EDIT_BUILT_IN(BuiltIn::kRoutingIcon03, 1);
+  RE_EDIT_BUILT_IN(BuiltIn::kRoutingIcon04, 1);
+  RE_EDIT_BUILT_IN(BuiltIn::kRoutingIcon05, 1);
+  RE_EDIT_BUILT_IN(BuiltIn::kRoutingIconWhite01, 1);
+  RE_EDIT_BUILT_IN(BuiltIn::kRoutingIconWhite02, 1);
+  RE_EDIT_BUILT_IN(BuiltIn::kRoutingIconWhite03, 1);
+  RE_EDIT_BUILT_IN(BuiltIn::kRoutingIconWhite04, 1);
+  RE_EDIT_BUILT_IN(BuiltIn::kRoutingIconWhite05, 1);
 }
 
 //------------------------------------------------------------------------

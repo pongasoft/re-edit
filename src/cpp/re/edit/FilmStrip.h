@@ -49,6 +49,16 @@ struct BuiltIn
   static constexpr char const *kTapeHorizontal = "Tape_Horizontal_1frames";
   static constexpr char const *kTapeVertical = "Tape_Vertical_1frames";
   static constexpr char const *kTrimKnob = "TrimKnob";
+  static constexpr char const *kRoutingIcon01 = "Routing_Icon_01";
+  static constexpr char const *kRoutingIcon02 = "Routing_Icon_02";
+  static constexpr char const *kRoutingIcon03 = "Routing_Icon_03";
+  static constexpr char const *kRoutingIcon04 = "Routing_Icon_04";
+  static constexpr char const *kRoutingIcon05 = "Routing_Icon_05";
+  static constexpr char const *kRoutingIconWhite01 = "Routing_Icon_White_01";
+  static constexpr char const *kRoutingIconWhite02 = "Routing_Icon_White_02";
+  static constexpr char const *kRoutingIconWhite03 = "Routing_Icon_White_03";
+  static constexpr char const *kRoutingIconWhite04 = "Routing_Icon_White_04";
+  static constexpr char const *kRoutingIconWhite05 = "Routing_Icon_White_05";
 };
 
 class FilmStrip
