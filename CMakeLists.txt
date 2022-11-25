@@ -186,8 +186,22 @@ target_link_libraries("${target}_lib" PUBLIC imgui stb-image re-mock nfd efsw)
 target_compile_definitions("${target}_lib" PUBLIC ENABLE_RE_EDIT_INTERNAL_ASSERT=1)
 
 # Build the executable
-add_executable(${target} "${re-edit_MAIN_SRC}")
+add_executable(${target} MACOSX_BUNDLE "${re-edit_MAIN_SRC}")
 target_link_libraries(${target} PRIVATE "${target}_lib")
+if(APPLE)
+  set_target_properties(${target} PROPERTIES
+      BUNDLE True
+      MACOSX_BUNDLE_GUI_IDENTIFIER com.pongasoft.re-edit
+      MACOSX_BUNDLE_BUNDLE_NAME re-edit
+      MACOSX_BUNDLE_BUNDLE_VERSION "${re-edit_VERSION}"
+      MACOSX_BUNDLE_SHORT_VERSION_STRING "${re-edit_VERSION}"
+      MACOSX_BUNDLE_ICON_NAME "AppIcon"
+      MACOSX_BUNDLE_COPYRIGHT "© 2022 pongasoft"
+      MACOSX_BUNDLE_INFO_PLIST "${CMAKE_SOURCE_DIR}/cmake/MacOSXBundleInfo.plist.in"
+      )
+  target_sources(${target} PRIVATE "src/resources/re-edit.icns")
+  set_source_files_properties("src/resources/re-edit.icns" PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
+endif()
 
 #if(APPLE AND ${re-edit_UNIVERSAL_BUILD})
 #  message(STATUS "setting up target for univeral build")
