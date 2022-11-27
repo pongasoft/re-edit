@@ -153,7 +153,6 @@ AppContext &AppContext::GetCurrent()
   return Application::GetCurrent().getAppContext();
 }
 
-
 //------------------------------------------------------------------------
 // Application::Application
 //------------------------------------------------------------------------
@@ -195,7 +194,7 @@ bool Application::init(Config const &iConfig)
   }
   catch(...)
   {
-    fAppContext = nullptr;
+    fState = State::kNoReLoaded;
     newDialog("Error")
       .preContentMessage(fmt::printf("Error while loading Rack Extension project [%s]", iConfig.fLocalRoot ? iConfig.fLocalRoot->u8string() : "Unknown"))
       .text(what(std::current_exception()), true)
@@ -221,6 +220,8 @@ void Application::initAppContext(fs::path const &iRoot, config::Local const &iCo
   fAppContext->initGUI2D();
 
   ImGui::LoadIniSettingsFromMemory(iConfig.fImGuiIni.c_str(), iConfig.fImGuiIni.size());
+
+  fState = State::kReLoaded;
 }
 
 //------------------------------------------------------------------------
@@ -228,30 +229,19 @@ void Application::initAppContext(fs::path const &iRoot, config::Local const &iCo
 //------------------------------------------------------------------------
 void Application::load(fs::path const &iRoot)
 {
-  try
+  Config c{};
+  c.fGlobalConfig = fConfig;
+  c.fLocalRoot = iRoot;
+  auto configFile = iRoot / "re-edit.lua";
+  if(fs::exists(configFile))
   {
-    Config c{};
-    c.fGlobalConfig = fConfig;
-    c.fLocalRoot = iRoot;
-    auto configFile = iRoot / "re-edit.lua";
-    if(fs::exists(configFile))
-    {
-      c.fLocalConfig = lua::LocalConfigParser::fromFile(configFile);
-      c.fLocalConfig->copyTo(c.fGlobalConfig);
-    }
-
-    init(c);
-
-    fContext->setWindowSize(fConfig.fNativeWindowWidth, fConfig.fNativeWindowHeight);
+    c.fLocalConfig = lua::LocalConfigParser::fromFile(configFile);
+    c.fLocalConfig->copyTo(c.fGlobalConfig);
   }
-  catch(...)
-  {
-    fAppContext = nullptr;
-    newDialog("Error")
-      .preContentMessage(fmt::printf("Error while loading Rack Extension project [%s]", iRoot.u8string()))
-      .text(what(std::current_exception()), true)
-      .buttonCancel("Ok");
-  }
+
+  init(c);
+
+  fContext->setWindowSize(fConfig.fNativeWindowWidth, fConfig.fNativeWindowHeight);
 }
 
 //------------------------------------------------------------------------
@@ -345,7 +335,7 @@ bool Application::render() noexcept
         case ReGui::Dialog::Result::kBreak:
           return running();
         case ReGui::Dialog::Result::kExit:
-          fExitRequested = true;
+          abort();
           return running();
         default:
           RE_EDIT_FAIL("not reached");
@@ -361,23 +351,29 @@ bool Application::render() noexcept
     }
   }
 
-  if(running())
+  try
   {
-    try
+    switch(fState)
     {
-      if(fAppContext)
+      case State::kReLoaded:
         renderAppContext();
-      else
+        break;
+
+      case State::kNoReLoaded:
         renderWelcome();
+        break;
+
+      default:
+        break;
     }
-    catch(...)
-    {
-      newExceptionDialog("Error during rendering", true, std::current_exception());
-      executeCatchAllExceptions([e = std::current_exception()] {
-        RE_EDIT_LOG_ERROR("Unrecoverable exception detected: %s", what(e));
-        ImGui::ErrorCheckEndFrameRecover(nullptr);
-      });
-    }
+  }
+  catch(...)
+  {
+    newExceptionDialog("Error during rendering", true, std::current_exception());
+    executeCatchAllExceptions([e = std::current_exception()] {
+      RE_EDIT_LOG_ERROR("Unrecoverable exception detected: %s", what(e));
+      ImGui::ErrorCheckEndFrameRecover(nullptr);
+    });
   }
 
   return running();
@@ -568,9 +564,9 @@ ReGui::Dialog &Application::newDialog(std::string iTitle, bool iHighPriority)
 //------------------------------------------------------------------------
 void Application::newExceptionDialog(std::string iMessage, bool iSaveButton, std::exception_ptr const &iException)
 {
-  if(!fHasException)
+  if(!hasException())
   {
-    fHasException = true;
+    fState = State::kException;
     auto &dialog =
       newDialog("Error", true)
         .breakOnNoAction()
@@ -615,19 +611,19 @@ ReGui::Dialog::Result Application::renderDialog()
 //------------------------------------------------------------------------
 void Application::maybeExit()
 {
-  if(fExitRequested)
+  if(!running())
     return;
 
   if(fAppContext && fAppContext->needsSaving())
   {
     newDialog("Quit")
       .postContentMessage("You have unsaved changes, do you want to save them before quitting?")
-      .button("Yes", [this] { fAppContext->save(); fExitRequested = true; return ReGui::Dialog::Result::kExit; })
-      .button("No", [this] { fExitRequested = true; return ReGui::Dialog::Result::kExit; })
+      .button("Yes", [this] { fAppContext->save(); fState = State::kDone; return ReGui::Dialog::Result::kExit; })
+      .button("No", [this] { fState = State::kDone; return ReGui::Dialog::Result::kExit; })
       .buttonCancel("Cancel", true);
   }
   else
-    fExitRequested = true;
+    fState = State::kDone;
 }
 
 //------------------------------------------------------------------------

@@ -58,6 +58,7 @@ public:
 
 public:
   explicit Application(std::shared_ptr<Context> iContext);
+  ~Application() { kCurrent = nullptr; }
 //  Application(fs::path const &iRoot, std::shared_ptr<TextureManager> iTextureManager);
 
   static Application &GetCurrent() { RE_EDIT_INTERNAL_ASSERT(kCurrent != nullptr); return *kCurrent; }
@@ -84,18 +85,28 @@ public:
   bool render() noexcept;
   void renderMainMenu();
   void maybeExit();
-  inline bool running() const { return !fExitRequested; }
-  inline void abort() { fExitRequested = true; };
+  inline bool running() const { return fState != State::kDone; }
+  inline void abort() { fState = State::kDone; };
   ReGui::Dialog &newDialog(std::string iTitle, bool iHighPriority = false);
   void newExceptionDialog(std::string iMessage, bool iSaveButton, std::exception_ptr const &iException);
 
-  constexpr bool hasException() const { return fHasException; }
+  constexpr bool hasException() const { return fState == State::kException; }
 
   static void saveFile(fs::path const &iFile, std::string const &iContent, UserError *oErrors = nullptr);
   static std::string what(std::exception_ptr const &p);
 
 public:
   float clear_color[4] = {0.55f, 0.55f, 0.55f, 1.00f};
+
+private:
+  enum class State
+  {
+    kNone,
+    kNoReLoaded,
+    kReLoaded,
+    kException,
+    kDone
+  };
 
 private:
   void initAppContext(fs::path const &iRoot, config::Local const &iConfig);
@@ -111,6 +122,7 @@ private:
   void load(fs::path const &iRoot);
 
 private:
+  State fState{State::kNoReLoaded};
   std::shared_ptr<Context> fContext;
   std::shared_ptr<FontManager> fFontManager;
   config::Global fConfig{};
@@ -118,8 +130,6 @@ private:
   bool fShowDemoWindow{false};
   bool fShowMetricsWindow{false};
 
-  bool fExitRequested{};
-  bool fHasException{};
   std::optional<fs::path> fNewRootRequested{};
   std::vector<std::unique_ptr<ReGui::Dialog>> fDialogs{};
   std::unique_ptr<ReGui::Dialog> fCurrentDialog{};
