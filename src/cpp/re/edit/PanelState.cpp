@@ -198,7 +198,7 @@ void PanelState::render(AppContext &iCtx)
   if(iCtx.fCurrentPanelState != iCtx.fPreviousPanelState)
     fPanel.markEdited();
 
-  iCtx.fZoom = fZoom * iCtx.fFontManager->getCurrentFontDpiScale();
+  iCtx.setCurrentZoom(fZoom);
   renderPanel(iCtx, iCtx.fCurrentPanelState != iCtx.fPreviousPanelState);
   renderPanelWidgets(iCtx);
   renderWidgets(iCtx);

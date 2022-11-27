@@ -111,7 +111,10 @@ void FontManager::requestNewFont(FontDef const &iFont)
   if(fFontChangeRequest)
     fFontChangeRequest = FontChangeRequest{iFont, fFontChangeRequest->fFontScale, fFontChangeRequest->fFontDpiScale};
   else
-    fFontChangeRequest = FontChangeRequest{iFont, fCurrentFontScale, fCurrentFontDpiScale};
+  {
+    if(fCurrentFont != iFont)
+      fFontChangeRequest = FontChangeRequest{iFont, fCurrentFontScale, fCurrentFontDpiScale};
+  }
 }
 
 //------------------------------------------------------------------------

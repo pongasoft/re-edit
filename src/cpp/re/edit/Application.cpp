@@ -20,13 +20,14 @@
 #include "Widget.h"
 #include "ReGui.h"
 #include "Errors.h"
-#include "lua/ReEdit.h"
+#include "lua/ConfigParser.h"
 #include "LoggingManager.h"
 #include <fstream>
 #include <iterator>
 #include <imgui.h>
 #include <imgui_internal.h>
 #include <version.h>
+#include <nfd.h>
 
 namespace re::edit {
 
@@ -71,36 +72,77 @@ void Application::executeCatchAllExceptions(F f) noexcept
   }
 }
 
+namespace impl {
+
+//------------------------------------------------------------------------
+// impl::inferValidRoot
+// Given a path, tries to determine a valid root for a rack extension
+//------------------------------------------------------------------------
+std::optional<fs::path> inferValidRoot(fs::path const &iPath)
+{
+  if(!fs::exists(iPath))
+    return std::nullopt;
+
+  if(fs::is_directory(iPath))
+  {
+    if(fs::exists(iPath / "info.lua"))
+      return iPath;
+  }
+  else
+  {
+    auto filename = iPath.filename().u8string();
+
+    if(filename == "info.lua")
+      return iPath.parent_path();
+
+    if(filename == "re_edit.lua" || filename == "motherboard_def.lua" || filename == "realtime_controller.lua")
+      return inferValidRoot(iPath.parent_path());
+
+    if(filename == "hdgui_2D.lua" || filename == "device_2D.lua")
+    {
+      auto GUI2D = iPath.parent_path();
+      if(GUI2D.has_parent_path())
+        return inferValidRoot(GUI2D.parent_path());
+    }
+  }
+
+  return std::nullopt;
+}
+
+}
+
 //------------------------------------------------------------------------
 // Application::parseArgs
 //------------------------------------------------------------------------
-std::optional<lua::Config> Application::parseArgs(std::vector<std::string> iArgs)
+Application::Config Application::parseArgs(std::vector<std::string> iArgs)
 {
-  if(iArgs.empty())
+  Application::Config c{};
+
+  // TODO: initialize global config from preferences
+
+  if(!iArgs.empty())
   {
-    RE_EDIT_LOG_ERROR("You must provide the path to the root folder of the device");
-    return std::nullopt;
+    auto root = impl::inferValidRoot(fs::path(iArgs[0]));
+    if(root)
+    {
+      c.fLocalRoot = root;
+      auto configFile = *root / "re-edit.lua";
+      if(fs::exists(configFile))
+      {
+        try
+        {
+          c.fLocalConfig = lua::LocalConfigParser::fromFile(configFile);
+          c.fLocalConfig->copyTo(c.fGlobalConfig);
+        }
+        catch(re::mock::Exception &e)
+        {
+          RE_EDIT_LOG_WARNING("Error while reading %s | %s", configFile.c_str(), e.what());
+        }
+      }
+    }
   }
 
-  auto root = fs::path(iArgs[0]);
-
-  fAppContext = std::make_shared<AppContext>(root);
-
-  auto configFile = root / "re-edit.lua";
-  lua::Config config{};
-  if(fs::exists(configFile))
-  {
-    try
-    {
-      config = lua::ReEdit::fromFile(configFile)->getConfig();
-    }
-    catch(re::mock::Exception &e)
-    {
-      RE_EDIT_LOG_WARNING("Error while reading %s | %s", configFile.c_str(), e.what());
-    }
-  }
-
-  return config;
+  return c;
 }
 
 //------------------------------------------------------------------------
@@ -115,61 +157,126 @@ AppContext &AppContext::GetCurrent()
 //------------------------------------------------------------------------
 // Application::Application
 //------------------------------------------------------------------------
-Application::Application()
+Application::Application(std::shared_ptr<Context> iContext) :
+  fContext{std::move(iContext)},
+  fFontManager{std::make_shared<FontManager>(fContext->newNativeFontManager())}
 {
   RE_EDIT_INTERNAL_ASSERT(Application::kCurrent == nullptr, "Only one instance of Application allowed");
   Application::kCurrent = this;
-}
-
-
-//------------------------------------------------------------------------
-// Application::Application (used from test)
-//------------------------------------------------------------------------
-Application::Application(fs::path const &iRoot, std::shared_ptr<TextureManager> iTextureManager)
-{
-  RE_EDIT_INTERNAL_ASSERT(Application::kCurrent == nullptr, "Only one instance of Application allowed");
-  Application::kCurrent = this;
-  fAppContext = std::make_shared<AppContext>(iRoot);
-  iTextureManager->init(iRoot);
-  fAppContext->fTextureManager = std::move(iTextureManager);
 }
 
 //------------------------------------------------------------------------
 // Application::init
 //------------------------------------------------------------------------
-bool Application::init(lua::Config const &iConfig,
-                       std::shared_ptr<TextureManager> iTextureManager,
-                       std::shared_ptr<NativeFontManager> iNativeFontManager)
+bool Application::init(Config const &iConfig)
 {
   try
   {
-    fAppContext->fFontManager = std::make_shared<FontManager>(std::move(iNativeFontManager));
-    fAppContext->fTextureManager = std::move(iTextureManager);
-    fAppContext->fUserPreferences = std::make_shared<UserPreferences>();
-    fAppContext->fPropertyManager = std::make_shared<PropertyManager>();
-    fAppContext->fUndoManager = std::make_shared<UndoManager>();
+    fConfig = iConfig.fGlobalConfig;
 
-    fAppContext->init(iConfig);
-    ImGui::LoadIniSettingsFromMemory(iConfig.fImGuiIni.c_str(), iConfig.fImGuiIni.size());
+    if(iConfig.fLocalRoot)
+    {
+      if(iConfig.fLocalConfig)
+        initAppContext(*iConfig.fLocalRoot, *iConfig.fLocalConfig);
+      else
+      {
+        config::Local c{};
+        c.copyFrom(fConfig);
+        initAppContext(*iConfig.fLocalRoot, c);
+      }
+    }
+
+    fFontManager->requestNewFont({"JetBrains Mono Regular", BuiltInFont::kJetBrainsMonoRegular, iConfig.getFontSize()});
 
     auto &io = ImGui::GetIO();
     io.IniFilename = nullptr; // don't use imgui.ini file
     io.WantSaveIniSettings = false; // will be "notified" when it changes
     io.ConfigWindowsMoveFromTitleBarOnly = true;
-
-    fAppContext->initDevice();
-    fAppContext->initGUI2D();
   }
   catch(...)
   {
-    newExceptionDialog("Error during initialization", false, std::current_exception());
-    executeCatchAllExceptions([e = std::current_exception()] {
-      RE_EDIT_LOG_ERROR("Unrecoverable exception detected: %s", what(e));
-      ImGui::ErrorCheckEndFrameRecover(nullptr);
-    });
+    fAppContext = nullptr;
+    newDialog("Error")
+      .preContentMessage(fmt::printf("Error while loading Rack Extension project [%s]", iConfig.fLocalRoot ? iConfig.fLocalRoot->u8string() : "Unknown"))
+      .text(what(std::current_exception()), true)
+      .buttonCancel("Ok");
   }
 
   return running();
+}
+
+//------------------------------------------------------------------------
+// Application::init
+//------------------------------------------------------------------------
+void Application::initAppContext(fs::path const &iRoot, config::Local const &iConfig)
+{
+  fAppContext = std::make_shared<AppContext>(iRoot);
+  fAppContext->fTextureManager = fContext->newTextureManager();
+  fAppContext->fUserPreferences = std::make_shared<UserPreferences>();
+  fAppContext->fPropertyManager = std::make_shared<PropertyManager>();
+  fAppContext->fUndoManager = std::make_shared<UndoManager>();
+
+  fAppContext->init(iConfig);
+  fAppContext->initDevice();
+  fAppContext->initGUI2D();
+
+  ImGui::LoadIniSettingsFromMemory(iConfig.fImGuiIni.c_str(), iConfig.fImGuiIni.size());
+}
+
+//------------------------------------------------------------------------
+// Application::load
+//------------------------------------------------------------------------
+void Application::load(fs::path const &iRoot)
+{
+  try
+  {
+    Config c{};
+    c.fGlobalConfig = fConfig;
+    c.fLocalRoot = iRoot;
+    auto configFile = iRoot / "re-edit.lua";
+    if(fs::exists(configFile))
+    {
+      c.fLocalConfig = lua::LocalConfigParser::fromFile(configFile);
+      c.fLocalConfig->copyTo(c.fGlobalConfig);
+    }
+
+    init(c);
+
+    fContext->setWindowSize(fConfig.fNativeWindowWidth, fConfig.fNativeWindowHeight);
+  }
+  catch(...)
+  {
+    fAppContext = nullptr;
+    newDialog("Error")
+      .preContentMessage(fmt::printf("Error while loading Rack Extension project [%s]", iRoot.u8string()))
+      .text(what(std::current_exception()), true)
+      .buttonCancel("Ok");
+  }
+}
+
+//------------------------------------------------------------------------
+// Application::setNativeWindowSize
+//------------------------------------------------------------------------
+void Application::setNativeWindowSize(int iWidth, int iHeight)
+{
+  fConfig.fNativeWindowWidth = iWidth;
+  fConfig.fNativeWindowHeight = iHeight;
+}
+
+//------------------------------------------------------------------------
+// Application::onNativeWindowFontDpiScaleChange
+//------------------------------------------------------------------------
+void Application::onNativeWindowFontDpiScaleChange(float iFontDpiScale)
+{
+  fFontManager->setDpiFontScale(iFontDpiScale);
+}
+
+//------------------------------------------------------------------------
+// Application::onNativeWindowFontScaleChange
+//------------------------------------------------------------------------
+void Application::onNativeWindowFontScaleChange(float iFontScale)
+{
+  fFontManager->setFontScale(iFontScale);
 }
 
 //------------------------------------------------------------------------
@@ -179,7 +286,34 @@ bool Application::newFrame() noexcept
 {
   try
   {
-    fAppContext->newFrame();
+    if(fNewRootRequested)
+    {
+      auto root = *fNewRootRequested;
+      fNewRootRequested = std::nullopt;
+      load(root);
+    }
+
+    if(fFontManager->hasFontChangeRequest())
+    {
+      auto oldDpiScale = fFontManager->getCurrentFontDpiScale();
+      fFontManager->applyFontChangeRequest();
+      auto newDpiScale = fFontManager->getCurrentFontDpiScale();
+
+      if(oldDpiScale != newDpiScale)
+      {
+        auto scaleFactor = newDpiScale;
+        ImGuiStyle newStyle{};
+        ImGui::StyleColorsDark(&newStyle);
+        newStyle.ScaleAllSizes(scaleFactor);
+        ImGui::GetStyle() = newStyle;
+      }
+
+      if(fAppContext)
+        fAppContext->fRecomputeDimensionsRequested = true;
+    }
+
+    if(fAppContext)
+      fAppContext->newFrame();
   }
   catch(...)
   {
@@ -231,7 +365,10 @@ bool Application::render() noexcept
   {
     try
     {
-      return doRender();
+      if(fAppContext)
+        renderAppContext();
+      else
+        renderWelcome();
     }
     catch(...)
     {
@@ -247,17 +384,44 @@ bool Application::render() noexcept
 }
 
 //------------------------------------------------------------------------
-// Application::doRender
+// Application::renderWelcome
 //------------------------------------------------------------------------
-bool Application::doRender()
+void Application::renderWelcome()
 {
+  static constexpr char const *kWelcomeTitle = "Welcome to re-edit";
+
+  if(hasDialog())
+    return;
+
+  if(!ImGui::IsPopupOpen(kWelcomeTitle))
+  {
+    ImGui::OpenPopup(kWelcomeTitle);
+    ReGui::CenterNextWindow();
+  }
+
+  if(ImGui::BeginPopupModal(kWelcomeTitle, nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_HorizontalScrollbar))
+  {
+    ImGui::TextUnformatted("welcome text...");
+    if(ImGui::Button("Exit"))
+    {
+      abort();
+    }
+    ImGui::EndPopup();
+  }
+}
+
+//------------------------------------------------------------------------
+// Application::renderAppContext
+//------------------------------------------------------------------------
+void Application::renderAppContext()
+{
+  RE_EDIT_INTERNAL_ASSERT(fAppContext != nullptr);
 
   fAppContext->beforeRenderFrame();
   renderMainMenu();
   fAppContext->renderMainMenu();
 
   ImGui::DockSpaceOverViewport(ImGui::GetMainViewport());
-
 
   fAppContext->render();
 
@@ -277,8 +441,6 @@ bool Application::doRender()
     ImGui::ShowMetricsWindow(&fShowMetricsWindow);
 
   fAppContext->afterRenderFrame();
-
-  return true;
 }
 
 //------------------------------------------------------------------------
@@ -304,7 +466,8 @@ void Application::renderMainMenu()
     }
     if(ImGui::BeginMenu("File"))
     {
-      // empty on purpose (AppContext fills this)
+      if(ImGui::MenuItem(ReGui_Prefix(ReGui_Icon_Open, "Load")))
+        renderLoadDialogBlocking();
       ImGui::EndMenu();
     }
 
@@ -349,6 +512,35 @@ void Application::renderMainMenu()
 //    ImGui::TextUnformatted(fAppContext->fPropertyManager->getDeviceInfo().fMediumName.c_str());
 //    ImGui::TextUnformatted(fAppContext->fPropertyManager->getDeviceInfo().fVersionNumber.c_str());
     ImGui::EndMainMenuBar();
+  }
+}
+
+//------------------------------------------------------------------------
+// Application::renderLoadDialogBlocking
+//------------------------------------------------------------------------
+void Application::renderLoadDialogBlocking()
+{
+  nfdchar_t *outPath;
+  nfdfilteritem_t filterItem[] = { { "Info", "lua" } };
+  nfdresult_t result = NFD_OpenDialog(&outPath, filterItem, 1, nullptr);
+  if(result == NFD_OKAY)
+  {
+    fs::path luaPath{outPath};
+    NFD_FreePath(outPath);
+    fNewRootRequested = impl::inferValidRoot(luaPath);
+    if(!fNewRootRequested)
+      newDialog("Invalid")
+      .preContentMessage("Cannot load Rack Extension")
+      .text(fmt::printf("%s is not a valid Rack Extension project (could not find info.lua)", luaPath.u8string()))
+      .buttonOk();
+  }
+  else if(result == NFD_CANCEL)
+  {
+    fNewRootRequested = std::nullopt;
+  }
+  else
+  {
+    RE_EDIT_LOG_WARNING("Error while opening project: %s", NFD_GetError());
   }
 }
 
@@ -426,7 +618,7 @@ void Application::maybeExit()
   if(fExitRequested)
     return;
 
-  if(fAppContext->needsSaving())
+  if(fAppContext && fAppContext->needsSaving())
   {
     newDialog("Quit")
       .postContentMessage("You have unsaved changes, do you want to save them before quitting?")
@@ -547,5 +739,14 @@ void Application::about() const
 
 
 }
+
+//------------------------------------------------------------------------
+// Application::welcome
+//------------------------------------------------------------------------
+void Application::welcome() const
+{
+  ImGui::TextUnformatted("welcome text...");
+}
+
 
 }

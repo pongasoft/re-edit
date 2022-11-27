@@ -16,30 +16,9 @@
  * @author Yan Pujante
  */
 
-#include "ReEdit.h"
+#include "ConfigParser.h"
 
 namespace re::edit::lua {
-
-//------------------------------------------------------------------------
-// ReEdit::fromFile
-//------------------------------------------------------------------------
-std::unique_ptr<ReEdit> ReEdit::fromFile(fs::path const &iLuaFilename)
-{
-  auto res = std::make_unique<ReEdit>();
-  res->loadFile(iLuaFilename);
-  return res;
-}
-
-//------------------------------------------------------------------------
-// ReEdit::getConfig
-//------------------------------------------------------------------------
-Config ReEdit::getConfig()
-{
-  if(!fConfig)
-    fConfig = loadConfig();
-
-  return *fConfig;
-}
 
 //------------------------------------------------------------------------
 // withOptionalValue
@@ -52,11 +31,45 @@ inline void withOptionalValue(std::optional<T> const &iOptionalValue, F &&f)
 }
 
 //------------------------------------------------------------------------
-// ReEdit::getConfig
+// GlobalConfigParser::fromString
 //------------------------------------------------------------------------
-Config ReEdit::loadConfig()
+config::Global GlobalConfigParser::fromString(std::string const &iLuaString)
 {
-  Config c{};
+  GlobalConfigParser parser{};
+  parser.loadString(iLuaString);
+  return parser.getConfig();
+}
+
+//------------------------------------------------------------------------
+// GlobalConfigParser::getConfig
+//------------------------------------------------------------------------
+config::Global GlobalConfigParser::getConfig()
+{
+  config::Global c{};
+
+  withOptionalValue(L.getTableValueAsOptionalInteger("native_window_width"), [&c](auto v) { c.fNativeWindowWidth = static_cast<int>(v); });
+  withOptionalValue(L.getTableValueAsOptionalInteger("native_window_height"), [&c](auto v) { c.fNativeWindowHeight = static_cast<int>(v); });
+  withOptionalValue(L.getTableValueAsOptionalNumber("font_size"), [&c](auto v) { c.fFontSize = v; });
+
+  return c;
+}
+
+//------------------------------------------------------------------------
+// LocalConfigParser::fromFile
+//------------------------------------------------------------------------
+config::Local LocalConfigParser::fromFile(fs::path const &iLuaFile)
+{
+  LocalConfigParser parser{};
+  parser.loadFile(iLuaFile);
+  return parser.getConfig();
+}
+
+//------------------------------------------------------------------------
+// LocalConfigParser::getConfig
+//------------------------------------------------------------------------
+config::Local LocalConfigParser::getConfig()
+{
+  config::Local c{};
 
   if(lua_getglobal(L, "re_edit") == LUA_TTABLE)
   {

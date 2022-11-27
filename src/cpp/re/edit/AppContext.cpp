@@ -539,15 +539,12 @@ void AppContext::resetUndoMergeKey()
 //------------------------------------------------------------------------
 // AppContext::init
 //------------------------------------------------------------------------
-void AppContext::init(lua::Config const &iConfig)
+void AppContext::init(config::Local const &iConfig)
 {
-  fNativeWindowWidth = iConfig.fNativeWindowWidth;
-  fNativeWindowHeight = iConfig.fNativeWindowHeight;
   fPanelWindow.setIsVisible(iConfig.fShowPanel);
   fPanelWidgetsWindow.setIsVisible(iConfig.fShowPanelWidgets);
   fPropertiesWindow.setIsVisible(iConfig.fShowProperties);
   fWidgetsWindow.setIsVisible(iConfig.fShowWidgets);
-  fFontManager->requestNewFont({"JetBrains Mono Regular", BuiltInFont::kJetBrainsMonoRegular, iConfig.fFontSize});
   fGrid = ImVec2{std::fmax(iConfig.fGrid.x, 1.0f), std::fmax(iConfig.fGrid.y, 1.0f)};
 //  fShowBorder = static_cast<ShowBorder>(iConfig.fShowBorder);
 //  fShowCustomDisplay = static_cast<ShowCustomDisplay>(iConfig.fShowCustomDisplay);
@@ -556,41 +553,27 @@ void AppContext::init(lua::Config const &iConfig)
 }
 
 //------------------------------------------------------------------------
-// AppContext::getLuaConfig
+// AppContext::getLocalConfigAsLua
 //------------------------------------------------------------------------
-std::string AppContext::getLuaConfig() const
+std::string AppContext::getLocalConfigAsLua() const
 {
+  auto const &app = Application::GetCurrent();
+
   std::stringstream s{};
 
-  s << fmt::printf("re_edit[\"native_window_width\"] = %d\n", fNativeWindowWidth);
-  s << fmt::printf("re_edit[\"native_window_height\"] = %d\n", fNativeWindowHeight);
+  s << fmt::printf("re_edit[\"native_window_width\"] = %d\n", app.getNativeWindowWidth());
+  s << fmt::printf("re_edit[\"native_window_height\"] = %d\n", app.getNativeWindowHeight());
   s << fmt::printf("re_edit[\"show_panel\"] = %s\n", fmt::Bool::to_chars(fPanelWindow.isVisible()));
   s << fmt::printf("re_edit[\"show_panel_widgets\"] = %s\n", fmt::Bool::to_chars(fPanelWidgetsWindow.isVisible()));
   s << fmt::printf("re_edit[\"show_properties\"] = %s\n", fmt::Bool::to_chars(fPropertiesWindow.isVisible()));
   s << fmt::printf("re_edit[\"show_widgets\"] = %s\n", fmt::Bool::to_chars(fWidgetsWindow.isVisible()));
-  s << fmt::printf("re_edit[\"font_size\"] = %d\n", static_cast<int>(fFontManager->getCurrentFont().fSize));
+  s << fmt::printf("re_edit[\"font_size\"] = %d\n", static_cast<int>(app.getCurrentFontSize()));
   s << fmt::printf("re_edit[\"grid\"] = { %d, %d }\n", static_cast<int>(fGrid.x), static_cast<int>(fGrid.y));
 //  s << fmt::printf("re_edit[\"show_border\"] = %d\n", static_cast<int>(fShowBorder));
 //  s << fmt::printf("re_edit[\"show_custom_display\"] = %d\n", static_cast<int>(fShowCustomDisplay));
 //  s << fmt::printf("re_edit[\"show_sample_drop_zone\"] = %d\n", static_cast<int>(fShowSampleDropZone));
 
   return s.str();
-}
-
-//------------------------------------------------------------------------
-// AppContext::onNativeWindowFontDpiScaleChange
-//------------------------------------------------------------------------
-void AppContext::onNativeWindowFontDpiScaleChange(float iFontDpiScale)
-{
-  fFontManager->setDpiFontScale(iFontDpiScale);
-}
-
-//------------------------------------------------------------------------
-// AppContext::onNativeWindowFontScaleChange
-//------------------------------------------------------------------------
-void AppContext::onNativeWindowFontScaleChange(float iFontScale)
-{
-  fFontManager->setFontScale(iFontScale);
 }
 
 //------------------------------------------------------------------------
@@ -766,24 +749,6 @@ void AppContext::renderMainMenu()
 
     if(ImGui::BeginMenu("File"))
     {
-//      if(ImGui::MenuItem(ReGui_Prefix(ReGui_Icon_Open, "Load")))
-//      {
-//        nfdchar_t *outPath;
-//        nfdresult_t result = NFD_PickFolder(&outPath, nullptr);
-//        if(result == NFD_OKAY)
-//        {
-//          RE_EDIT_LOG_INFO("Success %s", outPath);
-//          NFD_FreePath(outPath);
-//        }
-//        else if(result == NFD_CANCEL)
-//        {
-//          RE_EDIT_LOG_INFO("Cancel");
-//        }
-//        else
-//        {
-//          RE_EDIT_LOG_ERROR("Error: %s\n", NFD_GetError());
-//        }
-//      }
       if(ImGui::MenuItem(ReGui_Prefix(ReGui_Icon_Save, "Save")))
       {
         if(!fs::exists(fRoot / "re-edit.lua"))
@@ -843,9 +808,9 @@ void AppContext::renderMainMenu()
       fPropertiesWindow.menuItem();
       ImGui::Separator();
       if(ImGui::MenuItem("Horizontal Layout"))
-        fNewLayoutRequested = lua::kDefaultHorizontalLayout;
+        fNewLayoutRequested = config::kDefaultHorizontalLayout;
       if(ImGui::MenuItem("Vertical Layout"))
-        fNewLayoutRequested = lua::kDefaultVerticalLayout;
+        fNewLayoutRequested = config::kDefaultVerticalLayout;
       ImGui::EndMenu();
     }
     ImGui::EndMainMenuBar();
@@ -905,25 +870,6 @@ void AppContext::newFrame()
     fNewLayoutRequested = std::nullopt;
     ImGui::LoadIniSettingsFromMemory(newLayoutRequest.c_str(), newLayoutRequest.size());
   }
-
-  if(fFontManager->hasFontChangeRequest())
-  {
-    auto oldDpiScale = fFontManager->getCurrentFontDpiScale();
-    fFontManager->applyFontChangeRequest();
-    auto newDpiScale = fFontManager->getCurrentFontDpiScale();
-
-    if(oldDpiScale != newDpiScale)
-    {
-      auto scaleFactor = newDpiScale;
-      ImGuiStyle newStyle{};
-      ImGui::StyleColorsDark(&newStyle);
-      newStyle.ScaleAllSizes(scaleFactor);
-      ImGui::GetStyle() = newStyle;
-    }
-
-    fRecomputeDimensionsRequested = true;
-  }
-
 }
 
 //------------------------------------------------------------------------
@@ -999,7 +945,7 @@ void AppContext::saveConfig(UserError *oErrors)
   s << "format_version = \"1.0\"\n\n";
   s << "re_edit = {}\n";
 
-  s << getLuaConfig() << "\n";
+  s << getLocalConfigAsLua() << "\n";
 
   s << fmt::printf("re_edit[\"imgui.ini\"] = [==[\n%s\n]==]\n", ImGui::SaveIniSettingsToMemory());
 
@@ -1182,6 +1128,14 @@ void AppContext::importBuiltIns(UserError *oErrors)
 
   if(!keys.empty())
     fTextureManager->importBuiltIns(keys, oErrors);
+}
+
+//------------------------------------------------------------------------
+// AppContext::setCurrentZoom
+//------------------------------------------------------------------------
+void AppContext::setCurrentZoom(float iZoom)
+{
+  fZoom = iZoom * Application::GetCurrent().getCurrentFontDpiScale();
 }
 
 ////------------------------------------------------------------------------

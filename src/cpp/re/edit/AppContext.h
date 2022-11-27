@@ -31,7 +31,7 @@
 #include "UndoManager.h"
 #include "Constants.h"
 #include "Errors.h"
-#include "lua/ReEdit.h"
+#include "Config.h"
 
 namespace efsw {
 class FileWatcher;
@@ -101,6 +101,7 @@ public:
 public: // UserPreferences
   inline UserPreferences const &getUserPreferences() const { return *fUserPreferences; }
   inline UserPreferences &getUserPreferences() { return *fUserPreferences; }
+  void setCurrentZoom(float iZoom);
 
 public: // Properties
   inline Object const *findObject(std::string const &iObjectPath) const { return fPropertyManager->findObject(iObjectPath); };
@@ -263,8 +264,8 @@ public:
   float fItemWidth{300.0f};
 
 protected:
-  void init(lua::Config const &iConfig);
-  std::string getLuaConfig() const;
+  void init(config::Local const &iConfig);
+  std::string getLocalConfigAsLua() const;
   void reloadTextures();
   void markEdited();
   bool checkForErrors();
@@ -279,8 +280,6 @@ protected:
   std::string cmake() const;
 
   void initPanels(fs::path const &iDevice2DFile, fs::path const &iHDGui2DFile);
-  void onNativeWindowFontDpiScaleChange(float iFontDpiScale);
-  void onNativeWindowFontScaleChange(float iFontScale);
   inline void setCurrentWidget(Widget const *iWidget) { fCurrentWidget = iWidget; }
   void newFrame();
   void beforeRenderFrame();
@@ -308,7 +307,6 @@ protected:
   fs::path fRoot;
   ReGui::Window fMainWindow{"re-edit", std::nullopt, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_HorizontalScrollbar};
   std::shared_ptr<TextureManager> fTextureManager{};
-  std::shared_ptr<FontManager> fFontManager{};
   std::shared_ptr<UserPreferences> fUserPreferences{};
   std::shared_ptr<PropertyManager> fPropertyManager{};
   std::shared_ptr<UndoManager> fUndoManager{};
@@ -328,8 +326,6 @@ protected:
   Widget const *fCurrentWidget{};
   bool fNeedsSaving{};
   std::shared_ptr<UndoAction> fLastSavedUndoAction{};
-  int fNativeWindowWidth{1280};
-  int fNativeWindowHeight{720};
   bool fRecomputeDimensionsRequested{};
   bool fReloadTexturesRequested{};
   std::atomic<bool> fMaybeReloadTextures{};

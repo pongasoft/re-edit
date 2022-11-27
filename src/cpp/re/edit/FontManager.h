@@ -47,6 +47,18 @@ struct FontDef
   std::string fName{};
   std::variant<BuiltInFont, std::string> fSource{};
   float fSize{13.0f};
+
+  friend bool operator==(FontDef const &lhs, FontDef const &rhs)
+  {
+    return lhs.fName == rhs.fName &&
+           lhs.fSource == rhs.fSource &&
+           lhs.fSize == rhs.fSize;
+  }
+
+  friend bool operator!=(FontDef const &lhs, FontDef const &rhs)
+  {
+    return !(rhs == lhs);
+  }
 };
 
 class FontManager

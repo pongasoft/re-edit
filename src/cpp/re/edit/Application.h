@@ -36,30 +36,48 @@ namespace re::edit {
 class Application
 {
 public:
-  Application();
-  Application(fs::path const &iRoot, std::shared_ptr<TextureManager> iTextureManager);
+  class Context
+  {
+  public:
+    virtual ~Context() = default;
+    virtual std::shared_ptr<TextureManager> newTextureManager() const = 0;
+    virtual std::shared_ptr<NativeFontManager> newNativeFontManager() const = 0;
+    virtual void setWindowSize(int iWidth, int iHeight) const = 0;
+  };
+
+  struct Config
+  {
+    config::Global fGlobalConfig{};
+    std::optional<fs::path> fLocalRoot{};
+    std::optional<config::Local> fLocalConfig{};
+
+    int getNativeWindowWidth() const { return fGlobalConfig.fNativeWindowWidth; }
+    int getNativeWindowHeight() const { return fGlobalConfig.fNativeWindowHeight; }
+    float getFontSize() const { return fGlobalConfig.fFontSize; }
+  };
+
+public:
+  explicit Application(std::shared_ptr<Context> iContext);
+//  Application(fs::path const &iRoot, std::shared_ptr<TextureManager> iTextureManager);
 
   static Application &GetCurrent() { RE_EDIT_INTERNAL_ASSERT(kCurrent != nullptr); return *kCurrent; }
 
-  inline AppContext &getAppContext() { return *fAppContext; }
-  inline AppContext const &getAppContext() const { return *fAppContext; }
+  inline AppContext &getAppContext() { RE_EDIT_INTERNAL_ASSERT(fAppContext != nullptr); return *fAppContext; }
+  inline AppContext const &getAppContext() const { RE_EDIT_INTERNAL_ASSERT(fAppContext != nullptr); return *fAppContext; }
 
-  std::optional<lua::Config> parseArgs(std::vector<std::string> iArgs);
+  static Config parseArgs(std::vector<std::string> iArgs);
 
-  bool init(lua::Config const &iConfig,
-            std::shared_ptr<TextureManager> iTextureManager,
-            std::shared_ptr<NativeFontManager> iNativeFontManager);
+  bool init(Config const &iConfig);
 
-  inline void setNativeWindowSize(int iWidth, int iHeight) {
-    fAppContext->fNativeWindowWidth = iWidth;
-    fAppContext->fNativeWindowHeight = iHeight;
-  }
+  void setNativeWindowSize(int iWidth, int iHeight);
 
-  inline int getNativeWindowWidth() const { return fAppContext->fNativeWindowWidth; }
-  inline int getNativeWindowHeight() const { return fAppContext->fNativeWindowHeight; }
+  inline int getNativeWindowWidth() const { return fConfig.fNativeWindowWidth; }
+  inline int getNativeWindowHeight() const { return fConfig.fNativeWindowHeight; }
+  inline float getCurrentFontSize() const { return fFontManager->getCurrentFont().fSize; }
+  inline float getCurrentFontDpiScale() const { return fFontManager->getCurrentFontDpiScale(); }
 
-  inline void onNativeWindowFontDpiScaleChange(float iFontDpiScale) { fAppContext->onNativeWindowFontDpiScaleChange(iFontDpiScale); }
-  inline void onNativeWindowFontScaleChange(float iFontScale) { fAppContext->onNativeWindowFontScaleChange(iFontScale); }
+  void onNativeWindowFontDpiScaleChange(float iFontDpiScale);
+  void onNativeWindowFontScaleChange(float iFontScale);
 //  inline void onNativeWindowPositionChange(int x, int y, float iFontScale, float iFontDpiScale) { fAppContext.onNativeWindowPositionChange(x, y, iFontScale, iFontDpiScale); }
 
   bool newFrame() noexcept;
@@ -77,25 +95,35 @@ public:
   static std::string what(std::exception_ptr const &p);
 
 public:
-  float clear_color[4] = {0.45f, 0.55f, 0.60f, 1.00f};
+  float clear_color[4] = {0.55f, 0.55f, 0.55f, 1.00f};
 
 private:
-  bool doRender(); // may throw exception
+  void initAppContext(fs::path const &iRoot, config::Local const &iConfig);
+  void renderWelcome(); // may throw exception
+  void renderAppContext(); // may throw exception
   ReGui::Dialog::Result renderDialog();
   void about() const;
+  void welcome() const;
   inline bool hasDialog() const { return fCurrentDialog != nullptr || !fDialogs.empty(); }
   template<typename F>
   void executeCatchAllExceptions(F f) noexcept;
+  void renderLoadDialogBlocking();
+  void load(fs::path const &iRoot);
 
 private:
+  std::shared_ptr<Context> fContext;
+  std::shared_ptr<FontManager> fFontManager;
+  config::Global fConfig{};
   std::shared_ptr<AppContext> fAppContext{};
   bool fShowDemoWindow{false};
   bool fShowMetricsWindow{false};
 
   bool fExitRequested{};
   bool fHasException{};
+  std::optional<fs::path> fNewRootRequested{};
   std::vector<std::unique_ptr<ReGui::Dialog>> fDialogs{};
   std::unique_ptr<ReGui::Dialog> fCurrentDialog{};
+  std::unique_ptr<ReGui::Dialog> fWelcomeDialog{};
 
   inline static Application *kCurrent{};
 };

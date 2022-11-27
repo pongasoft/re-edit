@@ -16,16 +16,16 @@
  * @author Yan Pujante
  */
 
-#ifndef RE_EDIT_RE_EDIT_H
-#define RE_EDIT_RE_EDIT_H
+#ifndef RE_EDIT_CONFIG_H
+#define RE_EDIT_CONFIG_H
 
-#include "Base.h"
 #include <imgui.h>
-#include "../fs.h"
 
-namespace re::edit::lua {
+namespace re::edit::config {
 
 constexpr float kDefaultFontSize = 12.0f;
+constexpr int kDefaultWidth = 1280;
+constexpr int kDefaultHeight = 720;
 
 constexpr char const *kDefaultHorizontalLayout = R"(
 [Window][DockSpaceViewport_11111111]
@@ -159,10 +159,19 @@ DockSpace         ID=0x8B93E3BD Window=0xA787BDB4 Pos=0,18 Size=1280,702 Split=X
     DockNode      ID=0x0000000A Parent=0x00000002 SizeRef=850,193 Selected=0x64F50EE5
 )";
 
-struct Config
+struct Global
 {
-  int fNativeWindowWidth{1280};
-  int fNativeWindowHeight{720};
+  int fNativeWindowWidth{kDefaultWidth};
+  int fNativeWindowHeight{kDefaultHeight};
+  float fFontSize{kDefaultFontSize};
+
+  // std::vector<Project>...
+};
+
+struct Local
+{
+  int fNativeWindowWidth{kDefaultWidth};
+  int fNativeWindowHeight{kDefaultHeight};
   bool fShowProperties{false};
   bool fShowPanel{true};
   bool fShowPanelWidgets{true};
@@ -171,25 +180,23 @@ struct Config
   ImVec2 fGrid{10.0f, 10.0f};
 
   std::string fImGuiIni{kDefaultHorizontalLayout};
+
+  void copyTo(Global &o) const
+  {
+    o.fNativeWindowWidth = fNativeWindowWidth;
+    o.fNativeWindowHeight = fNativeWindowHeight;
+    o.fFontSize = fFontSize;
+  }
+
+  void copyFrom(Global const &i)
+  {
+    fNativeWindowWidth = i.fNativeWindowWidth;
+    fNativeWindowHeight = i.fNativeWindowHeight;
+    fFontSize = i.fFontSize;
+  }
 };
 
-class ReEdit : public Base
-{
-public:
-  ReEdit() = default;
-
-  Config getConfig();
-
-  static std::unique_ptr<ReEdit> fromFile(fs::path const &iLuaFilename);
-
-protected:
-  Config loadConfig();
-
-private:
-  std::optional<Config> fConfig{};
-};
 
 }
 
-
-#endif //RE_EDIT_RE_EDIT_H
+#endif //RE_EDIT_CONFIG_H
