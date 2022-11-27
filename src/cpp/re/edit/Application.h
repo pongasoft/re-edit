@@ -63,7 +63,9 @@ public:
 //  Application(fs::path const &iRoot, std::shared_ptr<TextureManager> iTextureManager);
 
   static Application &GetCurrent() { RE_EDIT_INTERNAL_ASSERT(kCurrent != nullptr); return *kCurrent; }
+  static bool HasCurrent() { return kCurrent != nullptr; }
 
+  inline bool hasAppContext() const { return fAppContext != nullptr; }
   inline AppContext &getAppContext() { RE_EDIT_INTERNAL_ASSERT(fAppContext != nullptr); return *fAppContext; }
   inline AppContext const &getAppContext() const { RE_EDIT_INTERNAL_ASSERT(fAppContext != nullptr); return *fAppContext; }
 

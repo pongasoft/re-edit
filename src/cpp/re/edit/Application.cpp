@@ -137,6 +137,14 @@ AppContext &AppContext::GetCurrent()
 }
 
 //------------------------------------------------------------------------
+// AppContext::HasCurrent
+//------------------------------------------------------------------------
+bool AppContext::HasCurrent()
+{
+  return Application::HasCurrent() && Application::GetCurrent().hasAppContext();
+}
+
+//------------------------------------------------------------------------
 // Application::Application
 //------------------------------------------------------------------------
 Application::Application(std::shared_ptr<Context> iContext) :
