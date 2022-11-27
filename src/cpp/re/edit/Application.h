@@ -30,6 +30,7 @@
 #include <optional>
 #include "Dialog.h"
 #include "fs.h"
+#include "Config.h"
 
 namespace re::edit {
 
@@ -49,7 +50,6 @@ public:
   {
     config::Global fGlobalConfig{};
     std::optional<fs::path> fLocalRoot{};
-    std::optional<config::Local> fLocalConfig{};
 
     int getNativeWindowWidth() const { return fGlobalConfig.fNativeWindowWidth; }
     int getNativeWindowHeight() const { return fGlobalConfig.fNativeWindowHeight; }
@@ -58,6 +58,7 @@ public:
 
 public:
   explicit Application(std::shared_ptr<Context> iContext);
+  Application(std::shared_ptr<Context> iContext, Application::Config const &iConfig);
   ~Application() { kCurrent = nullptr; }
 //  Application(fs::path const &iRoot, std::shared_ptr<TextureManager> iTextureManager);
 
@@ -67,8 +68,6 @@ public:
   inline AppContext const &getAppContext() const { RE_EDIT_INTERNAL_ASSERT(fAppContext != nullptr); return *fAppContext; }
 
   static Config parseArgs(std::vector<std::string> iArgs);
-
-  bool init(Config const &iConfig);
 
   void setNativeWindowSize(int iWidth, int iHeight);
 

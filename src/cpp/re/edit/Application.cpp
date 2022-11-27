@@ -122,24 +122,7 @@ Application::Config Application::parseArgs(std::vector<std::string> iArgs)
 
   if(!iArgs.empty())
   {
-    auto root = impl::inferValidRoot(fs::path(iArgs[0]));
-    if(root)
-    {
-      c.fLocalRoot = root;
-      auto configFile = *root / "re-edit.lua";
-      if(fs::exists(configFile))
-      {
-        try
-        {
-          c.fLocalConfig = lua::LocalConfigParser::fromFile(configFile);
-          c.fLocalConfig->copyTo(c.fGlobalConfig);
-        }
-        catch(re::mock::Exception &e)
-        {
-          RE_EDIT_LOG_WARNING("Error while reading %s | %s", configFile.c_str(), e.what());
-        }
-      }
-    }
+    c.fLocalRoot = impl::inferValidRoot(fs::path(iArgs[0]));
   }
 
   return c;
@@ -158,50 +141,24 @@ AppContext &AppContext::GetCurrent()
 //------------------------------------------------------------------------
 Application::Application(std::shared_ptr<Context> iContext) :
   fContext{std::move(iContext)},
-  fFontManager{std::make_shared<FontManager>(fContext->newNativeFontManager())}
+  fFontManager{std::make_shared<FontManager>(fContext->newNativeFontManager())},
+  fConfig{}
 {
   RE_EDIT_INTERNAL_ASSERT(Application::kCurrent == nullptr, "Only one instance of Application allowed");
   Application::kCurrent = this;
 }
 
 //------------------------------------------------------------------------
-// Application::init
+// Application::Application
 //------------------------------------------------------------------------
-bool Application::init(Config const &iConfig)
+Application::Application(std::shared_ptr<Context> iContext, Application::Config const &iConfig) :
+  fContext{std::move(iContext)},
+  fFontManager{std::make_shared<FontManager>(fContext->newNativeFontManager())},
+  fConfig{iConfig.fGlobalConfig},
+  fNewRootRequested{iConfig.fLocalRoot}
 {
-  try
-  {
-    fConfig = iConfig.fGlobalConfig;
-
-    if(iConfig.fLocalRoot)
-    {
-      if(iConfig.fLocalConfig)
-        initAppContext(*iConfig.fLocalRoot, *iConfig.fLocalConfig);
-      else
-      {
-        config::Local c{};
-        c.copyFrom(fConfig);
-        initAppContext(*iConfig.fLocalRoot, c);
-      }
-    }
-
-    fFontManager->requestNewFont({"JetBrains Mono Regular", BuiltInFont::kJetBrainsMonoRegular, iConfig.getFontSize()});
-
-    auto &io = ImGui::GetIO();
-    io.IniFilename = nullptr; // don't use imgui.ini file
-    io.WantSaveIniSettings = false; // will be "notified" when it changes
-    io.ConfigWindowsMoveFromTitleBarOnly = true;
-  }
-  catch(...)
-  {
-    fState = State::kNoReLoaded;
-    newDialog("Error")
-      .preContentMessage(fmt::printf("Error while loading Rack Extension project [%s]", iConfig.fLocalRoot ? iConfig.fLocalRoot->u8string() : "Unknown"))
-      .text(what(std::current_exception()), true)
-      .buttonCancel("Ok");
-  }
-
-  return running();
+  RE_EDIT_INTERNAL_ASSERT(Application::kCurrent == nullptr, "Only one instance of Application allowed");
+  Application::kCurrent = this;
 }
 
 //------------------------------------------------------------------------
@@ -229,19 +186,37 @@ void Application::initAppContext(fs::path const &iRoot, config::Local const &iCo
 //------------------------------------------------------------------------
 void Application::load(fs::path const &iRoot)
 {
-  Config c{};
-  c.fGlobalConfig = fConfig;
-  c.fLocalRoot = iRoot;
-  auto configFile = iRoot / "re-edit.lua";
-  if(fs::exists(configFile))
+  try
   {
-    c.fLocalConfig = lua::LocalConfigParser::fromFile(configFile);
-    c.fLocalConfig->copyTo(c.fGlobalConfig);
+    config::Local c{};
+    auto configFile = iRoot / "re-edit.lua";
+    if(fs::exists(configFile))
+    {
+      c = lua::LocalConfigParser::fromFile(configFile);
+      c.copyTo(fConfig);
+    }
+    else
+      c.copyFrom(fConfig);
+
+    initAppContext(iRoot, c);
+
+    fFontManager->requestNewFont({"JetBrains Mono Regular", BuiltInFont::kJetBrainsMonoRegular, fConfig.fFontSize});
+
+    auto &io = ImGui::GetIO();
+    io.IniFilename = nullptr; // don't use imgui.ini file
+    io.WantSaveIniSettings = false; // will be "notified" when it changes
+    io.ConfigWindowsMoveFromTitleBarOnly = true;
+
+    fContext->setWindowSize(fConfig.fNativeWindowWidth, fConfig.fNativeWindowHeight);
   }
-
-  init(c);
-
-  fContext->setWindowSize(fConfig.fNativeWindowWidth, fConfig.fNativeWindowHeight);
+  catch(...)
+  {
+    fState = State::kNoReLoaded;
+    newDialog("Error")
+      .preContentMessage(fmt::printf("Error while loading Rack Extension project [%s]", iRoot.u8string()))
+      .text(what(std::current_exception()), true)
+      .buttonCancel("Ok");
+  }
 }
 
 //------------------------------------------------------------------------

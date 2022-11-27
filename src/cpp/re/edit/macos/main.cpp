@@ -155,12 +155,7 @@ int doMain(int argc, char **argv)
 
   auto renderPassDescriptor = MTL::RenderPassDescriptor::alloc()->init();
 
-  re::edit::Application application{std::make_shared<MacOsContext>(window, device)};
-
-  if(!application.init(config))
-  {
-    fprintf(stderr, "An error was detected during initialization...");
-  }
+  re::edit::Application application{std::make_shared<MacOsContext>(window, device), config};
 
   if(NFD_Init() != NFD_OKAY)
   {
