@@ -628,17 +628,6 @@ bool Graphics::copyFrom(Attribute const *iFromAttribute)
 }
 
 //------------------------------------------------------------------------
-// Graphics::setTextureKey
-//------------------------------------------------------------------------
-void Graphics::setTextureKey(Texture::key_t const &iTextureKey)
-{
-  fTexture = iTextureKey;
-  fDNZTexture = AppContext::HasCurrent() ? AppContext::GetCurrent().getTexture(iTextureKey) : nullptr;
-  fEdited = true;
-}
-
-
-//------------------------------------------------------------------------
 // Background::draw
 //------------------------------------------------------------------------
 bool Background::draw(AppContext &iCtx, Graphics const *iParent, ImU32 iBorderColor, bool xRay) const

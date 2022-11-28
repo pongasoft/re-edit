@@ -91,7 +91,6 @@ public:
   ~AppContext();
 
   static AppContext &GetCurrent();
-  static bool HasCurrent();
 
   ImVec2 getCurrentPanelSize() const;
   void renderAddWidgetMenuView(ImVec2 const &iPosition = {});

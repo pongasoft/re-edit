@@ -122,7 +122,7 @@ public:
 
   inline Texture const *getTexture() const { RE_EDIT_INTERNAL_ASSERT(fDNZTexture != nullptr); return fDNZTexture.get(); }
   inline Texture::key_t getTextureKey() const { return std::get<Texture::key_t>(fTexture); }
-  void setTextureKey(Texture::key_t const &iTextureKey);
+  void setTextureKey(Texture::key_t const &iTextureKey) { fTexture = iTextureKey; fDNZTexture = AppContext::GetCurrent().getTexture(iTextureKey); fEdited = true; }
   inline void setSize(ImVec2 const &iSize) { fTexture = iSize; fDNZTexture.reset(); fEdited = true; }
 
   void reset() override;

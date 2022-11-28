@@ -353,8 +353,51 @@ inline constexpr auto HasValueTemplates = [](std::optional<std::vector<char cons
     return AttributeToString<ValueTemplates>("value_templates", R"(value_templates={{},false})");
 };
 
+class MockTexture : public Texture
+{
+
+};
+
+class MockTextureManager : public TextureManager
+{
+protected:
+  std::unique_ptr<Texture> createTexture() const override
+  {
+    return std::make_unique<MockTexture>();
+  }
+
+  void populateTexture(std::shared_ptr<Texture> const &iTexture) const override
+  {
+
+  }
+};
+
+class MockContext : public Application::Context
+{
+public:
+  MockContext() : Application::Context(true) {}
+
+  std::shared_ptr<TextureManager> newTextureManager() const override
+  {
+    return std::make_shared<MockTextureManager>();
+  }
+
+  std::shared_ptr<NativeFontManager> newNativeFontManager() const override
+  {
+    return nullptr;
+  }
+
+  void setWindowSize(int iWidth, int iHeight) const override
+  {
+
+  }
+};
+
 TEST(HDGui2D, All)
 {
+  re::edit::Application app{std::make_shared<MockContext>()};
+  app.load(getResourceFile("."));
+
   auto hdg = HDGui2D::fromFile(getResourceFile("all-hdgui_2D.lua"));
 
   auto front = hdg->front();

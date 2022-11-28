@@ -137,14 +137,6 @@ AppContext &AppContext::GetCurrent()
 }
 
 //------------------------------------------------------------------------
-// AppContext::HasCurrent
-//------------------------------------------------------------------------
-bool AppContext::HasCurrent()
-{
-  return Application::HasCurrent() && Application::GetCurrent().hasAppContext();
-}
-
-//------------------------------------------------------------------------
 // Application::Application
 //------------------------------------------------------------------------
 Application::Application(std::shared_ptr<Context> iContext) :
@@ -184,7 +176,8 @@ void Application::initAppContext(fs::path const &iRoot, config::Local const &iCo
   fAppContext->initDevice();
   fAppContext->initGUI2D();
 
-  ImGui::LoadIniSettingsFromMemory(iConfig.fImGuiIni.c_str(), iConfig.fImGuiIni.size());
+  if(!fContext->isHeadless())
+    ImGui::LoadIniSettingsFromMemory(iConfig.fImGuiIni.c_str(), iConfig.fImGuiIni.size());
 
   fState = State::kReLoaded;
 }
@@ -210,10 +203,13 @@ void Application::load(fs::path const &iRoot)
 
     fFontManager->requestNewFont({"JetBrains Mono Regular", BuiltInFont::kJetBrainsMonoRegular, fConfig.fFontSize});
 
-    auto &io = ImGui::GetIO();
-    io.IniFilename = nullptr; // don't use imgui.ini file
-    io.WantSaveIniSettings = false; // will be "notified" when it changes
-    io.ConfigWindowsMoveFromTitleBarOnly = true;
+    if(!fContext->isHeadless())
+    {
+      auto &io = ImGui::GetIO();
+      io.IniFilename = nullptr; // don't use imgui.ini file
+      io.WantSaveIniSettings = false; // will be "notified" when it changes
+      io.ConfigWindowsMoveFromTitleBarOnly = true;
+    }
 
     fContext->setWindowSize(fConfig.fNativeWindowWidth, fConfig.fNativeWindowHeight);
   }

@@ -40,10 +40,18 @@ public:
   class Context
   {
   public:
+    Context() = default;
+    explicit Context(bool iHeadless) : fHeadless{iHeadless} {}
+
     virtual ~Context() = default;
     virtual std::shared_ptr<TextureManager> newTextureManager() const = 0;
     virtual std::shared_ptr<NativeFontManager> newNativeFontManager() const = 0;
     virtual void setWindowSize(int iWidth, int iHeight) const = 0;
+
+    constexpr bool isHeadless() const { return fHeadless; }
+
+  private:
+    bool fHeadless{};
   };
 
   struct Config
@@ -60,16 +68,14 @@ public:
   explicit Application(std::shared_ptr<Context> iContext);
   Application(std::shared_ptr<Context> iContext, Application::Config const &iConfig);
   ~Application() { kCurrent = nullptr; }
-//  Application(fs::path const &iRoot, std::shared_ptr<TextureManager> iTextureManager);
 
   static Application &GetCurrent() { RE_EDIT_INTERNAL_ASSERT(kCurrent != nullptr); return *kCurrent; }
-  static bool HasCurrent() { return kCurrent != nullptr; }
 
-  inline bool hasAppContext() const { return fAppContext != nullptr; }
   inline AppContext &getAppContext() { RE_EDIT_INTERNAL_ASSERT(fAppContext != nullptr); return *fAppContext; }
   inline AppContext const &getAppContext() const { RE_EDIT_INTERNAL_ASSERT(fAppContext != nullptr); return *fAppContext; }
 
   static Config parseArgs(std::vector<std::string> iArgs);
+  void load(fs::path const &iRoot);
 
   void setNativeWindowSize(int iWidth, int iHeight);
 
@@ -120,7 +126,6 @@ private:
   template<typename F>
   void executeCatchAllExceptions(F f) noexcept;
   void renderLoadDialogBlocking();
-  void load(fs::path const &iRoot);
 
 private:
   State fState{State::kNoReLoaded};
