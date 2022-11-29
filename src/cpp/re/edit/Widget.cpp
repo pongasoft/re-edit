@@ -523,7 +523,7 @@ std::unique_ptr<Widget> Widget::audio_input_socket()
     ->setSize(kAudioSocketSize)
     ;
   w->fGraphics->fFilter = FilmStrip::bySizeFilter(kAudioSocketSize, 5);
-  w->setTextureKey(BuiltIn::kAudioSocket);
+  w->setTextureKey(BuiltIns::kAudioSocket.fKey);
   return w;
 }
 
@@ -541,7 +541,7 @@ std::unique_ptr<Widget> Widget::audio_output_socket()
     ->setSize(kAudioSocketSize)
     ;
   w->fGraphics->fFilter = FilmStrip::bySizeFilter(kAudioSocketSize, 5);
-  w->setTextureKey(BuiltIn::kAudioSocket);
+  w->setTextureKey(BuiltIns::kAudioSocket.fKey);
   return w;
 }
 
@@ -589,7 +589,7 @@ std::unique_ptr<Widget> Widget::cv_input_socket()
     ->setSize(kCVSocketSize)
     ;
   w->fGraphics->fFilter = FilmStrip::bySizeFilter(kCVSocketSize, 5);
-  w->setTextureKey(BuiltIn::kCVSocket);
+  w->setTextureKey(BuiltIns::kCVSocket.fKey);
   return w;
 }
 
@@ -606,7 +606,7 @@ std::unique_ptr<Widget> Widget::cv_output_socket()
     ->setSize(kCVSocketSize)
     ;
   w->fGraphics->fFilter = FilmStrip::bySizeFilter(kCVSocketSize, 5);
-  w->setTextureKey(BuiltIn::kCVSocket);
+  w->setTextureKey(BuiltIns::kCVSocket.fKey);
   return w;
 }
 
@@ -623,7 +623,7 @@ std::unique_ptr<Widget> Widget::cv_trim_knob()
     ->setSize(kCVTrimKnobSize)
     ;
   w->fGraphics->fFilter = FilmStrip::bySizeFilter(kCVTrimKnobSize, 20);
-  w->setTextureKey(BuiltIn::kTrimKnob);
+  w->setTextureKey(BuiltIns::kTrimKnob.fKey);
   return w;
 }
 
@@ -638,7 +638,7 @@ std::unique_ptr<Widget> Widget::device_name()
   auto w = std::make_unique<Widget>(WidgetType::kDeviceName);
   w->setSize(kDeviceNameHorizontal);
   w->fGraphics->fFilter = kGraphicsFilter;
-  w->setTextureKey(BuiltIn::kTapeHorizontal);
+  w->setTextureKey(BuiltIns::kTapeHorizontal.fKey);
   return w;
 }
 
@@ -678,7 +678,7 @@ std::unique_ptr<Widget> Widget::patch_browse_group()
     ;
   w->setSize(kPatchBrowseGroupSize);
   w->fGraphics->fFilter = FilmStrip::bySizeFilter(kPatchBrowseGroupSize, 5);
-  w->setTextureKey(BuiltIn::kPatchBrowseGroup);
+  w->setTextureKey(BuiltIns::kPatchBrowseGroup.fKey);
   return w;
 }
 
@@ -724,7 +724,7 @@ std::unique_ptr<Widget> Widget::placeholder()
   auto w = std::make_unique<Widget>(WidgetType::kPlaceholder);
   w->setSize(kPlaceholderSize);
   w->fGraphics->fFilter = FilmStrip::bySizeFilter(kPlaceholderSize);
-  w->setTextureKey(BuiltIn::kPlaceholder);
+  w->setTextureKey(BuiltIns::kPlaceholder.fKey);
   return w;
 }
 
@@ -785,7 +785,7 @@ std::unique_ptr<Widget> Widget::sample_browse_group()
     ;
   w->setSize(kPatchBrowseGroupSize);
   w->fGraphics->fFilter = FilmStrip::bySizeFilter(kSampleBrowseGroupSize, 5);
-  w->setTextureKey(BuiltIn::kSampleBrowseGroup);
+  w->setTextureKey(BuiltIns::kSampleBrowseGroup.fKey);
   return w;
 }
 

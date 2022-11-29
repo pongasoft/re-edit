@@ -26,9 +26,9 @@ namespace re::edit {
 //------------------------------------------------------------------------
 // TextureManager::init
 //------------------------------------------------------------------------
-void TextureManager::init(fs::path iDirectory)
+void TextureManager::init(std::vector<BuiltIns::Def> const &iBuiltIns, fs::path iDirectory)
 {
-  fFilmStripMgr = std::make_unique<FilmStripMgr>(std::move(iDirectory));
+  fFilmStripMgr = std::make_unique<FilmStripMgr>(iBuiltIns, std::move(iDirectory));
 }
 
 //------------------------------------------------------------------------

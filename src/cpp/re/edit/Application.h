@@ -76,7 +76,8 @@ public:
 
   static Config parseArgs(std::vector<std::string> iArgs);
   void loadProject(fs::path const &iRoot);
-  void closeProjectDeffered();
+  void loadProjectDeferred(fs::path const &iRoot);
+  void closeProjectDeferred();
   void maybeCloseProject();
 
   void setNativeWindowSize(int iWidth, int iHeight);
@@ -134,6 +135,7 @@ private:
 private:
   State fState{State::kNoReLoaded};
   std::shared_ptr<Context> fContext;
+  std::shared_ptr<TextureManager> fTextureManager;
   std::shared_ptr<FontManager> fFontManager;
   config::Global fConfig{};
   std::shared_ptr<AppContext> fAppContext{};

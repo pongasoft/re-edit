@@ -610,7 +610,7 @@ void AppContext::initDevice()
 void AppContext::initGUI2D()
 {
   auto GUI2D = fRoot / "GUI2D";
-  fTextureManager->init(GUI2D);
+  fTextureManager->init(BuiltIns::kProjectBuiltIns, GUI2D);
   fTextureManager->scanDirectory();
   auto device_2D = GUI2D / "device_2D.lua";
   auto hdgui_2D = GUI2D / "hdgui_2D.lua";

@@ -142,28 +142,16 @@ std::unique_ptr<FilmStrip> FilmStrip::load(std::shared_ptr<Source> const &iSourc
 //------------------------------------------------------------------------
 // FilmStripMgr::FilmStripMgr
 //------------------------------------------------------------------------
-FilmStripMgr::FilmStripMgr(fs::path iDirectory) : fDirectory{std::move(iDirectory)}
+FilmStripMgr::FilmStripMgr(std::vector<BuiltIns::Def> const &iBuiltIns,
+                           fs::path iDirectory) :
+  fDirectory{std::move(iDirectory)}
 {
-#define RE_EDIT_BUILT_IN(key, numFrames) fBuiltIns[key] = { numFrames, BuiltIns::getCompressedDataBase85(key) }; fSources[key] = toSource(key, fBuiltIns[key]);
-
-  RE_EDIT_BUILT_IN(BuiltIn::kAudioSocket, 3);
-  RE_EDIT_BUILT_IN(BuiltIn::kCVSocket, 3);
-  RE_EDIT_BUILT_IN(BuiltIn::kPatchBrowseGroup, 1);
-  RE_EDIT_BUILT_IN(BuiltIn::kPlaceholder, 1);
-  RE_EDIT_BUILT_IN(BuiltIn::kSampleBrowseGroup, 1);
-  RE_EDIT_BUILT_IN(BuiltIn::kTapeHorizontal, 1);
-  RE_EDIT_BUILT_IN(BuiltIn::kTapeVertical, 1);
-  RE_EDIT_BUILT_IN(BuiltIn::kTrimKnob, 1);
-  RE_EDIT_BUILT_IN(BuiltIn::kRoutingIcon01, 1);
-  RE_EDIT_BUILT_IN(BuiltIn::kRoutingIcon02, 1);
-  RE_EDIT_BUILT_IN(BuiltIn::kRoutingIcon03, 1);
-  RE_EDIT_BUILT_IN(BuiltIn::kRoutingIcon04, 1);
-  RE_EDIT_BUILT_IN(BuiltIn::kRoutingIcon05, 1);
-  RE_EDIT_BUILT_IN(BuiltIn::kRoutingIconWhite01, 1);
-  RE_EDIT_BUILT_IN(BuiltIn::kRoutingIconWhite02, 1);
-  RE_EDIT_BUILT_IN(BuiltIn::kRoutingIconWhite03, 1);
-  RE_EDIT_BUILT_IN(BuiltIn::kRoutingIconWhite04, 1);
-  RE_EDIT_BUILT_IN(BuiltIn::kRoutingIconWhite05, 1);
+  for(auto &def: iBuiltIns)
+  {
+    FilmStrip::key_t key{def.fKey};
+    fBuiltIns[key] = { def.fNumFrames, BuiltIns::getCompressedDataBase85(key) };
+    fSources[key] = toSource(key, fBuiltIns[key]);
+  }
 }
 
 //------------------------------------------------------------------------

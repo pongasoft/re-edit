@@ -40,26 +40,61 @@ struct BuiltIn
 {
   int fNumFrames{1};
   char const *fCompressedDataBase85{};
-
-  static constexpr char const *kAudioSocket = "SharedAudioJack_3frames";
-  static constexpr char const *kCVSocket = "SharedCVJack_3frames";
-  static constexpr char const *kPatchBrowseGroup = "PatchBrowseGroup";
-  static constexpr char const *kPlaceholder = "Placeholder";
-  static constexpr char const *kSampleBrowseGroup = "SampleBrowseGroup";
-  static constexpr char const *kTapeHorizontal = "Tape_Horizontal_1frames";
-  static constexpr char const *kTapeVertical = "Tape_Vertical_1frames";
-  static constexpr char const *kTrimKnob = "TrimKnob";
-  static constexpr char const *kRoutingIcon01 = "Routing_Icon_01";
-  static constexpr char const *kRoutingIcon02 = "Routing_Icon_02";
-  static constexpr char const *kRoutingIcon03 = "Routing_Icon_03";
-  static constexpr char const *kRoutingIcon04 = "Routing_Icon_04";
-  static constexpr char const *kRoutingIcon05 = "Routing_Icon_05";
-  static constexpr char const *kRoutingIconWhite01 = "Routing_Icon_White_01";
-  static constexpr char const *kRoutingIconWhite02 = "Routing_Icon_White_02";
-  static constexpr char const *kRoutingIconWhite03 = "Routing_Icon_White_03";
-  static constexpr char const *kRoutingIconWhite04 = "Routing_Icon_White_04";
-  static constexpr char const *kRoutingIconWhite05 = "Routing_Icon_White_05";
 };
+
+namespace BuiltIns {
+
+struct Def
+{
+  char const *fKey{};
+  int fNumFrames{1};
+};
+
+constexpr Def kAudioSocket{"SharedAudioJack_3frames", 3};
+constexpr Def kCVSocket{"SharedCVJack_3frames", 3};
+constexpr Def kPatchBrowseGroup{"PatchBrowseGroup"};
+constexpr Def kPlaceholder{"Placeholder"};
+constexpr Def kSampleBrowseGroup{"SampleBrowseGroup"};
+constexpr Def kTapeHorizontal{"Tape_Horizontal_1frames"};
+constexpr Def kTapeVertical{"Tape_Vertical_1frames"};
+constexpr Def kTrimKnob{"TrimKnob"};
+constexpr Def kRoutingIcon01{"Routing_Icon_01"};
+constexpr Def kRoutingIcon02{"Routing_Icon_02"};
+constexpr Def kRoutingIcon03{"Routing_Icon_03"};
+constexpr Def kRoutingIcon04{"Routing_Icon_04"};
+constexpr Def kRoutingIcon05{"Routing_Icon_05"};
+constexpr Def kRoutingIconWhite01{"Routing_Icon_White_01"};
+constexpr Def kRoutingIconWhite02{"Routing_Icon_White_02"};
+constexpr Def kRoutingIconWhite03{"Routing_Icon_White_03"};
+constexpr Def kRoutingIconWhite04{"Routing_Icon_White_04"};
+constexpr Def kRoutingIconWhite05{"Routing_Icon_White_05"};
+
+static std::vector<Def> kProjectBuiltIns{kAudioSocket,
+                                         kCVSocket,
+                                         kPatchBrowseGroup,
+                                         kPlaceholder,
+                                         kSampleBrowseGroup,
+                                         kTapeHorizontal,
+                                         kTapeVertical,
+                                         kTrimKnob,
+                                         kRoutingIcon01,
+                                         kRoutingIcon02,
+                                         kRoutingIcon03,
+                                         kRoutingIcon04,
+                                         kRoutingIcon05,
+                                         kRoutingIconWhite01,
+                                         kRoutingIconWhite02,
+                                         kRoutingIconWhite03,
+                                         kRoutingIconWhite04,
+                                         kRoutingIconWhite05};
+
+//constexpr Def kLogoDark{"logo_dark"}; unused
+constexpr Def kLogoLight{"logo_dark"};
+constexpr Def kDeviceType{"DeviceType_4frames", 4};
+
+static std::vector<Def> kGlobalBuiltIns{kLogoLight, kDeviceType};
+
+}
 
 class FilmStrip
 {
@@ -209,7 +244,7 @@ private:
 class FilmStripMgr
 {
 public:
-  explicit FilmStripMgr(fs::path iDirectory);
+  FilmStripMgr(std::vector<BuiltIns::Def> const &iBuiltIns, fs::path iDirectory);
   std::shared_ptr<FilmStrip> findFilmStrip(FilmStrip::key_t const &iKey) const;
   std::shared_ptr<FilmStrip> getFilmStrip(FilmStrip::key_t const &iKey) const;
 
@@ -225,8 +260,8 @@ private:
   static std::shared_ptr<FilmStrip::Source> toSource(FilmStrip::key_t const &iKey, BuiltIn const &iBuiltIn);
 
 private:
-  fs::path fDirectory;
   std::map<FilmStrip::key_t, BuiltIn> fBuiltIns{};
+  fs::path fDirectory;
   mutable std::map<FilmStrip::key_t, std::shared_ptr<FilmStrip>> fFilmStrips{};
   mutable std::map<FilmStrip::key_t, std::shared_ptr<FilmStrip::Source>> fSources{};
 };

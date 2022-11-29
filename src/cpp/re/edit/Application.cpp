@@ -141,7 +141,6 @@ AppContext &AppContext::GetCurrent()
 //------------------------------------------------------------------------
 Application::Application(std::shared_ptr<Context> iContext) :
   fContext{std::move(iContext)},
-  fFontManager{std::make_shared<FontManager>(fContext->newNativeFontManager())},
   fConfig{}
 {
   init();
@@ -152,12 +151,11 @@ Application::Application(std::shared_ptr<Context> iContext) :
 //------------------------------------------------------------------------
 Application::Application(std::shared_ptr<Context> iContext, Application::Config const &iConfig) :
   fContext{std::move(iContext)},
-  fFontManager{std::make_shared<FontManager>(fContext->newNativeFontManager())},
   fConfig{iConfig.fGlobalConfig}
 {
   init();
   if(iConfig.fProjectRoot)
-    deferNextFrame([this, projectRoot = *iConfig.fProjectRoot]() { loadProject(projectRoot); });
+    loadProjectDeferred(*iConfig.fProjectRoot);
 }
 
 
@@ -168,6 +166,10 @@ void Application::init()
 {
   RE_EDIT_INTERNAL_ASSERT(Application::kCurrent == nullptr, "Only one instance of Application allowed");
   Application::kCurrent = this;
+
+  fTextureManager = fContext->newTextureManager();
+  fTextureManager->init(BuiltIns::kGlobalBuiltIns, fs::current_path());
+  fFontManager = std::make_shared<FontManager>(fContext->newNativeFontManager());
 
   if(!fContext->isHeadless())
   {
@@ -233,6 +235,14 @@ void Application::loadProject(fs::path const &iRoot)
 }
 
 //------------------------------------------------------------------------
+// Application::loadProjectDeferred
+//------------------------------------------------------------------------
+void Application::loadProjectDeferred(fs::path const &iRoot)
+{
+  deferNextFrame([this, iRoot]() { loadProject(iRoot); });
+}
+
+//------------------------------------------------------------------------
 // Application::maybeCloseProject
 //------------------------------------------------------------------------
 void Application::maybeCloseProject()
@@ -243,19 +253,19 @@ void Application::maybeCloseProject()
     {
       newDialog("Close")
         .postContentMessage("You have unsaved changes, do you want to save them before closing?")
-        .button("Yes", [this] { fAppContext->save(); closeProjectDeffered(); return ReGui::Dialog::Result::kContinue; })
-        .button("No", [this] { closeProjectDeffered(); return ReGui::Dialog::Result::kContinue; })
+        .button("Yes", [this] { fAppContext->save(); closeProjectDeferred(); return ReGui::Dialog::Result::kContinue; })
+        .button("No", [this] { closeProjectDeferred(); return ReGui::Dialog::Result::kContinue; })
         .buttonCancel("Cancel", true);
     }
     else
-      closeProjectDeffered();
+      closeProjectDeferred();
   }
 }
 
 //------------------------------------------------------------------------
 // Application::closeProjectDeferred
 //------------------------------------------------------------------------
-void Application::closeProjectDeffered()
+void Application::closeProjectDeferred()
 {
   deferNextFrame([this]() {
     fAppContext = nullptr;
@@ -405,6 +415,7 @@ void Application::renderWelcome()
   static constexpr float kMinSize = 500.0f;
   static constexpr float kPadding = 20.0f;
   static constexpr ImVec2 kButtonSize{120.0f, 0};
+  constexpr ImU32 kWelcomeColorU32 = ReGui::GetColorU32(toFloatColor(100, 100, 100));
 
   if(hasDialog())
     return;
@@ -422,7 +433,12 @@ void Application::renderWelcome()
 
   if(ImGui::BeginPopupModal(kWelcomeTitle, nullptr, ImGuiWindowFlags_HorizontalScrollbar))
   {
-    ImGui::TextUnformatted("<Logo>");
+    auto textSizeHeight = ImGui::CalcTextSize("R").y;
+    auto computedHeight = 2.0f * textSizeHeight + ImGui::GetStyle().ItemSpacing.y;
+    auto logo = fTextureManager->getTexture(BuiltIns::kLogoLight.fKey);
+    auto zoom = computedHeight / logo->frameHeight();
+
+    logo->Item({}, getCurrentFontDpiScale() * zoom, 0);
 
     ImGui::SameLine();
 
@@ -443,11 +459,46 @@ void Application::renderWelcome()
     {
       abort();
     }
+    ImGui::Spacing();
     ImGui::Separator();
-    ImGui::TextUnformatted("No history...");
+    ImGui::Spacing();
+
+    auto icon = fTextureManager->getTexture(BuiltIns::kDeviceType.fKey);
+    zoom = textSizeHeight / icon->frameHeight();
+
+    static auto itemSpacing = ImGui::GetStyle().ItemSpacing;
+
+    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, itemSpacing);
+
+    icon->Item({}, getCurrentFontDpiScale() * zoom, 0);
+    ImGui::SameLine();
+    ImGui::BeginGroup();
+    ImGui::TextUnformatted("CVA - 7 djdjdj");
+    ImGui::TextUnformatted("/Volumes/Development/github/pongasoft/re-cva-7");
     ImGui::EndGroup();
-//    ImGui::SliderFloat("padding", &padding, 5.0f, 200.0f);
-//    ImGui::SliderFloat("minSize", &minSize, 50.0f, 1500.0f);
+
+    if(ImGui::IsItemClicked(ImGuiMouseButton_Left))
+    {
+      RE_EDIT_LOG_DEBUG("clicked!");
+      loadProjectDeferred(fs::path("/Volumes/Development/github/pongasoft/re-cva-7"));
+    }
+
+    ImGui::SameLine();
+    if(ReGui::ResetButton())
+    {
+      RE_EDIT_LOG_DEBUG("clear me!");
+    }
+
+    ImGui::PopStyleVar(1);
+
+    ImGui::Spacing();
+
+    ImGui::TextUnformatted("No history...");
+
+    ImGui::EndGroup();
+
+    ImGui::SliderFloat("paddingx", &itemSpacing.x, 5.0f, 200.0f);
+    ImGui::SliderFloat("paddingy", &itemSpacing.y, 5.0f, 200.0f);
 
     ImGui::EndPopup();
   }
@@ -580,7 +631,7 @@ void Application::renderLoadDialogBlocking()
       .text(fmt::printf("%s is not a valid Rack Extension project (could not find info.lua)", luaPath.u8string()))
       .buttonOk();
     else
-      deferNextFrame([this, projectPath = *newProjectPath]() { loadProject(projectPath); });
+      loadProjectDeferred(*newProjectPath);
   }
   else if(result == NFD_CANCEL)
   {
