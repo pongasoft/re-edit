@@ -767,6 +767,10 @@ void AppContext::renderMainMenu()
           save();
         }
       }
+      if(ImGui::MenuItem("Close"))
+      {
+        Application::GetCurrent().maybeCloseProject();
+      }
       ImGui::Separator();
       if(ImGui::MenuItem(ReGui_Prefix(ReGui_Icon_ImportImages, "Import images")))
       {

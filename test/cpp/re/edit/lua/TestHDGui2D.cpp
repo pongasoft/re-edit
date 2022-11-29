@@ -396,7 +396,7 @@ public:
 TEST(HDGui2D, All)
 {
   re::edit::Application app{std::make_shared<MockContext>()};
-  app.load(getResourceFile("."));
+  app.loadProject(getResourceFile("."));
 
   auto hdg = HDGui2D::fromFile(getResourceFile("all-hdgui_2D.lua"));
 

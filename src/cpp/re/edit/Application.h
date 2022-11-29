@@ -57,7 +57,7 @@ public:
   struct Config
   {
     config::Global fGlobalConfig{};
-    std::optional<fs::path> fLocalRoot{};
+    std::optional<fs::path> fProjectRoot{};
 
     int getNativeWindowWidth() const { return fGlobalConfig.fNativeWindowWidth; }
     int getNativeWindowHeight() const { return fGlobalConfig.fNativeWindowHeight; }
@@ -75,7 +75,9 @@ public:
   inline AppContext const &getAppContext() const { RE_EDIT_INTERNAL_ASSERT(fAppContext != nullptr); return *fAppContext; }
 
   static Config parseArgs(std::vector<std::string> iArgs);
-  void load(fs::path const &iRoot);
+  void loadProject(fs::path const &iRoot);
+  void closeProjectDeffered();
+  void maybeCloseProject();
 
   void setNativeWindowSize(int iWidth, int iHeight);
 
@@ -116,6 +118,7 @@ private:
   };
 
 private:
+  void init();
   void initAppContext(fs::path const &iRoot, config::Local const &iConfig);
   void renderWelcome(); // may throw exception
   void renderAppContext(); // may throw exception
@@ -126,6 +129,7 @@ private:
   template<typename F>
   void executeCatchAllExceptions(F f) noexcept;
   void renderLoadDialogBlocking();
+  void deferNextFrame(std::function<void()> iAction) { fNewFrameActions.emplace_back(std::move(iAction)); }
 
 private:
   State fState{State::kNoReLoaded};
@@ -136,7 +140,7 @@ private:
   bool fShowDemoWindow{false};
   bool fShowMetricsWindow{false};
 
-  std::optional<fs::path> fNewRootRequested{};
+  std::vector<std::function<void()>> fNewFrameActions{};
   std::vector<std::unique_ptr<ReGui::Dialog>> fDialogs{};
   std::unique_ptr<ReGui::Dialog> fCurrentDialog{};
   std::unique_ptr<ReGui::Dialog> fWelcomeDialog{};

@@ -122,7 +122,7 @@ Application::Config Application::parseArgs(std::vector<std::string> iArgs)
 
   if(!iArgs.empty())
   {
-    c.fLocalRoot = impl::inferValidRoot(fs::path(iArgs[0]));
+    c.fProjectRoot = impl::inferValidRoot(fs::path(iArgs[0]));
   }
 
   return c;
@@ -144,8 +144,7 @@ Application::Application(std::shared_ptr<Context> iContext) :
   fFontManager{std::make_shared<FontManager>(fContext->newNativeFontManager())},
   fConfig{}
 {
-  RE_EDIT_INTERNAL_ASSERT(Application::kCurrent == nullptr, "Only one instance of Application allowed");
-  Application::kCurrent = this;
+  init();
 }
 
 //------------------------------------------------------------------------
@@ -154,12 +153,31 @@ Application::Application(std::shared_ptr<Context> iContext) :
 Application::Application(std::shared_ptr<Context> iContext, Application::Config const &iConfig) :
   fContext{std::move(iContext)},
   fFontManager{std::make_shared<FontManager>(fContext->newNativeFontManager())},
-  fConfig{iConfig.fGlobalConfig},
-  fNewRootRequested{iConfig.fLocalRoot}
+  fConfig{iConfig.fGlobalConfig}
+{
+  init();
+  if(iConfig.fProjectRoot)
+    deferNextFrame([this, projectRoot = *iConfig.fProjectRoot]() { loadProject(projectRoot); });
+}
+
+
+//------------------------------------------------------------------------
+// Application::Application
+//------------------------------------------------------------------------
+void Application::init()
 {
   RE_EDIT_INTERNAL_ASSERT(Application::kCurrent == nullptr, "Only one instance of Application allowed");
   Application::kCurrent = this;
+
+  if(!fContext->isHeadless())
+  {
+    auto &io = ImGui::GetIO();
+    io.IniFilename = nullptr; // don't use imgui.ini file
+    io.WantSaveIniSettings = false; // will be "notified" when it changes
+    io.ConfigWindowsMoveFromTitleBarOnly = true;
+  }
 }
+
 
 //------------------------------------------------------------------------
 // Application::init
@@ -183,9 +201,9 @@ void Application::initAppContext(fs::path const &iRoot, config::Local const &iCo
 }
 
 //------------------------------------------------------------------------
-// Application::load
+// Application::loadProject
 //------------------------------------------------------------------------
-void Application::load(fs::path const &iRoot)
+void Application::loadProject(fs::path const &iRoot)
 {
   try
   {
@@ -202,15 +220,6 @@ void Application::load(fs::path const &iRoot)
     initAppContext(iRoot, c);
 
     fFontManager->requestNewFont({"JetBrains Mono Regular", BuiltInFont::kJetBrainsMonoRegular, fConfig.fFontSize});
-
-    if(!fContext->isHeadless())
-    {
-      auto &io = ImGui::GetIO();
-      io.IniFilename = nullptr; // don't use imgui.ini file
-      io.WantSaveIniSettings = false; // will be "notified" when it changes
-      io.ConfigWindowsMoveFromTitleBarOnly = true;
-    }
-
     fContext->setWindowSize(fConfig.fNativeWindowWidth, fConfig.fNativeWindowHeight);
   }
   catch(...)
@@ -221,6 +230,38 @@ void Application::load(fs::path const &iRoot)
       .text(what(std::current_exception()), true)
       .buttonCancel("Ok");
   }
+}
+
+//------------------------------------------------------------------------
+// Application::maybeCloseProject
+//------------------------------------------------------------------------
+void Application::maybeCloseProject()
+{
+  if(fState == State::kReLoaded)
+  {
+    if(fAppContext->needsSaving())
+    {
+      newDialog("Close")
+        .postContentMessage("You have unsaved changes, do you want to save them before closing?")
+        .button("Yes", [this] { fAppContext->save(); closeProjectDeffered(); return ReGui::Dialog::Result::kContinue; })
+        .button("No", [this] { closeProjectDeffered(); return ReGui::Dialog::Result::kContinue; })
+        .buttonCancel("Cancel", true);
+    }
+    else
+      closeProjectDeffered();
+  }
+}
+
+//------------------------------------------------------------------------
+// Application::closeProjectDeferred
+//------------------------------------------------------------------------
+void Application::closeProjectDeffered()
+{
+  deferNextFrame([this]() {
+    fAppContext = nullptr;
+    if(fState == State::kReLoaded)
+      fState = State::kNoReLoaded;
+  });
 }
 
 //------------------------------------------------------------------------
@@ -255,12 +296,9 @@ bool Application::newFrame() noexcept
 {
   try
   {
-    if(fNewRootRequested)
-    {
-      auto root = *fNewRootRequested;
-      fNewRootRequested = std::nullopt;
-      load(root);
-    }
+    for(auto &action: fNewFrameActions)
+      action();
+    fNewFrameActions.clear();
 
     if(fFontManager->hasFontChangeRequest())
     {
@@ -364,6 +402,9 @@ bool Application::render() noexcept
 void Application::renderWelcome()
 {
   static constexpr char const *kWelcomeTitle = "Welcome to re-edit";
+  static constexpr float kMinSize = 500.0f;
+  static constexpr float kPadding = 20.0f;
+  static constexpr ImVec2 kButtonSize{120.0f, 0};
 
   if(hasDialog())
     return;
@@ -374,15 +415,45 @@ void Application::renderWelcome()
     ReGui::CenterNextWindow();
   }
 
-  if(ImGui::BeginPopupModal(kWelcomeTitle, nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_HorizontalScrollbar))
+
+  ImGui::PushStyleVar(ImGuiStyleVar_WindowMinSize, {kMinSize, kMinSize});
+  ImGui::PushStyleVar(ImGuiStyleVar_WindowTitleAlign, {0.5f, 0.5f});
+  ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, {kPadding, kPadding});
+
+  if(ImGui::BeginPopupModal(kWelcomeTitle, nullptr, ImGuiWindowFlags_HorizontalScrollbar))
   {
-    ImGui::TextUnformatted("welcome text...");
-    if(ImGui::Button("Exit"))
+    ImGui::TextUnformatted("<Logo>");
+
+    ImGui::SameLine();
+
+    ImGui::BeginGroup();
+    ImGui::TextUnformatted("re-edit");
+    ImGui::Text("%s", kFullVersion);
+    ImGui::EndGroup();
+
+    ImGui::SameLine(0, kPadding);
+
+    ImGui::BeginGroup();
+    if(ImGui::Button("Open", kButtonSize))
+    {
+      renderLoadDialogBlocking();
+    }
+    ImGui::SameLine();
+    if(ImGui::Button("Quit", kButtonSize))
     {
       abort();
     }
+    ImGui::Separator();
+    ImGui::TextUnformatted("No history...");
+    ImGui::EndGroup();
+//    ImGui::SliderFloat("padding", &padding, 5.0f, 200.0f);
+//    ImGui::SliderFloat("minSize", &minSize, 50.0f, 1500.0f);
+
     ImGui::EndPopup();
   }
+
+  ImGui::PopStyleVar(3);
+
 }
 
 //------------------------------------------------------------------------
@@ -441,7 +512,7 @@ void Application::renderMainMenu()
     }
     if(ImGui::BeginMenu("File"))
     {
-      if(ImGui::MenuItem(ReGui_Prefix(ReGui_Icon_Open, "Load")))
+      if(ImGui::MenuItem(ReGui_Prefix(ReGui_Icon_Open, "Open")))
         renderLoadDialogBlocking();
       ImGui::EndMenu();
     }
@@ -502,16 +573,18 @@ void Application::renderLoadDialogBlocking()
   {
     fs::path luaPath{outPath};
     NFD_FreePath(outPath);
-    fNewRootRequested = impl::inferValidRoot(luaPath);
-    if(!fNewRootRequested)
+    auto newProjectPath = impl::inferValidRoot(luaPath);
+    if(!newProjectPath)
       newDialog("Invalid")
       .preContentMessage("Cannot load Rack Extension")
       .text(fmt::printf("%s is not a valid Rack Extension project (could not find info.lua)", luaPath.u8string()))
       .buttonOk();
+    else
+      deferNextFrame([this, projectPath = *newProjectPath]() { loadProject(projectPath); });
   }
   else if(result == NFD_CANCEL)
   {
-    fNewRootRequested = std::nullopt;
+    // nothing to do
   }
   else
   {
