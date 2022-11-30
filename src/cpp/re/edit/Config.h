@@ -20,6 +20,7 @@
 #define RE_EDIT_CONFIG_H
 
 #include <imgui.h>
+#include <chrono>
 
 namespace re::edit::config {
 
@@ -159,16 +160,40 @@ DockSpace         ID=0x8B93E3BD Window=0xA787BDB4 Pos=0,18 Size=1280,702 Split=X
     DockNode      ID=0x0000000A Parent=0x00000002 SizeRef=850,193 Selected=0x64F50EE5
 )";
 
+inline auto now() { return std::chrono::system_clock::now().time_since_epoch().count(); }
+
+struct DeviceHistoryItem
+{
+  using time_t = decltype(now());
+
+  std::string fName{};
+  std::string fPath{};
+  std::string fType{};
+  time_t fLastOpenedTime{};
+
+  static auto now() { return std::chrono::system_clock::now().time_since_epoch().count(); };
+};
+
 struct Global
 {
   int fNativeWindowWidth{kDefaultWidth};
   int fNativeWindowHeight{kDefaultHeight};
   float fFontSize{kDefaultFontSize};
 
+  std::vector<DeviceHistoryItem> fDeviceHistory{};
+
+  void add(DeviceHistoryItem const &iItem)
+  {
+    auto iter = std::find_if(fDeviceHistory.begin(), fDeviceHistory.end(), [path = iItem.fPath](auto const &item) { return item.fPath == path; });
+    if(iter != fDeviceHistory.end())
+      fDeviceHistory.erase(iter);
+    fDeviceHistory.emplace_back(iItem);
+  }
+
   // std::vector<Project>...
 };
 
-struct Local
+struct Device
 {
   int fNativeWindowWidth{kDefaultWidth};
   int fNativeWindowHeight{kDefaultHeight};

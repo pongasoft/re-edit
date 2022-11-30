@@ -162,6 +162,7 @@ void TextureManager::overrideNumFrames(std::string const &iKey, int iNumFrames) 
 //------------------------------------------------------------------------
 void Texture::doDraw(bool iAddItem,
                      ImVec2 const &iPosition,
+                     ImVec2 const &iSize,
                      float iPositionZoom,
                      float iTextureZoom,
                      int iFrameNumber,
@@ -173,7 +174,8 @@ void Texture::doDraw(bool iAddItem,
 
   auto const cp = ImGui::GetCursorScreenPos() + iPosition * iPositionZoom;
 
-  auto size = ImVec2{frameWidth() * iTextureZoom, frameHeight() * iTextureZoom};
+  auto size = ImVec2{(iSize.x == 0 ? frameWidth()  : iSize.x) * iTextureZoom,
+                     (iSize.y == 0 ? frameHeight() : iSize.y) * iTextureZoom};
   const ImRect rect{cp, cp + size};
 
   // do we treat the texture as a ImGui item (clickable, etc...)

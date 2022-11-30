@@ -109,6 +109,17 @@ std::optional<fs::path> inferValidRoot(fs::path const &iPath)
   return std::nullopt;
 }
 
+//------------------------------------------------------------------------
+// impl::computeDeviceHistoryItem
+//------------------------------------------------------------------------
+config::DeviceHistoryItem computeDeviceHistoryItem(AppContext &iCtx)
+{
+  config::DeviceHistoryItem item{};
+  item.fLastOpenedTime = config::now();
+  return item;
+}
+
+
 }
 
 //------------------------------------------------------------------------
@@ -180,11 +191,10 @@ void Application::init()
   }
 }
 
-
 //------------------------------------------------------------------------
 // Application::init
 //------------------------------------------------------------------------
-void Application::initAppContext(fs::path const &iRoot, config::Local const &iConfig)
+void Application::initAppContext(fs::path const &iRoot, config::Device const &iConfig)
 {
   fAppContext = std::make_shared<AppContext>(iRoot);
   fAppContext->fTextureManager = fContext->newTextureManager();
@@ -200,6 +210,8 @@ void Application::initAppContext(fs::path const &iRoot, config::Local const &iCo
     ImGui::LoadIniSettingsFromMemory(iConfig.fImGuiIni.c_str(), iConfig.fImGuiIni.size());
 
   fState = State::kReLoaded;
+
+  fConfig.add(fAppContext->getDeviceHistoryItem());
 }
 
 //------------------------------------------------------------------------
@@ -209,11 +221,11 @@ void Application::loadProject(fs::path const &iRoot)
 {
   try
   {
-    config::Local c{};
+    config::Device c{};
     auto configFile = iRoot / "re-edit.lua";
     if(fs::exists(configFile))
     {
-      c = lua::LocalConfigParser::fromFile(configFile);
+      c = lua::DeviceConfigParser::fromFile(configFile);
       c.copyTo(fConfig);
     }
     else
@@ -406,16 +418,36 @@ bool Application::render() noexcept
   return running();
 }
 
+namespace impl {
+
+//------------------------------------------------------------------------
+// impl::getFrameNumberFromDeviceType (filmstrip with each frame being a different type)
+//------------------------------------------------------------------------
+static int getFrameNumberFromDeviceType(std::string const &iType)
+{
+  if(iType == "creative_fx" || iType == "studio_fx")
+    return 0;
+
+  if(iType == "instrument")
+    return 1;
+
+  if(iType == "note_player")
+    return 2;
+
+  return 3;
+}
+
+}
+
 //------------------------------------------------------------------------
 // Application::renderWelcome
 //------------------------------------------------------------------------
 void Application::renderWelcome()
 {
   static constexpr char const *kWelcomeTitle = "Welcome to re-edit";
-  static constexpr float kMinSize = 500.0f;
+  static constexpr ImVec2 kWindowMinSize = {600.0f, 500.0f};
   static constexpr float kPadding = 20.0f;
   static constexpr ImVec2 kButtonSize{120.0f, 0};
-  constexpr ImU32 kWelcomeColorU32 = ReGui::GetColorU32(toFloatColor(100, 100, 100));
 
   if(hasDialog())
     return;
@@ -426,8 +458,7 @@ void Application::renderWelcome()
     ReGui::CenterNextWindow();
   }
 
-
-  ImGui::PushStyleVar(ImGuiStyleVar_WindowMinSize, {kMinSize, kMinSize});
+  ImGui::PushStyleVar(ImGuiStyleVar_WindowMinSize, kWindowMinSize);
   ImGui::PushStyleVar(ImGuiStyleVar_WindowTitleAlign, {0.5f, 0.5f});
   ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, {kPadding, kPadding});
 
@@ -436,9 +467,8 @@ void Application::renderWelcome()
     auto textSizeHeight = ImGui::CalcTextSize("R").y;
     auto computedHeight = 2.0f * textSizeHeight + ImGui::GetStyle().ItemSpacing.y;
     auto logo = fTextureManager->getTexture(BuiltIns::kLogoDark.fKey);
-    auto zoom = computedHeight / logo->frameHeight();
 
-    logo->Item({}, getCurrentFontDpiScale() * zoom, 0);
+    logo->Item({}, {computedHeight, computedHeight}, getCurrentFontDpiScale(), 0);
 
     ImGui::SameLine();
 
@@ -463,42 +493,38 @@ void Application::renderWelcome()
     ImGui::Separator();
     ImGui::Spacing();
 
-    auto icon = fTextureManager->getTexture(BuiltIns::kDeviceType.fKey);
-    zoom = textSizeHeight / icon->frameHeight();
-
-    static auto itemSpacing = ImGui::GetStyle().ItemSpacing;
-
-    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, itemSpacing);
-
-    icon->Item({}, getCurrentFontDpiScale() * zoom, 0);
-    ImGui::SameLine();
-    ImGui::BeginGroup();
-    ImGui::TextUnformatted("CVA - 7 djdjdj");
-    ImGui::TextUnformatted("/Volumes/Development/github/pongasoft/re-cva-7");
-    ImGui::EndGroup();
-
-    if(ImGui::IsItemClicked(ImGuiMouseButton_Left))
+    if(fConfig.fDeviceHistory.empty())
     {
-      RE_EDIT_LOG_DEBUG("clicked!");
-      loadProjectDeferred(fs::path("/Volumes/Development/github/pongasoft/re-cva-7"));
+      ImGui::TextUnformatted("No history");
+    }
+    else
+    {
+      auto icon = fTextureManager->getTexture(BuiltIns::kDeviceType.fKey);
+
+      ImGui::PushStyleColor(ImGuiCol_Button, 0); // make the button transparent
+
+      auto buttonHeight = 2.0f * (textSizeHeight + ImGui::GetStyle().FramePadding.y);
+
+      for(auto i = fConfig.fDeviceHistory.rbegin(); i != fConfig.fDeviceHistory.rend(); i++)
+      {
+        auto const &item = *i;
+
+        ImGui::Spacing();
+        ImGui::AlignTextToFramePadding();
+        icon->Item({}, {buttonHeight, buttonHeight}, getCurrentFontDpiScale(), impl::getFrameNumberFromDeviceType(item.fType));
+        ImGui::SameLine();
+        if(ImGui::Button(fmt::printf("%s\n%s", item.fName, item.fPath).c_str()))
+        {
+          loadProjectDeferred(fs::path(item.fPath));
+        }
+      }
+
+      ImGui::PopStyleColor(1);
     }
 
-    ImGui::SameLine();
-    if(ReGui::ResetButton())
-    {
-      RE_EDIT_LOG_DEBUG("clear me!");
-    }
-
-    ImGui::PopStyleVar(1);
-
-    ImGui::Spacing();
-
-    ImGui::TextUnformatted("No history...");
 
     ImGui::EndGroup();
 
-    ImGui::SliderFloat("paddingx", &itemSpacing.x, 5.0f, 200.0f);
-    ImGui::SliderFloat("paddingy", &itemSpacing.y, 5.0f, 200.0f);
 
     ImGui::EndPopup();
   }
@@ -797,24 +823,6 @@ void Application::about() const
   }
 
   constexpr auto boolToString = [](bool b) { return b ? "true" : "false"; };
-  constexpr auto deviceTypeToString = [](re::mock::DeviceType t) {
-    switch(t)
-    {
-      case mock::DeviceType::kUnknown:
-        return "unknown";
-      case mock::DeviceType::kInstrument:
-        return "instrument";
-      case mock::DeviceType::kCreativeFX:
-        return "creative_fx";
-      case mock::DeviceType::kStudioFX:
-        return "studio_fx";
-      case mock::DeviceType::kHelper:
-        return "helper";
-      case mock::DeviceType::kNotePlayer:
-        return "note_player";
-    }
-  };
-
 
   ImGui::SetNextItemOpen(true, ImGuiCond_Appearing);
   if(ImGui::TreeNodeEx("Rack Extension", ImGuiTreeNodeFlags_Framed))
@@ -837,14 +845,6 @@ void Application::about() const
   }
 
 
-}
-
-//------------------------------------------------------------------------
-// Application::welcome
-//------------------------------------------------------------------------
-void Application::welcome() const
-{
-  ImGui::TextUnformatted("welcome text...");
 }
 
 

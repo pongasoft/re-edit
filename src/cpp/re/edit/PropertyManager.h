@@ -31,6 +31,24 @@
 
 namespace re::edit {
 
+constexpr char const* deviceTypeToString(re::mock::DeviceType t) {
+  switch(t)
+  {
+    case mock::DeviceType::kInstrument:
+      return "instrument";
+    case mock::DeviceType::kCreativeFX:
+      return "creative_fx";
+    case mock::DeviceType::kStudioFX:
+      return "studio_fx";
+    case mock::DeviceType::kHelper:
+      return "helper";
+    case mock::DeviceType::kNotePlayer:
+      return "note_player";
+    default:
+      return "unknown";
+  }
+};
+
 class PropertyManager
 {
 public:

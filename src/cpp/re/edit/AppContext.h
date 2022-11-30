@@ -136,6 +136,7 @@ public: // Texture
 
   void TextureItem(Texture const *iTexture,
                    ImVec2 const &iPosition = {0,0},
+                   ImVec2 const &iSize = {0,0},
                    int iFrameNumber = 0,
                    ImU32 iBorderColor = ReGui::kTransparentColorU32,
                    ImU32 iTextureColor = ReGui::kWhiteColorU32) const;
@@ -264,7 +265,7 @@ public:
   float fItemWidth{300.0f};
 
 protected:
-  void init(config::Local const &iConfig);
+  void init(config::Device const &iConfig);
   std::string getLocalConfigAsLua() const;
   void reloadTextures();
   void markEdited();
@@ -278,6 +279,7 @@ protected:
   std::string hdgui2D() const;
   std::string device2D() const;
   std::string cmake() const;
+  config::DeviceHistoryItem getDeviceHistoryItem() const;
 
   void initPanels(fs::path const &iDevice2DFile, fs::path const &iHDGui2DFile);
   inline void setCurrentWidget(Widget const *iWidget) { fCurrentWidget = iWidget; }

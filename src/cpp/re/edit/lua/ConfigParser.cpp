@@ -55,21 +55,21 @@ config::Global GlobalConfigParser::getConfig()
 }
 
 //------------------------------------------------------------------------
-// LocalConfigParser::fromFile
+// DeviceConfigParser::fromFile
 //------------------------------------------------------------------------
-config::Local LocalConfigParser::fromFile(fs::path const &iLuaFile)
+config::Device DeviceConfigParser::fromFile(fs::path const &iLuaFile)
 {
-  LocalConfigParser parser{};
+  DeviceConfigParser parser{};
   parser.loadFile(iLuaFile);
   return parser.getConfig();
 }
 
 //------------------------------------------------------------------------
-// LocalConfigParser::getConfig
+// DeviceConfigParser::getConfig
 //------------------------------------------------------------------------
-config::Local LocalConfigParser::getConfig()
+config::Device DeviceConfigParser::getConfig()
 {
-  config::Local c{};
+  config::Device c{};
 
   if(lua_getglobal(L, "re_edit") == LUA_TTABLE)
   {

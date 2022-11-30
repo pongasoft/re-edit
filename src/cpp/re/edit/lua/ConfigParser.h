@@ -34,13 +34,13 @@ protected:
   config::Global getConfig();
 };
 
-class LocalConfigParser : public Base
+class DeviceConfigParser : public Base
 {
 public:
-  static config::Local fromFile(fs::path const &iLuaFile);
+  static config::Device fromFile(fs::path const &iLuaFile);
 
 protected:
-  config::Local getConfig();
+  config::Device getConfig();
 };
 
 

@@ -345,11 +345,12 @@ ImVec2 AppContext::getCurrentPanelSize() const
 //------------------------------------------------------------------------
 void AppContext::TextureItem(Texture const *iTexture,
                              ImVec2 const &iPosition,
+                             ImVec2 const &iSize,
                              int iFrameNumber,
                              ImU32 iBorderColor,
                              ImU32 iTextureColor) const
 {
-  iTexture->Item(iPosition, fZoom, iFrameNumber, iBorderColor, iTextureColor);
+  iTexture->Item(iPosition, iSize, fZoom, iFrameNumber, iBorderColor, iTextureColor);
 }
 
 //------------------------------------------------------------------------
@@ -539,7 +540,7 @@ void AppContext::resetUndoMergeKey()
 //------------------------------------------------------------------------
 // AppContext::init
 //------------------------------------------------------------------------
-void AppContext::init(config::Local const &iConfig)
+void AppContext::init(config::Device const &iConfig)
 {
   fPanelWindow.setIsVisible(iConfig.fShowPanel);
   fPanelWidgetsWindow.setIsVisible(iConfig.fShowPanelWidgets);
@@ -1140,6 +1141,21 @@ void AppContext::importBuiltIns(UserError *oErrors)
 void AppContext::setCurrentZoom(float iZoom)
 {
   fZoom = iZoom * Application::GetCurrent().getCurrentFontDpiScale();
+}
+
+//------------------------------------------------------------------------
+// AppContext::getDeviceHistoryItem
+//------------------------------------------------------------------------
+config::DeviceHistoryItem AppContext::getDeviceHistoryItem() const
+{
+  auto info = fPropertyManager->getDeviceInfo();
+
+  return {
+    info.fMediumName,
+    fRoot.u8string(),
+    deviceTypeToString(info.fDeviceType),
+    config::now()
+  };
 }
 
 ////------------------------------------------------------------------------

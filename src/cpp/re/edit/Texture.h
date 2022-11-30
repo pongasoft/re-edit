@@ -68,12 +68,13 @@ public:
   std::shared_ptr<FilmStrip> getFilmStrip() const { return fFilmStrip; }
 
   inline void Item(ImVec2 const &iPosition,
-                   float iZoom,
-                   int iFrameNumber,
+                   ImVec2 const &iSize = {},
+                   float iZoom = 1.0f,
+                   int iFrameNumber = 0,
                    ImU32 iBorderColor = ReGui::kTransparentColorU32,
                    ImU32 iTextureColor = ReGui::kWhiteColorU32) const
   {
-    doDraw(true, iPosition, iZoom, iZoom, iFrameNumber, iBorderColor, iTextureColor);
+    doDraw(true, iPosition, iSize, iZoom, iZoom, iFrameNumber, iBorderColor, iTextureColor);
   }
 
   inline void draw(ImVec2 const &iPosition,
@@ -82,7 +83,7 @@ public:
                    ImU32 iBorderColor = ReGui::kTransparentColorU32,
                    ImU32 iTextureColor = ReGui::kWhiteColorU32) const
   {
-    doDraw(false, iPosition, iZoom, iZoom, iFrameNumber, iBorderColor, iTextureColor);
+    doDraw(false, iPosition, {}, iZoom, iZoom, iFrameNumber, iBorderColor, iTextureColor);
   }
 
   inline void draw(ImVec2 const &iPosition,
@@ -92,7 +93,7 @@ public:
                    ImU32 iBorderColor = ReGui::kTransparentColorU32,
                    ImU32 iTextureColor = ReGui::kWhiteColorU32) const
   {
-    doDraw(false, iPosition, iPositionZoom, iTextureZoom, iFrameNumber, iBorderColor, iTextureColor);
+    doDraw(false, iPosition, {}, iPositionZoom, iTextureZoom, iFrameNumber, iBorderColor, iTextureColor);
   }
 
   void addData(std::unique_ptr<Data> iData) { fData.emplace_back(std::move(iData)); }
@@ -103,6 +104,7 @@ public:
 protected:
   void doDraw(bool iAddItem,
               ImVec2 const &iPosition,
+              ImVec2 const &iSize,
               float iPositionZoom,
               float iTextureZoom,
               int iFrameNumber,

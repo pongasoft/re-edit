@@ -120,12 +120,11 @@ private:
 
 private:
   void init();
-  void initAppContext(fs::path const &iRoot, config::Local const &iConfig);
+  void initAppContext(fs::path const &iRoot, config::Device const &iConfig);
   void renderWelcome(); // may throw exception
   void renderAppContext(); // may throw exception
   ReGui::Dialog::Result renderDialog();
   void about() const;
-  void welcome() const;
   inline bool hasDialog() const { return fCurrentDialog != nullptr || !fDialogs.empty(); }
   template<typename F>
   void executeCatchAllExceptions(F f) noexcept;
