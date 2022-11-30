@@ -88,11 +88,10 @@ static std::vector<Def> kProjectBuiltIns{kAudioSocket,
                                          kRoutingIconWhite04,
                                          kRoutingIconWhite05};
 
-//constexpr Def kLogoDark{"logo_dark"}; unused
-constexpr Def kLogoLight{"logo_dark"};
+constexpr Def kLogoDark{"logo_dark"};
 constexpr Def kDeviceType{"DeviceType_4frames", 4};
 
-static std::vector<Def> kGlobalBuiltIns{kLogoLight, kDeviceType};
+static std::vector<Def> kGlobalBuiltIns{kLogoDark, kDeviceType};
 
 }
 

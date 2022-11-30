@@ -435,7 +435,7 @@ void Application::renderWelcome()
   {
     auto textSizeHeight = ImGui::CalcTextSize("R").y;
     auto computedHeight = 2.0f * textSizeHeight + ImGui::GetStyle().ItemSpacing.y;
-    auto logo = fTextureManager->getTexture(BuiltIns::kLogoLight.fKey);
+    auto logo = fTextureManager->getTexture(BuiltIns::kLogoDark.fKey);
     auto zoom = computedHeight / logo->frameHeight();
 
     logo->Item({}, getCurrentFontDpiScale() * zoom, 0);
