@@ -448,6 +448,10 @@ void Application::renderWelcome()
   static constexpr ImVec2 kWindowMinSize = {600.0f, 500.0f};
   static constexpr float kPadding = 20.0f;
   static constexpr ImVec2 kButtonSize{120.0f, 0};
+  static auto constexpr kLogoModifier = ReGui::Modifier{}
+    .padding(10.0f)
+    .backgroundColor(ReGui::GetColorU32(toFloatColor(78, 78, 78)))
+    .borderColor(ReGui::kWhiteColorU32);
 
   if(hasDialog())
     return;
@@ -465,65 +469,70 @@ void Application::renderWelcome()
   if(ImGui::BeginPopupModal(kWelcomeTitle, nullptr, ImGuiWindowFlags_HorizontalScrollbar))
   {
     auto textSizeHeight = ImGui::CalcTextSize("R").y;
-    auto computedHeight = 2.0f * textSizeHeight + ImGui::GetStyle().ItemSpacing.y;
-    auto logo = fTextureManager->getTexture(BuiltIns::kLogoDark.fKey);
 
-    logo->Item({}, {computedHeight, computedHeight}, getCurrentFontDpiScale(), 0);
+    ReGui::Box(kLogoModifier, [this, textSizeHeight]() {
+      auto logo = fTextureManager->getTexture(BuiltIns::kLogoDark.fKey);
+      auto computedHeight = 2.0f * textSizeHeight + ImGui::GetStyle().ItemSpacing.y;
+      logo->Item({}, {computedHeight, computedHeight}, getCurrentFontDpiScale(), 0);
 
-    ImGui::SameLine();
+      ImGui::SameLine();
 
-    ImGui::BeginGroup();
-    ImGui::TextUnformatted("re-edit");
-    ImGui::Text("%s", kFullVersion);
-    ImGui::EndGroup();
+      ImGui::BeginGroup();
+      {
+        ImGui::TextUnformatted("re-edit");
+        ImGui::Text("%s", kFullVersion);
+        ImGui::EndGroup();
+      }
+    });
 
     ImGui::SameLine(0, kPadding);
 
     ImGui::BeginGroup();
-    if(ImGui::Button("Open", kButtonSize))
     {
-      renderLoadDialogBlocking();
-    }
-    ImGui::SameLine();
-    if(ImGui::Button("Quit", kButtonSize))
-    {
-      abort();
-    }
-    ImGui::Spacing();
-    ImGui::Separator();
-    ImGui::Spacing();
-
-    if(fConfig.fDeviceHistory.empty())
-    {
-      ImGui::TextUnformatted("No history");
-    }
-    else
-    {
-      auto icon = fTextureManager->getTexture(BuiltIns::kDeviceType.fKey);
-
-      ImGui::PushStyleColor(ImGuiCol_Button, 0); // make the button transparent
-
-      auto buttonHeight = 2.0f * (textSizeHeight + ImGui::GetStyle().FramePadding.y);
-
-      for(auto i = fConfig.fDeviceHistory.rbegin(); i != fConfig.fDeviceHistory.rend(); i++)
+      if(ImGui::Button("Open", kButtonSize))
       {
-        auto const &item = *i;
+        renderLoadDialogBlocking();
+      }
+      ImGui::SameLine();
+      if(ImGui::Button("Quit", kButtonSize))
+      {
+        abort();
+      }
+      ImGui::Spacing();
+      ImGui::Separator();
+      ImGui::Spacing();
 
-        ImGui::Spacing();
-        ImGui::AlignTextToFramePadding();
-        icon->Item({}, {buttonHeight, buttonHeight}, getCurrentFontDpiScale(), impl::getFrameNumberFromDeviceType(item.fType));
-        ImGui::SameLine();
-        if(ImGui::Button(fmt::printf("%s\n%s", item.fName, item.fPath).c_str()))
+      if(fConfig.fDeviceHistory.empty())
+      {
+        ImGui::TextUnformatted("No history");
+      }
+      else
+      {
+        auto icon = fTextureManager->getTexture(BuiltIns::kDeviceType.fKey);
+
+        ImGui::PushStyleColor(ImGuiCol_Button, 0); // make the button transparent
+
+        auto buttonHeight = 2.0f * (textSizeHeight + ImGui::GetStyle().FramePadding.y);
+
+        for(auto i = fConfig.fDeviceHistory.rbegin(); i != fConfig.fDeviceHistory.rend(); i++)
         {
-          loadProjectDeferred(fs::path(item.fPath));
+          auto const &item = *i;
+
+          ImGui::Spacing();
+          ImGui::AlignTextToFramePadding();
+          icon->Item({}, {buttonHeight, buttonHeight}, getCurrentFontDpiScale(), impl::getFrameNumberFromDeviceType(item.fType));
+          ImGui::SameLine();
+          if(ImGui::Button(fmt::printf("%s\n%s", item.fName, item.fPath).c_str()))
+          {
+            loadProjectDeferred(fs::path(item.fPath));
+          }
         }
+
+        ImGui::PopStyleColor(1);
       }
 
-      ImGui::PopStyleColor(1);
+      ImGui::EndGroup();
     }
-
-
-    ImGui::EndGroup();
 
 
     ImGui::EndPopup();

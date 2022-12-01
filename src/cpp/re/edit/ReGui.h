@@ -314,6 +314,29 @@ constexpr bool IsSingleSelectKey(ImGuiIO const &io)
 }
 
 //------------------------------------------------------------------------
+// ReGui::Modifier
+// Similar concept to jetpack compose
+//------------------------------------------------------------------------
+struct Modifier
+{
+  ImVec4 fPadding{};
+  ImU32 fBackgroundColor{};
+  ImU32 fBorderColor{};
+
+  constexpr Modifier &padding(float iTop, float iRight, float iBottom, float iLeft) { fPadding = {iTop, iRight, iBottom, iLeft}; return *this; } // x/y/z/w
+  constexpr Modifier &padding(float iPadding) { return padding(iPadding, iPadding, iPadding, iPadding); }
+  constexpr Modifier &padding(float iHorizontalPadding, float iVerticalPadding) { return padding(iVerticalPadding, iHorizontalPadding, iVerticalPadding, iHorizontalPadding); }
+
+  constexpr Modifier &backgroundColor(ImU32 iColor) { fBackgroundColor = iColor; return *this; }
+  constexpr Modifier &borderColor(ImU32 iColor) { fBorderColor = iColor; return *this; }
+};
+
+//------------------------------------------------------------------------
+// ReGui::Box
+//------------------------------------------------------------------------
+void Box(Modifier const &iModifier, std::function<void()> const &iBoxContent);
+
+//------------------------------------------------------------------------
 // ReGui::Window
 //------------------------------------------------------------------------
 class Window
