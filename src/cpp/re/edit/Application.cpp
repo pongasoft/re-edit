@@ -534,7 +534,6 @@ void Application::renderWelcome()
       ImGui::EndGroup();
     }
 
-
     ImGui::EndPopup();
   }
 

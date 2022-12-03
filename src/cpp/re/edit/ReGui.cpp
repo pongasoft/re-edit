@@ -25,45 +25,59 @@ namespace re::edit::ReGui {
 //------------------------------------------------------------------------
 // ReGui::Box
 //------------------------------------------------------------------------
-void Box(Modifier const &iModifier, std::function<void()> const &iBoxContent)
+void Box(Modifier const &iModifier, std::function<void()> const &iBoxContent, ImDrawListSplitter *iSplitter)
 {
   // Implementation note: this is made static because of this https://github.com/ocornut/imgui/issues/5944#issuecomment-1333930454
-  // "using a new Splitter every frame is prohibitively costly". The side effect is that you cannot nest boxes.
+  // "using a new Splitter every frame is prohibitively costly".
   static ImDrawListSplitter kSplitter{};
 
-  // split draw list in 2
-  auto drawList = ImGui::GetWindowDrawList();
-  kSplitter.Split(drawList, 2);
+  auto hasBackground = !ColorIsTransparent(iModifier.fBackgroundColor);
+  auto hasBorder = !ColorIsTransparent(iModifier.fBorderColor);
 
-  // first we draw in channel 1 to render iBoxContent (will be on top)
-  kSplitter.SetCurrentChannel(drawList, 1);
+  ImDrawList *drawList{};
+
+  if(hasBackground || hasBorder)
+  {
+    drawList = ImGui::GetWindowDrawList();
+    if(!iSplitter)
+      iSplitter = &kSplitter;
+
+    // split draw list in 2
+    iSplitter->Split(drawList, 2);
+
+    // first we draw in channel 1 to render iBoxContent (will be on top)
+    iSplitter->SetCurrentChannel(drawList, 1);
+  }
+
+  auto min = ImGui::GetCursorScreenPos();
+  // account for padding left/top
+  ImGui::SetCursorScreenPos(min + ImVec2{iModifier.fPadding.w, iModifier.fPadding.x});
 
   ImGui::BeginGroup();
   {
-    auto position = ImGui::GetCursorPos();
-    // account for padding left/top
-    ImGui::SetCursorPos(position + ImVec2{iModifier.fPadding.w, iModifier.fPadding.x});
     iBoxContent();
     ImGui::EndGroup();
   }
 
-  auto min = ImGui::GetItemRectMin();
   // account for padding right/bottom
   auto max = ImGui::GetItemRectMax() + ImVec2{iModifier.fPadding.y, iModifier.fPadding.z};
 
-  // second we draw the rectangle and border in channel 0 (will be below)
-  kSplitter.SetCurrentChannel(drawList, 0);
+  if(drawList)
+  {
+    // second we draw the rectangle and border in channel 0 (will be below)
+    iSplitter->SetCurrentChannel(drawList, 0);
 
-  // draw the background
-  if(!ColorIsTransparent(iModifier.fBackgroundColor))
-    drawList->AddRectFilled(min, max, iModifier.fBackgroundColor);
+    // draw the background
+    if(hasBackground)
+      drawList->AddRectFilled(min, max, iModifier.fBackgroundColor);
 
-  // draw the border
-  if(!ColorIsTransparent(iModifier.fBorderColor))
-    drawList->AddRect(min, max, iModifier.fBorderColor);
+    // draw the border
+    if(hasBorder)
+      drawList->AddRect(min, max, iModifier.fBorderColor);
 
-  // merge the 2 draw lists
-  kSplitter.Merge(drawList);
+    // merge the 2 draw lists
+    iSplitter->Merge(drawList);
+  }
 
   // reposition the cursor (top left) and render a "dummy" box of the correct size so that it occupies
   // the proper amount of space

@@ -331,10 +331,29 @@ struct Modifier
   constexpr Modifier &borderColor(ImU32 iColor) { fBorderColor = iColor; return *this; }
 };
 
-//------------------------------------------------------------------------
-// ReGui::Box
-//------------------------------------------------------------------------
-void Box(Modifier const &iModifier, std::function<void()> const &iBoxContent);
+/**
+ * Renders the content inside a "box" defined by its padding and background/border color.
+ *
+ * Note that the implementation is optimized in the event that only padding is provided. If you want to nest boxes
+ * you must provide your own splitter like this:
+ *
+ * ```cpp
+ *  ReGui::Box(ReGui::Modifier{}.padding(10.0f).backgroundColor(ReGui::kRedColorU32), []{
+ *    static ImDrawListSplitter kNestedSplitter{}; // MUST be static for performance reasons
+ *    ImGui::Text("Inside before");
+ *    ReGui::Box(ReGui::Modifier{}.padding(15.0f).borderColor(ReGui::kWhiteColorU32), [] {
+ *                 ImGui::Text("Nested");
+ *               },
+ *               &kNestedSplitter);
+ *    ImGui::Text("Inside after");
+ *  });
+ *  ```
+ *
+ * @param iModifier the box definition
+ * @param iBoxContent the content to render inside the box
+ * @param iSplitter optional unless you want to nest boxes
+ */
+void Box(Modifier const &iModifier, std::function<void()> const &iBoxContent, ImDrawListSplitter *iSplitter = nullptr);
 
 //------------------------------------------------------------------------
 // ReGui::Window
