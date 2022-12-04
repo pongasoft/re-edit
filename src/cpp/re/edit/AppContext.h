@@ -26,7 +26,7 @@
 #include <atomic>
 #include "TextureManager.h"
 #include "FontManager.h"
-#include "UserPreferences.h"
+#include "PreferencesManager.h"
 #include "PropertyManager.h"
 #include "UndoManager.h"
 #include "Constants.h"
@@ -266,7 +266,7 @@ public:
 
 protected:
   void init(config::Device const &iConfig);
-  std::string getLocalConfigAsLua() const;
+  std::string getDeviceConfigAsLua() const;
   void reloadTextures();
   void markEdited();
   bool checkForErrors();

@@ -10,6 +10,7 @@
 #include <cstdio>
 #include "../Application.h"
 #include "MTLManagers.h"
+#include "NSUserDefaultsManager.h"
 #include "nfd.h"
 #include <version.h>
 
@@ -80,7 +81,15 @@ static void onWindowClose(GLFWwindow* iWindow)
 class MacOsContext : public re::edit::Application::Context
 {
 public:
-  explicit MacOsContext(GLFWwindow *iWindow, MTL::Device *iDevice) : fWindow{iWindow}, fDevice{iDevice} {}
+  explicit MacOsContext(std::shared_ptr<re::edit::NativePreferencesManager> iPreferencesManager,
+                        GLFWwindow *iWindow,
+                        MTL::Device *iDevice) :
+    Context(std::move(iPreferencesManager)),
+    fWindow{iWindow},
+    fDevice{iDevice}
+    {
+      // empty
+    }
 
   std::shared_ptr<re::edit::TextureManager> newTextureManager() const override
   {
@@ -118,11 +127,13 @@ int doMain(int argc, char **argv)
   ImGui::StyleColorsDark();
   //ImGui::StyleColorsClassic();
 
+  auto preferencesManager = std::make_shared<re::edit::NSUserDefaultsManager>();
+
   std::vector<std::string> args{};
   for(int i = 1; i < argc; i++)
     args.emplace_back(argv[i]);
 
-  auto config = re::edit::Application::parseArgs(std::move(args));
+  auto config = re::edit::Application::parseArgs(preferencesManager.get(), std::move(args));
 
   // Setup window
   glfwSetErrorCallback(glfw_error_callback);
@@ -155,7 +166,7 @@ int doMain(int argc, char **argv)
 
   auto renderPassDescriptor = MTL::RenderPassDescriptor::alloc()->init();
 
-  re::edit::Application application{std::make_shared<MacOsContext>(window, device), config};
+  re::edit::Application application{std::make_shared<MacOsContext>(preferencesManager, window, device), config};
 
   if(NFD_Init() != NFD_OKAY)
   {

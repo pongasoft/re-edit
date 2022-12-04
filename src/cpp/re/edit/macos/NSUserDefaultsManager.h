@@ -16,26 +16,18 @@
  * @author Yan Pujante
  */
 
-#ifndef RE_EDIT_USER_PREFERENCES_H
-#define RE_EDIT_USER_PREFERENCES_H
+#ifndef RE_EDIT_NS_USER_DEFAULTS_MANAGER_H
+#define RE_EDIT_NS_USER_DEFAULTS_MANAGER_H
 
-#include <imgui.h>
+#include "../PreferencesManager.h"
 
 namespace re::edit {
-
-class UserPreferences
+class NSUserDefaultsManager : public NativePreferencesManager
 {
 public:
-  ImU32 fWidgetBorderColor{ReGui::GetColorU32(ImVec4{0,1,0,1})};
-
-  ImU32 fWidgetErrorColor{ReGui::GetColorU32(ImVec4{1,0,0,0.5})};
-
-  ImU32 fSelectedWidgetColor{ReGui::GetColorU32(ImVec4{1,1,0,1})};
-
-  ImU32 fWidgetNoGraphicsColor{ReGui::GetColorU32(ImVec4{0.5,0.5,0.5,1})};
-  ImU32 fWidgetNoGraphicsXRayColor{ReGui::GetColorU32(ImVec4{0.5,0.5,0.5,0.4})};
+  std::optional<std::string> load() const override;
+  void save(std::string const &iPreferences) const override;
 };
-
 }
 
-#endif //RE_EDIT_USER_PREFERENCES_H
+#endif //RE_EDIT_NS_USER_DEFAULTS_MANAGER_H

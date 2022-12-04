@@ -40,7 +40,7 @@ public:
   class Context
   {
   public:
-    Context() = default;
+    explicit Context(std::shared_ptr<NativePreferencesManager> iPreferencesManager) : fPreferencesManager{std::move(iPreferencesManager)} {}
     explicit Context(bool iHeadless) : fHeadless{iHeadless} {}
 
     virtual ~Context() = default;
@@ -48,10 +48,13 @@ public:
     virtual std::shared_ptr<NativeFontManager> newNativeFontManager() const = 0;
     virtual void setWindowSize(int iWidth, int iHeight) const = 0;
 
+    std::shared_ptr<NativePreferencesManager> getPreferencesManager() const { return fPreferencesManager; }
+
     constexpr bool isHeadless() const { return fHeadless; }
 
   private:
     bool fHeadless{};
+    std::shared_ptr<NativePreferencesManager> fPreferencesManager;
   };
 
   struct Config
@@ -74,7 +77,8 @@ public:
   inline AppContext &getAppContext() { RE_EDIT_INTERNAL_ASSERT(fAppContext != nullptr); return *fAppContext; }
   inline AppContext const &getAppContext() const { RE_EDIT_INTERNAL_ASSERT(fAppContext != nullptr); return *fAppContext; }
 
-  static Config parseArgs(std::vector<std::string> iArgs);
+  static Config parseArgs(NativePreferencesManager const *iPreferencesManager, std::vector<std::string> iArgs);
+
   void loadProject(fs::path const &iRoot);
   void loadProjectDeferred(fs::path const &iRoot);
   void closeProjectDeferred();
@@ -96,7 +100,7 @@ public:
   void renderMainMenu();
   void maybeExit();
   inline bool running() const { return fState != State::kDone; }
-  inline void abort() { fState = State::kDone; };
+  void exit();
   ReGui::Dialog &newDialog(std::string iTitle, bool iHighPriority = false);
   void newExceptionDialog(std::string iMessage, bool iSaveButton, std::exception_ptr const &iException);
 
@@ -130,6 +134,7 @@ private:
   void executeCatchAllExceptions(F f) noexcept;
   void renderLoadDialogBlocking();
   void deferNextFrame(std::function<void()> iAction) { fNewFrameActions.emplace_back(std::move(iAction)); }
+  void savePreferences() const noexcept;
 
 private:
   State fState{State::kNoReLoaded};

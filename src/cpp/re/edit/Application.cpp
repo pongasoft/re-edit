@@ -109,27 +109,27 @@ std::optional<fs::path> inferValidRoot(fs::path const &iPath)
   return std::nullopt;
 }
 
-//------------------------------------------------------------------------
-// impl::computeDeviceHistoryItem
-//------------------------------------------------------------------------
-config::DeviceHistoryItem computeDeviceHistoryItem(AppContext &iCtx)
-{
-  config::DeviceHistoryItem item{};
-  item.fLastOpenedTime = config::now();
-  return item;
-}
-
-
 }
 
 //------------------------------------------------------------------------
 // Application::parseArgs
 //------------------------------------------------------------------------
-Application::Config Application::parseArgs(std::vector<std::string> iArgs)
+Application::Config Application::parseArgs(NativePreferencesManager const *iPreferencesManager,
+                                           std::vector<std::string> iArgs)
 {
   Application::Config c{};
 
-  // TODO: initialize global config from preferences
+  if(iPreferencesManager)
+  {
+    try
+    {
+      c.fGlobalConfig = PreferencesManager::load(iPreferencesManager);
+    }
+    catch(...)
+    {
+      RE_EDIT_LOG_WARNING("Error while loading preferences %s", what(std::current_exception()));
+    }
+  }
 
   if(!iArgs.empty())
   {
@@ -137,6 +137,27 @@ Application::Config Application::parseArgs(std::vector<std::string> iArgs)
   }
 
   return c;
+}
+
+
+//------------------------------------------------------------------------
+// Application::savePreferences
+//------------------------------------------------------------------------
+void Application::savePreferences() const noexcept
+{
+  try
+  {
+    auto mgr = fContext->getPreferencesManager();
+    if(mgr)
+    {
+      RE_EDIT_LOG_DEBUG("saving preferences");
+      PreferencesManager::save(mgr.get(), fConfig);
+    }
+  }
+  catch(...)
+  {
+    RE_EDIT_LOG_WARNING("Error while saving preferences %s", what(std::current_exception()));
+  }
 }
 
 //------------------------------------------------------------------------
@@ -214,6 +235,16 @@ void Application::initAppContext(fs::path const &iRoot, config::Device const &iC
   fConfig.add(fAppContext->getDeviceHistoryItem());
 }
 
+
+//------------------------------------------------------------------------
+// Application::exit
+//------------------------------------------------------------------------
+void Application::exit()
+{
+  savePreferences();
+  fState = State::kDone;
+}
+
 //------------------------------------------------------------------------
 // Application::loadProject
 //------------------------------------------------------------------------
@@ -235,6 +266,7 @@ void Application::loadProject(fs::path const &iRoot)
 
     fFontManager->requestNewFont({"JetBrains Mono Regular", BuiltInFont::kJetBrainsMonoRegular, fConfig.fFontSize});
     fContext->setWindowSize(fConfig.fNativeWindowWidth, fConfig.fNativeWindowHeight);
+    savePreferences();
   }
   catch(...)
   {
@@ -374,7 +406,7 @@ bool Application::render() noexcept
         case ReGui::Dialog::Result::kBreak:
           return running();
         case ReGui::Dialog::Result::kExit:
-          abort();
+          exit();
           return running();
         default:
           RE_EDIT_FAIL("not reached");
@@ -496,7 +528,7 @@ void Application::renderWelcome()
       ImGui::SameLine();
       if(ImGui::Button("Quit", kButtonSize))
       {
-        abort();
+        exit();
       }
       ImGui::Spacing();
       ImGui::Separator();
@@ -634,6 +666,12 @@ void Application::renderMainMenu()
           .text(ImGui::SaveIniSettingsToMemory(), true)
           .buttonOk();
       }
+      if(ImGui::MenuItem("Global Config"))
+      {
+        newDialog("Global Config")
+          .text(PreferencesManager::getAsLua(fConfig), true)
+          .buttonOk();
+      }
       ImGui::Separator();
       ImGui::Text("Version: %s", kFullVersion);
       ImGui::Text("Build: %s", kGitVersion);
@@ -719,7 +757,7 @@ void Application::newExceptionDialog(std::string iMessage, bool iSaveButton, std
   else
   {
     RE_EDIT_LOG_ERROR("Error while handling error... aborting | %s", what(iException));
-    abort();
+    exit();
   }
 }
 
@@ -755,12 +793,12 @@ void Application::maybeExit()
   {
     newDialog("Quit")
       .postContentMessage("You have unsaved changes, do you want to save them before quitting?")
-      .button("Yes", [this] { fAppContext->save(); fState = State::kDone; return ReGui::Dialog::Result::kExit; })
-      .button("No", [this] { fState = State::kDone; return ReGui::Dialog::Result::kExit; })
+      .button("Yes", [this] { fAppContext->save(); return ReGui::Dialog::Result::kExit; })
+      .button("No", [] { return ReGui::Dialog::Result::kExit; })
       .buttonCancel("Cancel", true);
   }
   else
-    fState = State::kDone;
+    exit();
 }
 
 //------------------------------------------------------------------------

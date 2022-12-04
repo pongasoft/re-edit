@@ -149,6 +149,8 @@ set(re-edit_BUILD_SOURCES
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/Panel.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/PanelState.h"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/PanelState.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/PreferencesManager.h"
+    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/PreferencesManager.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/Property.h"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/PropertyManager.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/ReGui.h"
@@ -157,7 +159,6 @@ set(re-edit_BUILD_SOURCES
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/TextureManager.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/UndoManager.h"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/UndoManager.cpp"
-    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/UserPreferences.h"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/Views.h"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/Views.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/Widget.h"
@@ -173,7 +174,7 @@ set(RE_EDIT_FONTS_DIR "${CMAKE_CURRENT_LIST_DIR}/external/fonts")
 
 # Defines the macos main
 if(APPLE)
-  list(APPEND re-edit_BUILD_SOURCES "${re-edit_CPP_SRC_DIR}/re/edit/macos/MTLManagers.cpp")
+  list(APPEND re-edit_BUILD_SOURCES "${re-edit_CPP_SRC_DIR}/re/edit/macos/MTLManagers.cpp" "${re-edit_CPP_SRC_DIR}/re/edit/macos/NSUserDefaultsManager.mm")
   set(re-edit_MAIN_SRC "${re-edit_CPP_SRC_DIR}/re/edit/macos/main.cpp" "${re-edit_CPP_SRC_DIR}/re/edit/macos/metal.cpp")
 elseif(WIN32)
   list(APPEND re-edit_BUILD_SOURCES "${re-edit_CPP_SRC_DIR}/re/edit/windows/OGL3Managers.cpp")
@@ -286,6 +287,7 @@ set(target_test "${target}_test")
 set(re-edit_CPP_TST_DIR "${CMAKE_CURRENT_LIST_DIR}/test/cpp")
 
 set(TEST_CASE_SOURCES
+    "${re-edit_CPP_TST_DIR}/re/edit/lua/TestConfigParser.cpp"
     "${re-edit_CPP_TST_DIR}/re/edit/lua/TestDevice2D.cpp"
     "${re-edit_CPP_TST_DIR}/re/edit/lua/TestHDGui2D.cpp"
     )

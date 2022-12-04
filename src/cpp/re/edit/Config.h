@@ -21,6 +21,7 @@
 
 #include <imgui.h>
 #include <chrono>
+#include <vector>
 
 namespace re::edit::config {
 

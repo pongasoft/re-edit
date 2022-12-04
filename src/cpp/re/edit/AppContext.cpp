@@ -556,7 +556,7 @@ void AppContext::init(config::Device const &iConfig)
 //------------------------------------------------------------------------
 // AppContext::getLocalConfigAsLua
 //------------------------------------------------------------------------
-std::string AppContext::getLocalConfigAsLua() const
+std::string AppContext::getDeviceConfigAsLua() const
 {
   auto const &app = Application::GetCurrent();
 
@@ -950,7 +950,7 @@ void AppContext::saveConfig(UserError *oErrors)
   s << "format_version = \"1.0\"\n\n";
   s << "re_edit = {}\n";
 
-  s << getLocalConfigAsLua() << "\n";
+  s << getDeviceConfigAsLua() << "\n";
 
   s << fmt::printf("re_edit[\"imgui.ini\"] = [==[\n%s\n]==]\n", ImGui::SaveIniSettingsToMemory());
 

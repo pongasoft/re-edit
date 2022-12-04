@@ -47,9 +47,29 @@ config::Global GlobalConfigParser::getConfig()
 {
   config::Global c{};
 
-  withOptionalValue(L.getTableValueAsOptionalInteger("native_window_width"), [&c](auto v) { c.fNativeWindowWidth = static_cast<int>(v); });
-  withOptionalValue(L.getTableValueAsOptionalInteger("native_window_height"), [&c](auto v) { c.fNativeWindowHeight = static_cast<int>(v); });
-  withOptionalValue(L.getTableValueAsOptionalNumber("font_size"), [&c](auto v) { c.fFontSize = v; });
+  if(lua_getglobal(L, "global_config") == LUA_TTABLE)
+  {
+    withOptionalValue(L.getTableValueAsOptionalInteger("native_window_width"), [&c](auto v) { c.fNativeWindowWidth = static_cast<int>(v); });
+    withOptionalValue(L.getTableValueAsOptionalInteger("native_window_height"), [&c](auto v) { c.fNativeWindowHeight = static_cast<int>(v); });
+    withOptionalValue(L.getTableValueAsOptionalNumber("font_size"), [&c](auto v) { c.fFontSize = v; });
+    if(lua_getfield(L, -1, "device_history") == LUA_TTABLE)
+    {
+      iterateLuaArray([this, &c](int idx) {
+        if(lua_type(L, -1) == LUA_TTABLE)
+        {
+          config::DeviceHistoryItem item{};
+
+          withOptionalValue(L.getTableValueAsOptionalString("name"), [&item](auto v) { item.fName = v; });
+          withOptionalValue(L.getTableValueAsOptionalString("path"), [&item](auto v) { item.fPath = v; });
+          withOptionalValue(L.getTableValueAsOptionalString("type"), [&item](auto v) { item.fType = v; });
+          withOptionalValue(L.getTableValueAsOptionalNumber("last_opened_time"), [&item](auto v) { item.fLastOpenedTime = v; });
+
+          c.add(item);
+        }
+      }, true, false);
+    }
+    lua_pop(L, 1);
+  }
 
   return c;
 }
