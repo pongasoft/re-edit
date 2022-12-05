@@ -46,7 +46,9 @@ public:
     virtual ~Context() = default;
     virtual std::shared_ptr<TextureManager> newTextureManager() const = 0;
     virtual std::shared_ptr<NativeFontManager> newNativeFontManager() const = 0;
-    virtual void setWindowSize(int iWidth, int iHeight) const = 0;
+    virtual ImVec4 getWindowPositionAndSize() const = 0;
+    virtual void setWindowPositionAndSize(std::optional<ImVec2> const &iPosition, ImVec2 const &iSize) const = 0;
+    virtual void centerWindow() const = 0;
 
     std::shared_ptr<NativePreferencesManager> getPreferencesManager() const { return fPreferencesManager; }
 
@@ -61,10 +63,6 @@ public:
   {
     config::Global fGlobalConfig{};
     std::optional<fs::path> fProjectRoot{};
-
-    int getNativeWindowWidth() const { return fGlobalConfig.fNativeWindowWidth; }
-    int getNativeWindowHeight() const { return fGlobalConfig.fNativeWindowHeight; }
-    float getFontSize() const { return fGlobalConfig.fFontSize; }
   };
 
 public:
@@ -84,10 +82,6 @@ public:
   void closeProjectDeferred();
   void maybeCloseProject();
 
-  void setNativeWindowSize(int iWidth, int iHeight);
-
-  inline int getNativeWindowWidth() const { return fConfig.fNativeWindowWidth; }
-  inline int getNativeWindowHeight() const { return fConfig.fNativeWindowHeight; }
   inline float getCurrentFontSize() const { return fFontManager->getCurrentFont().fSize; }
   inline float getCurrentFontDpiScale() const { return fFontManager->getCurrentFontDpiScale(); }
 
@@ -103,6 +97,7 @@ public:
   void exit();
   ReGui::Dialog &newDialog(std::string iTitle, bool iHighPriority = false);
   void newExceptionDialog(std::string iMessage, bool iSaveButton, std::exception_ptr const &iException);
+  void savePreferences(UserError *oErrors = nullptr) noexcept;
 
   constexpr bool hasException() const { return fState == State::kException; }
 
@@ -134,7 +129,6 @@ private:
   void executeCatchAllExceptions(F f) noexcept;
   void renderLoadDialogBlocking();
   void deferNextFrame(std::function<void()> iAction) { fNewFrameActions.emplace_back(std::move(iAction)); }
-  void savePreferences() const noexcept;
 
 private:
   State fState{State::kNoReLoaded};

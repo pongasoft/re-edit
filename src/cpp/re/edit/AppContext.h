@@ -266,7 +266,7 @@ public:
 
 protected:
   void init(config::Device const &iConfig);
-  std::string getDeviceConfigAsLua() const;
+  config::Device getConfig() const;
   void reloadTextures();
   void markEdited();
   bool checkForErrors();
@@ -275,11 +275,9 @@ protected:
   void reloadDevice();
   void save();
   void importBuiltIns(UserError *oErrors = nullptr);
-  void saveConfig(UserError *oErrors = nullptr);
   std::string hdgui2D() const;
   std::string device2D() const;
   std::string cmake() const;
-  config::DeviceHistoryItem getDeviceHistoryItem() const;
 
   void initPanels(fs::path const &iDevice2DFile, fs::path const &iHDGui2DFile);
   inline void setCurrentWidget(Widget const *iWidget) { fCurrentWidget = iWidget; }

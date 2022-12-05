@@ -59,8 +59,6 @@ std::string PreferencesManager::getAsLua(config::Global const &iConfig)
   s << "format_version = \"1.0\"\n\n";
   s << "global_config = {}\n";
 
-  s << fmt::printf("global_config[\"native_window_width\"] = %d\n", iConfig.fNativeWindowWidth);
-  s << fmt::printf("global_config[\"native_window_height\"] = %d\n", iConfig.fNativeWindowHeight);
   s << fmt::printf("global_config[\"font_size\"] = %d\n", static_cast<int>(iConfig.fFontSize));
 
   auto const &history = iConfig.fDeviceHistory;
@@ -75,10 +73,30 @@ std::string PreferencesManager::getAsLua(config::Global const &iConfig)
   name = "%s",
   path = [==[%s]==],
   type = "%s",
-  last_opened_time = %ld
+  show_properties = %s,
+  show_panel = %s,
+  show_panel_widgets = %s,
+  show_widgets = %s,
+  grid = { %d, %d },
+  ["imgui.ini"] = [==[%s]==],
+  native_window_pos = { %d, %d },
+  native_window_size = { %d, %d },
+  last_access_time = %ld
 }
 )",
-                       index, item.fName, item.fPath, item.fType, item.fLastOpenedTime);
+                       index,
+                       item.fName,
+                       item.fPath,
+                       item.fType,
+                       fmt::Bool::to_chars(item.fShowProperties),
+                       fmt::Bool::to_chars(item.fShowPanel),
+                       fmt::Bool::to_chars(item.fShowPanelWidgets),
+                       fmt::Bool::to_chars(item.fShowWidgets),
+                       static_cast<int>(item.fGrid.x), static_cast<int>(item.fGrid.y),
+                       item.fImGuiIni,
+                       static_cast<int>(item.fNativeWindowPos->x), static_cast<int>(item.fNativeWindowPos->y),
+                       static_cast<int>(item.fNativeWindowSize.x), static_cast<int>(item.fNativeWindowSize.y),
+                       item.fLastAccessTime);
     }
   }
 

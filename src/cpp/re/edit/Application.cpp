@@ -78,34 +78,42 @@ namespace impl {
 // impl::inferValidRoot
 // Given a path, tries to determine a valid root for a rack extension
 //------------------------------------------------------------------------
-std::optional<fs::path> inferValidRoot(fs::path const &iPath)
+std::optional<fs::path> inferValidRoot(fs::path const &iPath) noexcept
 {
-  if(!fs::exists(iPath))
-    return std::nullopt;
-
-  if(fs::is_directory(iPath))
+  try
   {
-    if(fs::exists(iPath / "info.lua"))
-      return iPath;
-  }
-  else
-  {
-    auto filename = iPath.filename().u8string();
+    if(!fs::exists(iPath))
+      return std::nullopt;
 
-    if(filename == "info.lua")
-      return iPath.parent_path();
+    auto path = fs::canonical(iPath);
 
-    if(filename == "re_edit.lua" || filename == "motherboard_def.lua" || filename == "realtime_controller.lua")
-      return inferValidRoot(iPath.parent_path());
-
-    if(filename == "hdgui_2D.lua" || filename == "device_2D.lua")
+    if(fs::is_directory(path))
     {
-      auto GUI2D = iPath.parent_path();
-      if(GUI2D.has_parent_path())
-        return inferValidRoot(GUI2D.parent_path());
+      if(fs::exists(path / "info.lua"))
+        return path;
+    }
+    else
+    {
+      auto filename = path.filename().u8string();
+
+      if(filename == "info.lua")
+        return path.parent_path();
+
+      if(filename == "motherboard_def.lua" || filename == "realtime_controller.lua")
+        return inferValidRoot(path.parent_path());
+
+      if(filename == "hdgui_2D.lua" || filename == "device_2D.lua")
+      {
+        auto GUI2D = path.parent_path();
+        if(GUI2D.has_parent_path())
+          return inferValidRoot(GUI2D.parent_path());
+      }
     }
   }
-
+  catch(...)
+  {
+    RE_EDIT_LOG_WARNING("Exception while loading path %s", iPath.u8string());
+  }
   return std::nullopt;
 }
 
@@ -143,7 +151,7 @@ Application::Config Application::parseArgs(NativePreferencesManager const *iPref
 //------------------------------------------------------------------------
 // Application::savePreferences
 //------------------------------------------------------------------------
-void Application::savePreferences() const noexcept
+void Application::savePreferences(UserError *oErrors) noexcept
 {
   try
   {
@@ -151,12 +159,24 @@ void Application::savePreferences() const noexcept
     if(mgr)
     {
       RE_EDIT_LOG_DEBUG("saving preferences");
+      if(fAppContext)
+      {
+        auto deviceConfig = fAppContext->getConfig();
+        auto ps = fContext->getWindowPositionAndSize();
+        deviceConfig.fNativeWindowPos = ImVec2{ps.x, ps.y};
+        deviceConfig.fNativeWindowSize = ImVec2{ps.z, ps.w};
+        deviceConfig.fLastAccessTime = config::now();
+        fConfig.addDeviceConfigToHistory(deviceConfig);
+      }
       PreferencesManager::save(mgr.get(), fConfig);
     }
   }
   catch(...)
   {
-    RE_EDIT_LOG_WARNING("Error while saving preferences %s", what(std::current_exception()));
+    if(oErrors)
+      oErrors->add("Error while saving preferences %s", what(std::current_exception()));
+    else
+      RE_EDIT_LOG_WARNING("Error while saving preferences %s", what(std::current_exception()));
   }
 }
 
@@ -231,8 +251,6 @@ void Application::initAppContext(fs::path const &iRoot, config::Device const &iC
     ImGui::LoadIniSettingsFromMemory(iConfig.fImGuiIni.c_str(), iConfig.fImGuiIni.size());
 
   fState = State::kReLoaded;
-
-  fConfig.add(fAppContext->getDeviceHistoryItem());
 }
 
 
@@ -252,20 +270,12 @@ void Application::loadProject(fs::path const &iRoot)
 {
   try
   {
-    config::Device c{};
-    auto configFile = iRoot / "re-edit.lua";
-    if(fs::exists(configFile))
-    {
-      c = lua::DeviceConfigParser::fromFile(configFile);
-      c.copyTo(fConfig);
-    }
-    else
-      c.copyFrom(fConfig);
+    config::Device c = fConfig.getDeviceConfigFromHistory(iRoot.u8string());
+
+    fContext->setWindowPositionAndSize(c.fNativeWindowPos, c.fNativeWindowSize);
 
     initAppContext(iRoot, c);
 
-    fFontManager->requestNewFont({"JetBrains Mono Regular", BuiltInFont::kJetBrainsMonoRegular, fConfig.fFontSize});
-    fContext->setWindowSize(fConfig.fNativeWindowWidth, fConfig.fNativeWindowHeight);
     savePreferences();
   }
   catch(...)
@@ -312,19 +322,15 @@ void Application::maybeCloseProject()
 void Application::closeProjectDeferred()
 {
   deferNextFrame([this]() {
+    savePreferences();
     fAppContext = nullptr;
     if(fState == State::kReLoaded)
+    {
       fState = State::kNoReLoaded;
+      fContext->setWindowPositionAndSize(std::nullopt, ImVec2{config::kDefaultWelcomeWindowWidth,
+                                                              config::kDefaultWelcomeWindowHeight});
+    }
   });
-}
-
-//------------------------------------------------------------------------
-// Application::setNativeWindowSize
-//------------------------------------------------------------------------
-void Application::setNativeWindowSize(int iWidth, int iHeight)
-{
-  fConfig.fNativeWindowWidth = iWidth;
-  fConfig.fNativeWindowHeight = iHeight;
 }
 
 //------------------------------------------------------------------------

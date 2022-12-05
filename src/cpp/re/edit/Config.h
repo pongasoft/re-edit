@@ -26,8 +26,10 @@
 namespace re::edit::config {
 
 constexpr float kDefaultFontSize = 12.0f;
-constexpr int kDefaultWidth = 1280;
-constexpr int kDefaultHeight = 720;
+constexpr int kDefaultDeviceWindowWidth = 1280;
+constexpr int kDefaultDeviceWindowHeight = 720;
+constexpr int kDefaultWelcomeWindowWidth = 600;
+constexpr int kDefaultWelcomeWindowHeight = 500;
 
 constexpr char const *kDefaultHorizontalLayout = R"(
 [Window][DockSpaceViewport_11111111]
@@ -163,27 +165,31 @@ DockSpace         ID=0x8B93E3BD Window=0xA787BDB4 Pos=0,18 Size=1280,702 Split=X
 
 inline auto now() { return std::chrono::system_clock::now().time_since_epoch().count(); }
 
-struct DeviceHistoryItem
+struct Device
 {
   using time_t = decltype(now());
 
   std::string fName{};
   std::string fPath{};
   std::string fType{};
-  time_t fLastOpenedTime{};
-
-  static auto now() { return std::chrono::system_clock::now().time_since_epoch().count(); };
+  bool fShowProperties{false};
+  bool fShowPanel{true};
+  bool fShowPanelWidgets{true};
+  bool fShowWidgets{true};
+  ImVec2 fGrid{10.0f, 10.0f};
+  std::string fImGuiIni{kDefaultHorizontalLayout};
+  ImVec2 fNativeWindowSize{kDefaultDeviceWindowWidth, kDefaultDeviceWindowHeight};
+  std::optional<ImVec2> fNativeWindowPos{};
+  time_t fLastAccessTime{};
 };
 
 struct Global
 {
-  int fNativeWindowWidth{kDefaultWidth};
-  int fNativeWindowHeight{kDefaultHeight};
   float fFontSize{kDefaultFontSize};
 
-  std::vector<DeviceHistoryItem> fDeviceHistory{};
+  std::vector<Device> fDeviceHistory{};
 
-  void add(DeviceHistoryItem const &iItem)
+  void addDeviceConfigToHistory(Device const &iItem)
   {
     auto iter = std::find_if(fDeviceHistory.begin(), fDeviceHistory.end(), [path = iItem.fPath](auto const &item) { return item.fPath == path; });
     if(iter != fDeviceHistory.end())
@@ -191,34 +197,13 @@ struct Global
     fDeviceHistory.emplace_back(iItem);
   }
 
-  // std::vector<Project>...
-};
-
-struct Device
-{
-  int fNativeWindowWidth{kDefaultWidth};
-  int fNativeWindowHeight{kDefaultHeight};
-  bool fShowProperties{false};
-  bool fShowPanel{true};
-  bool fShowPanelWidgets{true};
-  bool fShowWidgets{true};
-  float fFontSize{kDefaultFontSize};
-  ImVec2 fGrid{10.0f, 10.0f};
-
-  std::string fImGuiIni{kDefaultHorizontalLayout};
-
-  void copyTo(Global &o) const
+  Device getDeviceConfigFromHistory(std::string const &iPath) const
   {
-    o.fNativeWindowWidth = fNativeWindowWidth;
-    o.fNativeWindowHeight = fNativeWindowHeight;
-    o.fFontSize = fFontSize;
-  }
-
-  void copyFrom(Global const &i)
-  {
-    fNativeWindowWidth = i.fNativeWindowWidth;
-    fNativeWindowHeight = i.fNativeWindowHeight;
-    fFontSize = i.fFontSize;
+    auto iter = std::find_if(fDeviceHistory.begin(), fDeviceHistory.end(), [&iPath](auto const &item) { return item.fPath == iPath; });
+    if(iter != fDeviceHistory.end())
+      return *iter;
+    else
+      return {};
   }
 };
 

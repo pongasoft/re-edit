@@ -34,16 +34,6 @@ protected:
   config::Global getConfig();
 };
 
-class DeviceConfigParser : public Base
-{
-public:
-  static config::Device fromFile(fs::path const &iLuaFile);
-
-protected:
-  config::Device getConfig();
-};
-
-
 }
 
 

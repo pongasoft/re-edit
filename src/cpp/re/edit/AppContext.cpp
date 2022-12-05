@@ -554,27 +554,25 @@ void AppContext::init(config::Device const &iConfig)
 }
 
 //------------------------------------------------------------------------
-// AppContext::getLocalConfigAsLua
+// AppContext::getConfig
 //------------------------------------------------------------------------
-std::string AppContext::getDeviceConfigAsLua() const
+config::Device AppContext::getConfig() const
 {
-  auto const &app = Application::GetCurrent();
+  auto info = fPropertyManager->getDeviceInfo();
 
-  std::stringstream s{};
+  config::Device c{
+    /* .fName             = */ info.fMediumName,
+    /* .fPath             = */ fRoot.u8string(),
+    /* .fType             = */ deviceTypeToString(info.fDeviceType),
+    /* .fShowProperties   = */ fPropertiesWindow.isVisible(),
+    /* .fShowPanel        = */ fPanelWindow.isVisible(),
+    /* .fShowPanelWidgets = */ fPanelWidgetsWindow.isVisible(),
+    /* .fShowWidgets      = */ fWidgetsWindow.isVisible(),
+    /* .fGrid             = */ fGrid,
+    /* .fImGuiIni         = */ ImGui::SaveIniSettingsToMemory()
+  };
 
-  s << fmt::printf("re_edit[\"native_window_width\"] = %d\n", app.getNativeWindowWidth());
-  s << fmt::printf("re_edit[\"native_window_height\"] = %d\n", app.getNativeWindowHeight());
-  s << fmt::printf("re_edit[\"show_panel\"] = %s\n", fmt::Bool::to_chars(fPanelWindow.isVisible()));
-  s << fmt::printf("re_edit[\"show_panel_widgets\"] = %s\n", fmt::Bool::to_chars(fPanelWidgetsWindow.isVisible()));
-  s << fmt::printf("re_edit[\"show_properties\"] = %s\n", fmt::Bool::to_chars(fPropertiesWindow.isVisible()));
-  s << fmt::printf("re_edit[\"show_widgets\"] = %s\n", fmt::Bool::to_chars(fWidgetsWindow.isVisible()));
-  s << fmt::printf("re_edit[\"font_size\"] = %d\n", static_cast<int>(app.getCurrentFontSize()));
-  s << fmt::printf("re_edit[\"grid\"] = { %d, %d }\n", static_cast<int>(fGrid.x), static_cast<int>(fGrid.y));
-//  s << fmt::printf("re_edit[\"show_border\"] = %d\n", static_cast<int>(fShowBorder));
-//  s << fmt::printf("re_edit[\"show_custom_display\"] = %d\n", static_cast<int>(fShowCustomDisplay));
-//  s << fmt::printf("re_edit[\"show_sample_drop_zone\"] = %d\n", static_cast<int>(fShowSampleDropZone));
-
-  return s.str();
+  return c;
 }
 
 //------------------------------------------------------------------------
@@ -899,7 +897,7 @@ void AppContext::save()
   Application::saveFile(GUI2D / "hdgui_2D.lua", hdgui2D(), &errors);
   if(fs::exists(fRoot / "CMakeLists.txt"))
     Application::saveFile(GUI2D / "gui_2D.cmake", cmake(), &errors);
-  saveConfig(&errors);
+  Application::GetCurrent().savePreferences(&errors);
   if(errors.hasErrors())
     Application::GetCurrent().newDialog("Error")
       .preContentMessage("There were some errors during the save operation")
@@ -939,24 +937,6 @@ std::string AppContext::hdgui2D() const
 
   return s.str();
 }
-
-//------------------------------------------------------------------------
-// Application::saveConfig
-//------------------------------------------------------------------------
-void AppContext::saveConfig(UserError *oErrors)
-{
-  std::stringstream s{};
-
-  s << "format_version = \"1.0\"\n\n";
-  s << "re_edit = {}\n";
-
-  s << getDeviceConfigAsLua() << "\n";
-
-  s << fmt::printf("re_edit[\"imgui.ini\"] = [==[\n%s\n]==]\n", ImGui::SaveIniSettingsToMemory());
-
-  Application::saveFile(fRoot / "re-edit.lua", s.str(), oErrors);
-}
-
 
 //------------------------------------------------------------------------
 // AppContext::device2D
@@ -1143,20 +1123,6 @@ void AppContext::setCurrentZoom(float iZoom)
   fZoom = iZoom * Application::GetCurrent().getCurrentFontDpiScale();
 }
 
-//------------------------------------------------------------------------
-// AppContext::getDeviceHistoryItem
-//------------------------------------------------------------------------
-config::DeviceHistoryItem AppContext::getDeviceHistoryItem() const
-{
-  auto info = fPropertyManager->getDeviceInfo();
-
-  return {
-    info.fMediumName,
-    fRoot.u8string(),
-    deviceTypeToString(info.fDeviceType),
-    config::now()
-  };
-}
 
 ////------------------------------------------------------------------------
 //// AppContext::onNativeWindowPositionChange

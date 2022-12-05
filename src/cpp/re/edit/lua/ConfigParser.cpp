@@ -49,61 +49,33 @@ config::Global GlobalConfigParser::getConfig()
 
   if(lua_getglobal(L, "global_config") == LUA_TTABLE)
   {
-    withOptionalValue(L.getTableValueAsOptionalInteger("native_window_width"), [&c](auto v) { c.fNativeWindowWidth = static_cast<int>(v); });
-    withOptionalValue(L.getTableValueAsOptionalInteger("native_window_height"), [&c](auto v) { c.fNativeWindowHeight = static_cast<int>(v); });
     withOptionalValue(L.getTableValueAsOptionalNumber("font_size"), [&c](auto v) { c.fFontSize = v; });
     if(lua_getfield(L, -1, "device_history") == LUA_TTABLE)
     {
       iterateLuaArray([this, &c](int idx) {
         if(lua_type(L, -1) == LUA_TTABLE)
         {
-          config::DeviceHistoryItem item{};
+          config::Device item{};
 
           withOptionalValue(L.getTableValueAsOptionalString("name"), [&item](auto v) { item.fName = v; });
           withOptionalValue(L.getTableValueAsOptionalString("path"), [&item](auto v) { item.fPath = v; });
           withOptionalValue(L.getTableValueAsOptionalString("type"), [&item](auto v) { item.fType = v; });
-          withOptionalValue(L.getTableValueAsOptionalNumber("last_opened_time"), [&item](auto v) { item.fLastOpenedTime = v; });
+          withOptionalValue(getOptionalImVec2TableField("native_window_size"), [&item](auto v) { item.fNativeWindowSize = v; });
+          withOptionalValue(getOptionalImVec2TableField("native_window_pos"), [&item](auto v) { item.fNativeWindowPos = v; });
+          withOptionalValue(L.getTableValueAsOptionalString("imgui.ini"), [&item](auto v) { item.fImGuiIni = std::move(v); });
+          withOptionalValue(L.getTableValueAsOptionalBoolean("show_panel"), [&item](auto v) { item.fShowPanel = v; });
+          withOptionalValue(L.getTableValueAsOptionalBoolean("show_panel_widgets"), [&item](auto v) { item.fShowPanelWidgets = v; });
+          withOptionalValue(L.getTableValueAsOptionalBoolean("show_properties"), [&item](auto v) { item.fShowProperties = v; });
+          withOptionalValue(L.getTableValueAsOptionalBoolean("show_widgets"), [&item](auto v) { item.fShowWidgets = v; });
+          withOptionalValue(getOptionalImVec2TableField("grid"), [&item](auto v) { item.fGrid = v; });
+          withOptionalValue(L.getTableValueAsOptionalNumber("last_access_time"), [&item](auto v) { item.fLastAccessTime = v; });
 
-          c.add(item);
+          c.addDeviceConfigToHistory(item);
         }
       }, true, false);
     }
     lua_pop(L, 1);
   }
-
-  return c;
-}
-
-//------------------------------------------------------------------------
-// DeviceConfigParser::fromFile
-//------------------------------------------------------------------------
-config::Device DeviceConfigParser::fromFile(fs::path const &iLuaFile)
-{
-  DeviceConfigParser parser{};
-  parser.loadFile(iLuaFile);
-  return parser.getConfig();
-}
-
-//------------------------------------------------------------------------
-// DeviceConfigParser::getConfig
-//------------------------------------------------------------------------
-config::Device DeviceConfigParser::getConfig()
-{
-  config::Device c{};
-
-  if(lua_getglobal(L, "re_edit") == LUA_TTABLE)
-  {
-    withOptionalValue(L.getTableValueAsOptionalInteger("native_window_width"), [&c](auto v) { c.fNativeWindowWidth = static_cast<int>(v); });
-    withOptionalValue(L.getTableValueAsOptionalInteger("native_window_height"), [&c](auto v) { c.fNativeWindowHeight = static_cast<int>(v); });
-    withOptionalValue(L.getTableValueAsOptionalString("imgui.ini"), [&c](auto v) { c.fImGuiIni = std::move(v); });
-    withOptionalValue(L.getTableValueAsOptionalBoolean("show_panel"), [&c](auto v) { c.fShowPanel = v; });
-    withOptionalValue(L.getTableValueAsOptionalBoolean("show_panel_widgets"), [&c](auto v) { c.fShowPanelWidgets = v; });
-    withOptionalValue(L.getTableValueAsOptionalBoolean("show_properties"), [&c](auto v) { c.fShowProperties = v; });
-    withOptionalValue(L.getTableValueAsOptionalBoolean("show_widgets"), [&c](auto v) { c.fShowWidgets = v; });
-    withOptionalValue(L.getTableValueAsOptionalNumber("font_size"), [&c](auto v) { c.fFontSize = v; });
-    withOptionalValue(getOptionalImVec2TableField("grid"), [&c](auto v) { c.fGrid = v; });
-  }
-  lua_pop(L, 1);
 
   return c;
 }
