@@ -37,6 +37,7 @@ public:
 
   ImVec4 getWindowPositionAndSize() const override;
   void setWindowPositionAndSize(std::optional<ImVec2> const &iPosition, ImVec2 const &iSize) const override;
+  void setWindowTitle(std::string const &iTitle) const override;
 
   void centerWindow() const override;
 

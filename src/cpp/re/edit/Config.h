@@ -28,8 +28,9 @@ namespace re::edit::config {
 constexpr float kDefaultFontSize = 12.0f;
 constexpr int kDefaultDeviceWindowWidth = 1280;
 constexpr int kDefaultDeviceWindowHeight = 720;
-constexpr int kDefaultWelcomeWindowWidth = 600;
-constexpr int kDefaultWelcomeWindowHeight = 500;
+constexpr int kWelcomeWindowWidth = 600;
+constexpr int kWelcomeWindowHeight = 500;
+constexpr char const *kWelcomeWindowTitle = "Welcome to re-edit";
 
 constexpr char const *kDefaultHorizontalLayout = R"(
 [Window][DockSpaceViewport_11111111]

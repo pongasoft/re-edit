@@ -101,6 +101,15 @@ void GLFWContext::centerWindow() const
   glfwSetWindowPos(fWindow, windowPosX, windowPosY);
 }
 
+
+//------------------------------------------------------------------------
+// GLFWContext::setWindowTitle
+//------------------------------------------------------------------------
+void GLFWContext::setWindowTitle(std::string const &iTitle) const
+{
+  glfwSetWindowTitle(fWindow, iTitle.c_str());
+}
+
 //------------------------------------------------------------------------
 // GLFWContext::getFontDpiScale
 //------------------------------------------------------------------------

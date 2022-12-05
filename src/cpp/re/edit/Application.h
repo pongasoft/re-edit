@@ -49,6 +49,7 @@ public:
     virtual ImVec4 getWindowPositionAndSize() const = 0;
     virtual void setWindowPositionAndSize(std::optional<ImVec2> const &iPosition, ImVec2 const &iSize) const = 0;
     virtual void centerWindow() const = 0;
+    virtual void setWindowTitle(std::string const &iTitle) const = 0;
 
     std::shared_ptr<NativePreferencesManager> getPreferencesManager() const { return fPreferencesManager; }
 

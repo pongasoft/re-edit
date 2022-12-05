@@ -89,9 +89,9 @@ int doMain(int argc, char **argv)
   // Create window with graphics context
   glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
   glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_TRUE);
-  GLFWwindow *window = glfwCreateWindow(re::edit::config::kDefaultWelcomeWindowWidth,
-                                        re::edit::config::kDefaultWelcomeWindowHeight,
-                                        "re-edit",
+  GLFWwindow *window = glfwCreateWindow(re::edit::config::kWelcomeWindowWidth,
+                                        re::edit::config::kWelcomeWindowHeight,
+                                        re::edit::config::kWelcomeWindowTitle,
                                         nullptr,
                                         nullptr);
   if(window == nullptr)

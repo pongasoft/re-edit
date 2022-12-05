@@ -272,6 +272,7 @@ void Application::loadProject(fs::path const &iRoot)
     config::Device c = fConfig.getDeviceConfigFromHistory(iRoot.u8string());
 
     fContext->setWindowPositionAndSize(c.fNativeWindowPos, c.fNativeWindowSize);
+    fContext->setWindowTitle(fmt::printf("re-edit - %s", c.fName));
 
     initAppContext(iRoot, c);
 
@@ -326,8 +327,9 @@ void Application::closeProjectDeferred()
     if(fState == State::kReLoaded)
     {
       fState = State::kNoReLoaded;
-      fContext->setWindowPositionAndSize(std::nullopt, ImVec2{config::kDefaultWelcomeWindowWidth,
-                                                              config::kDefaultWelcomeWindowHeight});
+      fContext->setWindowPositionAndSize(std::nullopt, ImVec2{config::kWelcomeWindowWidth,
+                                                              config::kWelcomeWindowHeight});
+      fContext->setWindowTitle(config::kWelcomeWindowTitle);
     }
   });
 }
@@ -481,8 +483,6 @@ static int getFrameNumberFromDeviceType(std::string const &iType)
 //------------------------------------------------------------------------
 void Application::renderWelcome()
 {
-  static constexpr char const *kWelcomeTitle = "Welcome to re-edit";
-  static constexpr ImVec2 kWindowMinSize = {600.0f, 500.0f};
   static constexpr float kPadding = 20.0f;
   static constexpr ImVec2 kButtonSize{120.0f, 0};
   static auto constexpr kLogoModifier = ReGui::Modifier{}
@@ -493,17 +493,15 @@ void Application::renderWelcome()
   if(hasDialog())
     return;
 
-  if(!ImGui::IsPopupOpen(kWelcomeTitle))
-  {
-    ImGui::OpenPopup(kWelcomeTitle);
-    ReGui::CenterNextWindow();
-  }
+  auto viewport = ImGui::GetWindowViewport();
 
-  ImGui::PushStyleVar(ImGuiStyleVar_WindowMinSize, kWindowMinSize);
   ImGui::PushStyleVar(ImGuiStyleVar_WindowTitleAlign, {0.5f, 0.5f});
   ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, {kPadding, kPadding});
 
-  if(ImGui::BeginPopupModal(kWelcomeTitle, nullptr, ImGuiWindowFlags_HorizontalScrollbar))
+  ImGui::SetNextWindowSize(viewport->Size);
+  ImGui::SetNextWindowPos({});
+
+  if(ImGui::Begin(config::kWelcomeWindowTitle, nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar))
   {
     auto textSizeHeight = ImGui::CalcTextSize("R").y;
 
@@ -570,11 +568,11 @@ void Application::renderWelcome()
 
       ImGui::EndGroup();
     }
-
-    ImGui::EndPopup();
   }
 
-  ImGui::PopStyleVar(3);
+  ImGui::End();
+
+  ImGui::PopStyleVar(2);
 
 }
 
