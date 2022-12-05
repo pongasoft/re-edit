@@ -19,9 +19,9 @@
 #ifndef RE_EDIT_MTL_TEXTURE_MANAGER_H
 #define RE_EDIT_MTL_TEXTURE_MANAGER_H
 
-#include "../TextureManager.h"
-#include "../FontManager.h"
-#include "imgui.h"
+#include "../../TextureManager.h"
+#include "../../FontManager.h"
+#include <imgui.h>
 #include <Metal/Metal.hpp>
 
 namespace re::edit {

@@ -19,7 +19,7 @@
 #ifndef RE_EDIT_NS_USER_DEFAULTS_MANAGER_H
 #define RE_EDIT_NS_USER_DEFAULTS_MANAGER_H
 
-#include "../PreferencesManager.h"
+#include "../../PreferencesManager.h"
 
 namespace re::edit {
 class NSUserDefaultsManager : public NativePreferencesManager

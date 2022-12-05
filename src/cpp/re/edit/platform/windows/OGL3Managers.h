@@ -19,8 +19,8 @@
 #ifndef RE_EDIT_OGL3_TEXTURE_MANAGER_H
 #define RE_EDIT_OGL3_TEXTURE_MANAGER_H
 
-#include "../TextureManager.h"
-#include "../FontManager.h"
+#include "../../TextureManager.h"
+#include "../../FontManager.h"
 
 namespace re::edit {
 

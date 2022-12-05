@@ -8,7 +8,7 @@
 #include <backends/imgui_impl_metal.h>
 #include <backends/regui_impl_metal.h>
 #include <cstdio>
-#include "../Application.h"
+#include "../GLFWContext.h"
 #include "MTLManagers.h"
 #include "NSUserDefaultsManager.h"
 #include "nfd.h"
@@ -32,115 +32,13 @@
 
 #include "QuartzCore/QuartzCore.hpp"
 
-static void glfw_error_callback(int error, const char *description)
-{
-  fprintf(stderr, "Glfw Error %d: %s\n", error, description);
-}
-
-//! getFontDpiScale
-static float getFontDpiScale(GLFWwindow *iWindow)
-{
-  float dpiScale{1.0f};
-
-  if(iWindow)
-    glfwGetWindowContentScale(iWindow, &dpiScale, nullptr);
-  else
-  {
-    auto monitor = glfwGetPrimaryMonitor();
-    if(monitor)
-    {
-      glfwGetMonitorContentScale(monitor, &dpiScale, nullptr);
-    }
-  }
-  return dpiScale;
-}
-
-//! onWindowContentScaleChange
-static void onWindowContentScaleChange(GLFWwindow* iWindow, float iXscale, float iYscale)
-{
-  auto application = reinterpret_cast<re::edit::Application *>(glfwGetWindowUserPointer(iWindow));
-  application->onNativeWindowFontScaleChange(iXscale);
-}
-
-//! onWindowClose
-static void onWindowClose(GLFWwindow* iWindow)
-{
-  auto application = reinterpret_cast<re::edit::Application *>(glfwGetWindowUserPointer(iWindow));
-  application->maybeExit();
-  if(application->running())
-    glfwSetWindowShouldClose(iWindow, GLFW_FALSE);
-}
-
-//static GLFWmonitor* findMonitor(GLFWwindow *iWindow)
-//{
-//
-//  int monitorCount;
-//  auto monitors = glfwGetMonitors(&monitorCount);
-//  if(monitorCount == 0)
-//    return glfwGetPrimaryMonitor();
-//
-//  if(monitorCount == 1)
-//    return monitors[0];
-//
-//  int x, y;
-//  glfwGetWindowPos(iWindow, &x, &y);
-//
-//    /*
-//   * from collections import namedtuple
-//Rectangle = namedtuple('Rectangle', 'xmin ymin xmax ymax')
-//
-//ra = Rectangle(3., 3., 5., 5.)
-//rb = Rectangle(1., 1., 4., 3.5)
-//# intersection here is (3, 3, 4, 3.5), or an area of 1*.5=.5
-//
-//def area(a, b):  # returns None if rectangles don't intersect
-//    dx = min(a.xmax, b.xmax) - max(a.xmin, b.xmin)
-//    dy = min(a.ymax, b.ymax) - max(a.ymin, b.ymin)
-//    if (dx>=0) and (dy>=0):
-//        return dx*dy
-//   */
-//
-//}
-
-static void centerWindow(GLFWwindow *iWindow)
-{
-  int windowWidth, windowHeight;
-  glfwGetWindowSize(iWindow, &windowWidth, &windowHeight);
-
-  {
-    int x, y;
-    glfwGetWindowPos(iWindow, &x, &y);
-    RE_EDIT_LOG_DEBUG("pos=%dx%d", x, y);
-  }
-
-//  int windowPosX, windowPosY;
-//  glfg(iWindow, &windowWidth, &windowHeight);
-
-  auto monitor = glfwGetPrimaryMonitor();
-  auto name = glfwGetMonitorName(monitor);
-//    int xpos, ypos;
-//    glfwGetMonitorPos(monitor, &xpos, &ypos);
-
-  int xpos, ypos, width, height;
-  glfwGetMonitorWorkarea(monitor, &xpos, &ypos, &width, &height);
-
-  auto availableWidth = width - xpos;
-  auto availableHeight = height - ypos;
-
-  auto windowPosX = (availableWidth - windowWidth) / 2 + xpos;
-  auto windowPosY = (availableHeight - windowHeight) / 2 + ypos;
-
-  glfwSetWindowPos(iWindow, windowPosX, windowPosY);
-}
-
-class MacOsContext : public re::edit::Application::Context
+class MacOsContext : public re::edit::platform::GLFWContext
 {
 public:
   explicit MacOsContext(std::shared_ptr<re::edit::NativePreferencesManager> iPreferencesManager,
                         GLFWwindow *iWindow,
                         MTL::Device *iDevice) :
-    Context(std::move(iPreferencesManager)),
-    fWindow{iWindow},
+    GLFWContext(std::move(iPreferencesManager), iWindow),
     fDevice{iDevice}
     {
       // empty
@@ -156,36 +54,7 @@ public:
     return std::make_shared<re::edit::MTLFontManager>(fDevice);
   }
 
-  ImVec4 getWindowPositionAndSize() const override
-  {
-    ImVec4 res{};
-    int x,y;
-    glfwGetWindowPos(fWindow, &x, &y);
-    res.x = static_cast<float>(x);
-    res.y = static_cast<float>(y);
-    glfwGetWindowSize(fWindow, &x, &y);
-    res.z = static_cast<float>(x);
-    res.w = static_cast<float>(y);
-    return res;
-  }
-
-  void setWindowPositionAndSize(std::optional<ImVec2> const &iPosition, ImVec2 const &iSize) const override
-  {
-    glfwSetWindowSize(fWindow, static_cast<int>(iSize.x), static_cast<int>(iSize.y));
-    if(iPosition)
-      glfwSetWindowPos(fWindow, static_cast<int>(iPosition->x), static_cast<int>(iPosition->y));
-    else
-      centerWindow();
-  }
-
-  void centerWindow() const override
-  {
-    ::centerWindow(fWindow);
-  }
-
-
 private:
-  GLFWwindow *fWindow;
   MTL::Device *fDevice;
 };
 
@@ -213,9 +82,8 @@ int doMain(int argc, char **argv)
 
   auto config = re::edit::Application::parseArgs(preferencesManager.get(), std::move(args));
 
-  // Setup window
-  glfwSetErrorCallback(glfw_error_callback);
-  if(!glfwInit())
+  // init glfw
+  if(!re::edit::platform::GLFWContext::initGLFW())
     return 1;
 
   // Create window with graphics context
@@ -244,7 +112,9 @@ int doMain(int argc, char **argv)
 
   auto renderPassDescriptor = MTL::RenderPassDescriptor::alloc()->init();
 
-  re::edit::Application application{std::make_shared<MacOsContext>(preferencesManager, window, device), config};
+  auto ctx = std::make_shared<MacOsContext>(preferencesManager, window, device);
+
+  re::edit::Application application{ctx, config};
 
   if(NFD_Init() != NFD_OKAY)
   {
@@ -252,30 +122,9 @@ int doMain(int argc, char **argv)
     return 1;
   }
 
-  application.onNativeWindowFontScaleChange(getFontDpiScale(window));
-  glfwSetWindowUserPointer(window, &application);
-  glfwSetWindowContentScaleCallback(window, onWindowContentScaleChange);
-  glfwSetWindowCloseCallback(window, onWindowClose);
-
-  {
-    int x, y;
-    glfwGetWindowPos(window, &x, &y);
-    RE_EDIT_LOG_DEBUG("pos=%dx%d", x, y);
-  }
-
-  {
-    auto monitor = glfwGetPrimaryMonitor();
-    auto name = glfwGetMonitorName(monitor);
-//    int xpos, ypos;
-//    glfwGetMonitorPos(monitor, &xpos, &ypos);
-
-    int xpos, ypos, width, height;
-    glfwGetMonitorWorkarea(monitor, &xpos, &ypos, &width, &height);
-
-    RE_EDIT_LOG_DEBUG("monitor=%s, pos=%dx%d, size=%dx%d", name, xpos, ypos, width, height);
-  }
-
-  centerWindow(window);
+  application.onNativeWindowFontScaleChange(ctx->getFontDpiScale());
+  ctx->setupCallbacks(&application);
+  ctx->centerWindow();
 
   // Main loop
   while(application.running())

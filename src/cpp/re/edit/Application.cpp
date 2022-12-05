@@ -158,7 +158,6 @@ void Application::savePreferences(UserError *oErrors) noexcept
     auto mgr = fContext->getPreferencesManager();
     if(mgr)
     {
-      RE_EDIT_LOG_DEBUG("saving preferences");
       if(fAppContext)
       {
         auto deviceConfig = fAppContext->getConfig();

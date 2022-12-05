@@ -125,6 +125,8 @@ set(re-edit_BUILD_SOURCES
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/lua/Device2D.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/lua/HDGui2D.h"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/lua/HDGui2D.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/platform/GLFWContext.h"
+    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/platform/GLFWContext.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/AppContext.h"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/AppContext.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/Application.h"
@@ -174,11 +176,11 @@ set(RE_EDIT_FONTS_DIR "${CMAKE_CURRENT_LIST_DIR}/external/fonts")
 
 # Defines the macos main
 if(APPLE)
-  list(APPEND re-edit_BUILD_SOURCES "${re-edit_CPP_SRC_DIR}/re/edit/macos/MTLManagers.cpp" "${re-edit_CPP_SRC_DIR}/re/edit/macos/NSUserDefaultsManager.mm")
-  set(re-edit_MAIN_SRC "${re-edit_CPP_SRC_DIR}/re/edit/macos/main.cpp" "${re-edit_CPP_SRC_DIR}/re/edit/macos/metal.cpp")
+  list(APPEND re-edit_BUILD_SOURCES "${re-edit_CPP_SRC_DIR}/re/edit/platform/macos/MTLManagers.cpp" "${re-edit_CPP_SRC_DIR}/re/edit/platform/macos/NSUserDefaultsManager.mm")
+  set(re-edit_MAIN_SRC "${re-edit_CPP_SRC_DIR}/re/edit/platform/macos/main.cpp" "${re-edit_CPP_SRC_DIR}/re/edit/platform/macos/metal.cpp")
 elseif(WIN32)
-  list(APPEND re-edit_BUILD_SOURCES "${re-edit_CPP_SRC_DIR}/re/edit/windows/OGL3Managers.cpp")
-  set(re-edit_MAIN_SRC "${re-edit_CPP_SRC_DIR}/re/edit/windows/main.cpp")
+  list(APPEND re-edit_BUILD_SOURCES "${re-edit_CPP_SRC_DIR}/re/edit/platform/windows/OGL3Managers.cpp")
+  set(re-edit_MAIN_SRC "${re-edit_CPP_SRC_DIR}/re/edit/platform/windows/main.cpp")
 endif()
 
 # Build the static library
