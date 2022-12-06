@@ -81,7 +81,7 @@ std::string PreferencesManager::getAsLua(config::Global const &iConfig)
   ["imgui.ini"] = [==[%s]==],
   native_window_pos = { %d, %d },
   native_window_size = { %d, %d },
-  last_access_time = %ld
+  last_access_time = %lld
 }
 )",
                        index,

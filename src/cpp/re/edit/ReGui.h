@@ -25,6 +25,7 @@
 #include "Constants.h"
 #include <IconsFAReEdit.h>
 #include <optional>
+#include <functional>
 
 static constexpr ImVec2 operator*(const ImVec2& lhs, const float rhs)              { return {lhs.x * rhs, lhs.y * rhs}; }
 static constexpr ImVec2 operator/(const ImVec2& lhs, const float rhs)              { return {lhs.x / rhs, lhs.y / rhs}; }

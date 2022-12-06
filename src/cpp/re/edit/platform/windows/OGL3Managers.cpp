@@ -18,7 +18,6 @@
 
 #include <utility>
 #include "OGL3Managers.h"
-#include "../Errors.h"
 #include "imgui_impl_opengl3_loader.h"
 #include "imgui_impl_opengl3.h"
 

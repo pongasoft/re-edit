@@ -23,7 +23,7 @@
 
 namespace re::edit::lua::Test {
 
-inline std::string getResourceFile(std::string const &iFilename)
+inline fs::path getResourceFile(std::string const &iFilename)
 {
   return fs::path(RE_EDIT_PROJECT_DIR) / "test" / "resources" / "re" / "edit" / "lua" / iFilename;
 }
