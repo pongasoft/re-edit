@@ -56,14 +56,15 @@ namespace re::edit::platform {
 //------------------------------------------------------------------------
 ImVec4 GLFWContext::getWindowPositionAndSize() const
 {
+  auto scale = getFontDpiScale();
   ImVec4 res{};
   int x,y;
   glfwGetWindowPos(fWindow, &x, &y);
-  res.x = static_cast<float>(x);
-  res.y = static_cast<float>(y);
+  res.x = x / scale;
+  res.y = y / scale;
   glfwGetWindowSize(fWindow, &x, &y);
-  res.z = static_cast<float>(x);
-  res.w = static_cast<float>(y);
+  res.z = x / scale;
+  res.w = y / scale;
   return res;
 }
 
@@ -72,9 +73,11 @@ ImVec4 GLFWContext::getWindowPositionAndSize() const
 //------------------------------------------------------------------------
 void GLFWContext::setWindowPositionAndSize(std::optional<ImVec2> const &iPosition, ImVec2 const &iSize) const
 {
-  glfwSetWindowSize(fWindow, static_cast<int>(iSize.x), static_cast<int>(iSize.y));
+  auto scale = getFontDpiScale();
+
+  glfwSetWindowSize(fWindow, static_cast<int>(iSize.x * scale), static_cast<int>(iSize.y * scale));
   if(iPosition)
-    glfwSetWindowPos(fWindow, static_cast<int>(iPosition->x), static_cast<int>(iPosition->y));
+    glfwSetWindowPos(fWindow, static_cast<int>(iPosition->x * scale), static_cast<int>(iPosition->y * scale));
   else
     centerWindow();
 }
@@ -113,10 +116,20 @@ void GLFWContext::setWindowTitle(std::string const &iTitle) const
 //------------------------------------------------------------------------
 // GLFWContext::getFontDpiScale
 //------------------------------------------------------------------------
-float GLFWContext::getFontDpiScale()
+float GLFWContext::getFontDpiScale(GLFWwindow *iWindow)
 {
   float dpiScale{1.0f};
-  glfwGetWindowContentScale(fWindow, &dpiScale, nullptr);
+
+  if(iWindow)
+    glfwGetWindowContentScale(iWindow, &dpiScale, nullptr);
+  else
+  {
+    auto monitor = glfwGetPrimaryMonitor();
+    if(monitor)
+    {
+      glfwGetMonitorContentScale(monitor, &dpiScale, nullptr);
+    }
+  }
   return dpiScale;
 }
 

@@ -43,9 +43,10 @@ public:
 
   void setupCallbacks(Application *iApplication);
 
-  float getFontDpiScale();
+  float getFontDpiScale() const { return getFontDpiScale(fWindow); }
 
   static int initGLFW();
+  static float getFontDpiScale(GLFWwindow *iWindow);
 
 protected:
   GLFWwindow *fWindow;

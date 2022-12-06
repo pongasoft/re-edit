@@ -6,13 +6,14 @@
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
-#include "../../Application.h"
 #include "OGL3Managers.h"
 #include <stdio.h>
 #include <shellscalingapi.h>
 #include <winuser.h>
 #include "nfd.h"
 #include <version.h>
+#include "LocalSettingsManager.h"
+#include "../GLFWContext.h"
 
 #if defined(IMGUI_IMPL_OPENGL_ES2)
 #include <GLES2/gl2.h>
@@ -31,54 +32,31 @@
 //#pragma comment(lib, "legacy_stdio_definitions")
 //#endif
 
-//! glfw_error_callback
-static void glfw_error_callback(int error, const char *description)
+class WindowsContext : public re::edit::platform::GLFWContext
 {
-  fprintf(stderr, "Glfw Error %d: %s\n", error, description);
-}
-
-//! getFontDpiScale
-static float getFontDpiScale(GLFWwindow *iWindow)
-{
-  float dpiScale{1.0f};
-
-  if(iWindow)
-    glfwGetWindowContentScale(iWindow, &dpiScale, nullptr);
-  else
+public:
+  explicit WindowsContext(std::shared_ptr<re::edit::NativePreferencesManager> iPreferencesManager,
+                          GLFWwindow *iWindow,
+                          int iGLMaxTextureSize) :
+    GLFWContext(std::move(iPreferencesManager), iWindow),
+    fGLMaxTextureSize{iGLMaxTextureSize}
   {
-    auto monitor = glfwGetPrimaryMonitor();
-    if(monitor)
-    {
-      glfwGetMonitorContentScale(monitor, &dpiScale, nullptr);
-    }
+    // empty
   }
-  return dpiScale;
-}
 
-//! onWindowContentScaleChange
-static void onWindowContentScaleChange(GLFWwindow* iWindow, float iXscale, float iYscale)
-{
-  re::edit::Application *application = reinterpret_cast<re::edit::Application *>(glfwGetWindowUserPointer(iWindow));
-  application->onNativeWindowFontDpiScaleChange(iXscale);
-  fprintf(stdout, "onWindowContentScaleChange %f: %f\n", iXscale, iYscale);
-}
+  std::shared_ptr<re::edit::TextureManager> newTextureManager() const override
+  {
+    return std::make_shared<re::edit::OGL3TextureManager>(fGLMaxTextureSize);
+  }
 
-//! onWindowSizeChange
-static void onWindowSizeChange(GLFWwindow* iWindow, int iWidth, int iHeight)
-{
-  re::edit::Application *application = reinterpret_cast<re::edit::Application *>(glfwGetWindowUserPointer(iWindow));
-  auto scale = getFontDpiScale(iWindow);
-  application->setNativeWindowSize(static_cast<int>(iWidth / scale), static_cast<int>(iHeight /scale));
-}
+  std::shared_ptr<re::edit::NativeFontManager> newNativeFontManager() const override
+  {
+    return std::make_shared<re::edit::OGL3FontManager>();
+  }
 
-//! onWindowClose
-static void onWindowClose(GLFWwindow* iWindow)
-{
-  auto application = reinterpret_cast<re::edit::Application *>(glfwGetWindowUserPointer(iWindow));
-  application->maybeExit();
-  if(application->running())
-    glfwSetWindowShouldClose(iWindow, GLFW_FALSE);
-}
+private:
+  int fGLMaxTextureSize;
+};
 
 static void printInfo(GLFWwindow *iWindow)
 {
@@ -140,27 +118,24 @@ int doMain(int argc, char **argv)
   ImGui::StyleColorsDark();
   //ImGui::StyleColorsClassic();
 
-  re::edit::Application application{};
+  auto preferencesManager = std::make_shared<re::edit::LocalSettingsManager>();
 
   std::vector<std::string> args{};
   for(int i = 1; i < argc; i++)
     args.emplace_back(argv[i]);
 
-  auto config = application.parseArgs(std::move(args));
-  if(!config)
+  auto config = re::edit::Application::parseArgs(preferencesManager.get(), std::move(args));
+
+  // init glfw
+  if(!re::edit::platform::GLFWContext::initGLFW())
     return 1;
 
-  // Setup window
-  glfwSetErrorCallback(glfw_error_callback);
-  if(!glfwInit())
-    return 1;
-
-  auto scale = getFontDpiScale(nullptr); // primary monitor
+  auto scale = re::edit::platform::GLFWContext::getFontDpiScale(nullptr); // primary monitor
 
   // Create window with graphics context
-  GLFWwindow *window = glfwCreateWindow(config->fNativeWindowWidth * scale,
-                                        config->fNativeWindowHeight * scale,
-                                        "re-edit",
+  GLFWwindow *window = glfwCreateWindow(re::edit::config::kWelcomeWindowWidth * scale,
+                                        re::edit::config::kWelcomeWindowHeight * scale,
+                                        re::edit::config::kWelcomeWindowTitle,
                                         nullptr,
                                         nullptr);
   if(window == nullptr)
@@ -178,12 +153,9 @@ int doMain(int argc, char **argv)
 
   printInfo(window);
 
-  if(!application.init(*config,
-                       std::make_shared<re::edit::OGL3TextureManager>(glMaxTextureSize),
-                       std::make_shared<re::edit::OGL3FontManager>()))
-  {
-    fprintf(stderr, "An error was detected during initialization...");
-  }
+  auto ctx = std::make_shared<WindowsContext>(preferencesManager, window, glMaxTextureSize);
+
+  re::edit::Application application{ctx, config};
 
   if(NFD_Init() != NFD_OKAY)
   {
@@ -191,12 +163,9 @@ int doMain(int argc, char **argv)
     return 1;
   }
 
-  glfwSetWindowUserPointer(window, &application);
-  glfwSetWindowContentScaleCallback(window, onWindowContentScaleChange);
-  glfwSetWindowSizeCallback(window, onWindowSizeChange);
-  glfwSetWindowCloseCallback(window, onWindowClose);
-
-  application.onNativeWindowFontDpiScaleChange(getFontDpiScale(window));
+  application.onNativeWindowFontDpiScaleChange(ctx->getFontDpiScale());
+  ctx->setupCallbacks(&application);
+  ctx->centerWindow();
 
   // Main loop
   while(application.running())

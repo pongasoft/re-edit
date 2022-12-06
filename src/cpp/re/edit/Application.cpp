@@ -483,10 +483,12 @@ static int getFrameNumberFromDeviceType(std::string const &iType)
 //------------------------------------------------------------------------
 void Application::renderWelcome()
 {
-  static constexpr float kPadding = 20.0f;
-  static constexpr ImVec2 kButtonSize{120.0f, 0};
-  static auto constexpr kLogoModifier = ReGui::Modifier{}
-    .padding(10.0f)
+  auto scale = getCurrentFontDpiScale();
+
+  const float padding = 20.0f * scale;
+  const ImVec2 buttonSize{120.0f * scale, 0};
+  const auto logoModifier = ReGui::Modifier{}
+    .padding(10.0f * scale)
     .backgroundColor(ReGui::GetColorU32(toFloatColor(78, 78, 78)))
     .borderColor(ReGui::kWhiteColorU32);
 
@@ -495,8 +497,9 @@ void Application::renderWelcome()
 
   auto viewport = ImGui::GetWindowViewport();
 
+
   ImGui::PushStyleVar(ImGuiStyleVar_WindowTitleAlign, {0.5f, 0.5f});
-  ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, {kPadding, kPadding});
+  ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, {padding, padding});
 
   ImGui::SetNextWindowSize(viewport->Size);
   ImGui::SetNextWindowPos({});
@@ -505,10 +508,10 @@ void Application::renderWelcome()
   {
     auto textSizeHeight = ImGui::CalcTextSize("R").y;
 
-    ReGui::Box(kLogoModifier, [this, textSizeHeight]() {
+    ReGui::Box(logoModifier, [this, textSizeHeight]() {
       auto logo = fTextureManager->getTexture(BuiltIns::kLogoDark.fKey);
-      auto computedHeight = 2.0f * textSizeHeight + ImGui::GetStyle().ItemSpacing.y;
-      logo->Item({}, {computedHeight, computedHeight}, getCurrentFontDpiScale(), 0);
+      auto computedHeight = 2.0f * textSizeHeight + (ImGui::GetStyle().ItemSpacing.y);
+      logo->Item({}, {computedHeight, computedHeight});
 
       ImGui::SameLine();
 
@@ -520,16 +523,16 @@ void Application::renderWelcome()
       }
     });
 
-    ImGui::SameLine(0, kPadding);
+    ImGui::SameLine(0, padding);
 
     ImGui::BeginGroup();
     {
-      if(ImGui::Button("Open", kButtonSize))
+      if(ImGui::Button("Open", buttonSize))
       {
         renderLoadDialogBlocking();
       }
       ImGui::SameLine();
-      if(ImGui::Button("Quit", kButtonSize))
+      if(ImGui::Button("Quit", buttonSize))
       {
         exit();
       }
@@ -555,7 +558,7 @@ void Application::renderWelcome()
 
           ImGui::Spacing();
           ImGui::AlignTextToFramePadding();
-          icon->Item({}, {buttonHeight, buttonHeight}, getCurrentFontDpiScale(), impl::getFrameNumberFromDeviceType(item.fType));
+          icon->Item({}, {buttonHeight, buttonHeight}, 1.0f, impl::getFrameNumberFromDeviceType(item.fType));
           ImGui::SameLine();
           if(ImGui::Button(fmt::printf("%s\n%s", item.fName, item.fPath).c_str()))
           {

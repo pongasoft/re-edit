@@ -179,7 +179,7 @@ if(APPLE)
   list(APPEND re-edit_BUILD_SOURCES "${re-edit_CPP_SRC_DIR}/re/edit/platform/macos/MTLManagers.cpp" "${re-edit_CPP_SRC_DIR}/re/edit/platform/macos/NSUserDefaultsManager.mm")
   set(re-edit_MAIN_SRC "${re-edit_CPP_SRC_DIR}/re/edit/platform/macos/main.cpp" "${re-edit_CPP_SRC_DIR}/re/edit/platform/macos/metal.cpp")
 elseif(WIN32)
-  list(APPEND re-edit_BUILD_SOURCES "${re-edit_CPP_SRC_DIR}/re/edit/platform/windows/OGL3Managers.cpp")
+  list(APPEND re-edit_BUILD_SOURCES "${re-edit_CPP_SRC_DIR}/re/edit/platform/windows/OGL3Managers.cpp" "${re-edit_CPP_SRC_DIR}/re/edit/platform/windows/LocalSettingsManager.cpp")
   set(re-edit_MAIN_SRC "${re-edit_CPP_SRC_DIR}/re/edit/platform/windows/main.cpp")
 endif()
 
