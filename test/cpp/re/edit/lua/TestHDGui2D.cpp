@@ -387,7 +387,22 @@ public:
     return nullptr;
   }
 
-  void setWindowSize(int iWidth, int iHeight) const override
+  ImVec4 getWindowPositionAndSize() const override
+  {
+    return ImVec4();
+  }
+
+  void setWindowPositionAndSize(std::optional<ImVec2> const &iPosition, ImVec2 const &iSize) const override
+  {
+
+  }
+
+  void centerWindow() const override
+  {
+
+  }
+
+  void setWindowTitle(std::string const &iTitle) const override
   {
 
   }
