@@ -23,6 +23,7 @@
 #include <vector>
 #include <functional>
 #include <optional>
+#include <memory>
 
 namespace re::edit::ReGui {
 

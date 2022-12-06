@@ -17,18 +17,50 @@
  */
 
 #include "LocalSettingsManager.h"
-#include <windows.storage.h>
+#include "../../Application.h"
+#include "../../Errors.h"
+#include "../../fs.h"
 
 namespace re::edit {
+
+namespace impl {
+
+//------------------------------------------------------------------------
+// impl::getOrCreateSettingsFolder
+//------------------------------------------------------------------------
+std::optional<fs::path> getOrCreateSettingsFolder()
+{
+  char *pLocalAppData;
+  size_t len;
+  errno_t err = _dupenv_s(&pLocalAppData, &len, "localappdata");
+  if(err) return std::nullopt; // this would be weird: no %LOCALAPPDATA% variable
+  std::string sLocalAppData{pLocalAppData};
+  free(pLocalAppData); // it is the responsibility of the caller to delete this!
+
+  fs::path localAppData{sLocalAppData};
+
+  if(!fs::exists(localAppData))
+    return std::nullopt; // this would be weird: the local app data folder does not exist
+
+  auto settingsFolder = localAppData / "pongasoft" / "re-edit";
+  if(!fs::exists(settingsFolder))
+    fs::create_directories(settingsFolder);
+
+  return settingsFolder;
+}
+
+}
 
 //------------------------------------------------------------------------
 // LocalSettingsManager::load
 //------------------------------------------------------------------------
 std::optional<std::string> LocalSettingsManager::load() const
 {
-//  Windows::Storage::ApplicationDataContainer localSettings{
-//    Windows::Storage::ApplicationData::Current().LocalSettings() };
-  return std::nullopt;
+  auto settingsFolder = impl::getOrCreateSettingsFolder();
+  if(settingsFolder)
+    return Application::readFile(*settingsFolder / "preferences.lua");
+  else
+    return std::nullopt;
 }
 
 //------------------------------------------------------------------------
@@ -36,6 +68,9 @@ std::optional<std::string> LocalSettingsManager::load() const
 //------------------------------------------------------------------------
 void LocalSettingsManager::save(std::string const &iPreferences) const
 {
+  auto settingsFolder = impl::getOrCreateSettingsFolder();
+  if(settingsFolder)
+    Application::saveFile(*settingsFolder / "preferences.lua", iPreferences);
 }
 
 }

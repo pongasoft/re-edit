@@ -228,6 +228,7 @@ void Application::init()
     io.IniFilename = nullptr; // don't use imgui.ini file
     io.WantSaveIniSettings = false; // will be "notified" when it changes
     io.ConfigWindowsMoveFromTitleBarOnly = true;
+    fFontManager->requestNewFont({"JetBrains Mono Regular", BuiltInFont::kJetBrainsMonoRegular, fConfig.fFontSize});
   }
 }
 
@@ -272,9 +273,11 @@ void Application::loadProject(fs::path const &iRoot)
     config::Device c = fConfig.getDeviceConfigFromHistory(iRoot.u8string());
 
     fContext->setWindowPositionAndSize(c.fNativeWindowPos, c.fNativeWindowSize);
-    fContext->setWindowTitle(fmt::printf("re-edit - %s", c.fName));
+//    fContext->setWindowTitle(fmt::printf("re-edit - %s", c.fName));
 
     initAppContext(iRoot, c);
+
+    fContext->setWindowTitle(fmt::printf("re-edit - %s", fAppContext->getConfig().fName));
 
     savePreferences();
   }
@@ -504,7 +507,7 @@ void Application::renderWelcome()
   ImGui::SetNextWindowSize(viewport->Size);
   ImGui::SetNextWindowPos({});
 
-  if(ImGui::Begin(config::kWelcomeWindowTitle, nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar))
+  if(ImGui::Begin(config::kWelcomeWindowTitle, nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_HorizontalScrollbar))
   {
     auto textSizeHeight = ImGui::CalcTextSize("R").y;
 
@@ -808,32 +811,43 @@ void Application::maybeExit()
 }
 
 //------------------------------------------------------------------------
+// Application::readFile
+//------------------------------------------------------------------------
+std::optional<std::string> Application::readFile(fs::path const &iFile, UserError *oErrors)
+{
+  try
+  {
+    // we check if the content has changed as there is no reason to overwrite (which changes the modified time)
+    if(fs::exists(iFile) && !fs::is_directory(iFile))
+    {
+      const auto size = fs::file_size(iFile);
+      std::ifstream contentFile(iFile, std::ios::in | std::ios::binary);
+      std::string content(size, '\0');
+      contentFile.read(content.data(), static_cast<std::streamsize>(size));
+      return content;
+    }
+  }
+  catch(...)
+  {
+    if(oErrors)
+      oErrors->add("Error while reading file %s: %s", iFile, what(std::current_exception()));
+  }
+
+  return std::nullopt;
+}
+
+//------------------------------------------------------------------------
 // Application::saveFile
 //------------------------------------------------------------------------
 void Application::saveFile(fs::path const &iFile, std::string const &iContent, UserError *oErrors)
 {
   try
   {
-    // we check if the content has changed as there is no reason to overwrite (which changes the modified time)
-    if(fs::exists(iFile))
+    auto originalContent = readFile(iFile);
+    if(originalContent && *originalContent == iContent)
     {
-      try
-      {
-        const auto size = fs::file_size(iFile);
-        std::ifstream originalFile(iFile, std::ios::in | std::ios::binary);
-        std::string originalContent(size, '\0');
-        originalFile.read(originalContent.data(), static_cast<std::streamsize>(size));
-        if(originalContent == iContent)
-        {
-          // no change => no save
-          return;
-        }
-      }
-      catch(...)
-      {
-        // we cannot read the previous file, but it's fine: we will just overwrite it
-        RE_EDIT_LOG_DEBUG("Error while reading file %s: %s", iFile, what(std::current_exception()));
-      }
+      // no change => no save
+      return;
     }
 
     // if the parent directory does not exist, just create it
@@ -843,7 +857,7 @@ void Application::saveFile(fs::path const &iFile, std::string const &iContent, U
 
     // we do it in 2 steps since step 1 is the one that is more likely to fail
     // 1. we save in a new file
-    auto tmpFile = dir / fmt::printf("%s.re_edit.tmp", iFile.filename());
+    auto tmpFile = dir / fmt::printf("%s.re_edit.tmp", iFile.filename().u8string());
     std::ofstream f{tmpFile};
     f.exceptions(std::ofstream::ios_base::failbit | std::ofstream::ios_base::badbit);
     f << iContent;

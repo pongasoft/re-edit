@@ -103,6 +103,7 @@ public:
   constexpr bool hasException() const { return fState == State::kException; }
 
   static void saveFile(fs::path const &iFile, std::string const &iContent, UserError *oErrors = nullptr);
+  static std::optional<std::string> readFile(fs::path const &iFile, UserError *oErrors = nullptr);
   static std::string what(std::exception_ptr const &p);
 
 public:
