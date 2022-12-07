@@ -54,6 +54,11 @@ public:
     return std::make_shared<re::edit::MTLFontManager>(fDevice);
   }
 
+  float getScale() const override
+  {
+    return 1.0;
+  }
+
 private:
   MTL::Device *fDevice;
 };

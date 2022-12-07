@@ -54,6 +54,11 @@ public:
     return std::make_shared<re::edit::OGL3FontManager>();
   }
 
+  float getScale() const override
+  {
+    return getFontDpiScale();
+  }
+
 private:
   int fGLMaxTextureSize;
 };

@@ -56,15 +56,15 @@ namespace re::edit::platform {
 //------------------------------------------------------------------------
 ImVec4 GLFWContext::getWindowPositionAndSize() const
 {
-  auto scale = getFontDpiScale();
+  auto scale = getScale();
   ImVec4 res{};
   int x,y;
   glfwGetWindowPos(fWindow, &x, &y);
-  res.x = x / scale;
-  res.y = y / scale;
+  res.x = static_cast<float>(x) / scale;
+  res.y = static_cast<float>(y) / scale;
   glfwGetWindowSize(fWindow, &x, &y);
-  res.z = x / scale;
-  res.w = y / scale;
+  res.z = static_cast<float>(x) / scale;
+  res.w = static_cast<float>(y) / scale;
   return res;
 }
 
@@ -73,7 +73,7 @@ ImVec4 GLFWContext::getWindowPositionAndSize() const
 //------------------------------------------------------------------------
 void GLFWContext::setWindowPositionAndSize(std::optional<ImVec2> const &iPosition, ImVec2 const &iSize) const
 {
-  auto scale = getFontDpiScale();
+  auto scale = getScale();
 
   glfwSetWindowSize(fWindow, static_cast<int>(iSize.x * scale), static_cast<int>(iSize.y * scale));
   if(iPosition)
