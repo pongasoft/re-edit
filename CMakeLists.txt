@@ -210,7 +210,7 @@ target_link_libraries("${target}_lib" PUBLIC imgui stb-image re-mock nfd efsw)
 target_compile_definitions("${target}_lib" PUBLIC ENABLE_RE_EDIT_INTERNAL_ASSERT=1)
 
 # Build the executable
-add_executable(${target} MACOSX_BUNDLE "${re-edit_MAIN_SRC}")
+add_executable(${target} WIN32 MACOSX_BUNDLE "${re-edit_MAIN_SRC}")
 target_link_libraries(${target} PRIVATE "${target}_lib")
 if(APPLE)
   set_target_properties(${target} PROPERTIES

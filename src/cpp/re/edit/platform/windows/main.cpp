@@ -240,3 +240,25 @@ int main(int argc, char **argv)
     return 1;
   }
 }
+
+INT WINAPI WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,
+                   PSTR lpCmdLine, INT nCmdShow)
+{
+  std::string mainExe("re-edit.exe");
+
+  if(lpCmdLine && !std::string(lpCmdLine).empty())
+  {
+    std::string args(lpCmdLine);
+    char *argv[2];
+    argv[0] = mainExe.data();
+    argv[1] = args.data();
+    return main(2, argv);
+  }
+  else
+  {
+    char *argv[1];
+    argv[0] = mainExe.data();
+    return main(1, argv);
+  }
+
+}
