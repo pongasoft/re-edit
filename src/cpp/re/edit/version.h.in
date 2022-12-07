@@ -28,6 +28,14 @@ constexpr auto kGitTag = "@re-edit_GIT_TAG@";
 constexpr auto kArchiveArchitecture = "@re-edit_ARCHIVE_ARCHITECTURE@";
 constexpr auto kReMockVersion = "@re-mock_GIT_TAG@";
 
+#define D_RE_EDIT_VERSION_MAJOR_INT @re-edit_VERSION_MAJOR@
+#define D_RE_EDIT_VERSION_MINOR_INT @re-edit_VERSION_MINOR@
+#define D_RE_EDIT_VERSION_PATCH_INT @re-edit_VERSION_PATCH@
+#define D_RE_EDIT_VERSION_STR "@re-edit_VERSION@"
+#define D_RE_EDIT_ARCHITECTURE_STR "@re-edit_ARCHIVE_ARCHITECTURE@"
+
+#define D_RE_EDIT_ICON_FILE "@re-edit_ICON_FILE@"
+
 }
 
 #endif

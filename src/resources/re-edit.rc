@@ -1,0 +1,49 @@
+#include <windows.h>
+#include <version.h>
+
+MAINICON ICON D_RE_EDIT_ICON_FILE
+
+#ifndef NDEBUG
+#define VER_DEBUG                   VS_FF_DEBUG
+#else
+#define VER_DEBUG                   0
+#endif
+
+#define D_RE_EDIT_FILE_DESCRIPTION "re-edit by pongasoft (" D_RE_EDIT_ARCHITECTURE_STR ")\0"
+
+VS_VERSION_INFO VERSIONINFO
+FILEVERSION     D_RE_EDIT_VERSION_MAJOR_INT,D_RE_EDIT_VERSION_MINOR_INT,D_RE_EDIT_VERSION_PATCH_INT,0
+PRODUCTVERSION  D_RE_EDIT_VERSION_MAJOR_INT,D_RE_EDIT_VERSION_MINOR_INT,D_RE_EDIT_VERSION_PATCH_INT,0
+FILEFLAGSMASK   VS_FFI_FILEFLAGSMASK
+FILEFLAGS       VER_DEBUG
+FILEOS          VOS__WINDOWS32
+FILETYPE        VFT_APP
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904E4"
+        BEGIN
+            VALUE "CompanyName",      "pongasoft\0"
+            VALUE "FileDescription",  D_RE_EDIT_FILE_DESCRIPTION
+            VALUE "FileVersion",      D_RE_EDIT_VERSION_STR "\0"
+            VALUE "InternalName",     "re-edit\0"
+            VALUE "LegalCopyright",   "© 2022 pongasoft\0"
+            VALUE "OriginalFilename", "re-edit.exe\0"
+            VALUE "ProductName",      D_RE_EDIT_FILE_DESCRIPTION
+            VALUE "ProductVersion",   D_RE_EDIT_VERSION_STR "\0"
+        END
+    END
+
+    BLOCK "VarFileInfo"
+    BEGIN
+        /* The following line should only be modified for localized versions.     */
+        /* It consists of any number of WORD,WORD pairs, with each pair           */
+        /* describing a language,codepage combination supported by the file.      */
+        /*                                                                        */
+        /* For example, a file might have values "0x409,1252" indicating that it  */
+        /* supports English language (0x409) in the Windows ANSI codepage (1252). */
+
+        VALUE "Translation", 0x409, 1252
+
+    END
+END

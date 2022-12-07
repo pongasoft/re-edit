@@ -85,6 +85,7 @@ public:
 
   inline float getCurrentFontSize() const { return fFontManager->getCurrentFont().fSize; }
   inline float getCurrentFontDpiScale() const { return fFontManager->getCurrentFontDpiScale(); }
+  std::shared_ptr<Texture> getLogo() const;
 
   void onNativeWindowFontDpiScaleChange(float iFontDpiScale);
   void onNativeWindowFontScaleChange(float iFontScale);

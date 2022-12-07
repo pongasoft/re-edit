@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.17)
+cmake_minimum_required(VERSION 3.20)
 
 set(re-edit_VERSION_MAJOR 0)
 set(re-edit_VERSION_MINOR 9)
@@ -115,6 +115,20 @@ add_subdirectory(../../pongasoft/re-mock re-mock EXCLUDE_FROM_ALL)
 # Defines the location of the sources
 set(re-edit_CPP_SRC_DIR "${CMAKE_CURRENT_LIST_DIR}/src/cpp")
 
+# Defines the location of the resources
+set(re-edit_RESOURCES_DIR "${CMAKE_CURRENT_LIST_DIR}/src/resources")
+
+# Defines the icon file
+if(APPLE)
+  set(re-edit_ICON_FILE "${re-edit_RESOURCES_DIR}/re-edit.icns")
+elseif(WIN32)
+  set(re-edit_ICON_FILE "${re-edit_RESOURCES_DIR}/re-edit.ico")
+endif()
+
+# Convert to native path
+cmake_path(NATIVE_PATH re-edit_ICON_FILE re-edit_ICON_FILE)
+string(REPLACE "\\" "\\\\" re-edit_ICON_FILE "${re-edit_ICON_FILE}")
+
 # Defines all the common sources
 set(re-edit_BUILD_SOURCES
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/lua/Base.h"
@@ -176,11 +190,17 @@ set(RE_EDIT_FONTS_DIR "${CMAKE_CURRENT_LIST_DIR}/external/fonts")
 
 # Defines the macos main
 if(APPLE)
-  list(APPEND re-edit_BUILD_SOURCES "${re-edit_CPP_SRC_DIR}/re/edit/platform/macos/MTLManagers.cpp" "${re-edit_CPP_SRC_DIR}/re/edit/platform/macos/NSUserDefaultsManager.mm")
+  list(APPEND re-edit_BUILD_SOURCES
+      "${re-edit_CPP_SRC_DIR}/re/edit/platform/macos/MTLManagers.cpp"
+      "${re-edit_CPP_SRC_DIR}/re/edit/platform/macos/NSUserDefaultsManager.mm"
+      )
   set(re-edit_MAIN_SRC "${re-edit_CPP_SRC_DIR}/re/edit/platform/macos/main.cpp" "${re-edit_CPP_SRC_DIR}/re/edit/platform/macos/metal.cpp")
 elseif(WIN32)
-  list(APPEND re-edit_BUILD_SOURCES "${re-edit_CPP_SRC_DIR}/re/edit/platform/windows/OGL3Managers.cpp" "${re-edit_CPP_SRC_DIR}/re/edit/platform/windows/LocalSettingsManager.cpp")
-  set(re-edit_MAIN_SRC "${re-edit_CPP_SRC_DIR}/re/edit/platform/windows/main.cpp")
+  list(APPEND re-edit_BUILD_SOURCES
+      "${re-edit_CPP_SRC_DIR}/re/edit/platform/windows/OGL3Managers.cpp"
+      "${re-edit_CPP_SRC_DIR}/re/edit/platform/windows/LocalSettingsManager.cpp"
+      )
+  set(re-edit_MAIN_SRC "${re-edit_CPP_SRC_DIR}/re/edit/platform/windows/main.cpp" "${re-edit_RESOURCES_DIR}/re-edit.rc")
 endif()
 
 # Build the static library

@@ -167,6 +167,15 @@ int doMain(int argc, char **argv)
   ctx->setupCallbacks(&application);
   ctx->centerWindow();
 
+  {
+    auto logo = application.getLogo();
+    GLFWimage image{static_cast<int>(logo->frameWidth()),
+                    static_cast<int>(logo->frameHeight()),
+                    const_cast<unsigned char*>(logo->getFilmStrip()->data()) };
+
+    glfwSetWindowIcon(window, 1, &image);
+  }
+
   // Main loop
   while(application.running())
   {

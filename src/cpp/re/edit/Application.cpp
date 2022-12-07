@@ -481,6 +481,15 @@ static int getFrameNumberFromDeviceType(std::string const &iType)
 
 }
 
+
+//------------------------------------------------------------------------
+// Application::getLogo
+//------------------------------------------------------------------------
+std::shared_ptr<Texture> Application::getLogo() const
+{
+  return fTextureManager->getTexture(BuiltIns::kLogoDark.fKey);
+}
+
 //------------------------------------------------------------------------
 // Application::renderWelcome
 //------------------------------------------------------------------------
@@ -512,7 +521,7 @@ void Application::renderWelcome()
     auto textSizeHeight = ImGui::CalcTextSize("R").y;
 
     ReGui::Box(logoModifier, [this, textSizeHeight]() {
-      auto logo = fTextureManager->getTexture(BuiltIns::kLogoDark.fKey);
+      auto logo = getLogo();
       auto computedHeight = 2.0f * textSizeHeight + (ImGui::GetStyle().ItemSpacing.y);
       logo->Item({}, {computedHeight, computedHeight});
 
