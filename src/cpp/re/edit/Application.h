@@ -31,6 +31,7 @@
 #include "Dialog.h"
 #include "fs.h"
 #include "Config.h"
+#include <future>
 
 namespace re::edit {
 
@@ -115,16 +116,20 @@ private:
   {
     kNone,
     kNoReLoaded,
+    kReLoading,
     kReLoaded,
     kException,
     kDone
   };
 
 private:
+  using gui_action_t = std::function<void()>;
+
   void init();
   void initAppContext(fs::path const &iRoot, config::Device const &iConfig);
   void renderWelcome(); // may throw exception
   void renderAppContext(); // may throw exception
+  void renderLoading(); // may throw exception
   ReGui::Dialog::Result renderDialog();
   void about() const;
   inline bool hasDialog() const { return fCurrentDialog != nullptr || !fDialogs.empty(); }
@@ -143,7 +148,8 @@ private:
   bool fShowDemoWindow{false};
   bool fShowMetricsWindow{false};
 
-  std::vector<std::function<void()>> fNewFrameActions{};
+  std::unique_ptr<std::future<gui_action_t>> fReLoadingFuture{};
+  std::vector<gui_action_t> fNewFrameActions{};
   std::vector<std::unique_ptr<ReGui::Dialog>> fDialogs{};
   std::unique_ptr<ReGui::Dialog> fCurrentDialog{};
   std::unique_ptr<ReGui::Dialog> fWelcomeDialog{};

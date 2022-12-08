@@ -23,6 +23,7 @@
 #include "lua/ConfigParser.h"
 #include "LoggingManager.h"
 #include <fstream>
+#include <chrono>
 #include <iterator>
 #include <imgui.h>
 #include <imgui_internal.h>
@@ -158,8 +159,9 @@ void Application::savePreferences(UserError *oErrors) noexcept
     auto mgr = fContext->getPreferencesManager();
     if(mgr)
     {
-      if(fAppContext)
+      if(fState == State::kReLoaded)
       {
+        RE_EDIT_INTERNAL_ASSERT(fAppContext != nullptr);
         auto deviceConfig = fAppContext->getConfig();
         auto ps = fContext->getWindowPositionAndSize();
         deviceConfig.fNativeWindowPos = ImVec2{ps.x, ps.y};
@@ -246,11 +248,6 @@ void Application::initAppContext(fs::path const &iRoot, config::Device const &iC
   fAppContext->init(iConfig);
   fAppContext->initDevice();
   fAppContext->initGUI2D();
-
-  if(!fContext->isHeadless())
-    ImGui::LoadIniSettingsFromMemory(iConfig.fImGuiIni.c_str(), iConfig.fImGuiIni.size());
-
-  fState = State::kReLoaded;
 }
 
 
@@ -268,27 +265,36 @@ void Application::exit()
 //------------------------------------------------------------------------
 void Application::loadProject(fs::path const &iRoot)
 {
-  try
-  {
-    config::Device c = fConfig.getDeviceConfigFromHistory(iRoot.u8string());
+  config::Device c = fConfig.getDeviceConfigFromHistory(iRoot.u8string());
 
-    fContext->setWindowPositionAndSize(c.fNativeWindowPos, c.fNativeWindowSize);
-//    fContext->setWindowTitle(fmt::printf("re-edit - %s", c.fName));
-
-    initAppContext(iRoot, c);
-
-    fContext->setWindowTitle(fmt::printf("re-edit - %s", fAppContext->getConfig().fName));
-
-    savePreferences();
-  }
-  catch(...)
-  {
-    fState = State::kNoReLoaded;
-    newDialog("Error")
-      .preContentMessage(fmt::printf("Error while loading Rack Extension project [%s]", iRoot.u8string()))
-      .text(what(std::current_exception()), true)
-      .buttonCancel("Ok");
-  }
+  fAppContext = nullptr;
+  fState = State::kReLoading;
+  fContext->setWindowTitle(fmt::printf("re-edit - Loading [%s]", iRoot.u8string()));
+  fReLoadingFuture = std::make_unique<std::future<gui_action_t>>(std::async(std::launch::async, [this, iRoot, c] {
+    try
+    {
+      initAppContext(iRoot, c);
+      return gui_action_t([this, c]() {
+        fState = State::kReLoaded;
+        if(!fContext->isHeadless())
+          ImGui::LoadIniSettingsFromMemory(c.fImGuiIni.c_str(), c.fImGuiIni.size());
+        fContext->setWindowPositionAndSize(c.fNativeWindowPos, c.fNativeWindowSize);
+        fContext->setWindowTitle(fmt::printf("re-edit - %s", fAppContext->getConfig().fName));
+        savePreferences();
+      });
+    }
+    catch(...)
+    {
+      return gui_action_t([this, c, iRoot, exception = what(std::current_exception())]() {
+        fAppContext = nullptr;
+        fState = State::kNoReLoaded;
+        newDialog("Error")
+          .preContentMessage(fmt::printf("Error while loading Rack Extension project [%s]", iRoot.u8string()))
+          .text(exception, true)
+          .button("Ok", [this]{ fContext->setWindowTitle(config::kWelcomeWindowTitle); return ReGui::Dialog::Result::kContinue;});
+      });
+    }
+  }));
 }
 
 //------------------------------------------------------------------------
@@ -444,6 +450,10 @@ bool Application::render() noexcept
         renderWelcome();
         break;
 
+      case State::kReLoading:
+        renderLoading();
+        break;
+
       default:
         break;
     }
@@ -590,6 +600,50 @@ void Application::renderWelcome()
   ImGui::PopStyleVar(2);
 
 }
+
+//------------------------------------------------------------------------
+// Application::renderLoading
+//------------------------------------------------------------------------
+void Application::renderLoading()
+{
+  RE_EDIT_INTERNAL_ASSERT(fReLoadingFuture != nullptr);
+
+  auto scale = getCurrentFontDpiScale();
+
+  auto constexpr kTitle = "Loading...";
+  const auto logoModifier = ReGui::Modifier{}
+    .padding(20.0f * scale)
+    .backgroundColor(ReGui::GetColorU32(toFloatColor(78, 78, 78)))
+    .borderColor(ReGui::kWhiteColorU32);
+
+  bool closePopup = false;
+
+  if(fReLoadingFuture->wait_for(std::chrono::milliseconds(1)) == std::future_status::ready)
+  {
+    deferNextFrame(fReLoadingFuture->get());
+    fReLoadingFuture = nullptr;
+    closePopup = true;
+  }
+
+  if(!ImGui::IsPopupOpen(kTitle))
+  {
+    ImGui::OpenPopup(kTitle);
+    ReGui::CenterNextWindow();
+  }
+
+  if(ImGui::BeginPopupModal(kTitle, nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_HorizontalScrollbar))
+  {
+    ReGui::Box(logoModifier, [this]() {
+      auto logo = getLogo();
+      logo->Item({}, {64.0f, 64.0f});
+    });
+    ImGui::TextUnformatted("Please wait");
+    if(closePopup)
+      ImGui::CloseCurrentPopup();
+    ImGui::EndPopup();
+  }
+}
+
 
 //------------------------------------------------------------------------
 // Application::renderAppContext
