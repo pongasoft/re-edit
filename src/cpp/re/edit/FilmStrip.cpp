@@ -43,7 +43,7 @@ FilmStrip::FilmStrip(std::shared_ptr<Source> iSource, char const *iErrorMessage)
   fData{},
   fErrorMessage{iErrorMessage}
 {
-//  RE_MOCK_LOG_INFO("%p | Error: FilmStrip::FilmStrip(%s) : %s", this, fSource->fKey, iErrorMessage);
+//  RE_EDIT_LOG_DEBUG("%p | Error: FilmStrip::FilmStrip(%s) : %s", this, fSource->fKey, iErrorMessage);
 }
 
 //------------------------------------------------------------------------
@@ -56,7 +56,7 @@ FilmStrip::FilmStrip(std::shared_ptr<Source> iSource, int iWidth, int iHeight, s
   fData{std::move(iData)},
   fErrorMessage{}
 {
-//  RE_MOCK_LOG_INFO("%p | FilmStrip::FilmStrip(%s)", this, fSource->fKey);
+//  RE_EDIT_LOG_DEBUG("%p | FilmStrip::FilmStrip(%s)", this, fSource->fKey);
 }
 
 //------------------------------------------------------------------------
@@ -64,7 +64,7 @@ FilmStrip::FilmStrip(std::shared_ptr<Source> iSource, int iWidth, int iHeight, s
 //------------------------------------------------------------------------
 FilmStrip::~FilmStrip()
 {
-//  RE_MOCK_LOG_INFO("%p | ~FilmStrip::FilmStrip(%s)", this, fSource->fKey);
+//  RE_EDIT_LOG_DEBUG("%p | ~FilmStrip::FilmStrip(%s)", this, fSource->fKey);
 }
 
 //------------------------------------------------------------------------

@@ -24,19 +24,31 @@
 namespace re::edit::Utils {
 
 template<typename F>
-class DeferableAction
+class DeferrableAction
 {
 public:
-  explicit DeferableAction(F iAction) : fAction{std::move(iAction)} {}
-  DeferableAction(DeferableAction const &) = delete;
-  DeferableAction &operator=(DeferableAction const &) = delete;
-  ~DeferableAction() { fAction(); }
+  explicit DeferrableAction(F iAction) : fAction{std::move(iAction)} {}
+  DeferrableAction(DeferrableAction const &) = delete;
+  DeferrableAction &operator=(DeferrableAction const &) = delete;
+  ~DeferrableAction() { fAction(); }
 private:
   F fAction{};
 };
 
 template<typename F>
-[[nodiscard]] inline std::unique_ptr<DeferableAction<F>> defer(F iAction) { return std::make_unique<DeferableAction<F>>(std::move(iAction)); }
+[[nodiscard]] inline std::unique_ptr<DeferrableAction<F>> defer(F iAction) { return std::make_unique<DeferrableAction<F>>(std::move(iAction)); }
+
+template<typename T>
+struct StorageRAII
+{
+  explicit StorageRAII(T **iStorage, T *iValue) : fStorage{iStorage}, fPrevious{*iStorage} { *fStorage = iValue; }
+  StorageRAII(StorageRAII &&) = delete;
+  StorageRAII(StorageRAII const &) = delete;
+  ~StorageRAII() { *fStorage = fPrevious; }
+private:
+  T **fStorage;
+  T *fPrevious;
+};
 
 }
 

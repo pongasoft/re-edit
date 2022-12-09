@@ -8,6 +8,7 @@
 #include <backends/imgui_impl_metal.h>
 #include <backends/regui_impl_metal.h>
 #include <cstdio>
+#include <cstdlib>
 #include "../GLFWContext.h"
 #include "MTLManagers.h"
 #include "NSUserDefaultsManager.h"
@@ -197,7 +198,12 @@ int doMain(int argc, char **argv)
   glfwDestroyWindow(window);
   glfwTerminate();
 
-  return application.hasException() ? 1 : 0;
+  auto const res = application.hasException() ? 1 : 0;
+
+  if(!application.shutdown(std::chrono::seconds(1)))
+    std::_Exit(application.hasException() ? EXIT_FAILURE : EXIT_SUCCESS);
+
+  return res;
 }
 
 int main(int argc, char **argv)

@@ -70,12 +70,11 @@ public:
 public:
   explicit Application(std::shared_ptr<Context> iContext);
   Application(std::shared_ptr<Context> iContext, Application::Config const &iConfig);
-  ~Application() { kCurrent = nullptr; }
+  template<class Rep, class Period>
+  bool shutdown(std::chrono::duration<Rep,Period> const &iTimeout);
+  ~Application();
 
   static Application &GetCurrent() { RE_EDIT_INTERNAL_ASSERT(kCurrent != nullptr); return *kCurrent; }
-
-  inline AppContext &getAppContext() { RE_EDIT_INTERNAL_ASSERT(fAppContext != nullptr); return *fAppContext; }
-  inline AppContext const &getAppContext() const { RE_EDIT_INTERNAL_ASSERT(fAppContext != nullptr); return *fAppContext; }
 
   static Config parseArgs(NativePreferencesManager const *iPreferencesManager, std::vector<std::string> iArgs);
 
@@ -126,7 +125,7 @@ private:
   using gui_action_t = std::function<void()>;
 
   void init();
-  void initAppContext(fs::path const &iRoot, config::Device const &iConfig);
+  std::shared_ptr<AppContext> initAppContext(fs::path const &iRoot, config::Device const &iConfig);
   void renderWelcome(); // may throw exception
   void renderAppContext(); // may throw exception
   void renderLoading(); // may throw exception
@@ -136,7 +135,7 @@ private:
   template<typename F>
   void executeCatchAllExceptions(F f) noexcept;
   void renderLoadDialogBlocking();
-  void deferNextFrame(std::function<void()> iAction) { fNewFrameActions.emplace_back(std::move(iAction)); }
+  void deferNextFrame(std::function<void()> iAction) { if(iAction) fNewFrameActions.emplace_back(std::move(iAction)); }
 
 private:
   State fState{State::kNoReLoaded};
@@ -154,8 +153,22 @@ private:
   std::unique_ptr<ReGui::Dialog> fCurrentDialog{};
   std::unique_ptr<ReGui::Dialog> fWelcomeDialog{};
 
-  inline static Application *kCurrent{};
+  inline static thread_local Application *kCurrent{};
 };
+
+//------------------------------------------------------------------------
+// Application::shutdown
+//------------------------------------------------------------------------
+template<class Rep, class Period>
+bool Application::shutdown(std::chrono::duration<Rep,Period> const &iTimeout)
+{
+  if(fReLoadingFuture)
+  {
+    return fReLoadingFuture->wait_for(iTimeout) == std::future_status::ready;
+  }
+
+  return true;
+}
 
 }
 

@@ -90,7 +90,7 @@ public:
   explicit AppContext(fs::path const &iRoot);
   ~AppContext();
 
-  static AppContext &GetCurrent();
+  static AppContext &GetCurrent() { RE_EDIT_INTERNAL_ASSERT(kCurrent != nullptr); return *kCurrent; }
 
   ImVec2 getCurrentPanelSize() const;
   void renderAddWidgetMenuView(ImVec2 const &iPosition = {});
@@ -302,6 +302,8 @@ protected:
 
   static std::string computeUpdateDescription(Widget const *iWidget, widget::Attribute const *iAttribute);
   static std::string computeResetDescription(Widget const *iWidget, widget::Attribute const *iAttribute);
+
+  inline static thread_local AppContext *kCurrent{};
 
 protected:
   fs::path fRoot;

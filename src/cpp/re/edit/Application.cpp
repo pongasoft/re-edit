@@ -19,6 +19,7 @@
 #include "Application.h"
 #include "Widget.h"
 #include "ReGui.h"
+#include "Utils.h"
 #include "Errors.h"
 #include "lua/ConfigParser.h"
 #include "LoggingManager.h"
@@ -182,14 +183,6 @@ void Application::savePreferences(UserError *oErrors) noexcept
 }
 
 //------------------------------------------------------------------------
-// AppContext::AppContext
-//------------------------------------------------------------------------
-AppContext &AppContext::GetCurrent()
-{
-  return Application::GetCurrent().getAppContext();
-}
-
-//------------------------------------------------------------------------
 // Application::Application
 //------------------------------------------------------------------------
 Application::Application(std::shared_ptr<Context> iContext) :
@@ -211,15 +204,20 @@ Application::Application(std::shared_ptr<Context> iContext, Application::Config 
     loadProjectDeferred(*iConfig.fProjectRoot);
 }
 
+//------------------------------------------------------------------------
+// Application::~Application
+//------------------------------------------------------------------------
+Application::~Application()
+{
+  if(fReLoadingFuture)
+    fReLoadingFuture->get();
+}
 
 //------------------------------------------------------------------------
 // Application::Application
 //------------------------------------------------------------------------
 void Application::init()
 {
-  RE_EDIT_INTERNAL_ASSERT(Application::kCurrent == nullptr, "Only one instance of Application allowed");
-  Application::kCurrent = this;
-
   fTextureManager = fContext->newTextureManager();
   fTextureManager->init(BuiltIns::kGlobalBuiltIns, fs::current_path());
   fFontManager = std::make_shared<FontManager>(fContext->newNativeFontManager());
@@ -237,17 +235,22 @@ void Application::init()
 //------------------------------------------------------------------------
 // Application::init
 //------------------------------------------------------------------------
-void Application::initAppContext(fs::path const &iRoot, config::Device const &iConfig)
+std::shared_ptr<AppContext> Application::initAppContext(fs::path const &iRoot, config::Device const &iConfig)
 {
-  fAppContext = std::make_shared<AppContext>(iRoot);
-  fAppContext->fTextureManager = fContext->newTextureManager();
-  fAppContext->fUserPreferences = std::make_shared<UserPreferences>();
-  fAppContext->fPropertyManager = std::make_shared<PropertyManager>();
-  fAppContext->fUndoManager = std::make_shared<UndoManager>();
+  auto ctx = std::make_shared<AppContext>(iRoot);
 
-  fAppContext->init(iConfig);
-  fAppContext->initDevice();
-  fAppContext->initGUI2D();
+  Utils::StorageRAII<AppContext> current{&AppContext::kCurrent, ctx.get()};
+
+  ctx->fTextureManager = fContext->newTextureManager();
+  ctx->fUserPreferences = std::make_shared<UserPreferences>();
+  ctx->fPropertyManager = std::make_shared<PropertyManager>();
+  ctx->fUndoManager = std::make_shared<UndoManager>();
+
+  ctx->init(iConfig);
+  ctx->initDevice();
+  ctx->initGUI2D();
+
+  return ctx;
 }
 
 
@@ -273,10 +276,10 @@ void Application::loadProject(fs::path const &iRoot)
   fReLoadingFuture = std::make_unique<std::future<gui_action_t>>(std::async(std::launch::async, [this, iRoot, c] {
     try
     {
-      initAppContext(iRoot, c);
-      return gui_action_t([this, c]() {
+      return gui_action_t([this, c, ctx = initAppContext(iRoot, c)]() {
         if(fState == State::kReLoading)
         {
+          fAppContext = ctx;
           fState = State::kReLoaded;
           if(!fContext->isHeadless())
             ImGui::LoadIniSettingsFromMemory(c.fImGuiIni.c_str(), c.fImGuiIni.size());
@@ -373,6 +376,8 @@ void Application::onNativeWindowFontScaleChange(float iFontScale)
 //------------------------------------------------------------------------
 bool Application::newFrame() noexcept
 {
+  Utils::StorageRAII<Application> current{&kCurrent, this};
+
   try
   {
     for(auto &action: fNewFrameActions)
@@ -418,6 +423,8 @@ bool Application::newFrame() noexcept
 //------------------------------------------------------------------------
 bool Application::render() noexcept
 {
+  Utils::StorageRAII<Application> current{&kCurrent, this};
+
   if(hasDialog())
   {
     try
@@ -680,6 +687,8 @@ void Application::renderLoading()
 void Application::renderAppContext()
 {
   RE_EDIT_INTERNAL_ASSERT(fAppContext != nullptr);
+
+  Utils::StorageRAII<AppContext> current{&AppContext::kCurrent, fAppContext.get()};
 
   fAppContext->beforeRenderFrame();
   renderMainMenu();
