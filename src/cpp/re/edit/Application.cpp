@@ -219,7 +219,7 @@ Application::~Application()
 void Application::init()
 {
   fTextureManager = fContext->newTextureManager();
-  fTextureManager->init(BuiltIns::kGlobalBuiltIns, fs::current_path());
+  fTextureManager->init(BuiltIns::kGlobalBuiltIns);
   fFontManager = std::make_shared<FontManager>(fContext->newNativeFontManager());
 
   if(!fContext->isHeadless())
@@ -237,14 +237,9 @@ void Application::init()
 //------------------------------------------------------------------------
 std::shared_ptr<AppContext> Application::initAppContext(fs::path const &iRoot, config::Device const &iConfig)
 {
-  auto ctx = std::make_shared<AppContext>(iRoot);
+  auto ctx = std::make_shared<AppContext>(iRoot, fContext->newTextureManager());
 
   Utils::StorageRAII<AppContext> current{&AppContext::kCurrent, ctx.get()};
-
-  ctx->fTextureManager = fContext->newTextureManager();
-  ctx->fUserPreferences = std::make_shared<UserPreferences>();
-  ctx->fPropertyManager = std::make_shared<PropertyManager>();
-  ctx->fUndoManager = std::make_shared<UndoManager>();
 
   ctx->init(iConfig);
   ctx->initDevice();

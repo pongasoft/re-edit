@@ -87,7 +87,7 @@ public:
   };
 
 public:
-  explicit AppContext(fs::path const &iRoot);
+  AppContext(fs::path const &iRoot, std::shared_ptr<TextureManager> iTextureManager);
   ~AppContext();
 
   static AppContext &GetCurrent() { RE_EDIT_INTERNAL_ASSERT(kCurrent != nullptr); return *kCurrent; }
@@ -264,6 +264,8 @@ public:
   ImVec2 fGrid{1.0f, 1.0f};
   float fItemWidth{300.0f};
 
+  inline static thread_local AppContext *kCurrent{};
+
 protected:
   void init(config::Device const &iConfig);
   config::Device getConfig() const;
@@ -302,8 +304,6 @@ protected:
 
   static std::string computeUpdateDescription(Widget const *iWidget, widget::Attribute const *iAttribute);
   static std::string computeResetDescription(Widget const *iWidget, widget::Attribute const *iAttribute);
-
-  inline static thread_local AppContext *kCurrent{};
 
 protected:
   fs::path fRoot;

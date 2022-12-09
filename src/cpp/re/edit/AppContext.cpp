@@ -94,8 +94,12 @@ private:
 //------------------------------------------------------------------------
 // AppContext::AppContext
 //------------------------------------------------------------------------
-AppContext::AppContext(fs::path const &iRoot) :
+AppContext::AppContext(fs::path const &iRoot, std::shared_ptr<TextureManager> iTextureManager) :
   fRoot{fs::canonical(iRoot)},
+  fTextureManager{std::move(iTextureManager)},
+  fUserPreferences{std::make_shared<UserPreferences>()},
+  fPropertyManager{std::make_shared<PropertyManager>()},
+  fUndoManager{std::make_shared<UndoManager>()},
   fFrontPanel(std::make_unique<PanelState>(PanelType::kFront)),
   fFoldedFrontPanel(std::make_unique<PanelState>(PanelType::kFoldedFront)),
   fBackPanel(std::make_unique<PanelState>(PanelType::kBack)),
@@ -609,7 +613,7 @@ void AppContext::initDevice()
 void AppContext::initGUI2D()
 {
   auto GUI2D = fRoot / "GUI2D";
-  fTextureManager->init(BuiltIns::kProjectBuiltIns, GUI2D);
+  fTextureManager->init(BuiltIns::kDeviceBuiltIns, GUI2D);
   fTextureManager->scanDirectory();
   auto device_2D = GUI2D / "device_2D.lua";
   auto hdgui_2D = GUI2D / "hdgui_2D.lua";

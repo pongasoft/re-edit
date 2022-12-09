@@ -69,24 +69,24 @@ constexpr Def kRoutingIconWhite03{"Routing_Icon_White_03"};
 constexpr Def kRoutingIconWhite04{"Routing_Icon_White_04"};
 constexpr Def kRoutingIconWhite05{"Routing_Icon_White_05"};
 
-static std::vector<Def> kProjectBuiltIns{kAudioSocket,
-                                         kCVSocket,
-                                         kPatchBrowseGroup,
-                                         kPlaceholder,
-                                         kSampleBrowseGroup,
-                                         kTapeHorizontal,
-                                         kTapeVertical,
-                                         kTrimKnob,
-                                         kRoutingIcon01,
-                                         kRoutingIcon02,
-                                         kRoutingIcon03,
-                                         kRoutingIcon04,
-                                         kRoutingIcon05,
-                                         kRoutingIconWhite01,
-                                         kRoutingIconWhite02,
-                                         kRoutingIconWhite03,
-                                         kRoutingIconWhite04,
-                                         kRoutingIconWhite05};
+static std::vector<Def> kDeviceBuiltIns{kAudioSocket,
+                                        kCVSocket,
+                                        kPatchBrowseGroup,
+                                        kPlaceholder,
+                                        kSampleBrowseGroup,
+                                        kTapeHorizontal,
+                                        kTapeVertical,
+                                        kTrimKnob,
+                                        kRoutingIcon01,
+                                        kRoutingIcon02,
+                                        kRoutingIcon03,
+                                        kRoutingIcon04,
+                                        kRoutingIcon05,
+                                        kRoutingIconWhite01,
+                                        kRoutingIconWhite02,
+                                        kRoutingIconWhite03,
+                                        kRoutingIconWhite04,
+                                        kRoutingIconWhite05};
 
 constexpr Def kLogoDark{"logo_dark"};
 constexpr Def kDeviceType{"DeviceType_4frames", 4};
@@ -243,7 +243,7 @@ private:
 class FilmStripMgr
 {
 public:
-  FilmStripMgr(std::vector<BuiltIns::Def> const &iBuiltIns, fs::path iDirectory);
+  explicit FilmStripMgr(std::vector<BuiltIns::Def> const &iBuiltIns, std::optional<fs::path> iDirectory = std::nullopt);
   std::shared_ptr<FilmStrip> findFilmStrip(FilmStrip::key_t const &iKey) const;
   std::shared_ptr<FilmStrip> getFilmStrip(FilmStrip::key_t const &iKey) const;
 
@@ -260,7 +260,7 @@ private:
 
 private:
   std::map<FilmStrip::key_t, BuiltIn> fBuiltIns{};
-  fs::path fDirectory;
+  std::optional<fs::path> fDirectory;
   mutable std::map<FilmStrip::key_t, std::shared_ptr<FilmStrip>> fFilmStrips{};
   mutable std::map<FilmStrip::key_t, std::shared_ptr<FilmStrip::Source>> fSources{};
 };

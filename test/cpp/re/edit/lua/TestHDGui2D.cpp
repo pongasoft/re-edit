@@ -20,6 +20,7 @@
 #include <gtest/gtest-matchers.h>
 #include <re/edit/lua/HDGui2D.h>
 #include <re/edit/Application.h>
+#include <re/edit/Utils.h>
 #include <re/mock/fmt.h>
 #include <gmock/gmock-matchers.h>
 #include <ostream>
@@ -372,46 +373,14 @@ protected:
   }
 };
 
-class MockContext : public Application::Context
-{
-public:
-  MockContext() : Application::Context(true) {}
-
-  std::shared_ptr<TextureManager> newTextureManager() const override
-  {
-    return std::make_shared<MockTextureManager>();
-  }
-
-  std::shared_ptr<NativeFontManager> newNativeFontManager() const override
-  {
-    return nullptr;
-  }
-
-  ImVec4 getWindowPositionAndSize() const override
-  {
-    return ImVec4();
-  }
-
-  void setWindowPositionAndSize(std::optional<ImVec2> const &iPosition, ImVec2 const &iSize) const override
-  {
-
-  }
-
-  void centerWindow() const override
-  {
-
-  }
-
-  void setWindowTitle(std::string const &iTitle) const override
-  {
-
-  }
-};
-
 TEST(HDGui2D, All)
 {
-  re::edit::Application app{std::make_shared<MockContext>()};
-  app.loadProject(getResourceFile("."));
+  auto textureMgr = std::make_shared<MockTextureManager>();
+  textureMgr->init(BuiltIns::kDeviceBuiltIns);
+
+  AppContext ctx(getResourceFile("."), textureMgr);
+
+  re::edit::Utils::StorageRAII<AppContext> current{&AppContext::kCurrent, &ctx};
 
   auto hdg = HDGui2D::fromFile(getResourceFile("all-hdgui_2D.lua"));
 

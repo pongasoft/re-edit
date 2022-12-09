@@ -143,7 +143,7 @@ std::unique_ptr<FilmStrip> FilmStrip::load(std::shared_ptr<Source> const &iSourc
 // FilmStripMgr::FilmStripMgr
 //------------------------------------------------------------------------
 FilmStripMgr::FilmStripMgr(std::vector<BuiltIns::Def> const &iBuiltIns,
-                           fs::path iDirectory) :
+                           std::optional<fs::path> iDirectory) :
   fDirectory{std::move(iDirectory)}
 {
   for(auto &def: iBuiltIns)
@@ -211,11 +211,13 @@ std::shared_ptr<FilmStrip> FilmStripMgr::getFilmStrip(FilmStrip::key_t const &iK
   if(iterFS != fFilmStrips.end())
     return iterFS->second;
 
+
   auto iterSource = fSources.find(iKey);
   // When the key is not found in fSources it means, it is not a valid key (not built in, nor file)
   if(iterSource == fSources.end())
   {
-    fSources[iKey] = std::make_shared<FilmStrip::Source>(FilmStrip::Source::from(iKey, fDirectory));
+    RE_EDIT_INTERNAL_ASSERT(fDirectory != std::nullopt);
+    fSources[iKey] = std::make_shared<FilmStrip::Source>(FilmStrip::Source::from(iKey, *fDirectory));
     iterSource = fSources.find(iKey);
   }
 
@@ -230,7 +232,7 @@ std::shared_ptr<FilmStrip> FilmStripMgr::getFilmStrip(FilmStrip::key_t const &iK
 //------------------------------------------------------------------------
 std::set<FilmStrip::key_t> FilmStripMgr::scanDirectory()
 {
-  auto const sources = scanDirectory(fDirectory);
+  auto const sources = fDirectory ? scanDirectory(*fDirectory) : std::vector<FilmStrip::Source>{};
   auto previousSources = fSources;
   std::set<FilmStrip::key_t> modifiedKeys{};
 
@@ -327,26 +329,29 @@ std::vector<FilmStrip::Source> FilmStripMgr::scanDirectory(fs::path const &iDire
 //------------------------------------------------------------------------
 std::optional<FilmStrip::key_t> FilmStripMgr::importTexture(fs::path const &iTexturePath)
 {
+  if(!fDirectory)
+    return std::nullopt;
+
   if(fs::is_regular_file(iTexturePath))
   {
-    // already there... skipping
-    if(iTexturePath.parent_path() == fDirectory)
-      return nullptr;
+    if(iTexturePath.parent_path() != *fDirectory)
+    {
+      // need to copy
+      std::error_code errorCode;
+      if(!fs::copy_file(iTexturePath, *fDirectory / iTexturePath.filename(), fs::copy_options::overwrite_existing, errorCode))
+      {
+        RE_EDIT_LOG_ERROR("Error while copying file [%s]: (%d | %s)", iTexturePath, errorCode.value(), errorCode.message());
+        return std::nullopt;
+      }
+    }
 
-    std::error_code errorCode;
-    if(fs::copy_file(iTexturePath, fDirectory / iTexturePath.filename(), fs::copy_options::overwrite_existing, errorCode))
-    {
-      auto key = iTexturePath.filename().u8string();
-      key = key.substr(0, key.size() - 4); // remove .png
-      fFilmStrips.erase(key);
-      fSources[key] = std::make_shared<FilmStrip::Source>(FilmStrip::Source::from(key, fDirectory));
-      return key; // loads the texture
-    }
-    else
-    {
-      RE_EDIT_LOG_ERROR("Error while copying file [%s]: (%d | %s)", iTexturePath, errorCode.value(), errorCode.message());
-    }
+    auto key = iTexturePath.filename().u8string();
+    key = key.substr(0, key.size() - 4); // remove .png
+    fFilmStrips.erase(key);
+    fSources[key] = std::make_shared<FilmStrip::Source>(FilmStrip::Source::from(key, *fDirectory));
+    return key; // loads the texture
   }
+
   return std::nullopt;
 }
 
@@ -357,12 +362,15 @@ std::set<FilmStrip::key_t> FilmStripMgr::importBuiltIns(std::set<FilmStrip::key_
 {
   std::set<FilmStrip::key_t> modifiedKeys{};
 
+  if(!fDirectory)
+    return modifiedKeys;
+
   for(auto &key: iKeys)
   {
     auto sourceIter = fSources.find(key);
     if(sourceIter != fSources.end() && sourceIter->second->hasBuiltIn())
     {
-      auto path = fDirectory / fmt::printf("%s.png", key);
+      auto path = *fDirectory / fmt::printf("%s.png", key);
       // we make sure that the file has not been created in the meantime
       if(!fs::exists(path))
       {
@@ -389,7 +397,7 @@ std::set<FilmStrip::key_t> FilmStripMgr::importBuiltIns(std::set<FilmStrip::key_
         }
       }
       fFilmStrips.erase(key);
-      fSources[key] = std::make_shared<FilmStrip::Source>(FilmStrip::Source::from(key, fDirectory));
+      fSources[key] = std::make_shared<FilmStrip::Source>(FilmStrip::Source::from(key, *fDirectory));
 
       modifiedKeys.emplace(key);
     }
