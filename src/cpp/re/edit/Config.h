@@ -192,10 +192,15 @@ struct Global
 
   void addDeviceConfigToHistory(Device const &iItem)
   {
-    auto iter = std::find_if(fDeviceHistory.begin(), fDeviceHistory.end(), [path = iItem.fPath](auto const &item) { return item.fPath == path; });
+    removeDeviceConfigFromHistory(iItem.fPath);
+    fDeviceHistory.emplace_back(iItem);
+  }
+
+  void removeDeviceConfigFromHistory(std::string const &iPath)
+  {
+    auto iter = std::find_if(fDeviceHistory.begin(), fDeviceHistory.end(), [&iPath](auto const &item) { return item.fPath == iPath; });
     if(iter != fDeviceHistory.end())
       fDeviceHistory.erase(iter);
-    fDeviceHistory.emplace_back(iItem);
   }
 
   Device getDeviceConfigFromHistory(std::string const &iPath) const

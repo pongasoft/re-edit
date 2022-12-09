@@ -275,23 +275,32 @@ void Application::loadProject(fs::path const &iRoot)
     {
       initAppContext(iRoot, c);
       return gui_action_t([this, c]() {
-        fState = State::kReLoaded;
-        if(!fContext->isHeadless())
-          ImGui::LoadIniSettingsFromMemory(c.fImGuiIni.c_str(), c.fImGuiIni.size());
-        fContext->setWindowPositionAndSize(c.fNativeWindowPos, c.fNativeWindowSize);
-        fContext->setWindowTitle(fmt::printf("re-edit - %s", fAppContext->getConfig().fName));
-        savePreferences();
+        if(fState == State::kReLoading)
+        {
+          fState = State::kReLoaded;
+          if(!fContext->isHeadless())
+            ImGui::LoadIniSettingsFromMemory(c.fImGuiIni.c_str(), c.fImGuiIni.size());
+          fContext->setWindowPositionAndSize(c.fNativeWindowPos, c.fNativeWindowSize);
+          fContext->setWindowTitle(fmt::printf("re-edit - %s", fAppContext->getConfig().fName));
+          savePreferences();
+        }
       });
     }
     catch(...)
     {
       return gui_action_t([this, c, iRoot, exception = what(std::current_exception())]() {
-        fAppContext = nullptr;
-        fState = State::kNoReLoaded;
-        newDialog("Error")
-          .preContentMessage(fmt::printf("Error while loading Rack Extension project [%s]", iRoot.u8string()))
-          .text(exception, true)
-          .button("Ok", [this]{ fContext->setWindowTitle(config::kWelcomeWindowTitle); return ReGui::Dialog::Result::kContinue;});
+        if(fState == State::kReLoading)
+        {
+          fAppContext = nullptr;
+          fState = State::kNoReLoaded;
+          newDialog("Error")
+            .preContentMessage(fmt::printf("Error while loading Rack Extension project [%s]", iRoot.u8string()))
+            .text(exception, true)
+            .button("Ok", [this] {
+              fContext->setWindowTitle(config::kWelcomeWindowTitle);
+              return ReGui::Dialog::Result::kContinue;
+            });
+        }
       });
     }
   }));
@@ -519,6 +528,7 @@ void Application::renderWelcome()
 
   auto viewport = ImGui::GetWindowViewport();
 
+  auto defaultWindowPadding = ImGui::GetStyle().WindowPadding;
 
   ImGui::PushStyleVar(ImGuiStyleVar_WindowTitleAlign, {0.5f, 0.5f});
   ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, {padding, padding});
@@ -574,19 +584,38 @@ void Application::renderWelcome()
 
         auto buttonHeight = 2.0f * (textSizeHeight + ImGui::GetStyle().FramePadding.y);
 
-        for(auto i = fConfig.fDeviceHistory.rbegin(); i != fConfig.fDeviceHistory.rend(); i++)
+        int id = 1;
+        std::optional<std::string> deviceToRemoveFromHistory{};
+
+        for(auto i = fConfig.fDeviceHistory.rbegin(); i != fConfig.fDeviceHistory.rend(); i++, id++)
         {
           auto const &item = *i;
 
           ImGui::Spacing();
-          ImGui::AlignTextToFramePadding();
-          icon->Item({}, {buttonHeight, buttonHeight}, 1.0f, impl::getFrameNumberFromDeviceType(item.fType));
-          ImGui::SameLine();
-          if(ImGui::Button(fmt::printf("%s\n%s", item.fName, item.fPath).c_str()))
+          ImGui::BeginGroup();
           {
-            loadProjectDeferred(fs::path(item.fPath));
+            ImGui::AlignTextToFramePadding();
+            icon->Item({}, {buttonHeight, buttonHeight}, 1.0f, impl::getFrameNumberFromDeviceType(item.fType));
+            ImGui::SameLine();
+            if(ImGui::Button(fmt::printf("%s\n%s", item.fName, item.fPath).c_str()))
+              loadProjectDeferred(fs::path(item.fPath));
           }
+          ImGui::EndGroup();
+          ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, defaultWindowPadding);
+          if(ImGui::BeginPopupContextItem(item.fPath.c_str()))
+          {
+            if(ImGui::MenuItem(ReGui_Prefix(ReGui_Icon_Open, "Open")))
+              loadProjectDeferred(fs::path(item.fPath));
+
+            if(ImGui::MenuItem(ReGui_Prefix(ReGui_Icon_Reset, "Remove from recent")))
+              deviceToRemoveFromHistory = item.fPath;
+            ImGui::EndPopup();
+          }
+          ImGui::PopStyleVar();
         }
+
+        if(deviceToRemoveFromHistory)
+          fConfig.removeDeviceConfigFromHistory(*deviceToRemoveFromHistory);
 
         ImGui::PopStyleColor(1);
       }
