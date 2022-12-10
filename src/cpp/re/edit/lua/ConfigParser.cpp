@@ -21,16 +21,6 @@
 namespace re::edit::lua {
 
 //------------------------------------------------------------------------
-// withOptionalValue
-//------------------------------------------------------------------------
-template<typename T, typename F>
-inline void withOptionalValue(std::optional<T> const &iOptionalValue, F &&f)
-{
-  if(iOptionalValue)
-    f(*iOptionalValue);
-}
-
-//------------------------------------------------------------------------
 // GlobalConfigParser::fromString
 //------------------------------------------------------------------------
 config::Global GlobalConfigParser::fromString(std::string const &iLuaString)

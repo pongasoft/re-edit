@@ -384,6 +384,8 @@ TEST(HDGui2D, All)
 
   auto hdg = HDGui2D::fromFile(getResourceFile("all-hdgui_2D.lua"));
 
+  ASSERT_EQ(std::nullopt, hdg->getReEditVersion());
+
   auto front = hdg->front();
   ASSERT_EQ(37, front->fWidgets.size());
   ASSERT_EQ("Panel_front_bg", front->fGraphicsNode);

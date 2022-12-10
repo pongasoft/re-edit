@@ -1385,7 +1385,6 @@ std::string Panel::device2D() const
 
   if(!fDecalsOrder.empty())
   {
-    s << "re_edit = re_edit or {}\n";
     s << fmt::printf("re_edit.%s = { decals = {} }\n", panelName);
     int index = 1;
     for(auto id: fDecalsOrder)

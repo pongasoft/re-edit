@@ -253,6 +253,8 @@ public: // Undo
   void maybeReloadTextures(bool b) { fMaybeReloadTextures = b; }
   void maybeReloadDevice(bool b) { fMaybeReloadDevice = b; }
 
+  std::string getDeviceName() const;
+
 public:
   EWidgetRendering fWidgetRendering{EWidgetRendering::kNormal};
   EBorderRendering fBorderRendering{EBorderRendering::kNone};
@@ -280,6 +282,7 @@ protected:
   std::string hdgui2D() const;
   std::string device2D() const;
   std::string cmake() const;
+  std::optional<std::string> getReEditVersion() const { return fReEditVersion; }
 
   void initPanels(fs::path const &iDevice2DFile, fs::path const &iHDGui2DFile);
   inline void setCurrentWidget(Widget const *iWidget) { fCurrentWidget = iWidget; }
@@ -318,6 +321,7 @@ protected:
   std::unique_ptr<PanelState> fBackPanel;
   std::unique_ptr<PanelState> fFoldedBackPanel;
   bool fHasFoldedPanels{};
+  std::optional<std::string> fReEditVersion{};
   ReGui::Window fPanelWindow{"Panel", true, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoCollapse};
   ReGui::Window fPanelWidgetsWindow{"Panel Widgets", true, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoCollapse};
   ReGui::Window fWidgetsWindow{"Widgets", true, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoCollapse};

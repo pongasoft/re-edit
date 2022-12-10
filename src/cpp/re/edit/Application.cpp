@@ -294,14 +294,76 @@ void Application::loadProject(fs::path const &iRoot)
           newDialog("Error")
             .preContentMessage(fmt::printf("Error while loading Rack Extension project [%s]", iRoot.u8string()))
             .text(exception, true)
-            .button("Ok", [this] {
-              fContext->setWindowTitle(config::kWelcomeWindowTitle);
-              return ReGui::Dialog::Result::kContinue;
-            });
+            .button("Ok", [this] { fContext->setWindowTitle(config::kWelcomeWindowTitle); });
         }
       });
     }
   }));
+}
+
+namespace impl {
+//------------------------------------------------------------------------
+// impl::chain
+//------------------------------------------------------------------------
+Application::gui_action_t chain(Application::gui_action_t iFirst, Application::gui_action_t iNext)
+{
+  if(!iNext)
+    return iFirst;
+
+  if(!iFirst)
+    return iNext;
+
+  return [first = std::move(iFirst), next = std::move(iNext)]() { first(); next(); };
+}
+
+//------------------------------------------------------------------------
+// impl::maybeInvoke
+//------------------------------------------------------------------------
+constexpr void maybeInvoke(Application::gui_action_t const &iAction) { if(iAction) iAction(); }
+
+}
+
+//------------------------------------------------------------------------
+// Application::maybeSaveProject
+//------------------------------------------------------------------------
+void Application::maybeSaveProject(gui_action_t const &iNextAction)
+{
+  auto action = impl::chain([this]() { saveProject(); }, iNextAction);
+
+  if(fAppContext)
+  {
+    if(!fAppContext->getReEditVersion())
+    {
+      newDialog(fmt::printf("Saving - %s", fAppContext->getDeviceName()))
+        .preContentMessage("Warning")
+        .text("This is the first time you save this project.\n"
+              "Saving will override hdgui_2d.lua and device_2d.lua.\n"
+              "Are you sure you want to proceed?")
+        .button("Yes (save)", [action] { action(); })
+        .button("No (don't save)", [iNextAction] { impl::maybeInvoke(iNextAction); })
+        ;
+    }
+    else
+    {
+      action();
+    }
+  }
+  else
+  {
+    impl::maybeInvoke(iNextAction);
+  }
+}
+
+//------------------------------------------------------------------------
+// Application::saveProject
+//------------------------------------------------------------------------
+void Application::saveProject()
+{
+  if(fAppContext)
+  {
+    Utils::StorageRAII<AppContext> current{&AppContext::kCurrent, fAppContext.get()};
+    fAppContext->save();
+  }
 }
 
 //------------------------------------------------------------------------
@@ -315,39 +377,45 @@ void Application::loadProjectDeferred(fs::path const &iRoot)
 //------------------------------------------------------------------------
 // Application::maybeCloseProject
 //------------------------------------------------------------------------
-void Application::maybeCloseProject()
+void Application::maybeCloseProject(std::optional<std::string> const &iDialogTitle, gui_action_t const &iNextAction)
 {
+  // nextAction must be deferred because closeProject is deferred
+  auto nextAction = [this, iNextAction]() { deferNextFrame(iNextAction); };
+  auto action = [this, nextAction]() { deferNextFrame(impl::chain([this]() { closeProject(); }, nextAction)); };
+
   if(fState == State::kReLoaded)
   {
     if(fAppContext->needsSaving())
     {
-      newDialog("Close")
-        .postContentMessage("You have unsaved changes, do you want to save them before closing?")
-        .button("Yes", [this] { fAppContext->save(); closeProjectDeferred(); return ReGui::Dialog::Result::kContinue; })
-        .button("No", [this] { closeProjectDeferred(); return ReGui::Dialog::Result::kContinue; })
-        .buttonCancel("Cancel", true);
+      newDialog(iDialogTitle ? *iDialogTitle : fmt::printf("Closing - %s", fAppContext->getDeviceName()))
+        .postContentMessage("You have unsaved changes, do you want to save them?")
+        .button("Yes", [this, action] { maybeSaveProject(action); })
+        .button("No", [action] { impl::maybeInvoke(action); })
+        .button("Cancel", {});
     }
     else
-      closeProjectDeferred();
+      action();
+  }
+  else
+  {
+    impl::maybeInvoke(nextAction);
   }
 }
 
 //------------------------------------------------------------------------
-// Application::closeProjectDeferred
+// Application::closeProject
 //------------------------------------------------------------------------
-void Application::closeProjectDeferred()
+void Application::closeProject()
 {
-  deferNextFrame([this]() {
-    savePreferences();
-    fAppContext = nullptr;
-    if(fState == State::kReLoaded)
-    {
-      fState = State::kNoReLoaded;
-      fContext->setWindowPositionAndSize(std::nullopt, ImVec2{config::kWelcomeWindowWidth,
-                                                              config::kWelcomeWindowHeight});
-      fContext->setWindowTitle(config::kWelcomeWindowTitle);
-    }
-  });
+  savePreferences();
+  fAppContext = nullptr;
+  if(fState == State::kReLoaded)
+  {
+    fState = State::kNoReLoaded;
+    fContext->setWindowPositionAndSize(std::nullopt, ImVec2{config::kWelcomeWindowWidth,
+                                                            config::kWelcomeWindowHeight});
+    fContext->setWindowTitle(config::kWelcomeWindowTitle);
+  }
 }
 
 //------------------------------------------------------------------------
@@ -375,9 +443,13 @@ bool Application::newFrame() noexcept
 
   try
   {
-    for(auto &action: fNewFrameActions)
-      action();
-    fNewFrameActions.clear();
+    if(!fNewFrameActions.empty())
+    {
+      // we move before iterating so that action() can enqueue for next frame
+      auto actions = std::move(fNewFrameActions);
+      for(auto &action: actions)
+        action();
+    }
 
     if(fFontManager->hasFontChangeRequest())
     {
@@ -424,20 +496,7 @@ bool Application::render() noexcept
   {
     try
     {
-      auto res = renderDialog();
-      switch(res)
-      {
-        case ReGui::Dialog::Result::kContinue:
-          // nothing to do... just continue
-          break;
-        case ReGui::Dialog::Result::kBreak:
-          return running();
-        case ReGui::Dialog::Result::kExit:
-          exit();
-          return running();
-        default:
-          RE_EDIT_FAIL("not reached");
-      }
+      renderDialog();
     }
     catch(...)
     {
@@ -586,10 +645,9 @@ void Application::renderWelcome()
 
         auto buttonHeight = 2.0f * (textSizeHeight + ImGui::GetStyle().FramePadding.y);
 
-        int id = 1;
         std::optional<std::string> deviceToRemoveFromHistory{};
 
-        for(auto i = fConfig.fDeviceHistory.rbegin(); i != fConfig.fDeviceHistory.rend(); i++, id++)
+        for(auto i = fConfig.fDeviceHistory.rbegin(); i != fConfig.fDeviceHistory.rend(); i++)
         {
           auto const &item = *i;
 
@@ -735,7 +793,33 @@ void Application::renderMainMenu()
     if(ImGui::BeginMenu("File"))
     {
       if(ImGui::MenuItem(ReGui_Prefix(ReGui_Icon_Open, "Open")))
+      {
         renderLoadDialogBlocking();
+      }
+      if(fConfig.fDeviceHistory.size() > 1)
+      {
+        if(ImGui::BeginMenu("Open Recent"))
+        {
+          // we skip the current device!
+          for(auto i = fConfig.fDeviceHistory.rbegin() + 1; i != fConfig.fDeviceHistory.rend(); i++)
+          {
+            auto const &item = *i;
+            ImGui::PushID(item.fPath.c_str()); // fName is not unique
+            if(ImGui::MenuItem(item.fName.c_str()))
+            {
+              maybeCloseProject(std::nullopt, [this, path = item.fPath]() { loadProject(path); });
+            }
+            if(ImGui::IsItemHovered())
+            {
+              ImGui::BeginTooltip();
+              ImGui::TextUnformatted(item.fPath.c_str());
+              ImGui::EndTooltip();
+            }
+            ImGui::PopID();
+          }
+          ImGui::EndMenu();
+        }
+      }
       ImGui::EndMenu();
     }
 
@@ -808,7 +892,7 @@ void Application::renderLoadDialogBlocking()
       .text(fmt::printf("%s is not a valid Rack Extension project (could not find info.lua)", luaPath.u8string()))
       .buttonOk();
     else
-      loadProjectDeferred(*newProjectPath);
+      maybeCloseProject(std::nullopt, [this, path = *newProjectPath]() { loadProject(path); });
   }
   else if(result == NFD_CANCEL)
   {
@@ -849,15 +933,15 @@ void Application::newExceptionDialog(std::string iMessage, bool iSaveButton, std
     fState = State::kException;
     auto &dialog =
       newDialog("Error", true)
-        .breakOnNoAction()
         .preContentMessage(std::move(iMessage))
         .text(what(iException), true);
 
     if(iSaveButton)
-      dialog.button("Save", [this] { fAppContext->save(); return ReGui::Dialog::Result::kExit; }, true);
+      dialog.button("Save", [this] { maybeSaveProject([this]() { exit(); }); }, true);
 
-    dialog.buttonExit()
-      .postContentMessage("Note: If you think this is an error in the tool, please report it at https://github.com/pongasoft/re-edit-dev/issues");
+    dialog.button("Exit", [this] { exit(); }, true);
+
+    dialog.postContentMessage("Note: If you think this is an error in the tool, please report it at https://github.com/pongasoft/re-edit-dev/issues");
   }
   else
   {
@@ -869,20 +953,19 @@ void Application::newExceptionDialog(std::string iMessage, bool iSaveButton, std
 //------------------------------------------------------------------------
 // Application::renderDialog
 //------------------------------------------------------------------------
-ReGui::Dialog::Result Application::renderDialog()
+void Application::renderDialog()
 {
   if(!fCurrentDialog)
   {
     if(fDialogs.empty())
-      return ReGui::Dialog::Result::kContinue;
+      return;
     fCurrentDialog = std::move(fDialogs[0]);
     fDialogs.erase(fDialogs.begin());
   }
 
-  auto res = fCurrentDialog->render();
+  fCurrentDialog->render();
   if(!fCurrentDialog->isOpen())
     fCurrentDialog = nullptr;
-  return res;
 }
 
 
@@ -894,16 +977,7 @@ void Application::maybeExit()
   if(!running())
     return;
 
-  if(fAppContext && fAppContext->needsSaving())
-  {
-    newDialog("Quit")
-      .postContentMessage("You have unsaved changes, do you want to save them before quitting?")
-      .button("Yes", [this] { fAppContext->save(); return ReGui::Dialog::Result::kExit; })
-      .button("No", [] { return ReGui::Dialog::Result::kExit; })
-      .buttonCancel("Cancel", true);
-  }
-  else
-    exit();
+  maybeCloseProject("Quit", [this] { exit(); });
 }
 
 //------------------------------------------------------------------------

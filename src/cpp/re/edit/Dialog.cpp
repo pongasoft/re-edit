@@ -35,10 +35,8 @@ Dialog::Dialog(std::string iTitle) : fTitle{std::move(iTitle)},
 //------------------------------------------------------------------------
 // Dialog::render
 //------------------------------------------------------------------------
-Dialog::Result Dialog::render()
+void Dialog::render()
 {
-  auto res = fNoActionResult;
-
   auto title = fDialogID.c_str();
 
   if(!ImGui::IsPopupOpen(title))
@@ -87,7 +85,7 @@ Dialog::Result Dialog::render()
       if(ImGui::Button(button.fLabel.c_str(), buttonSize))
       {
         if(button.fAction)
-          res = button.fAction();
+          button.fAction();
         ImGui::CloseCurrentPopup();
       }
       if(button.fDefaultFocus)
@@ -103,9 +101,6 @@ Dialog::Result Dialog::render()
 
     ImGui::EndPopup();
   }
-
-
-  return res;
 }
 
 //------------------------------------------------------------------------

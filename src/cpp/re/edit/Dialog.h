@@ -30,16 +30,9 @@ namespace re::edit::ReGui {
 class Dialog
 {
 public:
-  enum class Result
-  {
-    kContinue,
-    kBreak,
-    kExit
-  };
-
   struct Button
   {
-    using action_t = std::function<Dialog::Result()>;
+    using action_t = std::function<void()>;
 
     std::string fLabel{};
     action_t fAction{};
@@ -64,17 +57,15 @@ public:
 
 public:
   explicit Dialog(std::string iTitle);
-  Result render();
+  void render();
 
-  Dialog &breakOnNoAction() { fNoActionResult = Result::kBreak; return *this; }
   Dialog &preContentMessage(std::string iMessage) { fPreContentMessage = std::move(iMessage); return *this; }
   Dialog &postContentMessage(std::string iMessage) { fPostContentMessage = std::move(iMessage); return *this; }
   Dialog &text(std::string iText, bool iCopyToClipboard = false);
   Dialog &lambda(std::function<void()> iLambda, bool iCopyToClipboard = false);
   Dialog &button(std::string iLabel, Button::action_t iAction, bool iDefaultFocus = false);
-  Dialog &buttonCancel(std::string iLabel = "Cancel", bool iDefaultFocus = false) { return button(std::move(iLabel), []{ return Result::kContinue;}, iDefaultFocus); }
-  Dialog &buttonOk(std::string iLabel = "Ok", bool iDefaultFocus = false) { return button(std::move(iLabel), []{ return Result::kContinue;}, iDefaultFocus); }
-  Dialog &buttonExit(std::string iLabel = "Exit", bool iDefaultFocus = false) { return button(std::move(iLabel), []{ return Result::kExit;}, iDefaultFocus); }
+  Dialog &buttonCancel(std::string iLabel = "Cancel", bool iDefaultFocus = false) { return button(std::move(iLabel), {}, iDefaultFocus); }
+  Dialog &buttonOk(std::string iLabel = "Ok", bool iDefaultFocus = false) { return button(std::move(iLabel), {}, iDefaultFocus); }
 
   bool isOpen() const;
 
@@ -83,7 +74,6 @@ protected:
 
 protected:
   std::string fTitle;
-  Result fNoActionResult{Result::kContinue};
   std::optional<std::string> fPreContentMessage{};
   std::optional<std::string> fPostContentMessage{};
   std::vector<std::shared_ptr<Content>> fContent{};

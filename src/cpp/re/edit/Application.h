@@ -67,6 +67,8 @@ public:
     std::optional<fs::path> fProjectRoot{};
   };
 
+  using gui_action_t = std::function<void()>;
+
 public:
   explicit Application(std::shared_ptr<Context> iContext);
   Application(std::shared_ptr<Context> iContext, Application::Config const &iConfig);
@@ -80,8 +82,10 @@ public:
 
   void loadProject(fs::path const &iRoot);
   void loadProjectDeferred(fs::path const &iRoot);
-  void closeProjectDeferred();
-  void maybeCloseProject();
+  void maybeSaveProject(gui_action_t const &iNextAction = {});
+  void saveProject();
+  void closeProject();
+  void maybeCloseProject(std::optional<std::string> const &iDialogTitle = {}, gui_action_t const &iNextAction = {});
 
   inline float getCurrentFontSize() const { return fFontManager->getCurrentFont().fSize; }
   inline float getCurrentFontDpiScale() const { return fFontManager->getCurrentFontDpiScale(); }
@@ -122,14 +126,12 @@ private:
   };
 
 private:
-  using gui_action_t = std::function<void()>;
-
   void init();
   std::shared_ptr<AppContext> initAppContext(fs::path const &iRoot, config::Device const &iConfig);
   void renderWelcome(); // may throw exception
   void renderAppContext(); // may throw exception
   void renderLoading(); // may throw exception
-  ReGui::Dialog::Result renderDialog();
+  void renderDialog();
   void about() const;
   inline bool hasDialog() const { return fCurrentDialog != nullptr || !fDialogs.empty(); }
   template<typename F>

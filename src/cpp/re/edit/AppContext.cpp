@@ -25,6 +25,7 @@
 #include <regex>
 #include <efsw/efsw.hpp>
 #include <nfd.h>
+#include <version.h>
 
 namespace re::edit {
 
@@ -123,6 +124,7 @@ AppContext::~AppContext()
 void AppContext::initPanels(fs::path const &iDevice2DFile, fs::path const &iHDGui2DFile)
 {
   auto d2d = lua::Device2D::fromFile(iDevice2DFile);
+  fReEditVersion = d2d->getReEditVersion();
   auto hdg = lua::HDGui2D::fromFile(iHDGui2DFile);
   auto merge = [](std::map<std::string, int> &m1, std::map<std::string, int> const &m2) {
     for(auto &[k, numFrame]: m2)
@@ -580,6 +582,14 @@ config::Device AppContext::getConfig() const
 }
 
 //------------------------------------------------------------------------
+// AppContext::getDeviceName
+//------------------------------------------------------------------------
+std::string AppContext::getDeviceName() const
+{
+  return fPropertyManager->getDeviceInfo().fMediumName;
+}
+
+//------------------------------------------------------------------------
 // AppContext::reloadTextures
 //------------------------------------------------------------------------
 void AppContext::reloadTextures()
@@ -754,21 +764,7 @@ void AppContext::renderMainMenu()
     {
       if(ImGui::MenuItem(ReGui_Prefix(ReGui_Icon_Save, "Save")))
       {
-        if(!fs::exists(fRoot / "re-edit.lua"))
-        {
-          Application::GetCurrent().newDialog("Save")
-            .preContentMessage("Warning")
-            .text("This is the first time you save this project.\n"
-                  "Saving will override hdgui_2d.lua and device_2d.lua.\n"
-                  "Are you sure you want to proceed?")
-            .button("Yes (save)", [this] { save(); return ReGui::Dialog::Result::kContinue; })
-            .buttonCancel("No (don't save)", true)
-            ;
-        }
-        else
-        {
-          save();
-        }
+        Application::GetCurrent().maybeSaveProject();
       }
       if(ImGui::MenuItem("Close"))
       {
@@ -923,6 +919,7 @@ std::string AppContext::hdgui2D() const
 {
   std::stringstream s{};
   s << "format_version = \"2.0\"\n\n";
+  s << fmt::printf("re_edit = { version = \"%s\" }\n\n", kFullVersion);
   s << fFrontPanel->fPanel.hdgui2D();
   s << "\n";
   s << fBackPanel->fPanel.hdgui2D();
@@ -949,6 +946,7 @@ std::string AppContext::device2D() const
 {
   std::stringstream s{};
   s << "format_version = \"2.0\"\n\n";
+  s << fmt::printf("re_edit = { version = \"%s\" }\n\n", kFullVersion);
 
   if(!fHasFoldedPanels)
   {

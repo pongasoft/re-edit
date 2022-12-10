@@ -19,7 +19,7 @@
 #ifndef RE_EDIT_HD_GUI_2D_H
 #define RE_EDIT_HD_GUI_2D_H
 
-#include <re/mock/lua/MockJBox.h>
+#include "Base.h"
 #include <re/mock/ObjectManager.hpp>
 #include <variant>
 #include <map>
@@ -63,7 +63,7 @@ using jbox_object = std::variant<jbox_ignored, std::shared_ptr<jbox_widget>, jbo
 
 }
 
-class HDGui2D : public re::mock::lua::MockJBox
+class HDGui2D : public Base
 {
 public:
   HDGui2D();

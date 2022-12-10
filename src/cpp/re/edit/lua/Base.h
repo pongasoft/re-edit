@@ -29,11 +29,23 @@ class Base : public re::mock::lua::MockJBox
 public:
   Base() = default;
 
+  std::optional<std::string> getReEditVersion();
+
 protected:
   ImVec2 getImVec2(int idx = -1);
   std::optional<ImVec2> getOptionalImVec2(int idx = -1);
   std::optional<ImVec2> getOptionalImVec2TableField(char const *iKey, int idx = -1);
 };
+
+//------------------------------------------------------------------------
+// withOptionalValue
+//------------------------------------------------------------------------
+template<typename T, typename F>
+inline void withOptionalValue(std::optional<T> const &iOptionalValue, F &&f)
+{
+  if(iOptionalValue)
+    f(*iOptionalValue);
+}
 
 }
 

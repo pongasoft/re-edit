@@ -40,6 +40,8 @@ TEST(Device2D, All)
 {
   auto d2d = Device2D::fromFile(getResourceFile("all-device_2D.lua"));
 
+  ASSERT_EQ("1.2.3", d2d->getReEditVersion());
+
   auto front = d2d->front();
 
   ASSERT_EQ(5, front->fNodes.size());

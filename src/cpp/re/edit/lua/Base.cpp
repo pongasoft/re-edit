@@ -74,6 +74,20 @@ std::optional<ImVec2> Base::getOptionalImVec2TableField(char const *iKey, int id
   return res;
 }
 
+//------------------------------------------------------------------------
+// Base::getReEditVersion
+//------------------------------------------------------------------------
+std::optional<std::string> Base::getReEditVersion()
+{
+  std::optional<std::string> version{};
+  if(lua_getglobal(L, "re_edit") == LUA_TTABLE)
+  {
+    withOptionalValue(L.getTableValueAsOptionalString("version"), [&version](auto v) { version = v; });
+  }
+  lua_pop(L, 1);
+  return version;
+}
+
 
 
 }
