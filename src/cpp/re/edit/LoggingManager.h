@@ -22,6 +22,7 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <mutex>
 #include <re/mock/fmt.h>
 
 namespace re::edit {
@@ -47,7 +48,7 @@ public:
   template<typename ... Args>
   void logError(const std::string& format, Args ... args);
 
-  size_t getLogCount() const { return fLog.size(); }
+  size_t getLogCount() const;
 
   void clearLog();
 
@@ -55,13 +56,12 @@ public:
 
   void render();
 
-  bool isShowDebug() const { return fShowDebug; }
-  bool isShowLog() const { return fShowLog; }
+  bool isShowDebug() const;
+  void setShowDebug(bool b);
+  bool isShowLog() const;
+  void setShowLog(bool b);
 
-  bool &getShowDebug() { return fShowDebug; };
-  bool &getShowLog() { return fShowLog; };
-
-  void showLog() { fShowLog = true; }
+  void showLog();
 
   static LoggingManager *instance();
 
@@ -81,6 +81,7 @@ private:
   void renderDebug();
 
 private:
+  mutable std::mutex fMutex;
   bool fShowDebug{false};
   bool fShowLog{false};
   bool fScrollLog{false};

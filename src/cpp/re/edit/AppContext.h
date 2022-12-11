@@ -32,6 +32,7 @@
 #include "Constants.h"
 #include "Errors.h"
 #include "Config.h"
+#include "Utils.h"
 
 namespace efsw {
 class FileWatcher;
@@ -275,7 +276,7 @@ protected:
   void markEdited();
   bool checkForErrors();
   void initDevice();
-  void initGUI2D();
+  void initGUI2D(Utils::CancellableSPtr const &iCancellable);
   void reloadDevice();
   void save();
   void importBuiltIns(UserError *oErrors = nullptr);
@@ -284,7 +285,9 @@ protected:
   std::string cmake() const;
   std::optional<std::string> getReEditVersion() const { return fReEditVersion; }
 
-  void initPanels(fs::path const &iDevice2DFile, fs::path const &iHDGui2DFile);
+  void initPanels(fs::path const &iDevice2DFile,
+                  fs::path const &iHDGui2DFile,
+                  Utils::CancellableSPtr const &iCancellable);
   inline void setCurrentWidget(Widget const *iWidget) { fCurrentWidget = iWidget; }
   void newFrame();
   void beforeRenderFrame();

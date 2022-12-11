@@ -121,11 +121,17 @@ AppContext::~AppContext()
 //------------------------------------------------------------------------
 // AppContext::initPanels
 //------------------------------------------------------------------------
-void AppContext::initPanels(fs::path const &iDevice2DFile, fs::path const &iHDGui2DFile)
+void AppContext::initPanels(fs::path const &iDevice2DFile,
+                            fs::path const &iHDGui2DFile,
+                            Utils::CancellableSPtr const &iCancellable)
 {
+  iCancellable->progress("Loading device_2D.lua...");
   auto d2d = lua::Device2D::fromFile(iDevice2DFile);
   fReEditVersion = d2d->getReEditVersion();
+
+  iCancellable->progress("Loading hdgui_2D.lua...");
   auto hdg = lua::HDGui2D::fromFile(iHDGui2DFile);
+
   auto merge = [](std::map<std::string, int> &m1, std::map<std::string, int> const &m2) {
     for(auto &[k, numFrame]: m2)
     {
@@ -140,13 +146,20 @@ void AppContext::initPanels(fs::path const &iDevice2DFile, fs::path const &iHDGu
     }
   };
   std::map<std::string, int> numFrames{};
+  iCancellable->progress("Init front panel...");
   merge(numFrames, fFrontPanel->initPanel(*this, d2d->front(), hdg->front()));
+
+  iCancellable->progress("Init back panel...");
   merge(numFrames, fBackPanel->initPanel(*this, d2d->back(), hdg->back()));
   if(fHasFoldedPanels)
   {
+    iCancellable->progress("Init folded front panel...");
     merge(numFrames, fFoldedFrontPanel->initPanel(*this, d2d->folded_front(), hdg->folded_front()));
+
+    iCancellable->progress("Init folded back panel...");
     merge(numFrames, fFoldedBackPanel->initPanel(*this, d2d->folded_back(), hdg->folded_back()));
   }
+  iCancellable->progress("Computing num frames...");
   fTextureManager->overrideNumFrames(numFrames);
   markEdited();
   checkForErrors();
@@ -620,15 +633,19 @@ void AppContext::initDevice()
 //------------------------------------------------------------------------
 // AppContext::initGUI2D
 //------------------------------------------------------------------------
-void AppContext::initGUI2D()
+void AppContext::initGUI2D(Utils::CancellableSPtr const &iCancellable)
 {
   auto GUI2D = fRoot / "GUI2D";
+  iCancellable->progress("Loading built ins...");
   fTextureManager->init(BuiltIns::kDeviceBuiltIns, GUI2D);
+
+  iCancellable->progress("Scanning GUI2D...");
   fTextureManager->scanDirectory();
+
   auto device_2D = GUI2D / "device_2D.lua";
   auto hdgui_2D = GUI2D / "hdgui_2D.lua";
   if(fs::exists(device_2D) && fs::exists(hdgui_2D))
-    initPanels(device_2D, hdgui_2D);
+    initPanels(device_2D, hdgui_2D, iCancellable);
   else
   {
     markEdited();

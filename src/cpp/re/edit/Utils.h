@@ -20,6 +20,8 @@
 #define RE_EDIT_UTILS_H
 
 #include <memory>
+#include <mutex>
+#include <thread>
 
 namespace re::edit::Utils {
 
@@ -49,6 +51,49 @@ private:
   T **fStorage;
   T *fPrevious;
 };
+
+class Cancellable
+{
+public:
+  class cancelled_t : public std::exception {};
+
+public:
+  bool cancelled() const
+  {
+    std::lock_guard<std::mutex> lock(fMutex);
+    return fCancelled;
+  }
+
+  void cancel()
+  {
+    std::lock_guard<std::mutex> lock(fMutex);
+    fCancelled = true;
+  }
+
+  void progress(std::string const &s)
+  {
+//    std::this_thread::sleep_for(std::chrono::seconds(1));
+    std::lock_guard<std::mutex> lock(fMutex);
+    if(fCancelled)
+      throw cancelled_t();
+    fProgress = s;
+    fCount++;
+  }
+
+  std::pair<int, std::string> progress() const
+  {
+    std::lock_guard<std::mutex> lock(fMutex);
+    return {fCount, fProgress};
+  }
+
+private:
+  mutable std::mutex fMutex;
+  bool fCancelled{};
+  int fCount{};
+  std::string fProgress{};
+};
+
+using CancellableSPtr = std::shared_ptr<Cancellable>;
 
 }
 

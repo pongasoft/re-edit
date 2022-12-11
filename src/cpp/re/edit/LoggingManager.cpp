@@ -35,6 +35,8 @@ LoggingManager *LoggingManager::instance()
 //------------------------------------------------------------------------
 void LoggingManager::debug(std::string const &iKey, std::string iMessage)
 {
+  std::lock_guard<std::mutex> lock(fMutex);
+
   fDebug[iKey] = std::move(iMessage);
 }
 
@@ -43,6 +45,8 @@ void LoggingManager::debug(std::string const &iKey, std::string iMessage)
 //------------------------------------------------------------------------
 void LoggingManager::clearDebug(std::string const &iKey)
 {
+  std::lock_guard<std::mutex> lock(fMutex);
+
   fDebug.erase(iKey);
 }
 
@@ -51,6 +55,8 @@ void LoggingManager::clearDebug(std::string const &iKey)
 //------------------------------------------------------------------------
 void LoggingManager::clearDebug()
 {
+  std::lock_guard<std::mutex> lock(fMutex);
+
   fDebug.clear();
 }
 
@@ -59,6 +65,8 @@ void LoggingManager::clearDebug()
 //------------------------------------------------------------------------
 void LoggingManager::clearLog()
 {
+  std::lock_guard<std::mutex> lock(fMutex);
+
   fLog.clear();
 }
 
@@ -67,6 +75,8 @@ void LoggingManager::clearLog()
 //------------------------------------------------------------------------
 void LoggingManager::logEntry(LoggingManager::LogEntry iEntry)
 {
+  std::lock_guard<std::mutex> lock(fMutex);
+
   if(fLog.size() > kMaxLogEntries)
     fLog.erase(fLog.begin());
   fLog.emplace_back(std::move(iEntry));
@@ -125,6 +135,8 @@ void LoggingManager::renderDebug()
 //------------------------------------------------------------------------
 void LoggingManager::render()
 {
+  std::lock_guard<std::mutex> lock(fMutex);
+
   if(fShowDebug)
     renderDebug();
 
@@ -132,6 +144,59 @@ void LoggingManager::render()
     renderLog();
 }
 
+//------------------------------------------------------------------------
+// LoggingManager::getLogCount
+//------------------------------------------------------------------------
+size_t LoggingManager::getLogCount() const
+{
+  std::lock_guard<std::mutex> lock(fMutex);
+  return fLog.size();
+}
+
+//------------------------------------------------------------------------
+// LoggingManager::isShowDebug
+//------------------------------------------------------------------------
+bool LoggingManager::isShowDebug() const
+{
+  std::lock_guard<std::mutex> lock(fMutex);
+  return fShowDebug;
+}
+
+//------------------------------------------------------------------------
+// LoggingManager::setShowDebug
+//------------------------------------------------------------------------
+void LoggingManager::setShowDebug(bool b)
+{
+  std::lock_guard<std::mutex> lock(fMutex);
+  fShowDebug = b;
+}
+
+//------------------------------------------------------------------------
+// LoggingManager::isShowLog
+//------------------------------------------------------------------------
+bool LoggingManager::isShowLog() const
+{
+  std::lock_guard<std::mutex> lock(fMutex);
+  return fShowLog;
+}
+
+//------------------------------------------------------------------------
+// LoggingManager::isShowLog
+//------------------------------------------------------------------------
+void LoggingManager::setShowLog(bool b)
+{
+  std::lock_guard<std::mutex> lock(fMutex);
+  fShowLog = b;
+}
+
+//------------------------------------------------------------------------
+// LoggingManager::showLog
+//------------------------------------------------------------------------
+void LoggingManager::showLog()
+{
+  std::lock_guard<std::mutex> lock(fMutex);
+  fShowLog = true;
+}
 
 
 }

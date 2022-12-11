@@ -125,9 +125,23 @@ private:
     kDone
   };
 
+  template<typename T>
+  struct CancellableFuture
+  {
+    template< class Function, class... Args >
+    void launch(Function&& f, Args&&... args) { fFuture = std::async(std::launch::async, std::forward<Function>(f), std::forward<Args>(args)...); }
+
+    inline void cancel() { fCancellable->cancel(); }
+    inline bool cancelled() const { return fCancellable->cancelled(); }
+    inline std::pair<int, std::string> progress() const { return fCancellable->progress(); }
+
+    std::shared_ptr<Utils::Cancellable> fCancellable{std::make_shared<Utils::Cancellable>()};
+    std::future<T> fFuture{};
+  };
+
 private:
   void init();
-  std::shared_ptr<AppContext> initAppContext(fs::path const &iRoot, config::Device const &iConfig);
+  std::shared_ptr<AppContext> initAppContext(fs::path const &iRoot, config::Device const &iConfig, Utils::CancellableSPtr const &iCancellable);
   void renderWelcome(); // may throw exception
   void renderAppContext(); // may throw exception
   void renderLoading(); // may throw exception
@@ -149,7 +163,7 @@ private:
   bool fShowDemoWindow{false};
   bool fShowMetricsWindow{false};
 
-  std::unique_ptr<std::future<gui_action_t>> fReLoadingFuture{};
+  std::unique_ptr<CancellableFuture<gui_action_t>> fReLoadingFuture{};
   std::vector<gui_action_t> fNewFrameActions{};
   std::vector<std::unique_ptr<ReGui::Dialog>> fDialogs{};
   std::unique_ptr<ReGui::Dialog> fCurrentDialog{};
@@ -166,7 +180,8 @@ bool Application::shutdown(std::chrono::duration<Rep,Period> const &iTimeout)
 {
   if(fReLoadingFuture)
   {
-    return fReLoadingFuture->wait_for(iTimeout) == std::future_status::ready;
+    fReLoadingFuture->cancel();
+    return fReLoadingFuture->fFuture.wait_for(iTimeout) == std::future_status::ready;
   }
 
   return true;

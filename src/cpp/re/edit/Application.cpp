@@ -210,7 +210,7 @@ Application::Application(std::shared_ptr<Context> iContext, Application::Config 
 Application::~Application()
 {
   if(fReLoadingFuture)
-    fReLoadingFuture->get();
+    fReLoadingFuture->fFuture.get();
 }
 
 //------------------------------------------------------------------------
@@ -235,16 +235,20 @@ void Application::init()
 //------------------------------------------------------------------------
 // Application::init
 //------------------------------------------------------------------------
-std::shared_ptr<AppContext> Application::initAppContext(fs::path const &iRoot, config::Device const &iConfig)
+std::shared_ptr<AppContext> Application::initAppContext(fs::path const &iRoot,
+                                                        config::Device const &iConfig,
+                                                        Utils::CancellableSPtr const &iCancellable)
 {
   auto ctx = std::make_shared<AppContext>(iRoot, fContext->newTextureManager());
 
   Utils::StorageRAII<AppContext> current{&AppContext::kCurrent, ctx.get()};
 
+  iCancellable->progress("Loading...");
   ctx->init(iConfig);
+  iCancellable->progress("Loading motherboard...");
   ctx->initDevice();
-  ctx->initGUI2D();
-
+  iCancellable->progress("Loading GUI...");
+  ctx->initGUI2D(iCancellable);
   return ctx;
 }
 
@@ -268,19 +272,31 @@ void Application::loadProject(fs::path const &iRoot)
   fAppContext = nullptr;
   fState = State::kReLoading;
   fContext->setWindowTitle(fmt::printf("re-edit - Loading [%s]", iRoot.u8string()));
-  fReLoadingFuture = std::make_unique<std::future<gui_action_t>>(std::async(std::launch::async, [this, iRoot, c] {
+  fReLoadingFuture = std::make_unique<CancellableFuture<gui_action_t>>();
+  fReLoadingFuture->launch([this, iRoot, c, cancellable = fReLoadingFuture->fCancellable] {
     try
     {
-      return gui_action_t([this, c, ctx = initAppContext(iRoot, c)]() {
+      return gui_action_t([this, c, ctx = initAppContext(iRoot, c, cancellable)]() {
         if(fState == State::kReLoading)
         {
-          fAppContext = ctx;
-          fState = State::kReLoaded;
-          if(!fContext->isHeadless())
-            ImGui::LoadIniSettingsFromMemory(c.fImGuiIni.c_str(), c.fImGuiIni.size());
-          fContext->setWindowPositionAndSize(c.fNativeWindowPos, c.fNativeWindowSize);
-          fContext->setWindowTitle(fmt::printf("re-edit - %s", fAppContext->getConfig().fName));
-          savePreferences();
+            fAppContext = ctx;
+            fState = State::kReLoaded;
+            if(!fContext->isHeadless())
+              ImGui::LoadIniSettingsFromMemory(c.fImGuiIni.c_str(), c.fImGuiIni.size());
+            fContext->setWindowPositionAndSize(c.fNativeWindowPos, c.fNativeWindowSize);
+            fContext->setWindowTitle(fmt::printf("re-edit - %s", fAppContext->getConfig().fName));
+            savePreferences();
+          }
+      });
+    }
+    catch(Utils::Cancellable::cancelled_t const &e)
+    {
+      return gui_action_t([this]() {
+        RE_EDIT_LOG_DEBUG("Cancelled");
+        if(fState == State::kReLoading)
+        {
+          fAppContext = nullptr;
+          fState = State::kNoReLoaded;
         }
       });
     }
@@ -298,7 +314,7 @@ void Application::loadProject(fs::path const &iRoot)
         }
       });
     }
-  }));
+  });
 }
 
 namespace impl {
@@ -698,20 +714,18 @@ void Application::renderLoading()
   RE_EDIT_INTERNAL_ASSERT(fReLoadingFuture != nullptr);
 
   auto scale = getCurrentFontDpiScale();
+  const float padding = 32.0f * scale;
 
   auto constexpr kTitle = "Loading...";
   const auto logoModifier = ReGui::Modifier{}
-    .padding(20.0f * scale)
+    .padding(padding)
     .backgroundColor(ReGui::GetColorU32(toFloatColor(78, 78, 78)))
     .borderColor(ReGui::kWhiteColorU32);
 
-  bool closePopup = false;
-
-  if(fReLoadingFuture->wait_for(std::chrono::milliseconds(1)) == std::future_status::ready)
+  if(fReLoadingFuture->fFuture.wait_for(std::chrono::milliseconds(1)) == std::future_status::ready)
   {
-    deferNextFrame(fReLoadingFuture->get());
+    deferNextFrame(fReLoadingFuture->fFuture.get());
     fReLoadingFuture = nullptr;
-    closePopup = true;
   }
 
   if(!ImGui::IsPopupOpen(kTitle))
@@ -722,13 +736,25 @@ void Application::renderLoading()
 
   if(ImGui::BeginPopupModal(kTitle, nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_HorizontalScrollbar))
   {
-    ReGui::Box(logoModifier, [this]() {
-      auto logo = getLogo();
-      logo->Item({}, {64.0f, 64.0f});
-    });
-    ImGui::TextUnformatted("Please wait");
-    if(closePopup)
+    if(fReLoadingFuture)
+    {
+      ReGui::Box(logoModifier, [this]() {
+        auto logo = getLogo();
+        logo->Item({}, {64.0f, 64.0f});
+      });
+      auto progress = fReLoadingFuture->progress();
+      ImGui::ProgressBar(static_cast<float>(progress.first) / 12.0f,
+                         {ImGui::GetItemRectSize().x, 0},
+                         progress.second.c_str());
+      if(ImGui::Button("Cancel"))
+      {
+        fReLoadingFuture->cancel();
+      }
+    }
+    else
+    {
       ImGui::CloseCurrentPopup();
+    }
     ImGui::EndPopup();
   }
 }
@@ -753,7 +779,7 @@ void Application::renderAppContext()
 
   auto loggingManager = LoggingManager::instance();
 
-  if(loggingManager->getShowDebug())
+  if(loggingManager->isShowDebug())
   {
     loggingManager->debug("Undo", "History[%d]", fAppContext->fUndoManager->getUndoHistory().size());
     loggingManager->debug("Redo", "History[%d]", fAppContext->fUndoManager->getRedoHistory().size());
@@ -838,8 +864,16 @@ void Application::renderMainMenu()
     if(ImGui::BeginMenu("Dev"))
     {
       auto loggingManager = LoggingManager::instance();
-      ImGui::MenuItem("Debug", nullptr, &loggingManager->getShowDebug());
-      ImGui::MenuItem(fmt::printf("Log [%d]##Log", loggingManager->getLogCount()).c_str(), nullptr, &loggingManager->getShowLog());
+      {
+        bool b = loggingManager->isShowDebug();
+        if(ImGui::MenuItem("Debug", nullptr, &b))
+          loggingManager->setShowDebug(b);
+      }
+      {
+        bool b = loggingManager->isShowLog();
+        if(ImGui::MenuItem(fmt::printf("Log [%d]##Log", loggingManager->getLogCount()).c_str(), nullptr, &b))
+          loggingManager->setShowLog(b);
+      }
       ImGui::Separator();
       ImGui::MenuItem("ImGui Demo", nullptr, &fShowDemoWindow);
       ImGui::MenuItem("ImGui Metrics", nullptr, &fShowMetricsWindow);
