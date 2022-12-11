@@ -251,7 +251,6 @@ void PropertyManager::setValueAsInt(std::string const &iPropertyPath, int iValue
         break;
     }
   }
-  fDevice->setNum<int>(iPropertyPath, iValue);
 }
 
 //------------------------------------------------------------------------
