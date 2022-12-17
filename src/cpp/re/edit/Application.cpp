@@ -61,7 +61,7 @@ std::string Application::what(std::exception_ptr const &p)
 // Application::executeCatchAllExceptions
 //------------------------------------------------------------------------
 template<typename F>
-void Application::executeCatchAllExceptions(F f) noexcept
+void Application::executeAndAbortOnException(F&& f) noexcept
 {
   try
   {
@@ -71,6 +71,23 @@ void Application::executeCatchAllExceptions(F f) noexcept
   {
     fprintf(stderr, "ABORT| Unrecoverable exception detected: %s", Application::what(std::current_exception()).c_str());
     abort();
+  }
+}
+
+//------------------------------------------------------------------------
+// Application::executeAndLogOnException
+//------------------------------------------------------------------------
+template<typename R, typename F>
+R Application::executeAndLogOnException(F&& f) noexcept
+{
+  try
+  {
+    return f();
+  }
+  catch(...)
+  {
+    RE_EDIT_LOG_WARNING("Unexpected exception detected: %s (ignored)", Application::what(std::current_exception()).c_str());
+    return {};
   }
 }
 
@@ -119,6 +136,20 @@ std::optional<fs::path> inferValidRoot(fs::path const &iPath) noexcept
   return std::nullopt;
 }
 
+}
+
+
+//------------------------------------------------------------------------
+// Application::async
+//------------------------------------------------------------------------
+template<class Function, class... Args>
+void Application::async(Function &&f, Args &&... args)
+{
+  RE_EDIT_INTERNAL_ASSERT(fGUIThreadID == std::this_thread::get_id(), "Can only be called from the GUI thread!");
+  std::future<gui_action_t> action = std::async(std::launch::async,
+                                                std::forward<Function>(f),
+                                                std::forward<Args>(args)...);
+  fAsyncActions.push_back(std::move(action));
 }
 
 //------------------------------------------------------------------------
@@ -214,13 +245,34 @@ Application::~Application()
 }
 
 //------------------------------------------------------------------------
+// Application::asyncCheckForUpdates
+//------------------------------------------------------------------------
+void Application::asyncCheckForUpdates()
+{
+  async([this]() {
+    auto latestRelease = fNetworkManager->getLatestRelease();
+    if(latestRelease)
+      return gui_action_t([this, latestRelease = *latestRelease]() {
+        newDialog("Check for Updates")
+          .text(latestRelease.fReleaseNotes)
+          .buttonOk();
+      });
+    else
+      return gui_action_t();
+  });
+}
+
+//------------------------------------------------------------------------
 // Application::Application
 //------------------------------------------------------------------------
 void Application::init()
 {
+  fGUIThreadID = std::this_thread::get_id();
+
   fTextureManager = fContext->newTextureManager();
   fTextureManager->init(BuiltIns::kGlobalBuiltIns);
   fFontManager = std::make_shared<FontManager>(fContext->newNativeFontManager());
+  fNetworkManager = fContext->newNetworkManager();
 
   if(!fContext->isHeadless())
   {
@@ -451,6 +503,66 @@ void Application::onNativeWindowFontScaleChange(float iFontScale)
 }
 
 //------------------------------------------------------------------------
+// Application::handleNewFrameActions
+//------------------------------------------------------------------------
+void Application::handleNewFrameActions()
+{
+  // we move before iterating so that action() can enqueue for next frame
+  auto actions = std::move(fNewFrameActions);
+  for(auto &action: actions)
+    action();
+}
+
+//------------------------------------------------------------------------
+// Application::handleAsyncActions
+//------------------------------------------------------------------------
+void Application::handleAsyncActions()
+{
+  auto futures = std::move(fAsyncActions);
+  for(auto &future : futures)
+  {
+    switch(future.wait_for(std::chrono::seconds(0)))
+    {
+      case std::future_status::ready:
+      {
+        auto action = executeAndLogOnException<gui_action_t>([&future] { return future.get(); });
+        if(action)
+          action();
+        break;
+      }
+      case std::future_status::timeout:
+        // not complete => moving back to fAsyncActions
+        fAsyncActions.emplace_back(std::move(future));
+        break;
+      case std::future_status::deferred:
+        RE_EDIT_FAIL("not reached");
+    }
+  }
+}
+
+//------------------------------------------------------------------------
+// Application::handleFontChangeRequest
+//------------------------------------------------------------------------
+void Application::handleFontChangeRequest()
+{
+  auto oldDpiScale = fFontManager->getCurrentFontDpiScale();
+  fFontManager->applyFontChangeRequest();
+  auto newDpiScale = fFontManager->getCurrentFontDpiScale();
+
+  if(oldDpiScale != newDpiScale)
+  {
+    auto scaleFactor = newDpiScale;
+    ImGuiStyle newStyle{};
+    ImGui::StyleColorsDark(&newStyle);
+    newStyle.ScaleAllSizes(scaleFactor);
+    ImGui::GetStyle() = newStyle;
+  }
+
+  if(fAppContext)
+    fAppContext->fRecomputeDimensionsRequested = true;
+}
+
+//------------------------------------------------------------------------
 // Application::newFrame
 //------------------------------------------------------------------------
 bool Application::newFrame() noexcept
@@ -460,31 +572,13 @@ bool Application::newFrame() noexcept
   try
   {
     if(!fNewFrameActions.empty())
-    {
-      // we move before iterating so that action() can enqueue for next frame
-      auto actions = std::move(fNewFrameActions);
-      for(auto &action: actions)
-        action();
-    }
+      handleNewFrameActions();
+
+    if(!fAsyncActions.empty())
+      handleAsyncActions();
 
     if(fFontManager->hasFontChangeRequest())
-    {
-      auto oldDpiScale = fFontManager->getCurrentFontDpiScale();
-      fFontManager->applyFontChangeRequest();
-      auto newDpiScale = fFontManager->getCurrentFontDpiScale();
-
-      if(oldDpiScale != newDpiScale)
-      {
-        auto scaleFactor = newDpiScale;
-        ImGuiStyle newStyle{};
-        ImGui::StyleColorsDark(&newStyle);
-        newStyle.ScaleAllSizes(scaleFactor);
-        ImGui::GetStyle() = newStyle;
-      }
-
-      if(fAppContext)
-        fAppContext->fRecomputeDimensionsRequested = true;
-    }
+      handleFontChangeRequest();
 
     if(fAppContext)
       fAppContext->newFrame();
@@ -492,7 +586,7 @@ bool Application::newFrame() noexcept
   catch(...)
   {
     newExceptionDialog("Error during newFrame", true, std::current_exception());
-    executeCatchAllExceptions([e = std::current_exception()] {
+    executeAndAbortOnException([e = std::current_exception()] {
       RE_EDIT_LOG_ERROR("Unrecoverable exception detected: %s", what(e));
       ImGui::ErrorCheckEndFrameRecover(nullptr);
     });
@@ -517,7 +611,7 @@ bool Application::render() noexcept
     catch(...)
     {
       newExceptionDialog("Error during dialog rendering", true, std::current_exception());
-      executeCatchAllExceptions([e = std::current_exception()] {
+      executeAndAbortOnException([e = std::current_exception()] {
         RE_EDIT_LOG_ERROR("Unrecoverable exception detected: %s", what(e));
         ImGui::ErrorCheckEndFrameRecover(nullptr);
       });
@@ -547,7 +641,7 @@ bool Application::render() noexcept
   catch(...)
   {
     newExceptionDialog("Error during rendering", true, std::current_exception());
-    executeCatchAllExceptions([e = std::current_exception()] {
+    executeAndAbortOnException([e = std::current_exception()] {
       RE_EDIT_LOG_ERROR("Unrecoverable exception detected: %s", what(e));
       ImGui::ErrorCheckEndFrameRecover(nullptr);
     });
@@ -809,6 +903,10 @@ void Application::renderMainMenu()
         newDialog("About")
           .lambda([this]() { about(); }, true)
           .buttonOk();
+      }
+      if(ImGui::MenuItem("Check for Updates..."))
+      {
+        asyncCheckForUpdates();
       }
       if(ImGui::MenuItem("Quit"))
       {

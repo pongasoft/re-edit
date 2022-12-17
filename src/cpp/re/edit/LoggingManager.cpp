@@ -104,7 +104,7 @@ void LoggingManager::renderLog()
     }
     ImGui::BeginDisabled(fLog.empty());
     if(ImGui::Button("Clear"))
-      clearLog();
+      fLog.clear();
     if(fScrollLog)
     {
       ImGui::SetScrollHereY(1.0);

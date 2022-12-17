@@ -12,6 +12,7 @@
 #include "../GLFWContext.h"
 #include "MTLManagers.h"
 #include "NSUserDefaultsManager.h"
+#include "MacOSNetworkManager.h"
 #include "nfd.h"
 #include <version.h>
 
@@ -53,6 +54,11 @@ public:
   std::shared_ptr<re::edit::NativeFontManager> newNativeFontManager() const override
   {
     return std::make_shared<re::edit::MTLFontManager>(fDevice);
+  }
+
+  std::shared_ptr<re::edit::NetworkManager> newNetworkManager() const override
+  {
+    return std::make_shared<re::edit::MacOSNetworkManager>();
   }
 
   float getScale() const override

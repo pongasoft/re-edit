@@ -161,6 +161,8 @@ set(re-edit_BUILD_SOURCES
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/LoggingManager.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/Graphics.h"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/Graphics.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/NetworkManager.h"
+    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/NetworkManager.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/Panel.h"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/Panel.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/PanelState.h"
@@ -192,6 +194,7 @@ set(RE_EDIT_FONTS_DIR "${CMAKE_CURRENT_LIST_DIR}/external/fonts")
 if(APPLE)
   list(APPEND re-edit_BUILD_SOURCES
       "${re-edit_CPP_SRC_DIR}/re/edit/platform/macos/MTLManagers.cpp"
+      "${re-edit_CPP_SRC_DIR}/re/edit/platform/macos/MacOSNetworkManager.mm"
       "${re-edit_CPP_SRC_DIR}/re/edit/platform/macos/NSUserDefaultsManager.mm"
       )
   set(re-edit_MAIN_SRC "${re-edit_CPP_SRC_DIR}/re/edit/platform/macos/main.cpp" "${re-edit_CPP_SRC_DIR}/re/edit/platform/macos/metal.cpp")

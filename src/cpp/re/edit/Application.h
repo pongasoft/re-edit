@@ -20,6 +20,7 @@
 #define RE_EDIT_APPLICATION_H
 
 #include "TextureManager.h"
+#include "NetworkManager.h"
 #include "imgui.h"
 #include "Panel.h"
 #include "AppContext.h"
@@ -47,6 +48,7 @@ public:
     virtual ~Context() = default;
     virtual std::shared_ptr<TextureManager> newTextureManager() const = 0;
     virtual std::shared_ptr<NativeFontManager> newNativeFontManager() const = 0;
+    virtual std::shared_ptr<NetworkManager> newNetworkManager() const = 0;
     virtual ImVec4 getWindowPositionAndSize() const = 0;
     virtual void setWindowPositionAndSize(std::optional<ImVec2> const &iPosition, ImVec2 const &iSize) const = 0;
     virtual void centerWindow() const = 0;
@@ -86,6 +88,7 @@ public:
   void saveProject();
   void closeProject();
   void maybeCloseProject(std::optional<std::string> const &iDialogTitle = {}, gui_action_t const &iNextAction = {});
+  void asyncCheckForUpdates();
 
   inline float getCurrentFontSize() const { return fFontManager->getCurrentFont().fSize; }
   inline float getCurrentFontDpiScale() const { return fFontManager->getCurrentFontDpiScale(); }
@@ -149,21 +152,33 @@ private:
   void about() const;
   inline bool hasDialog() const { return fCurrentDialog != nullptr || !fDialogs.empty(); }
   template<typename F>
-  void executeCatchAllExceptions(F f) noexcept;
+  void executeAndAbortOnException(F&& f) noexcept;
+  template<typename R, typename F>
+  R executeAndLogOnException(F&& f) noexcept;
   void renderLoadDialogBlocking();
-  void deferNextFrame(std::function<void()> iAction) { if(iAction) fNewFrameActions.emplace_back(std::move(iAction)); }
+  void deferNextFrame(gui_action_t iAction) { if(iAction) fNewFrameActions.emplace_back(std::move(iAction)); }
+
+  template<class Function, class... Args>
+  void async(Function&& f, Args&&... args);
+
+  void handleNewFrameActions();
+  void handleAsyncActions();
+  void handleFontChangeRequest();
 
 private:
+  std::thread::id fGUIThreadID{};
   State fState{State::kNoReLoaded};
   std::shared_ptr<Context> fContext;
   std::shared_ptr<TextureManager> fTextureManager;
   std::shared_ptr<FontManager> fFontManager;
+  std::shared_ptr<NetworkManager> fNetworkManager;
   config::Global fConfig{};
   std::shared_ptr<AppContext> fAppContext{};
   bool fShowDemoWindow{false};
   bool fShowMetricsWindow{false};
 
   std::unique_ptr<CancellableFuture<gui_action_t>> fReLoadingFuture{};
+  std::vector<std::future<gui_action_t>> fAsyncActions{};
   std::vector<gui_action_t> fNewFrameActions{};
   std::vector<std::unique_ptr<ReGui::Dialog>> fDialogs{};
   std::unique_ptr<ReGui::Dialog> fCurrentDialog{};
