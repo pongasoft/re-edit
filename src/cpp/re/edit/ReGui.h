@@ -315,6 +315,25 @@ constexpr bool IsSingleSelectKey(ImGuiIO const &io)
 }
 
 //------------------------------------------------------------------------
+// ReGui::ToolTip
+//------------------------------------------------------------------------
+template<typename F>
+void ToolTip(F &&iTooltipContent)
+{
+  ImGui::BeginTooltip();
+  ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
+  iTooltipContent();
+  ImGui::PopTextWrapPos();
+  ImGui::EndTooltip();
+}
+
+//------------------------------------------------------------------------
+// ReGui::MultiLineText
+// Issues one ImGui::Text per line of text
+//------------------------------------------------------------------------
+void MultiLineText(std::string const &iText);
+
+//------------------------------------------------------------------------
 // ReGui::Modifier
 // Similar concept to jetpack compose
 //------------------------------------------------------------------------

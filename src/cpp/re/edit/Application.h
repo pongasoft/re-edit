@@ -32,7 +32,9 @@
 #include "Dialog.h"
 #include "fs.h"
 #include "Config.h"
+#include <version.h>
 #include <future>
+#include <map>
 
 namespace re::edit {
 
@@ -89,6 +91,7 @@ public:
   void closeProject();
   void maybeCloseProject(std::optional<std::string> const &iDialogTitle = {}, gui_action_t const &iNextAction = {});
   void asyncCheckForUpdates();
+  inline bool hasNewVersion() const { return fLatestRelease && fLatestRelease->fVersion != std::string(kGitTag); }
 
   inline float getCurrentFontSize() const { return fFontManager->getCurrentFont().fSize; }
   inline float getCurrentFontDpiScale() const { return fFontManager->getCurrentFontDpiScale(); }
@@ -149,7 +152,7 @@ private:
   void renderAppContext(); // may throw exception
   void renderLoading(); // may throw exception
   void renderDialog();
-  void renderLogoBox(float iPadding = 10.0f) const;
+  void renderLogoBox(float iPadding = 10.0f);
   void about() const;
   inline bool hasDialog() const { return fCurrentDialog != nullptr || !fDialogs.empty(); }
   template<typename F>
@@ -160,7 +163,8 @@ private:
   void deferNextFrame(gui_action_t iAction) { if(iAction) fNewFrameActions.emplace_back(std::move(iAction)); }
 
   template<class Function, class... Args>
-  void async(Function&& f, Args&&... args);
+  bool async(std::string const &iKey, Function&& f, Args&&... args);
+  bool hasAsyncAction(std::string const &iKey) const { return fAsyncActions.find(iKey) != fAsyncActions.end(); }
 
   void handleNewFrameActions();
   void handleAsyncActions();
@@ -180,7 +184,7 @@ private:
   bool fShowMetricsWindow{false};
 
   std::unique_ptr<CancellableFuture<gui_action_t>> fReLoadingFuture{};
-  std::vector<std::future<gui_action_t>> fAsyncActions{};
+  std::map<std::string, std::future<gui_action_t>> fAsyncActions{};
   std::vector<gui_action_t> fNewFrameActions{};
   std::vector<std::unique_ptr<ReGui::Dialog>> fDialogs{};
   std::unique_ptr<ReGui::Dialog> fCurrentDialog{};

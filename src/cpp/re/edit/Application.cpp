@@ -33,6 +33,8 @@
 
 namespace re::edit {
 
+const std::string kCheckForUpdatesKey{"CFU_Key"};
+
 //------------------------------------------------------------------------
 // Application::what
 //------------------------------------------------------------------------
@@ -143,13 +145,22 @@ std::optional<fs::path> inferValidRoot(fs::path const &iPath) noexcept
 // Application::async
 //------------------------------------------------------------------------
 template<class Function, class... Args>
-void Application::async(Function &&f, Args &&... args)
+bool Application::async(std::string const &iKey, Function &&f, Args &&... args)
 {
   RE_EDIT_INTERNAL_ASSERT(fGUIThreadID == std::this_thread::get_id(), "Can only be called from the GUI thread!");
-  std::future<gui_action_t> action = std::async(std::launch::async,
-                                                std::forward<Function>(f),
-                                                std::forward<Args>(args)...);
-  fAsyncActions.push_back(std::move(action));
+  if(!hasAsyncAction(iKey))
+  {
+    std::future<gui_action_t> action = std::async(std::launch::async,
+                                                  std::forward<Function>(f),
+                                                  std::forward<Args>(args)...);
+    fAsyncActions[iKey] = std::move(action);
+    return true;
+  }
+  else
+  {
+    RE_EDIT_LOG_DEBUG("already running %s", iKey);
+    return false;
+  }
 }
 
 //------------------------------------------------------------------------
@@ -250,7 +261,7 @@ bool Application::shutdown(long iTimeoutMillis)
       return false;
   }
 
-  for(auto &future: fAsyncActions)
+  for(auto &[k, future]: fAsyncActions)
   {
     if(future.wait_for(timeout) != std::future_status::ready)
       return false;
@@ -273,11 +284,11 @@ Application::~Application()
 //------------------------------------------------------------------------
 void Application::asyncCheckForUpdates()
 {
-  async([this]() {
+  async(kCheckForUpdatesKey, [this]() {
     auto latestRelease = fNetworkManager->getLatestRelease();
-//    std::this_thread::sleep_for(std::chrono::milliseconds(5000));
-//    std::optional<Release> latestRelease = Release{kGitTag, "https://github.com/pongasoft/jamba/releases/tag/v6.0.1", "* Fixed gtest crash on Apple M1 platform\r\n"};
+//    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 //    std::optional<Release> latestRelease = Release{"v0.0.0", "https://github.com/pongasoft/jamba/releases/tag/v6.0.1", "* Fixed gtest crash on Apple M1 platform\r\n"};
+//    std::optional<Release> latestRelease = Release{kGitTag, "https://github.com/pongasoft/jamba/releases/tag/v6.0.1", "* Fixed gtest crash on Apple M1 platform\r\n"};
     if(latestRelease)
       return gui_action_t([this, latestRelease = *latestRelease]() {
         fLatestRelease = latestRelease;
@@ -286,7 +297,7 @@ void Application::asyncCheckForUpdates()
           auto &dialog = newDialog("Check for Updates");
           dialog.lambda([this]() { renderLogoBox(); });
           dialog.text(fmt::printf("Latest Version: %s", latestRelease.fVersion));
-          if(fLatestRelease->fVersion != std::string(kGitTag))
+          if(latestRelease.fVersion != std::string(kGitTag))
           {
             dialog.text(fmt::printf("There is a new version (you currently have %s).\n"
                                     "Release Notes\n"
@@ -295,14 +306,16 @@ void Application::asyncCheckForUpdates()
             if(latestRelease.fURL)
             {
               dialog.button("Download", [this, url = *latestRelease.fURL]() { fContext->openURL(url); });
+              dialog.buttonCancel();
             }
+            else
+              dialog.buttonOk();
           }
           else
           {
             dialog.text("You are running the latest version.");
+            dialog.buttonOk();
           }
-
-          dialog.buttonOk();
         }
       });
     else
@@ -568,8 +581,10 @@ void Application::handleNewFrameActions()
 void Application::handleAsyncActions()
 {
   auto futures = std::move(fAsyncActions);
-  for(auto &future : futures)
+  for(auto &pair : futures)
   {
+    auto &key = pair.first;
+    auto &future = pair.second;
     switch(future.wait_for(std::chrono::seconds(0)))
     {
       case std::future_status::ready:
@@ -581,7 +596,7 @@ void Application::handleAsyncActions()
       }
       case std::future_status::timeout:
         // not complete => moving back to fAsyncActions
-        fAsyncActions.emplace_back(std::move(future));
+        fAsyncActions[key] = std::move(future);
         break;
       case std::future_status::deferred:
         RE_EDIT_FAIL("not reached");
@@ -732,7 +747,7 @@ std::shared_ptr<Texture> Application::getLogo() const
 //------------------------------------------------------------------------
 // Application::renderLogoBox
 //------------------------------------------------------------------------
-void Application::renderLogoBox(float iPadding) const
+void Application::renderLogoBox(float iPadding)
 {
   auto scale = getCurrentFontDpiScale();
   const auto logoModifier = ReGui::Modifier{}
@@ -741,7 +756,7 @@ void Application::renderLogoBox(float iPadding) const
     .borderColor(ReGui::kWhiteColorU32);
   auto textSizeHeight = ImGui::CalcTextSize("R").y;
 
-  auto newVersion = fLatestRelease && fLatestRelease->fVersion != std::string(kGitTag);
+  auto newVersion = hasNewVersion();
 
   ReGui::Box(logoModifier, [this, textSizeHeight, newVersion]() {
     auto logo = getLogo();
@@ -762,16 +777,29 @@ void Application::renderLogoBox(float iPadding) const
   {
     if(ImGui::IsItemHovered())
     {
-      ImGui::BeginTooltip();
-      ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
-      ImGui::Text("New Version Detected: %s", fLatestRelease->fVersion.c_str());
-      ImGui::Text("Click to download");
-      ImGui::PopTextWrapPos();
-      ImGui::EndTooltip();
+      ReGui::ToolTip([this]() {
+        ImGui::Text("New Version Detected: %s", fLatestRelease->fVersion.c_str());
+        ImGui::Text("Click to download");
+      });
     }
     if(ImGui::IsItemClicked(ImGuiMouseButton_Left))
     {
       fContext->openURL(*fLatestRelease->fURL);
+    }
+  }
+  else
+  {
+    if(hasAsyncAction(kCheckForUpdatesKey))
+    {
+      if(ImGui::IsItemHovered())
+        ReGui::ToolTip([]() { ImGui::Text("Checking for updates..."); });
+    }
+    else
+    {
+      if(ImGui::IsItemHovered())
+        ReGui::ToolTip([]() { ImGui::Text("Click to check for updates"); });
+      if(ImGui::IsItemClicked(ImGuiMouseButton_Left))
+        asyncCheckForUpdates();
     }
   }
 
@@ -819,6 +847,24 @@ void Application::renderWelcome()
       ImGui::Spacing();
       ImGui::Separator();
       ImGui::Spacing();
+
+      if(hasNewVersion())
+      {
+        if(ImGui::TreeNodeEx("New Release"))
+        {
+          ImGui::Text("Latest Release: %s", fLatestRelease->fVersion.c_str());
+          if(fLatestRelease->fReleaseNotes)
+            ReGui::MultiLineText(*fLatestRelease->fReleaseNotes);
+          if(fLatestRelease->fURL)
+          {
+            if(ImGui::Button("Download"))
+              fContext->openURL(*fLatestRelease->fURL);
+          }
+          ImGui::TreePop();
+        }
+        ImGui::Separator();
+        ImGui::Spacing();
+      }
 
       if(fConfig.fDeviceHistory.empty())
       {

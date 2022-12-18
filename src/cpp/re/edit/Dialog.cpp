@@ -108,14 +108,7 @@ void Dialog::render()
 //------------------------------------------------------------------------
 Dialog &Dialog::text(std::string iText, bool iCopyToClipboard)
 {
-  return lambda([text = std::move(iText)]() {
-                  std::istringstream stream(text);
-                  std::string line;
-                  while(std::getline(stream, line, '\n'))
-                  {
-                    ImGui::TextUnformatted(line.c_str());
-                  }
-                },
+  return lambda([text = std::move(iText)]() { ReGui::MultiLineText(text); },
                 iCopyToClipboard);
 }
 

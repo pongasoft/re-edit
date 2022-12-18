@@ -85,6 +85,19 @@ void Box(Modifier const &iModifier, std::function<void()> const &iBoxContent, Im
   ImGui::Dummy(max - min);
 }
 
+//------------------------------------------------------------------------
+// ReGui::MultiLineText
+//------------------------------------------------------------------------
+void MultiLineText(std::string const &iText)
+{
+  std::istringstream stream(iText);
+  std::string line;
+  while(std::getline(stream, line, '\n'))
+  {
+    ImGui::TextUnformatted(line.c_str());
+  }
+}
+
 
 //------------------------------------------------------------------------
 // Window::Lifecycle::~Lifecycle
