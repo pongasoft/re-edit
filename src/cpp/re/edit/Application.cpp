@@ -276,29 +276,34 @@ void Application::asyncCheckForUpdates()
   async([this]() {
     auto latestRelease = fNetworkManager->getLatestRelease();
 //    std::this_thread::sleep_for(std::chrono::milliseconds(5000));
-//    std::optional<Release> latestRelease = Release{kGitTag, "https://api.github.com/repos/pongasoft/jamba/releases/68473512", "* Fixed gtest crash on Apple M1 platform\r\n"};
+//    std::optional<Release> latestRelease = Release{kGitTag, "https://github.com/pongasoft/jamba/releases/tag/v6.0.1", "* Fixed gtest crash on Apple M1 platform\r\n"};
+//    std::optional<Release> latestRelease = Release{"v0.0.0", "https://github.com/pongasoft/jamba/releases/tag/v6.0.1", "* Fixed gtest crash on Apple M1 platform\r\n"};
     if(latestRelease)
       return gui_action_t([this, latestRelease = *latestRelease]() {
         fLatestRelease = latestRelease;
-        auto &dialog = newDialog("Check for Updates");
-        dialog.preContentMessage(fmt::printf("Latest Version: %s", latestRelease.fVersion));
-        if(fLatestRelease->fVersion != std::string(kGitTag))
+        if(fState == State::kReLoaded)
         {
-          dialog.text(fmt::printf("There is a new version (you currently have %s).\n"
-                                  "Release Notes\n"
-                                  "-------------\n"
-                                  "%s", kGitTag, (latestRelease.fReleaseNotes ? *latestRelease.fReleaseNotes : "")));
-          if(latestRelease.fURL)
+          auto &dialog = newDialog("Check for Updates");
+          dialog.lambda([this]() { renderLogoBox(); });
+          dialog.text(fmt::printf("Latest Version: %s", latestRelease.fVersion));
+          if(fLatestRelease->fVersion != std::string(kGitTag))
           {
-            dialog.button("Download", [this, url = *latestRelease.fURL]() { fContext->openURL(url); });
+            dialog.text(fmt::printf("There is a new version (you currently have %s).\n"
+                                    "Release Notes\n"
+                                    "-------------\n"
+                                    "%s", kGitTag, (latestRelease.fReleaseNotes ? *latestRelease.fReleaseNotes : "")));
+            if(latestRelease.fURL)
+            {
+              dialog.button("Download", [this, url = *latestRelease.fURL]() { fContext->openURL(url); });
+            }
           }
-        }
-        else
-        {
-          dialog.text("You are running the latest version.");
-        }
+          else
+          {
+            dialog.text("You are running the latest version.");
+          }
 
-        dialog.buttonOk();
+          dialog.buttonOk();
+        }
       });
     else
       return gui_action_t();
@@ -371,6 +376,7 @@ void Application::loadProject(fs::path const &iRoot)
   fReLoadingFuture->launch([this, iRoot, c, cancellable = fReLoadingFuture->fCancellable] {
     try
     {
+      //std::this_thread::sleep_for(std::chrono::seconds(5));
       return gui_action_t([this, c, ctx = initAppContext(iRoot, c, cancellable)]() {
         if(fState == State::kReLoading)
         {
@@ -724,18 +730,61 @@ std::shared_ptr<Texture> Application::getLogo() const
 }
 
 //------------------------------------------------------------------------
+// Application::renderLogoBox
+//------------------------------------------------------------------------
+void Application::renderLogoBox(float iPadding) const
+{
+  auto scale = getCurrentFontDpiScale();
+  const auto logoModifier = ReGui::Modifier{}
+    .padding(iPadding * scale)
+    .backgroundColor(ReGui::GetColorU32(toFloatColor(78, 78, 78)))
+    .borderColor(ReGui::kWhiteColorU32);
+  auto textSizeHeight = ImGui::CalcTextSize("R").y;
+
+  auto newVersion = fLatestRelease && fLatestRelease->fVersion != std::string(kGitTag);
+
+  ReGui::Box(logoModifier, [this, textSizeHeight, newVersion]() {
+    auto logo = getLogo();
+    auto computedHeight = 2.0f * textSizeHeight + (ImGui::GetStyle().ItemSpacing.y);
+    logo->Item({}, {computedHeight, computedHeight});
+
+    ImGui::SameLine();
+
+    ImGui::BeginGroup();
+    {
+      ImGui::TextUnformatted("re-edit");
+      ImGui::Text("%s%s", kFullVersion, newVersion ? "*" : "");
+      ImGui::EndGroup();
+    }
+  });
+
+  if(newVersion && fLatestRelease->fURL)
+  {
+    if(ImGui::IsItemHovered())
+    {
+      ImGui::BeginTooltip();
+      ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
+      ImGui::Text("New Version Detected: %s", fLatestRelease->fVersion.c_str());
+      ImGui::Text("Click to download");
+      ImGui::PopTextWrapPos();
+      ImGui::EndTooltip();
+    }
+    if(ImGui::IsItemClicked(ImGuiMouseButton_Left))
+    {
+      fContext->openURL(*fLatestRelease->fURL);
+    }
+  }
+
+}
+
+//------------------------------------------------------------------------
 // Application::renderWelcome
 //------------------------------------------------------------------------
 void Application::renderWelcome()
 {
   auto scale = getCurrentFontDpiScale();
-
   const float padding = 20.0f * scale;
   const ImVec2 buttonSize{120.0f * scale, 0};
-  const auto logoModifier = ReGui::Modifier{}
-    .padding(10.0f * scale)
-    .backgroundColor(ReGui::GetColorU32(toFloatColor(78, 78, 78)))
-    .borderColor(ReGui::kWhiteColorU32);
 
   if(hasDialog())
     return;
@@ -752,22 +801,7 @@ void Application::renderWelcome()
 
   if(ImGui::Begin(config::kWelcomeWindowTitle, nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_HorizontalScrollbar))
   {
-    auto textSizeHeight = ImGui::CalcTextSize("R").y;
-
-    ReGui::Box(logoModifier, [this, textSizeHeight]() {
-      auto logo = getLogo();
-      auto computedHeight = 2.0f * textSizeHeight + (ImGui::GetStyle().ItemSpacing.y);
-      logo->Item({}, {computedHeight, computedHeight});
-
-      ImGui::SameLine();
-
-      ImGui::BeginGroup();
-      {
-        ImGui::TextUnformatted("re-edit");
-        ImGui::Text("%s", kFullVersion);
-        ImGui::EndGroup();
-      }
-    });
+    renderLogoBox();
 
     ImGui::SameLine(0, padding);
 
@@ -796,6 +830,7 @@ void Application::renderWelcome()
 
         ImGui::PushStyleColor(ImGuiCol_Button, 0); // make the button transparent
 
+        auto textSizeHeight = ImGui::CalcTextSize("R").y;
         auto buttonHeight = 2.0f * (textSizeHeight + ImGui::GetStyle().FramePadding.y);
 
         std::optional<std::string> deviceToRemoveFromHistory{};
@@ -851,13 +886,8 @@ void Application::renderLoading()
   RE_EDIT_INTERNAL_ASSERT(fReLoadingFuture != nullptr);
 
   auto scale = getCurrentFontDpiScale();
-  const float padding = 32.0f * scale;
 
   auto constexpr kTitle = "Loading...";
-  const auto logoModifier = ReGui::Modifier{}
-    .padding(padding)
-    .backgroundColor(ReGui::GetColorU32(toFloatColor(78, 78, 78)))
-    .borderColor(ReGui::kWhiteColorU32);
 
   if(fReLoadingFuture->fFuture.wait_for(std::chrono::milliseconds(1)) == std::future_status::ready)
   {
@@ -875,10 +905,7 @@ void Application::renderLoading()
   {
     if(fReLoadingFuture)
     {
-      ReGui::Box(logoModifier, [this]() {
-        auto logo = getLogo();
-        logo->Item({}, {64.0f, 64.0f});
-      });
+      renderLogoBox(32.0f);
       auto progress = fReLoadingFuture->progress();
       ImGui::ProgressBar(static_cast<float>(progress.first) / 12.0f,
                          {ImGui::GetItemRectSize().x, 0},
@@ -944,6 +971,7 @@ void Application::renderMainMenu()
       if(ImGui::MenuItem("About"))
       {
         newDialog("About")
+          .lambda([this]() { renderLogoBox(); })
           .lambda([this]() { about(); }, true)
           .buttonOk();
       }

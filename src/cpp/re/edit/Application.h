@@ -149,6 +149,7 @@ private:
   void renderAppContext(); // may throw exception
   void renderLoading(); // may throw exception
   void renderDialog();
+  void renderLogoBox(float iPadding = 10.0f) const;
   void about() const;
   inline bool hasDialog() const { return fCurrentDialog != nullptr || !fDialogs.empty(); }
   template<typename F>
