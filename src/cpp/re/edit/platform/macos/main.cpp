@@ -66,6 +66,11 @@ public:
     return 1.0;
   }
 
+  void openURL(std::string const &iURL) const override
+  {
+    std::system(re::mock::fmt::printf("open \"%s\"", iURL).c_str());
+  }
+
 private:
   MTL::Device *fDevice;
 };
@@ -206,7 +211,7 @@ int doMain(int argc, char **argv)
 
   auto const res = application.hasException() ? 1 : 0;
 
-  if(!application.shutdown(std::chrono::seconds(1)))
+  if(!application.shutdown(250))
     std::_Exit(application.hasException() ? EXIT_FAILURE : EXIT_SUCCESS);
 
   return res;

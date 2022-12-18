@@ -29,7 +29,8 @@ namespace re::edit {
 struct Release
 {
   std::string fVersion{};
-  std::string fReleaseNotes{};
+  std::optional<std::string> fURL{};
+  std::optional<std::string> fReleaseNotes{};
 };
 
 class NetworkManager

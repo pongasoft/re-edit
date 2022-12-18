@@ -53,6 +53,7 @@ public:
     virtual void setWindowPositionAndSize(std::optional<ImVec2> const &iPosition, ImVec2 const &iSize) const = 0;
     virtual void centerWindow() const = 0;
     virtual void setWindowTitle(std::string const &iTitle) const = 0;
+    virtual void openURL(std::string const &iURL) const = 0;
 
     std::shared_ptr<NativePreferencesManager> getPreferencesManager() const { return fPreferencesManager; }
 
@@ -74,8 +75,7 @@ public:
 public:
   explicit Application(std::shared_ptr<Context> iContext);
   Application(std::shared_ptr<Context> iContext, Application::Config const &iConfig);
-  template<class Rep, class Period>
-  bool shutdown(std::chrono::duration<Rep,Period> const &iTimeout);
+  bool shutdown(long iTimeoutMillis);
   ~Application();
 
   static Application &GetCurrent() { RE_EDIT_INTERNAL_ASSERT(kCurrent != nullptr); return *kCurrent; }
@@ -173,6 +173,7 @@ private:
   std::shared_ptr<FontManager> fFontManager;
   std::shared_ptr<NetworkManager> fNetworkManager;
   config::Global fConfig{};
+  std::optional<Release> fLatestRelease{};
   std::shared_ptr<AppContext> fAppContext{};
   bool fShowDemoWindow{false};
   bool fShowMetricsWindow{false};
@@ -186,21 +187,6 @@ private:
 
   inline static thread_local Application *kCurrent{};
 };
-
-//------------------------------------------------------------------------
-// Application::shutdown
-//------------------------------------------------------------------------
-template<class Rep, class Period>
-bool Application::shutdown(std::chrono::duration<Rep,Period> const &iTimeout)
-{
-  if(fReLoadingFuture)
-  {
-    fReLoadingFuture->cancel();
-    return fReLoadingFuture->fFuture.wait_for(iTimeout) == std::future_status::ready;
-  }
-
-  return true;
-}
 
 }
 

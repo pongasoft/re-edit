@@ -235,6 +235,30 @@ Application::Application(std::shared_ptr<Context> iContext, Application::Config 
     loadProjectDeferred(*iConfig.fProjectRoot);
 }
 
+
+//------------------------------------------------------------------------
+// Application::shutdown
+//------------------------------------------------------------------------
+bool Application::shutdown(long iTimeoutMillis)
+{
+  auto timeout = std::chrono::milliseconds(iTimeoutMillis);
+
+  if(fReLoadingFuture)
+  {
+    fReLoadingFuture->cancel();
+    if(fReLoadingFuture->fFuture.wait_for(timeout) != std::future_status::ready)
+      return false;
+  }
+
+  for(auto &future: fAsyncActions)
+  {
+    if(future.wait_for(timeout) != std::future_status::ready)
+      return false;
+  }
+
+  return true;
+}
+
 //------------------------------------------------------------------------
 // Application::~Application
 //------------------------------------------------------------------------
@@ -251,11 +275,30 @@ void Application::asyncCheckForUpdates()
 {
   async([this]() {
     auto latestRelease = fNetworkManager->getLatestRelease();
+//    std::this_thread::sleep_for(std::chrono::milliseconds(5000));
+//    std::optional<Release> latestRelease = Release{kGitTag, "https://api.github.com/repos/pongasoft/jamba/releases/68473512", "* Fixed gtest crash on Apple M1 platform\r\n"};
     if(latestRelease)
       return gui_action_t([this, latestRelease = *latestRelease]() {
-        newDialog("Check for Updates")
-          .text(latestRelease.fReleaseNotes)
-          .buttonOk();
+        fLatestRelease = latestRelease;
+        auto &dialog = newDialog("Check for Updates");
+        dialog.preContentMessage(fmt::printf("Latest Version: %s", latestRelease.fVersion));
+        if(fLatestRelease->fVersion != std::string(kGitTag))
+        {
+          dialog.text(fmt::printf("There is a new version (you currently have %s).\n"
+                                  "Release Notes\n"
+                                  "-------------\n"
+                                  "%s", kGitTag, (latestRelease.fReleaseNotes ? *latestRelease.fReleaseNotes : "")));
+          if(latestRelease.fURL)
+          {
+            dialog.button("Download", [this, url = *latestRelease.fURL]() { fContext->openURL(url); });
+          }
+        }
+        else
+        {
+          dialog.text("You are running the latest version.");
+        }
+
+        dialog.buttonOk();
       });
     else
       return gui_action_t();

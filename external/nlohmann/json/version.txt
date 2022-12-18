@@ -1,0 +1,2 @@
+Version 3.11.2 from https://github.com/nlohmann/json 2022/12/17 (bc889afb4c5bf1c0d8ee29ef35eaaf4c8bef8a5d)
+

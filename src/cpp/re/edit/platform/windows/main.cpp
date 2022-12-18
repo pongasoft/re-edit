@@ -230,7 +230,12 @@ int doMain(int argc, char **argv)
   glfwDestroyWindow(window);
   glfwTerminate();
 
-  return application.hasException() ? 1 : 0;
+  auto const res = application.hasException() ? 1 : 0;
+
+  if(!application.shutdown(250))
+    std::_Exit(application.hasException() ? EXIT_FAILURE : EXIT_SUCCESS);
+
+  return res;
 }
 
 int main(int argc, char **argv)

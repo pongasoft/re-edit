@@ -10,7 +10,7 @@ execute_process(COMMAND git describe --long --dirty --abbrev=10 --tags
     OUTPUT_VARIABLE re-edit_GIT_VERSION
     WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
     OUTPUT_STRIP_TRAILING_WHITESPACE)
-execute_process(COMMAND git describe --tags
+execute_process(COMMAND git describe --tags --abbrev=0
     RESULT_VARIABLE result
     OUTPUT_VARIABLE re-edit_GIT_TAG
     WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
@@ -208,7 +208,13 @@ endif()
 
 # Build the static library
 add_library("${target}_lib" "${re-edit_BUILD_SOURCES}")
-target_include_directories("${target}_lib" PUBLIC "${VERSION_DIR}" "external/misc" "${RE_EDIT_FONTS_DIR}/includes" "${RE_EDIT_FONTS_DIR}/src")
+target_include_directories("${target}_lib" PUBLIC
+    "${VERSION_DIR}"
+    "external/misc"
+    "external/nlohmann/json/single_include"
+    "${RE_EDIT_FONTS_DIR}/includes"
+    "${RE_EDIT_FONTS_DIR}/src"
+    )
 target_link_libraries("${target}_lib" PUBLIC imgui stb-image re-mock nfd efsw)
 target_compile_definitions("${target}_lib" PUBLIC ENABLE_RE_EDIT_INTERNAL_ASSERT=1)
 

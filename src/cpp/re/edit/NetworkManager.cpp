@@ -17,8 +17,11 @@
  */
 
 #include "NetworkManager.h"
+#include <nlohmann/json.hpp>
 
 namespace re::edit {
+
+using json = nlohmann::json;
 
 // using Jamba for now as re-edit is NOT public yet!
 constexpr auto kReEditGithubURL = RE_EDIT_NATIVE_STRING("https://api.github.com/repos/pongasoft/jamba/releases/latest");
@@ -27,6 +30,19 @@ const std::map<NetworkManager::native_string_t, NetworkManager::native_string_t>
   {RE_EDIT_NATIVE_STRING("Accept"),               RE_EDIT_NATIVE_STRING("application/vnd.github+json")}
 };
 
+namespace impl {
+
+std::optional<std::string> optional(json const &iObject, std::string const &iKey)
+{
+  auto i = iObject.find(iKey);
+  if(i != iObject.end() && i->is_string())
+    return *i;
+  else
+    return std::nullopt;
+}
+
+}
+
 //------------------------------------------------------------------------
 // NetworkManager::getLatestRelease
 //------------------------------------------------------------------------
@@ -34,9 +50,20 @@ std::optional<Release> NetworkManager::getLatestRelease() const
 {
   auto content = HttpGet(kReEditGithubURL, kReEditGithubAPIHeaders);
   if(content)
-    return Release{"TBD", *content};
-  else
-    return std::nullopt;
+  {
+    auto release = json::parse(*content);
+    if(release.is_object())
+    {
+      auto version = impl::optional(release, "tag_name");
+      if(version)
+      {
+        return Release{*version,
+                       impl::optional(release, "html_url"),
+                       impl::optional(release, "body")};
+      }
+    }
+  }
+  return std::nullopt;
 }
 
 }
