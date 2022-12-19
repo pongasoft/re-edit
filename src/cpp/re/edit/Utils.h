@@ -38,7 +38,7 @@ private:
 };
 
 template<typename F>
-[[nodiscard]] inline std::unique_ptr<DeferrableAction<F>> defer(F iAction) { return std::make_unique<DeferrableAction<F>>(std::move(iAction)); }
+[[nodiscard]] inline DeferrableAction<F> defer(F iAction) { return DeferrableAction<F>(std::move(iAction)); }
 
 template<typename T>
 struct StorageRAII

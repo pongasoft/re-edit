@@ -10,9 +10,11 @@
 #include <stdio.h>
 #include <shellscalingapi.h>
 #include <winuser.h>
+#include <shellapi.h>
 #include "nfd.h"
 #include <version.h>
 #include "LocalSettingsManager.h"
+#include "WindowsNetworkManager.h"
 #include "../GLFWContext.h"
 
 #if defined(IMGUI_IMPL_OPENGL_ES2)
@@ -57,6 +59,16 @@ public:
   float getScale() const override
   {
     return getFontDpiScale();
+  }
+
+  std::shared_ptr<re::edit::NetworkManager> newNetworkManager() const override
+  {
+    return std::make_shared<re::edit::WindowsNetworkManager>();
+  }
+
+  void openURL(std::string const &iURL) const override
+  {
+    ShellExecuteA(0, nullptr, iURL.c_str(), nullptr, nullptr, SW_SHOW);
   }
 
 private:

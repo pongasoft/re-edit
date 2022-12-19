@@ -449,7 +449,7 @@ Application::gui_action_t chain(Application::gui_action_t iFirst, Application::g
 //------------------------------------------------------------------------
 // impl::maybeInvoke
 //------------------------------------------------------------------------
-constexpr void maybeInvoke(Application::gui_action_t const &iAction) { if(iAction) iAction(); }
+inline void maybeInvoke(Application::gui_action_t const &iAction) { if(iAction) iAction(); }
 
 }
 
