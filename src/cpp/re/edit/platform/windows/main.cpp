@@ -16,6 +16,8 @@
 #include "LocalSettingsManager.h"
 #include "WindowsNetworkManager.h"
 #include "../GLFWContext.h"
+#include <thread>
+#include <mutex>
 
 #if defined(IMGUI_IMPL_OPENGL_ES2)
 #include <GLES2/gl2.h>
@@ -41,9 +43,25 @@ public:
                           GLFWwindow *iWindow,
                           int iGLMaxTextureSize) :
     GLFWContext(std::move(iPreferencesManager), iWindow),
+    fGUIThreadID{std::this_thread::get_id()},
     fGLMaxTextureSize{iGLMaxTextureSize}
   {
-    // empty
+    fMainDC = wglGetCurrentDC();
+    RE_EDIT_ASSERT(fMainDC != nullptr, "Error %lu in wglGetCurrentDC.", GetLastError());
+
+    auto currentContext = wglGetCurrentContext();
+    RE_EDIT_ASSERT(currentContext != nullptr, "Error %lu in wglGetCurrentContext.", GetLastError());
+
+    fOGL3SecondaryContext = wglCreateContext(fMainDC);
+    RE_EDIT_ASSERT(fOGL3SecondaryContext != nullptr, "Error %lu in wglCreateContext.", GetLastError());
+
+    auto res = wglShareLists(currentContext, fOGL3SecondaryContext);
+    RE_EDIT_ASSERT(res == TRUE, "Error %lu in wglShareLists.", GetLastError());
+  }
+
+  ~WindowsContext()
+  {
+    wglDeleteContext(fOGL3SecondaryContext);
   }
 
   std::shared_ptr<re::edit::TextureManager> newTextureManager() const override
@@ -71,7 +89,27 @@ public:
     ShellExecuteA(0, nullptr, iURL.c_str(), nullptr, nullptr, SW_SHOW);
   }
 
+  void executeWithUIContext(std::function<void()> f) const override
+  {
+    if(std::this_thread::get_id() == fGUIThreadID)
+    {
+      f();
+    }
+    else
+    {
+      // ensure that fOGL3SecondaryContext is used only by one thread at a time
+      std::lock_guard<std::mutex> lock(fOGL3Mutex);
+      wglMakeCurrent(fMainDC, fOGL3SecondaryContext);
+      auto cleanCurrentContext = re::edit::Utils::defer([]() { wglMakeCurrent(nullptr, nullptr); });
+      f();
+    }
+  }
+
 private:
+  std::thread::id fGUIThreadID;
+  HDC fMainDC;
+  HGLRC fOGL3SecondaryContext;
+  mutable std::mutex fOGL3Mutex;
   int fGLMaxTextureSize;
 };
 

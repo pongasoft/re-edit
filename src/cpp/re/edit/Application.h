@@ -56,6 +56,7 @@ public:
     virtual void centerWindow() const = 0;
     virtual void setWindowTitle(std::string const &iTitle) const = 0;
     virtual void openURL(std::string const &iURL) const = 0;
+    virtual void executeWithUIContext(std::function<void()> f) const { f(); }
 
     std::shared_ptr<NativePreferencesManager> getPreferencesManager() const { return fPreferencesManager; }
 
