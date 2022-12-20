@@ -158,9 +158,13 @@ void Panel::draw(AppContext &iCtx)
       fShiftMouseDrag = MouseDrag{mousePos, mousePos, mousePos};
     else
     {
-      fMouseDrag = MouseDrag{mousePos, mousePos, mousePos};
-      fWidgetMove = WidgetMove{mousePos};
-      selectWidget(iCtx, mousePos, ReGui::IsSingleSelectKey(io));
+      if(selectWidget(iCtx, mousePos, ReGui::IsSingleSelectKey(io)))
+      {
+        fMouseDrag = MouseDrag{mousePos, mousePos, mousePos};
+        fWidgetMove = WidgetMove{mousePos};
+      }
+      else
+        fShiftMouseDrag = MouseDrag{mousePos, mousePos, mousePos};
     }
   }
 
@@ -225,16 +229,16 @@ void Panel::draw(AppContext &iCtx)
     iCtx.drawRect(fShiftMouseDrag->fInitialPosition, fShiftMouseDrag->fCurrentPosition - fShiftMouseDrag->fInitialPosition, color);
   }
 
-  auto logging = LoggingManager::instance();
-
-  if(logging->isShowDebug())
-  {
-    logging->debug("Key[Ctrl]", "%s", fmt::Bool::to_chars(io.KeyCtrl));
-    logging->debug("Key[Shift]", "%s", fmt::Bool::to_chars(io.KeyShift));
-    logging->debug("Key[Super]", "%s", fmt::Bool::to_chars(io.KeySuper));
-    auto mousePos = ImGui::GetMousePos() - backgroundScreenPosition; // accounts for scrollbars
-    logging->debug("MouseDown", "%s | %fx%f (%fx%f)", ImGui::IsMouseDown(ImGuiMouseButton_::ImGuiMouseButton_Left) ? "true" : "false", mousePos.x, mousePos.y, backgroundScreenPosition.x, backgroundScreenPosition.y);
-  }
+//  auto logging = LoggingManager::instance();
+//
+//  if(logging->isShowDebug())
+//  {
+//    logging->debug("Key[Ctrl]", "%s", fmt::Bool::to_chars(io.KeyCtrl));
+//    logging->debug("Key[Shift]", "%s", fmt::Bool::to_chars(io.KeyShift));
+//    logging->debug("Key[Super]", "%s", fmt::Bool::to_chars(io.KeySuper));
+//    auto mousePos = ImGui::GetMousePos() - backgroundScreenPosition; // accounts for scrollbars
+//    logging->debug("MouseDown", "%s | %fx%f (%fx%f)", ImGui::IsMouseDown(ImGuiMouseButton_::ImGuiMouseButton_Left) ? "true" : "false", mousePos.x, mousePos.y, backgroundScreenPosition.x, backgroundScreenPosition.y);
+//  }
 }
 
 //------------------------------------------------------------------------
@@ -532,13 +536,14 @@ std::shared_ptr<Widget> Panel::findWidgetOnTopAt(ImVec2 const &iPosition) const
 //------------------------------------------------------------------------
 // Panel::selectWidget
 //------------------------------------------------------------------------
-void Panel::selectWidget(AppContext &iCtx, ImVec2 const &iPosition, bool iMultiSelectKey)
+bool Panel::selectWidget(AppContext &iCtx, ImVec2 const &iPosition, bool iMultiSelectKey)
 {
   auto widget = findWidgetOnTopAt(iPosition);
   if(!widget)
   {
     if(!iMultiSelectKey)
       clearSelection();
+    return false;
   }
   else
   {
@@ -551,6 +556,7 @@ void Panel::selectWidget(AppContext &iCtx, ImVec2 const &iPosition, bool iMultiS
       if(!widget->isSelected())
         selectWidget(widget->getId(), false);
     }
+    return true;
   }
 }
 

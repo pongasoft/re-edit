@@ -148,7 +148,7 @@ protected:
   std::shared_ptr<UndoAction> createWidgetsUndoAction(std::string const &iDescription) const;
 
 private:
-  void selectWidget(AppContext &iCtx, ImVec2 const &iPosition, bool iMultiSelectKey);
+  bool selectWidget(AppContext &iCtx, ImVec2 const &iPosition, bool iMultiSelectKey);
   void selectWidgets(AppContext &iCtx, ImVec2 const &iPosition1, ImVec2 const &iPosition2);
   std::shared_ptr<Widget> findWidgetOnTopAt(std::vector<int> const &iOrder, ImVec2 const &iPosition) const;
   std::shared_ptr<Widget> findWidgetOnTopAt(ImVec2 const &iPosition) const;
