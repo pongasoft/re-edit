@@ -335,7 +335,7 @@ protected:
   Widget const *fCurrentWidget{};
   bool fNeedsSaving{};
   std::shared_ptr<UndoAction> fLastSavedUndoAction{};
-  bool fRecomputeDimensionsRequested{};
+  bool fRecomputeDimensionsRequested{true};
   bool fReloadTexturesRequested{};
   std::atomic<bool> fMaybeReloadTextures{};
   bool fReloadDeviceRequested{};
