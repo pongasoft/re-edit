@@ -24,7 +24,7 @@ namespace re::edit {
 using json = nlohmann::json;
 
 // using Jamba for now as re-edit is NOT public yet!
-constexpr auto kReEditGithubURL = RE_EDIT_NATIVE_STRING("https://api.github.com/repos/pongasoft/jamba/releases/latest");
+constexpr auto kReEditGithubURL = RE_EDIT_NATIVE_STRING("https://api.github.com/repos/pongasoft/re-edit/releases/latest");
 const std::map<NetworkManager::native_string_t, NetworkManager::native_string_t> kReEditGithubAPIHeaders{
   {RE_EDIT_NATIVE_STRING("X-GitHub-Api-Version"), RE_EDIT_NATIVE_STRING("2022-11-28")},
   {RE_EDIT_NATIVE_STRING("Accept"),               RE_EDIT_NATIVE_STRING("application/vnd.github+json")}

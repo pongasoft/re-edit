@@ -14,7 +14,7 @@
 #
 # @author Yan Pujante
 
-cmake_minimum_required(VERSION 3.17)
+cmake_minimum_required(VERSION 3.20)
 
 include(FetchContent)
 
@@ -32,20 +32,24 @@ set(googletest_GIT_REPO "https://github.com/google/googletest" CACHE STRING "goo
 
 #------------------------------------------------------------------------
 # The git tag for googletest
-# release-1.11.0 => e2239ee6043f73722e7aa812a459f54a28552929
+# release-1.12.1 (2022/06/30)
 #------------------------------------------------------------------------
-set(googletest_GIT_TAG "e2239ee6043f73722e7aa812a459f54a28552929" CACHE STRING "googletest git tag")
+set(googletest_GIT_TAG "release-1.12.1" CACHE STRING "googletest git tag")
+
+#------------------------------------------------------------------------
+# The download URL for googletest
+#------------------------------------------------------------------------
+set(googletest_DOWNLOAD_URL "${googletest_GIT_REPO}/archive/refs/tags/${googletest_GIT_TAG}.zip" CACHE STRING "googletest download url" FORCE)
 
 FetchContent_Declare(googletest
-    GIT_REPOSITORY    ${googletest_GIT_REPO}
-    GIT_TAG           ${googletest_GIT_TAG}
-    GIT_CONFIG        advice.detachedHead=false
-    SOURCE_DIR        "${CMAKE_BINARY_DIR}/googletest-src"
-    BINARY_DIR        "${CMAKE_BINARY_DIR}/googletest-build"
-    CONFIGURE_COMMAND ""
-    BUILD_COMMAND     ""
-    INSTALL_COMMAND   ""
-    TEST_COMMAND      ""
+    URL                        "${googletest_DOWNLOAD_URL}"
+    DOWNLOAD_EXTRACT_TIMESTAMP true
+    SOURCE_DIR                 "${CMAKE_BINARY_DIR}/googletest-src"
+    BINARY_DIR                 "${CMAKE_BINARY_DIR}/googletest-build"
+    CONFIGURE_COMMAND          ""
+    BUILD_COMMAND              ""
+    INSTALL_COMMAND            ""
+    TEST_COMMAND               ""
     )
 
 FetchContent_GetProperties(googletest)
@@ -55,7 +59,7 @@ if(NOT googletest_POPULATED)
   if(FETCHCONTENT_SOURCE_DIR_GOOGLETEST)
     message(STATUS "Using googletest from local ${FETCHCONTENT_SOURCE_DIR_GOOGLETEST}")
   else()
-    message(STATUS "Fetching googletest ${googletest_GIT_REPO}/tree/${googletest_GIT_TAG}")
+    message(STATUS "Fetching googletest from ${googletest_DOWNLOAD_URL}")
   endif()
 
   FetchContent_Populate(googletest)

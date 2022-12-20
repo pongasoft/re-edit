@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.20)
 
-set(re-edit_VERSION_MAJOR 0)
-set(re-edit_VERSION_MINOR 9)
-set(re-edit_VERSION_PATCH 9)
+set(re-edit_VERSION_MAJOR 1)
+set(re-edit_VERSION_MINOR 0)
+set(re-edit_VERSION_PATCH 0)
 set(re-edit_VERSION "${re-edit_VERSION_MAJOR}.${re-edit_VERSION_MINOR}.${re-edit_VERSION_PATCH}")
 
 execute_process(COMMAND git describe --long --dirty --abbrev=10 --tags
@@ -47,25 +47,6 @@ project(re-edit VERSION "${re-edit_VERSION}" LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 
-#if(re-edit_DEV_BUILD)
-#  enable_testing()
-#
-#  # Using RE SDK version 4.3.0
-#  set(RE_SDK_VERSION 4.3.0)
-#
-#  # Location of RE SDK: can be set when invoking cmake => cmake -D "RE_SDK_ROOT:PATH=/path/to/re_sdk"
-#  # or via -p option in configure.py script or in cmake-gui
-#  if(APPLE)
-#    set(RE_SDK_ROOT "/Users/Shared/ReasonStudios/JukeboxSDK_${RE_SDK_VERSION}/SDK" CACHE PATH "Location of RE SDK")
-#  else()
-#    set(RE_SDK_ROOT "C:/Users/Public/Documents/ReasonStudios/JukeboxSDK_${RE_SDK_VERSION}/SDK" CACHE PATH "Location of RE SDK")
-#  endif()
-#else()
-#  if(NOT RE_SDK_ROOT)
-#    message(ERROR "RE_SDK_ROOT must be defined")
-#  endif()
-#endif()
-#
 set(target "re-edit")
 
 # Uncomment to run with sanitizer
@@ -109,8 +90,8 @@ endif()
 
 # Adding dependency on re-mock
 option(RE_MOCK_SUPPORT_FOR_AUDIO_FILE "" ON)
-set(re-mock_GIT_TAG "fc9f859ec1e904fb71a96730ed477c76e41bc940" CACHE STRING "re-mock git tag")
-add_subdirectory(../../pongasoft/re-mock re-mock EXCLUDE_FROM_ALL)
+#set(re-mock_ROOT_DIR "${CMAKE_CURRENT_LIST_DIR}/../../pongasoft/re-mock")
+include(cmake/fetch_re-mock.cmake)
 
 # Defines the location of the sources
 set(re-edit_CPP_SRC_DIR "${CMAKE_CURRENT_LIST_DIR}/src/cpp")
@@ -231,7 +212,7 @@ if(APPLE)
       MACOSX_BUNDLE_BUNDLE_VERSION "${re-edit_VERSION}"
       MACOSX_BUNDLE_SHORT_VERSION_STRING "${re-edit_VERSION}"
       MACOSX_BUNDLE_ICON_NAME "AppIcon"
-      MACOSX_BUNDLE_COPYRIGHT "© 2022 pongasoft"
+      MACOSX_BUNDLE_COPYRIGHT "© 2023 pongasoft"
       MACOSX_BUNDLE_INFO_PLIST "${CMAKE_SOURCE_DIR}/cmake/MacOSXBundleInfo.plist.in"
       )
   target_sources(${target} PRIVATE "src/resources/re-edit.icns")
@@ -312,7 +293,7 @@ add_custom_target("create_archive"
 # Testing
 #######################################################
 # Download and unpack googletest at configure time
-include(fetch-GoogleTest.cmake)
+include(cmake/fetch-GoogleTest.cmake)
 include(GoogleTest)
 
 set(target_test "${target}_test")
