@@ -1092,24 +1092,26 @@ void Application::renderMainMenu()
 
     if(ImGui::BeginMenu("Window"))
     {
-      // empty on purpose (AppContext fills this)
-      ImGui::EndMenu();
-    }
-
-    if(ImGui::BeginMenu("Dev"))
-    {
       auto loggingManager = LoggingManager::instance();
+#ifndef NDEBUG
       {
         bool b = loggingManager->isShowDebug();
         if(ImGui::MenuItem("Debug", nullptr, &b))
           loggingManager->setShowDebug(b);
       }
+#endif
       {
         bool b = loggingManager->isShowLog();
         if(ImGui::MenuItem(fmt::printf("Log [%d]##Log", loggingManager->getLogCount()).c_str(), nullptr, &b))
           loggingManager->setShowLog(b);
       }
       ImGui::Separator();
+      ImGui::EndMenu();
+    }
+
+#ifndef NDEBUG
+    if(ImGui::BeginMenu("Dev"))
+    {
       ImGui::MenuItem("ImGui Demo", nullptr, &fShowDemoWindow);
       ImGui::MenuItem("ImGui Metrics", nullptr, &fShowMetricsWindow);
       if(ImGui::MenuItem("gui_2D.cmake"))
@@ -1135,6 +1137,8 @@ void Application::renderMainMenu()
       ImGui::Text("Build: %s", kGitVersion);
       ImGui::EndMenu();
     }
+#endif
+
 //    ImGui::Separator();
 //    ImGui::TextUnformatted(fAppContext->fPropertyManager->getDeviceInfo().fMediumName.c_str());
 //    ImGui::TextUnformatted(fAppContext->fPropertyManager->getDeviceInfo().fVersionNumber.c_str());
