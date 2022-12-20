@@ -93,6 +93,7 @@ public:
   void maybeCloseProject(std::optional<std::string> const &iDialogTitle = {}, gui_action_t const &iNextAction = {});
   void asyncCheckForUpdates();
   inline bool hasNewVersion() const { return fLatestRelease && fLatestRelease->fVersion != std::string(kGitTag); }
+  void downloadLatestVersion() const;
 
   inline float getCurrentFontSize() const { return fFontManager->getCurrentFont().fSize; }
   inline float getCurrentFontDpiScale() const { return fFontManager->getCurrentFontDpiScale(); }
@@ -154,6 +155,7 @@ private:
   void renderLoading(); // may throw exception
   void renderDialog();
   void renderLogoBox(float iPadding = 10.0f);
+  void newAboutDialog();
   void about() const;
   inline bool hasDialog() const { return fCurrentDialog != nullptr || !fDialogs.empty(); }
   template<typename F>

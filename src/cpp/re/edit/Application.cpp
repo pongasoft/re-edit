@@ -286,7 +286,7 @@ void Application::asyncCheckForUpdates()
 {
   async(kCheckForUpdatesKey, [this]() {
     auto latestRelease = fNetworkManager->getLatestRelease();
-//    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+//    std::this_thread::sleep_for(std::chrono::milliseconds(5000));
 //    std::optional<Release> latestRelease = Release{"v0.0.0", "https://github.com/pongasoft/jamba/releases/tag/v6.0.1", "* Fixed gtest crash on Apple M1 platform\r\n"};
 //    std::optional<Release> latestRelease = Release{kGitTag, "https://github.com/pongasoft/jamba/releases/tag/v6.0.1", "* Fixed gtest crash on Apple M1 platform\r\n"};
     if(latestRelease)
@@ -776,37 +776,6 @@ void Application::renderLogoBox(float iPadding)
       ImGui::EndGroup();
     }
   });
-
-  if(newVersion && fLatestRelease->fURL)
-  {
-    if(ImGui::IsItemHovered())
-    {
-      ReGui::ToolTip([this]() {
-        ImGui::Text("New Version Detected: %s", fLatestRelease->fVersion.c_str());
-        ImGui::Text("Click to download");
-      });
-    }
-    if(ImGui::IsItemClicked(ImGuiMouseButton_Left))
-    {
-      fContext->openURL(*fLatestRelease->fURL);
-    }
-  }
-  else
-  {
-    if(hasAsyncAction(kCheckForUpdatesKey))
-    {
-      if(ImGui::IsItemHovered())
-        ReGui::ToolTip([]() { ImGui::Text("Checking for updates..."); });
-    }
-    else
-    {
-      if(ImGui::IsItemHovered())
-        ReGui::ToolTip([]() { ImGui::Text("Click to check for updates"); });
-      if(ImGui::IsItemClicked(ImGuiMouseButton_Left))
-        asyncCheckForUpdates();
-    }
-  }
-
 }
 
 //------------------------------------------------------------------------
@@ -833,7 +802,49 @@ void Application::renderWelcome()
 
   if(ImGui::Begin(config::kWelcomeWindowTitle, nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_HorizontalScrollbar))
   {
-    renderLogoBox();
+    ImGui::BeginGroup();
+    {
+      renderLogoBox();
+
+      auto textSizeHeight = ImGui::CalcTextSize("R").y;
+      auto remainingSizeY = viewport->Size.y - ImGui::GetCursorPosY();
+      auto sizeY = remainingSizeY - textSizeHeight - padding - ImGui::GetStyle().ScrollbarSize;
+
+      // empty space to position the Menu button at the bottom
+      ImGui::Dummy({0, sizeY});
+
+      if(ReGui::MenuButton())
+        ImGui::OpenPopup("Menu");
+
+      ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, defaultWindowPadding);
+      if(ImGui::BeginPopup("Menu"))
+      {
+        if(ImGui::MenuItem("About"))
+        {
+          newAboutDialog();
+        }
+        if(ImGui::MenuItem("Check For Updates...", nullptr, false, !hasAsyncAction(kCheckForUpdatesKey)))
+        {
+          asyncCheckForUpdates();
+        }
+        if(fLatestRelease)
+        {
+          bool newVersion = hasNewVersion();
+          if(newVersion)
+          {
+            if(ImGui::MenuItem(fmt::printf("Download - %s", fLatestRelease->fVersion).c_str()))
+              downloadLatestVersion();
+          }
+          else
+          {
+            ImGui::MenuItem("No New Update", nullptr, false, false);
+          }
+        }
+        ImGui::EndPopup();
+      }
+      ImGui::EndGroup();
+      ImGui::PopStyleVar();
+    }
 
     ImGui::SameLine(0, padding);
 
@@ -859,11 +870,8 @@ void Application::renderWelcome()
           ImGui::Text("Latest Release: %s", fLatestRelease->fVersion.c_str());
           if(fLatestRelease->fReleaseNotes)
             ReGui::MultiLineText(*fLatestRelease->fReleaseNotes);
-          if(fLatestRelease->fURL)
-          {
-            if(ImGui::Button("Download"))
-              fContext->openURL(*fLatestRelease->fURL);
-          }
+          if(ImGui::Button("Download"))
+            downloadLatestVersion();
           ImGui::TreePop();
         }
         ImGui::Separator();
@@ -926,6 +934,15 @@ void Application::renderWelcome()
 
   ImGui::PopStyleVar(2);
 
+}
+
+//------------------------------------------------------------------------
+// Application::downloadLatestVersion
+//------------------------------------------------------------------------
+void Application::downloadLatestVersion() const
+{
+  if(fLatestRelease && fLatestRelease->fURL)
+    fContext->openURL(*fLatestRelease->fURL);
 }
 
 //------------------------------------------------------------------------
@@ -1020,15 +1037,14 @@ void Application::renderMainMenu()
     {
       if(ImGui::MenuItem("About"))
       {
-        newDialog("About")
-          .lambda([this]() { renderLogoBox(); })
-          .lambda([this]() { about(); }, true)
-          .buttonOk();
+        newAboutDialog();
       }
-      if(ImGui::MenuItem("Check for Updates..."))
+      ImGui::BeginDisabled(hasAsyncAction(kCheckForUpdatesKey));
+      if(ImGui::MenuItem("Check For Updates..."))
       {
         asyncCheckForUpdates();
       }
+      ImGui::EndDisabled();
       if(ImGui::MenuItem("Quit"))
       {
         maybeExit();
@@ -1296,6 +1312,17 @@ void Application::saveFile(fs::path const &iFile, std::string const &iContent, U
 }
 
 //------------------------------------------------------------------------
+// Application::newAboutDialog
+//------------------------------------------------------------------------
+void Application::newAboutDialog()
+{
+  newDialog("About")
+    .lambda([this]() { renderLogoBox(); })
+    .lambda([this]() { about(); }, true)
+    .buttonOk();
+}
+
+//------------------------------------------------------------------------
 // Application::about
 //------------------------------------------------------------------------
 void Application::about() const
@@ -1311,29 +1338,30 @@ void Application::about() const
     ImGui::TreePop();
   }
 
-  constexpr auto boolToString = [](bool b) { return b ? "true" : "false"; };
-
-  ImGui::SetNextItemOpen(true, ImGuiCond_Appearing);
-  if(ImGui::TreeNodeEx("Rack Extension", ImGuiTreeNodeFlags_Framed))
+  if(fAppContext)
   {
-    auto const &info = fAppContext->fPropertyManager->getDeviceInfo();
-    ImGui::Text("long_name:                       %s", info.fLongName.c_str());
-    ImGui::Text("medium_name:                     %s", info.fMediumName.c_str());
-    ImGui::Text("short_name:                      %s", info.fShortName.c_str());
-    ImGui::Text("product_id:                      %s", info.fProductId.c_str());
-    ImGui::Text("manufacturer:                    %s", info.fManufacturer.c_str());
-    ImGui::Text("version_number:                  %s", info.fVersionNumber.c_str());
-    ImGui::Text("device_type:                     %s", deviceTypeToString(info.fDeviceType));
-    ImGui::Text("supports_patches:                %s", boolToString(info.fSupportPatches));
-    ImGui::Text("default_patch:                   %s", info.fDefaultPatch.c_str());
-    ImGui::Text("accepts_notes:                   %s", boolToString(info.fAcceptNotes));
-    ImGui::Text("auto_create_note_lane:           %s", boolToString(info.fAutoCreateNoteLane));
-    ImGui::Text("supports_performance_automation: %s", boolToString(info.fSupportsPerformanceAutomation));
-    ImGui::Text("device_height_ru:                %d", info.fDeviceHeightRU);
-    ImGui::TreePop();
+    constexpr auto boolToString = [](bool b) { return b ? "true" : "false"; };
+
+    ImGui::SetNextItemOpen(true, ImGuiCond_Appearing);
+    if(ImGui::TreeNodeEx("Rack Extension", ImGuiTreeNodeFlags_Framed))
+    {
+      auto const &info = fAppContext->fPropertyManager->getDeviceInfo();
+      ImGui::Text("long_name:                       %s", info.fLongName.c_str());
+      ImGui::Text("medium_name:                     %s", info.fMediumName.c_str());
+      ImGui::Text("short_name:                      %s", info.fShortName.c_str());
+      ImGui::Text("product_id:                      %s", info.fProductId.c_str());
+      ImGui::Text("manufacturer:                    %s", info.fManufacturer.c_str());
+      ImGui::Text("version_number:                  %s", info.fVersionNumber.c_str());
+      ImGui::Text("device_type:                     %s", deviceTypeToString(info.fDeviceType));
+      ImGui::Text("supports_patches:                %s", boolToString(info.fSupportPatches));
+      ImGui::Text("default_patch:                   %s", info.fDefaultPatch.c_str());
+      ImGui::Text("accepts_notes:                   %s", boolToString(info.fAcceptNotes));
+      ImGui::Text("auto_create_note_lane:           %s", boolToString(info.fAutoCreateNoteLane));
+      ImGui::Text("supports_performance_automation: %s", boolToString(info.fSupportsPerformanceAutomation));
+      ImGui::Text("device_height_ru:                %d", info.fDeviceHeightRU);
+      ImGui::TreePop();
+    }
   }
-
-
 }
 
 
