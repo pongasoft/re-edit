@@ -806,6 +806,8 @@ void Application::renderWelcome()
     {
       renderLogoBox();
 
+      ImGui::TextUnformatted("© 2023 pongasoft");
+
       auto textSizeHeight = ImGui::CalcTextSize("R").y;
       auto remainingSizeY = viewport->Size.y - ImGui::GetCursorPosY();
       auto sizeY = remainingSizeY - textSizeHeight - padding - ImGui::GetStyle().ScrollbarSize;
@@ -819,27 +821,7 @@ void Application::renderWelcome()
       ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, defaultWindowPadding);
       if(ImGui::BeginPopup("Menu"))
       {
-        if(ImGui::MenuItem("About"))
-        {
-          newAboutDialog();
-        }
-        if(ImGui::MenuItem("Check For Updates...", nullptr, false, !hasAsyncAction(kCheckForUpdatesKey)))
-        {
-          asyncCheckForUpdates();
-        }
-        if(fLatestRelease)
-        {
-          bool newVersion = hasNewVersion();
-          if(newVersion)
-          {
-            if(ImGui::MenuItem(fmt::printf("Download - %s", fLatestRelease->fVersion).c_str()))
-              downloadLatestVersion();
-          }
-          else
-          {
-            ImGui::MenuItem("No New Update", nullptr, false, false);
-          }
-        }
+        renderApplicationMenuItems();
         ImGui::EndPopup();
       }
       ImGui::EndGroup();
@@ -1026,6 +1008,39 @@ void Application::renderAppContext()
   fAppContext->afterRenderFrame();
 }
 
+
+//------------------------------------------------------------------------
+// Application::renderApplicationMenuItems
+//------------------------------------------------------------------------
+void Application::renderApplicationMenuItems()
+{
+  if(ImGui::MenuItem("About"))
+  {
+    newAboutDialog();
+  }
+  if(ImGui::MenuItem("Check For Updates...", nullptr, false, !hasAsyncAction(kCheckForUpdatesKey)))
+  {
+    asyncCheckForUpdates();
+  }
+  if(fLatestRelease)
+  {
+    bool newVersion = hasNewVersion();
+    if(newVersion)
+    {
+      if(ImGui::MenuItem(fmt::printf("Download - %s", fLatestRelease->fVersion).c_str()))
+        downloadLatestVersion();
+    }
+    else
+    {
+      ImGui::MenuItem("No New Update", nullptr, false, false);
+    }
+  }
+  if(ImGui::MenuItem("Quit"))
+  {
+    maybeExit();
+  }
+}
+
 //------------------------------------------------------------------------
 // Application::renderMainMenu
 //------------------------------------------------------------------------
@@ -1035,20 +1050,7 @@ void Application::renderMainMenu()
   {
     if(ImGui::BeginMenu("re-edit"))
     {
-      if(ImGui::MenuItem("About"))
-      {
-        newAboutDialog();
-      }
-      ImGui::BeginDisabled(hasAsyncAction(kCheckForUpdatesKey));
-      if(ImGui::MenuItem("Check For Updates..."))
-      {
-        asyncCheckForUpdates();
-      }
-      ImGui::EndDisabled();
-      if(ImGui::MenuItem("Quit"))
-      {
-        maybeExit();
-      }
+      renderApplicationMenuItems();
       ImGui::EndMenu();
     }
     if(ImGui::BeginMenu("File"))
@@ -1365,6 +1367,32 @@ void Application::about() const
       ImGui::Text("device_height_ru:                %d", info.fDeviceHeightRU);
       ImGui::TreePop();
     }
+  }
+
+  static const std::vector<std::tuple<char const *, char const *, char const *>> kLicenses = {
+    {"btzy/nativefiledialog-extended", "ZLib license", "https://github.com/btzy/nativefiledialog-extended/blob/master/LICENSE"},
+    {"glfw                          ", "ZLib license", "https://www.glfw.org/license.html"},
+    {"bitmask_operators             ", "Boost Software License", "http://www.boost.org/LICENSE_1_0.txt"},
+    {"nlohmann/json                 ", "MIT License", "https://github.com/nlohmann/json/blob/develop/LICENSE.MIT"},
+    {"nothings/stb                  ", "Public Domain", "https://github.com/nothings/stb/blob/master/docs/why_public_domain.md"},
+    {"Dear ImGui                    ", "MIT License", "https://github.com/ocornut/imgui/blob/master/LICENSE.txt"},
+    {"SpartanJ/efsw                 ", "MIT License", "https://github.com/SpartanJ/efsw/blob/master/LICENSE"}
+  };
+
+  if(ImGui::TreeNodeEx("Licenses", ImGuiTreeNodeFlags_Framed))
+  {
+    for(auto &[project, license, url]: kLicenses)
+    {
+      ImGui::Text("%s", project);
+      ImGui::SameLine();
+      ImGui::PushID(project);
+      if(ImGui::Button(license))
+      {
+        fContext->openURL(url);
+      }
+      ImGui::PopID();
+    }
+    ImGui::TreePop();
   }
 }
 

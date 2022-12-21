@@ -161,19 +161,12 @@ bool Dialog::isOpen() const
 //------------------------------------------------------------------------
 void Dialog::LamdaContent::render()
 {
-  ImGui::PushID(this);
-  bool copy_to_clipboard = fCopyToClipboard ? ImGui::Button(ReGui_Prefix(ReGui_Icon_Copy, "Copy to clipboard")) : false;
-  if(copy_to_clipboard)
-  {
-    ImGui::LogToClipboard();
-  }
-  if(fLambda)
-    fLambda();
-  if(copy_to_clipboard)
-  {
-    ImGui::LogFinish();
-  }
-  ImGui::PopID();
+  if(!fLambda)
+    return;
 
+  if(fCopyToClipboard)
+    ReGui::CopyToClipboard([this] { fLambda(); });
+  else
+    fLambda();
 }
 }

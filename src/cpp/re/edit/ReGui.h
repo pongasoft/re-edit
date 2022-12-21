@@ -328,6 +328,32 @@ void ToolTip(F &&iTooltipContent)
 }
 
 //------------------------------------------------------------------------
+// ReGui::CopyToClipboard
+//------------------------------------------------------------------------
+template<typename F>
+void CopyToClipboard(F &&iContent)
+{
+  ImGui::PushID(&iContent);
+  bool copy_to_clipboard = ImGui::Button(ReGui_Icon_Copy);
+  if(ImGui::IsItemHovered())
+  {
+    ReGui::ToolTip([]{
+      ImGui::TextUnformatted("Copy to clipboard");
+    });
+  }
+  if(copy_to_clipboard)
+  {
+    ImGui::LogToClipboard();
+  }
+  iContent();
+  if(copy_to_clipboard)
+  {
+    ImGui::LogFinish();
+  }
+  ImGui::PopID();
+}
+
+//------------------------------------------------------------------------
 // ReGui::MultiLineText
 // Issues one ImGui::Text per line of text
 //------------------------------------------------------------------------
