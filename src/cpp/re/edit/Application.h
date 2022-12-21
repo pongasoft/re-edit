@@ -165,6 +165,7 @@ private:
   R executeAndLogOnException(F&& f) noexcept;
   void renderLoadDialogBlocking();
   void deferNextFrame(gui_action_t iAction) { if(iAction) fNewFrameActions.emplace_back(std::move(iAction)); }
+  void applyConfigStyle() const;
 
   template<class Function, class... Args>
   bool async(std::string const &iKey, Function&& f, Args&&... args);

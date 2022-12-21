@@ -95,6 +95,16 @@ private:
 
 using CancellableSPtr = std::shared_ptr<Cancellable>;
 
+//------------------------------------------------------------------------
+// str_tolower
+//------------------------------------------------------------------------
+inline std::string str_tolower(std::string const &s) {
+  auto s2 = s;
+  std::transform(s2.begin(), s2.end(), s2.begin(), [](unsigned char c){ return std::tolower(c); });
+  return s2;
+}
+
+
 }
 
 #endif //RE_EDIT_UTILS_H

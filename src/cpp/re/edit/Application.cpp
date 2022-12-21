@@ -323,8 +323,34 @@ void Application::asyncCheckForUpdates()
   });
 }
 
+
 //------------------------------------------------------------------------
-// Application::Application
+// Application::applyConfigStyle
+//------------------------------------------------------------------------
+void Application::applyConfigStyle() const
+{
+  auto scaleFactor = fFontManager->getCurrentFontDpiScale();
+  ImGuiStyle newStyle{};
+  switch(fConfig.fStyle)
+  {
+    case config::Style::kLight:
+      ImGui::StyleColorsLight(&newStyle);
+      break;
+
+    case config::Style::kClassic:
+      ImGui::StyleColorsClassic(&newStyle);
+      break;
+
+    default:
+      ImGui::StyleColorsDark(&newStyle);
+      break;
+  }
+  newStyle.ScaleAllSizes(scaleFactor);
+  ImGui::GetStyle() = newStyle;
+}
+
+//------------------------------------------------------------------------
+// Application::init
 //------------------------------------------------------------------------
 void Application::init()
 {
@@ -346,7 +372,7 @@ void Application::init()
 }
 
 //------------------------------------------------------------------------
-// Application::init
+// Application::initAppContext
 //------------------------------------------------------------------------
 std::shared_ptr<AppContext> Application::initAppContext(fs::path const &iRoot,
                                                         config::Device const &iConfig,
@@ -613,18 +639,9 @@ void Application::handleAsyncActions()
 //------------------------------------------------------------------------
 void Application::handleFontChangeRequest()
 {
-  auto oldDpiScale = fFontManager->getCurrentFontDpiScale();
   fFontManager->applyFontChangeRequest();
-  auto newDpiScale = fFontManager->getCurrentFontDpiScale();
 
-  if(oldDpiScale != newDpiScale)
-  {
-    auto scaleFactor = newDpiScale;
-    ImGuiStyle newStyle{};
-    ImGui::StyleColorsDark(&newStyle);
-    newStyle.ScaleAllSizes(scaleFactor);
-    ImGui::GetStyle() = newStyle;
-  }
+  applyConfigStyle();
 
   if(fAppContext)
     fAppContext->fRecomputeDimensionsRequested = true;
@@ -753,11 +770,14 @@ std::shared_ptr<Texture> Application::getLogo() const
 //------------------------------------------------------------------------
 void Application::renderLogoBox(float iPadding)
 {
+  static constexpr auto kBackgroundLightColor = ReGui::GetColorU32(toFloatColor(156, 156, 156));
+  static constexpr auto kBackgroundDarkColor = ReGui::GetColorU32(toFloatColor(78, 78, 78));
+
   auto scale = getCurrentFontDpiScale();
   const auto logoModifier = ReGui::Modifier{}
     .padding(iPadding * scale)
-    .backgroundColor(ReGui::GetColorU32(toFloatColor(78, 78, 78)))
-    .borderColor(ReGui::kWhiteColorU32);
+    .backgroundColor(fConfig.fStyle == config::Style::kLight ? kBackgroundLightColor : kBackgroundDarkColor)
+    .borderColor(fConfig.fStyle == config::Style::kLight ? ReGui::kBlackColorU32 : ReGui::kWhiteColorU32);
   auto textSizeHeight = ImGui::CalcTextSize("R").y;
 
   auto newVersion = hasNewVersion();
@@ -1017,6 +1037,23 @@ void Application::renderApplicationMenuItems()
   if(ImGui::MenuItem("About"))
   {
     newAboutDialog();
+  }
+  if(ImGui::BeginMenu("Style"))
+  {
+    std::optional<config::Style> newStyle{};
+    if(ImGui::MenuItem("Dark", nullptr, fConfig.fStyle == config::Style::kDark))
+      newStyle = config::Style::kDark;
+    if(ImGui::MenuItem("Light", nullptr, fConfig.fStyle == config::Style::kLight))
+      newStyle = config::Style::kLight;
+    if(ImGui::MenuItem("Classic", nullptr, fConfig.fStyle == config::Style::kClassic))
+      newStyle = config::Style::kClassic;
+    if(newStyle)
+    {
+      fConfig.fStyle = *newStyle;
+      applyConfigStyle();
+      savePreferences();
+    }
+    ImGui::EndMenu();
   }
   if(ImGui::MenuItem("Check For Updates...", nullptr, false, !hasAsyncAction(kCheckForUpdatesKey)))
   {
@@ -1395,6 +1432,7 @@ void Application::about() const
     ImGui::TreePop();
   }
 }
+
 
 
 }

@@ -17,6 +17,7 @@
  */
 
 #include "ConfigParser.h"
+#include "../Utils.h"
 
 namespace re::edit::lua {
 
@@ -40,6 +41,15 @@ config::Global GlobalConfigParser::getConfig()
   if(lua_getglobal(L, "global_config") == LUA_TTABLE)
   {
     withOptionalValue(L.getTableValueAsOptionalNumber("font_size"), [&c](auto v) { c.fFontSize = v; });
+    withOptionalValue(L.getTableValueAsOptionalString("style"), [&c](auto v) {
+      v = Utils::str_tolower(v);
+      if(v == "light")
+        c.fStyle = config::Style::kLight;
+      else if(v == "classic")
+        c.fStyle = config::Style::kClassic;
+      else
+        c.fStyle = config::Style::kDark;
+      });
     if(lua_getfield(L, -1, "device_history") == LUA_TTABLE)
     {
       iterateLuaArray([this, &c](int idx) {

@@ -25,12 +25,33 @@
 
 namespace re::edit::config {
 
+enum class Style
+{
+  kDark,
+  kLight,
+  kClassic
+};
+
+constexpr char const *to_string(Style s)
+{
+  switch(s)
+  {
+    case Style::kDark:
+      return "Dark";
+    case Style::kLight:
+      return "Light";
+    case Style::kClassic:
+      return "Classic";
+  }
+}
+
 constexpr float kDefaultFontSize = 12.0f;
 constexpr int kDefaultDeviceWindowWidth = 1280;
 constexpr int kDefaultDeviceWindowHeight = 720;
 constexpr int kWelcomeWindowWidth = 600;
 constexpr int kWelcomeWindowHeight = 500;
 constexpr char const *kWelcomeWindowTitle = "Welcome to re-edit";
+constexpr Style kDefaultStyle = Style::kDark;
 
 constexpr char const *kDefaultHorizontalLayout = R"(
 [Window][DockSpaceViewport_11111111]
@@ -187,6 +208,7 @@ struct Device
 struct Global
 {
   float fFontSize{kDefaultFontSize};
+  Style fStyle{kDefaultStyle};
 
   std::vector<Device> fDeviceHistory{};
 

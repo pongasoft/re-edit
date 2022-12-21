@@ -107,6 +107,7 @@ constexpr ImVec4 toFloatColor(int r, int g, int b, int a = 255) { return ImVec4{
 
 constexpr auto kHitBoundariesColor = toFloatColor(60, 255, 2);
 constexpr auto kWhiteColor = ImVec4{1, 1, 1, 1};
+constexpr auto kBlackColor = ImVec4{0, 0, 0, 1};
 constexpr auto kErrorColor = ImVec4{1,0,0,1};
 constexpr auto kTipColor = toFloatColor(92, 184, 92);
 constexpr auto kXRayColor = ImVec4{1, 1, 1, 0.4};

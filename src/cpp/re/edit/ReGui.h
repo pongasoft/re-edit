@@ -99,6 +99,7 @@ constexpr bool ColorIsTransparent(ImU32 iColor)
 }
 
 constexpr ImU32 kWhiteColorU32 = GetColorU32(kWhiteColor);
+constexpr ImU32 kBlackColorU32 = GetColorU32(kBlackColor);
 constexpr ImU32 kErrorColorU32 = GetColorU32(kErrorColor);
 constexpr ImU32 kTipColorU32 = GetColorU32(kTipColor);
 constexpr ImU32 kTransparentColorU32 = 0;
