@@ -123,6 +123,7 @@ public:
 class RedoAction
 {
 public:
+  virtual ~RedoAction() = default;
   virtual void execute() = 0;
 
 /**

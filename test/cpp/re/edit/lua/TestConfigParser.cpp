@@ -27,6 +27,7 @@ TEST(ConfigParser, All) {
 
 global_config = {}
 global_config["font_size"] = 20
+global_config["style"] = "Dark"
 global_config["device_history"] = {}
 global_config["device_history"][1] = {
   name = "CVA-7 CV Analyzer",
@@ -62,6 +63,7 @@ global_config["device_history"][2] = {
   ASSERT_EQ(configString, PreferencesManager::getAsLua(config));
   
   ASSERT_EQ(20, config.fFontSize);
+  ASSERT_EQ(config::Style::kDark, config.fStyle);
   ASSERT_EQ(2, config.fDeviceHistory.size());
 
   {

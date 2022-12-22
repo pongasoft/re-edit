@@ -269,7 +269,7 @@ install(
 set(CPACK_PACKAGE_NAME                "${target}")
 set(CPACK_PACKAGE_VERSION_MAJOR       "${re-edit_VERSION_MAJOR}")
 set(CPACK_PACKAGE_VERSION_MINOR       "${re-edit_VERSION_MINOR}")
-set(CPACK_PACKAGE_VERSION_PATCH       "${re-edit_VERSION_PATCH}-dev")
+set(CPACK_PACKAGE_VERSION_PATCH       "${re-edit_VERSION_PATCH}")
 set(CPACK_SYSTEM_NAME                 "${re-edit_ARCHIVE_ARCHITECTURE}")
 
 set(CPACK_GENERATOR ZIP)

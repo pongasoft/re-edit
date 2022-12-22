@@ -290,6 +290,8 @@ public:
 
   bool contains(int iValue) const;
 
+  using Attribute::editView;
+
   void editView(int iMin,
                 int iMax,
                 std::function<void()>                       const &iOnAdd,

@@ -711,7 +711,7 @@ void HDGui2D::populate(String *oValue)
 void HDGui2D::populate(Integer *oValue)
 {
   if(oValue)
-    impl::setValue(*oValue, L.getTableValueAsOptionalInteger(oValue->fName));
+    impl::setValue(*oValue, L.getTableValueAsOptionalInteger<int>(oValue->fName));
 }
 
 //------------------------------------------------------------------------

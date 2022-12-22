@@ -10,7 +10,7 @@ else()
 endif()
 
 set(re-mock_GIT_REPO "https://github.com/pongasoft/re-mock" CACHE STRING "re-mock git repository url" FORCE)
-set(re-mock_GIT_TAG "v1.3.1" CACHE STRING "re-mock git tag" FORCE)
+set(re-mock_GIT_TAG "v1.3.2" CACHE STRING "re-mock git tag" FORCE)
 set(re-mock_DOWNLOAD_URL "${re-mock_GIT_REPO}/archive/refs/tags/${re-mock_GIT_TAG}.zip" CACHE STRING "re-mock download url" FORCE)
 
 FetchContent_Declare(re-mock

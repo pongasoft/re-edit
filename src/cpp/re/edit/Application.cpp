@@ -954,8 +954,6 @@ void Application::renderLoading()
 {
   RE_EDIT_INTERNAL_ASSERT(fReLoadingFuture != nullptr);
 
-  auto scale = getCurrentFontDpiScale();
-
   auto constexpr kTitle = "Loading...";
 
   if(fReLoadingFuture->fFuture.wait_for(std::chrono::milliseconds(1)) == std::future_status::ready)

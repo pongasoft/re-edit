@@ -213,13 +213,13 @@ public: // Undo
   inline void addUndoAttributeChange(widget::Attribute const *iAttribute)
   {
     RE_EDIT_INTERNAL_ASSERT(fCurrentWidget != nullptr);
-    return addUndoCurrentWidgetChange(std::move(computeUpdateDescription(fCurrentWidget, iAttribute)));
+    return addUndoCurrentWidgetChange(computeUpdateDescription(fCurrentWidget, iAttribute));
   }
 
   inline void addUndoAttributeReset(widget::Attribute const *iAttribute)
   {
     RE_EDIT_INTERNAL_ASSERT(fCurrentWidget != nullptr);
-    return addUndoCurrentWidgetChange(std::move(computeResetDescription(fCurrentWidget, iAttribute)));
+    return addUndoCurrentWidgetChange(computeResetDescription(fCurrentWidget, iAttribute));
   }
 
   template<typename T>

@@ -92,9 +92,9 @@ std::vector<unsigned char> loadCompressedBase85(char const *iCompressedBase85)
   // compressed binary => binary
   const unsigned int buf_decompressed_size = impl::stb_decompress_length((const unsigned char*) compressedData.data());
   std::vector<unsigned char> decompressedData(static_cast<size_t>(buf_decompressed_size));
-  impl::stb_decompress(decompressedData.data(), compressedData.data(), compressedData.size());
+  impl::stb_decompress(decompressedData.data(), compressedData.data(), static_cast<unsigned int>(compressedData.size()));
 
-  return std::move(decompressedData);
+  return decompressedData;
 }
 
 }

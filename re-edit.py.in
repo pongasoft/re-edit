@@ -80,7 +80,14 @@ if args.release and args.debug:
     print('Conflicting options (-r and -d) used')
     exit(1)
 
-config = 'Debug'
+if generator_is_multi_config:
+    config = 'Release' if args.release else 'Debug'
+else:
+    config = 'Release' if args.release else 'Debug' if args.debug else cmake_single_config_build_type
+    if cmake_single_config_build_type != config:
+        print(f'Single Config Build is [{cmake_single_config_build_type}]... cannot build in [{config}] mode')
+        exit(1)
+
 cmake_config = ['--config', config]
 
 step = 0

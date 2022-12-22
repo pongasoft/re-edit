@@ -729,8 +729,8 @@ void PropertyPath::editView(AppContext &iCtx)
              fProvided = true;
              fEdited = true;
            },
-           [this](auto &iCtx) { editPropertyView(iCtx); },
-           [this](auto &iCtx) { tooltipPropertyView(iCtx); });
+           [this](auto &iCtx) { this->editPropertyView(iCtx); },
+           [this](auto &iCtx) { this->tooltipPropertyView(iCtx); });
 }
 
 //------------------------------------------------------------------------
@@ -1212,10 +1212,6 @@ void UserSampleIndex::editView(AppContext &iCtx)
 //------------------------------------------------------------------------
 void UserSampleIndex::findErrors(AppContext &iCtx, UserError &oErrors) const
 {
-  static constexpr auto kInvalidUserSampleIndex = "Must be an integer in the range [0,  user_sample-count - 1] "
-                                                  "where user_sample-count is the number of user samples in "
-                                                  "motherboard_def.lua";
-
   auto count = iCtx.getUserSamplesCount();
 
   if(count < 1)

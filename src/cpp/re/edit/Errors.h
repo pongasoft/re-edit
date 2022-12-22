@@ -95,6 +95,8 @@ void log_error(char const *iFile, int iLine, const std::string &format, Args ...
 #endif
 #ifndef NDEBUG
 #define RE_EDIT_LOG_DEBUG(...) re::edit::log_debug(__FILE__, __LINE__, __VA_ARGS__)
+#else
+#define RE_EDIT_LOG_DEBUG(...)
 #endif
 #define RE_EDIT_LOG_INFO(...) re::edit::log_info(__FILE__, __LINE__, __VA_ARGS__)
 #define RE_EDIT_LOG_WARNING(...) re::edit::log_warning(__FILE__, __LINE__, __VA_ARGS__)
