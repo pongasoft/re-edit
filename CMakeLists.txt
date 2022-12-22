@@ -203,6 +203,7 @@ target_compile_definitions("${target}_lib" PUBLIC ENABLE_RE_EDIT_INTERNAL_ASSERT
 
 # Build the executable
 add_executable(${target} WIN32 MACOSX_BUNDLE "${re-edit_MAIN_SRC}")
+set_target_properties(${target} PROPERTIES OUTPUT_NAME "RE Edit")
 target_link_libraries(${target} PRIVATE "${target}_lib")
 if(APPLE)
   set_target_properties(${target} PROPERTIES
@@ -218,26 +219,6 @@ if(APPLE)
   target_sources(${target} PRIVATE "src/resources/re-edit.icns")
   set_source_files_properties("src/resources/re-edit.icns" PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
 endif()
-
-#if(APPLE AND ${re-edit_UNIVERSAL_BUILD})
-#  message(STATUS "setting up target for univeral build")
-#  function(target_setup_universal_binary target)
-#    set_target_properties(${target}
-#        PROPERTIES
-#        XCODE_ATTRIBUTE_OSX_ARCHITECTURES   "x86_64;arm64"
-#        XCODE_ATTRIBUTE_ARCHS               "$(ARCHS_STANDARD_64_BIT)"
-#        )
-#    set_target_properties(${target}
-#        PROPERTIES
-#        XCODE_ATTRIBUTE_ONLY_ACTIVE_ARCH        "NO"
-#        )
-#  endfunction()
-#  target_setup_universal_binary("${target}")
-#  target_setup_universal_binary(glfw)
-#  target_setup_universal_binary(imgui)
-#  target_setup_universal_binary(re-mock)
-#  target_setup_universal_binary(stb)
-#endif()
 
 macro(cmake_option_to_python_bool cmake_opt python_opt)
   if ("${cmake_opt}")

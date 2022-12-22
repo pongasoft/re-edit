@@ -410,7 +410,7 @@ void Application::loadProject(fs::path const &iRoot)
 
   fAppContext = nullptr;
   fState = State::kReLoading;
-  fContext->setWindowTitle(fmt::printf("re-edit - Loading [%s]", iRoot.u8string()));
+  fContext->setWindowTitle(fmt::printf("RE Edit - Loading [%s]", iRoot.u8string()));
   fReLoadingFuture = std::make_unique<CancellableFuture<gui_action_t>>();
   fReLoadingFuture->launch([this, iRoot, c, cancellable = fReLoadingFuture->fCancellable] {
     try
@@ -428,7 +428,7 @@ void Application::loadProject(fs::path const &iRoot)
             if(!fContext->isHeadless())
               ImGui::LoadIniSettingsFromMemory(c.fImGuiIni.c_str(), c.fImGuiIni.size());
             fContext->setWindowPositionAndSize(c.fNativeWindowPos, c.fNativeWindowSize);
-            fContext->setWindowTitle(fmt::printf("re-edit - %s", fAppContext->getConfig().fName));
+            fContext->setWindowTitle(fmt::printf("RE Edit - %s", fAppContext->getConfig().fName));
             savePreferences();
           }
       });
@@ -791,7 +791,7 @@ void Application::renderLogoBox(float iPadding)
 
     ImGui::BeginGroup();
     {
-      ImGui::TextUnformatted("re-edit");
+      ImGui::TextUnformatted("RE Edit");
       ImGui::Text("%s%s", kFullVersion, newVersion ? "*" : "");
       ImGui::EndGroup();
     }
@@ -1083,7 +1083,7 @@ void Application::renderMainMenu()
 {
   if(ImGui::BeginMainMenuBar())
   {
-    if(ImGui::BeginMenu("re-edit"))
+    if(ImGui::BeginMenu("RE Edit"))
     {
       renderApplicationMenuItems();
       ImGui::EndMenu();
@@ -1251,7 +1251,7 @@ void Application::newExceptionDialog(std::string iMessage, bool iSaveButton, std
 
     dialog.button("Exit", [this] { exit(); }, true);
 
-    dialog.postContentMessage("Note: If you think this is an error in the tool, please report it at https://github.com/pongasoft/re-edit-dev/issues");
+    dialog.postContentMessage("Note: If you think this is an error in the tool, please report it at https://github.com/pongasoft/re-edit/issues");
   }
   else
   {
@@ -1358,7 +1358,11 @@ void Application::saveFile(fs::path const &iFile, std::string const &iContent, U
 void Application::newAboutDialog()
 {
   newDialog("About")
-    .lambda([this]() { renderLogoBox(); })
+    .lambda([this]() {
+      renderLogoBox();
+      if(ImGui::Button("pongasoft.com"))
+        fContext->openURL("https://www.pongasoft.com");
+    })
     .lambda([this]() { about(); }, true)
     .buttonOk();
 }
@@ -1369,7 +1373,7 @@ void Application::newAboutDialog()
 void Application::about() const
 {
   ImGui::SetNextItemOpen(true, ImGuiCond_Appearing);
-  if(ImGui::TreeNodeEx("re-edit", ImGuiTreeNodeFlags_Framed))
+  if(ImGui::TreeNodeEx("RE Edit", ImGuiTreeNodeFlags_Framed))
   {
     ImGui::Text("Version:      %s", kFullVersion);
     ImGui::Text("Git Version:  %s", kGitVersion);

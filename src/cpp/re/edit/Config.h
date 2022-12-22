@@ -50,7 +50,7 @@ constexpr int kDefaultDeviceWindowWidth = 1280;
 constexpr int kDefaultDeviceWindowHeight = 720;
 constexpr int kWelcomeWindowWidth = 600;
 constexpr int kWelcomeWindowHeight = 500;
-constexpr char const *kWelcomeWindowTitle = "Welcome to re-edit";
+constexpr char const *kWelcomeWindowTitle = "Welcome to RE Edit";
 constexpr Style kDefaultStyle = Style::kDark;
 
 constexpr char const *kDefaultHorizontalLayout = R"(
