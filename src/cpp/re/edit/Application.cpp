@@ -1409,13 +1409,18 @@ void Application::about() const
   }
 
   static const std::vector<std::tuple<char const *, char const *, char const *>> kLicenses = {
-    {"btzy/nativefiledialog-extended", "ZLib license", "https://github.com/btzy/nativefiledialog-extended/blob/master/LICENSE"},
-    {"glfw                          ", "ZLib license", "https://www.glfw.org/license.html"},
+    {"craigsapp/midifile            ", "BSD 2-Clause \"Simplified\" License", "https://github.com/craigsapp/midifile/blob/master/LICENSE.txt"},
     {"bitmask_operators             ", "Boost Software License", "http://www.boost.org/LICENSE_1_0.txt"},
+    {"btzy/nativefiledialog-extended", "ZLib license", "https://github.com/btzy/nativefiledialog-extended/blob/master/LICENSE"},
+    {"Dear ImGui                    ", "MIT License", "https://github.com/ocornut/imgui/blob/master/LICENSE.txt"},
+    {"glfw                          ", "ZLib license", "https://www.glfw.org/license.html"},
+    {"libsndfile                    ", "LGPL-2.1 License", "https://github.com/libsndfile/libsndfile/blob/master/COPYING"},
+    {"Lua                           ", "MIT License", "https://www.lua.org/license.html"},
+    {"lubgr/lua-cmake               ", "MIT License", "https://github.com/lubgr/lua-cmake/blob/master/LICENSE"},
     {"nlohmann/json                 ", "MIT License", "https://github.com/nlohmann/json/blob/develop/LICENSE.MIT"},
     {"nothings/stb                  ", "Public Domain", "https://github.com/nothings/stb/blob/master/docs/why_public_domain.md"},
-    {"Dear ImGui                    ", "MIT License", "https://github.com/ocornut/imgui/blob/master/LICENSE.txt"},
-    {"SpartanJ/efsw                 ", "MIT License", "https://github.com/SpartanJ/efsw/blob/master/LICENSE"}
+    {"pongasoft/re-mock             ", "Apache 2.0", "https://github.com/pongasoft/re-mock/blob/master/LICENSE.txt"},
+    {"SpartanJ/efsw                 ", "MIT License", "https://github.com/SpartanJ/efsw/blob/master/LICENSE"},
   };
 
   if(ImGui::TreeNodeEx("Licenses", ImGuiTreeNodeFlags_Framed))

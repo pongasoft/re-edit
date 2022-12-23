@@ -253,19 +253,27 @@ set(CPACK_PACKAGE_VERSION_MINOR       "${re-edit_VERSION_MINOR}")
 set(CPACK_PACKAGE_VERSION_PATCH       "${re-edit_VERSION_PATCH}")
 set(CPACK_SYSTEM_NAME                 "${re-edit_ARCHIVE_ARCHITECTURE}")
 
-set(CPACK_GENERATOR ZIP)
 set(CPACK_VERBATIM_VARIABLES TRUE)
 set(CPACK_ARCHIVE_COMPONENT_INSTALL OFF)
 set(CPACK_COMPONENTS_ALL_IN_ONE_PACKAGE ON)
 set(CPACK_COMPONENTS_GROUPING ALL_COMPONENTS_IN_ONE)
+set(CPACK_PACKAGE_CHECKSUM "SHA256")
 
 include(CPack)
 
 cpack_add_component("exe")
 
+if(APPLE)
+  # Generates a dmg
+  set(RE_EDIT_CPACK_GENERATOR "DragNDrop")
+elseif(WIN32)
+  # Look into Wix!
+  set(RE_EDIT_CPACK_GENERATOR "ZIP")
+endif()
+
 add_custom_target("create_archive"
     COMMAND ${CMAKE_COMMAND} -E echo "Creating archive..."
-    COMMAND "${CMAKE_CPACK_COMMAND}" --verbose -G ZIP -C $<CONFIG>
+    COMMAND "${CMAKE_CPACK_COMMAND}" --verbose -G ${RE_EDIT_CPACK_GENERATOR} -C $<CONFIG>
     WORKING_DIRECTORY "${CMAKE_BINARY_DIR}" # CPackConfig.cmake is created there
     DEPENDS "${target}"
     )
