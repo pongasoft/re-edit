@@ -261,10 +261,10 @@ void AppContext::render()
     ImGui::PopID();
 
     ImGui::PopID();
-    ImGui::Separator();
 
     if(maybeReloadTextures())
     {
+      ImGui::Separator();
       ImGui::AlignTextToFramePadding();
       ReGui::TipIcon();ImGui::SameLine();ImGui::TextUnformatted("Detected image changes");
       ImGui::SameLine();
@@ -273,11 +273,11 @@ void AppContext::render()
       ImGui::SameLine();
       if(ImGui::Button(ReGui_Prefix(ReGui_Icon_Reset, "Dismiss")))
         maybeReloadTextures(false);
-      ImGui::Separator();
     }
 
     if(maybeReloadDevice())
     {
+      ImGui::Separator();
       ImGui::AlignTextToFramePadding();
       ReGui::TipIcon();ImGui::SameLine();ImGui::TextUnformatted("Detected device changes");
       ImGui::SameLine();
@@ -286,12 +286,13 @@ void AppContext::render()
       ImGui::SameLine();
       if(ImGui::Button(ReGui_Prefix(ReGui_Icon_Reset, "Dismiss")))
         maybeReloadDevice(false);
-      ImGui::Separator();
     }
 
+#ifndef NDEBUG
+    ImGui::Separator();
     ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate,
                 ImGui::GetIO().Framerate);
-
+#endif
   }
 
 }
