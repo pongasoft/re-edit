@@ -248,10 +248,12 @@ install(
 # Archive
 #######################################################
 set(CPACK_PACKAGE_NAME                "${target}")
+set(CPACK_PACKAGE_VENDOR              "pongasoft")
 set(CPACK_PACKAGE_VERSION_MAJOR       "${re-edit_VERSION_MAJOR}")
 set(CPACK_PACKAGE_VERSION_MINOR       "${re-edit_VERSION_MINOR}")
 set(CPACK_PACKAGE_VERSION_PATCH       "${re-edit_VERSION_PATCH}")
 set(CPACK_SYSTEM_NAME                 "${re-edit_ARCHIVE_ARCHITECTURE}")
+set(CPACK_RESOURCE_FILE_LICENSE       "${CMAKE_CURRENT_LIST_DIR}/LICENSE.txt")
 
 set(CPACK_VERBATIM_VARIABLES TRUE)
 set(CPACK_ARCHIVE_COMPONENT_INSTALL OFF)
@@ -259,17 +261,31 @@ set(CPACK_COMPONENTS_ALL_IN_ONE_PACKAGE ON)
 set(CPACK_COMPONENTS_GROUPING ALL_COMPONENTS_IN_ONE)
 set(CPACK_PACKAGE_CHECKSUM "SHA256")
 
-include(CPack)
-
-cpack_add_component("exe")
-
 if(APPLE)
   # Generates a dmg
   set(RE_EDIT_CPACK_GENERATOR "DragNDrop")
 elseif(WIN32)
-  # Look into Wix!
-  set(RE_EDIT_CPACK_GENERATOR "ZIP")
+  set_property(INSTALL "$<TARGET_FILE_NAME:${target}>" PROPERTY CPACK_START_MENU_SHORTCUTS "RE Edit")
+
+  set(CPACK_PACKAGE_NAME              "RE Edit")
+  set(CPACK_PACKAGE_INSTALL_DIRECTORY "pongasoft/RE Edit")
+  set(CPACK_WIX_PROGRAM_MENU_FOLDER   "pongasoft")
+  set(CPACK_WIX_UI_BANNER             "${CMAKE_CURRENT_LIST_DIR}/src/resources/wix_ui_banner-493x58.png")
+  set(CPACK_WIX_UI_DIALOG             "${CMAKE_CURRENT_LIST_DIR}/src/resources/wix_ui_dialog-493x312.png")
+  set(CPACK_WIX_PRODUCT_ICON          "${CMAKE_CURRENT_LIST_DIR}/src/resources/re-edit.ico")
+  set(CPACK_WIX_UPGRADE_GUID          "3FFD49F8-82AE-4B57-BBEC-7AB995C24B8F")
+  set(CPACK_WIX_ARCHITECTURE          "x64")
+
+  # For the add/remove program section
+  set(CPACK_WIX_PROPERTY_ARPCOMMENTS      "RE Edit is a free and open source WYSIWYG editor for the UI of a Rack Extension")
+  set(CPACK_WIX_PROPERTY_ARPHELPLINK      "https://pongasoft.com/contact.html")
+  set(CPACK_WIX_PROPERTY_ARPURLINFOABOUT  "https://pongasoft.com/re-edit")
+  set(CPACK_WIX_PROPERTY_ARPURLUPDATEINFO "https://github.com/pongasoft/re-edit/releases")
+
+  set(RE_EDIT_CPACK_GENERATOR         "WIX")
 endif()
+
+include(CPack)
 
 add_custom_target("create_archive"
     COMMAND ${CMAKE_COMMAND} -E echo "Creating archive..."

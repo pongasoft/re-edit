@@ -22,6 +22,7 @@
 #include <memory>
 #include <mutex>
 #include <thread>
+#include <algorithm>
 
 namespace re::edit::Utils {
 
