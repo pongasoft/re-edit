@@ -18,10 +18,6 @@ FetchContent_Declare(re-mock
       SOURCE_DIR                 "${CMAKE_BINARY_DIR}/re-mock"
       BINARY_DIR                 "${CMAKE_BINARY_DIR}/re-mock-build"
       DOWNLOAD_EXTRACT_TIMESTAMP true
-      CONFIGURE_COMMAND          ""
-      BUILD_COMMAND              ""
-      INSTALL_COMMAND            ""
-      TEST_COMMAND               ""
       )
 
 FetchContent_GetProperties(re-mock)

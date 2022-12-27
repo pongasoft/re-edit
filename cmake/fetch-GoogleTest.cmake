@@ -46,10 +46,6 @@ FetchContent_Declare(googletest
     DOWNLOAD_EXTRACT_TIMESTAMP true
     SOURCE_DIR                 "${CMAKE_BINARY_DIR}/googletest-src"
     BINARY_DIR                 "${CMAKE_BINARY_DIR}/googletest-build"
-    CONFIGURE_COMMAND          ""
-    BUILD_COMMAND              ""
-    INSTALL_COMMAND            ""
-    TEST_COMMAND               ""
     )
 
 FetchContent_GetProperties(googletest)

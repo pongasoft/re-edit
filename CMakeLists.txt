@@ -240,7 +240,6 @@ set(CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/install")
 
 install(
     TARGETS "${target}"
-    COMPONENT "exe"
     DESTINATION "."
 )
 
