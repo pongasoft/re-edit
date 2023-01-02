@@ -32,6 +32,15 @@ Features implemented by the code
 - Uses a different font (JetBrains Mono) and FontAwesome (embedded via base85 compressed encoding)
 - Uses built-in icons (embedded via base85 compressed encoding)
 
+Look & Feel
+-----------
+
+#### Dark Style
+![RE Edit - Dark](https://github.com/pongasoft/re-edit/releases/download/v1.0.0/re-edit-dark.png)
+
+#### Light Style
+![RE Edit - Light](https://github.com/pongasoft/re-edit/releases/download/v1.0.0/re-edit-light.png)
+
 Build
 -----
 
