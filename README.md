@@ -85,7 +85,7 @@ pongasoft produces a variety of high quality and free/open source software. If y
 Release Notes
 -------------
 
-* #### 1.0.0 - 2023/01/TBD
+* #### 1.0.0 - 2023/01/02
 
 - First public release
 
