@@ -248,11 +248,10 @@ install(
 #######################################################
 set(CPACK_PACKAGE_NAME                "${target}")
 set(CPACK_PACKAGE_VENDOR              "pongasoft")
-set(CPACK_PACKAGE_VERSION_MAJOR       "${re-edit_VERSION_MAJOR}")
-set(CPACK_PACKAGE_VERSION_MINOR       "${re-edit_VERSION_MINOR}")
-set(CPACK_PACKAGE_VERSION_PATCH       "${re-edit_VERSION_PATCH}")
+set(CPACK_PACKAGE_VERSION             "${re-edit_VERSION}")
 set(CPACK_SYSTEM_NAME                 "${re-edit_ARCHIVE_ARCHITECTURE}")
 set(CPACK_RESOURCE_FILE_LICENSE       "${CMAKE_CURRENT_LIST_DIR}/LICENSE.txt")
+set(CPACK_PACKAGE_FILE_NAME           "${target}-${CPACK_PACKAGE_VERSION}-${CPACK_SYSTEM_NAME}")
 
 set(CPACK_VERBATIM_VARIABLES TRUE)
 set(CPACK_ARCHIVE_COMPONENT_INSTALL OFF)
