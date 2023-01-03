@@ -86,12 +86,15 @@ static std::vector<Def> kDeviceBuiltIns{kAudioSocket,
                                         kRoutingIconWhite02,
                                         kRoutingIconWhite03,
                                         kRoutingIconWhite04,
-                                        kRoutingIconWhite05};
+                                        kRoutingIconWhite05,
+                                        };
 
 constexpr Def kLogoDark{"logo_dark"};
 constexpr Def kDeviceType{"DeviceType_4frames", 4};
+constexpr Def kFoldButton{"SharedFoldButton_4frames", 4};
+constexpr Def kRackRails{"RackRails_4frames", 4}; // 0 is Front_Left; 1 is Front_Right; 2 is Back_Left; 3 is Back_Right
 
-static std::vector<Def> kGlobalBuiltIns{kLogoDark, kDeviceType};
+static std::vector<Def> kGlobalBuiltIns{kLogoDark, kDeviceType, kFoldButton, kRackRails};
 
 }
 

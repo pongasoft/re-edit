@@ -205,9 +205,9 @@ void AppContext::render()
 
     ImGui::PushID("Rendering");
 
-    ImGui::PushID("Widget");
+    ImGui::PushID("Widgets");
     ImGui::AlignTextToFramePadding();
-    ImGui::Text("Widget          ");
+    ImGui::Text("Widgets         ");
     ImGui::SameLine();
     ReGui::TextRadioButton("None  ", &fWidgetRendering, AppContext::EWidgetRendering::kNone);
     ImGui::SameLine();
@@ -218,13 +218,26 @@ void AppContext::render()
 
     ImGui::PushID("Border");
     ImGui::AlignTextToFramePadding();
-    ImGui::Text("Border          ");
+    ImGui::Text("Widgets Border  ");
     ImGui::SameLine();
     ReGui::TextRadioButton("None  ", &fBorderRendering, AppContext::EBorderRendering::kNone);
     ImGui::SameLine();
     ReGui::TextRadioButton("Normal", &fBorderRendering, AppContext::EBorderRendering::kNormal);
     ImGui::SameLine();
     ReGui::TextRadioButton("Hit B.", &fBorderRendering, AppContext::EBorderRendering::kHitBoundaries);
+    ImGui::PopID();
+
+    ImGui::PushID("Panel");
+    ImGui::AlignTextToFramePadding();
+    ImGui::Text("Panel           ");
+    ImGui::SameLine();
+    ReGui::TextRadioButton("None  ", &fPanelRendering, AppContext::EPanelRendering::kNone);
+    ImGui::SameLine();
+    ReGui::TextRadioButton("Border", &fPanelRendering, AppContext::EPanelRendering::kBorder);
+    ImGui::SameLine();
+    ReGui::TextRadioButton("Normal", &fPanelRendering, AppContext::EPanelRendering::kNormal);
+    ImGui::SameLine();
+    ReGui::TextRadioButton("X-Ray ", &fPanelRendering, AppContext::EPanelRendering::kXRay);
     ImGui::PopID();
 
     ImGui::PushID("SizeOnly");
@@ -249,6 +262,15 @@ void AppContext::render()
     ReGui::TextRadioButton("SD Bg.", &fCustomDisplayRendering, AppContext::ECustomDisplayRendering::kBackgroundSD);
     ImGui::SameLine();
     ReGui::TextRadioButton("HD Bg.", &fCustomDisplayRendering, AppContext::ECustomDisplayRendering::kBackgroundHD);
+    ImGui::PopID();
+
+    ImGui::PushID("Icons");
+    ImGui::AlignTextToFramePadding();
+    ImGui::Text("Icons           ");
+    ImGui::SameLine();
+    ReGui::TextToggleButton("Fold  ", &fShowFoldButton);
+    ImGui::SameLine();
+    ReGui::TextToggleButton("Rails ", &fShowRackRails);
     ImGui::PopID();
 
     ImGui::PushID("Sample Drop Zone");
@@ -407,7 +429,7 @@ void AppContext::RectFilledItem(ImVec2 const &iPosition,
 {
   auto const cp = ImGui::GetCursorScreenPos() + iPosition * fZoom;
 
-  const ImRect rect{cp, cp + iSize};
+  const ImRect rect{cp, cp + iSize * fZoom};
 
   ImGui::SetCursorScreenPos(cp);
   ImGui::ItemSize(rect);
@@ -417,6 +439,41 @@ void AppContext::RectFilledItem(ImVec2 const &iPosition,
   ImGui::SetCursorScreenPos(cp);
   auto drawList = ImGui::GetWindowDrawList();
   drawList->AddRectFilled(cp, {cp.x + (iSize.x * fZoom), cp.y + (iSize.y * fZoom)}, iColor, iRounding, iFlags);
+}
+
+//------------------------------------------------------------------------
+// AppContext::RectItem
+//------------------------------------------------------------------------
+void AppContext::RectItem(ImVec2 const &iPosition,
+                          ImVec2 const &iSize,
+                          ImU32 iColor,
+                          float iRounding,
+                          ImDrawFlags iFlags) const
+{
+  auto const cp = ImGui::GetCursorScreenPos() + iPosition * fZoom;
+
+  const ImRect rect{cp, cp + iSize * fZoom};
+
+  ImGui::SetCursorScreenPos(cp);
+  ImGui::ItemSize(rect);
+  if(!ImGui::ItemAdd(rect, 0))
+    return;
+
+  ImGui::SetCursorScreenPos(cp);
+  auto drawList = ImGui::GetWindowDrawList();
+  drawList->AddRect(cp, {cp.x + (iSize.x * fZoom), cp.y + (iSize.y * fZoom)}, iColor, iRounding, iFlags);
+}
+
+//------------------------------------------------------------------------
+// AppContext::Dummy
+//------------------------------------------------------------------------
+void AppContext::Dummy(ImVec2 const &iPosition, ImVec2 const &iSize) const
+{
+  auto const cp = ImGui::GetCursorScreenPos() + iPosition * fZoom;
+  const ImRect rect{cp, cp + iSize * fZoom};
+  ImGui::SetCursorScreenPos(cp);
+  ImGui::ItemSize(rect);
+  ImGui::ItemAdd(rect, 0);
 }
 
 
@@ -1141,6 +1198,14 @@ void AppContext::importBuiltIns(UserError *oErrors)
 void AppContext::setCurrentZoom(float iZoom)
 {
   fZoom = iZoom * Application::GetCurrent().getCurrentFontDpiScale();
+}
+
+//------------------------------------------------------------------------
+// AppContext::getBuiltInTexture
+//------------------------------------------------------------------------
+std::shared_ptr<Texture> AppContext::getBuiltInTexture(FilmStrip::key_t const &iKey) const
+{
+  return Application::GetCurrent().getTexture(iKey);
 }
 
 

@@ -97,10 +97,52 @@ void Panel::draw(AppContext &iCtx)
   auto backgroundSize = getSize() * iCtx.fZoom;
   clickableArea = {std::max(clickableArea.x, backgroundSize.x), std::max(clickableArea.y, backgroundSize.y)};
 
-  if(texture)
-    iCtx.TextureItem(texture);
+  // rails are always below
+  if(iCtx.fShowRackRails)
+  {
+    auto rails = iCtx.getBuiltInTexture(BuiltIns::kRackRails.fKey);
+    int leftFrame = 0;
+    int rightFrame = 1;
+    if(!isPanelOfType(fType, kPanelTypeAnyFront))
+    {
+      leftFrame = 2;
+      rightFrame = 3;
+    }
+    auto heightRU = isPanelOfType(fType, kPanelTypeAnyUnfolded) ? fDeviceHeightRU : 1;
+    auto leftPos = ImVec2{};
+    auto rightPos = ImVec2{kDevicePixelWidth - rails->frameWidth(), 0};
+    auto increment = ImVec2{ 0, rails->frameHeight() };
+    for(int i = 0 ; i < heightRU; i++, leftPos += increment, rightPos += increment)
+    {
+      iCtx.drawTexture(rails.get(), leftPos, leftFrame);
+      iCtx.drawTexture(rails.get(), rightPos, rightFrame);
+    }
+  }
+
+  if(iCtx.fPanelRendering != AppContext::EPanelRendering::kNone)
+  {
+    if(iCtx.fPanelRendering == AppContext::EPanelRendering::kBorder)
+    {
+      iCtx.RectItem(ImVec2{}, getSize(), ImGui::GetColorU32(ImGui::GetStyle().Colors[ImGuiCol_Text]));
+    }
+    else
+    {
+      if(texture)
+      {
+        auto textureColor = iCtx.fPanelRendering == AppContext::EPanelRendering::kXRay ?
+                            ReGui::GetColorU32(kXRayColor) :
+                            ReGui::GetColorU32(kWhiteColor);
+
+        iCtx.TextureItem(texture, {}, {}, 0, ReGui::kTransparentColorU32, textureColor);
+      }
+      else
+        iCtx.RectFilledItem(ImVec2{}, getSize(), iCtx.getUserPreferences().fWidgetErrorColor);
+    }
+  }
   else
-    iCtx.RectFilledItem(ImVec2{}, getSize(), iCtx.getUserPreferences().fWidgetErrorColor);
+  {
+    iCtx.Dummy(ImVec2{}, getSize());
+  }
 
   backgroundScreenPosition = ImGui::GetItemRectMin(); // accounts for scrollbar!
 
@@ -178,6 +220,13 @@ void Panel::draw(AppContext &iCtx)
 
   // then the cable origin
   drawCableOrigin(iCtx);
+
+  // draw the fold button
+  if(iCtx.fShowFoldButton)
+  {
+    iCtx.drawTexture(iCtx.getBuiltInTexture(BuiltIns::kFoldButton.fKey).get(), kFoldButtonPos,
+                     isPanelOfType(fType, kPanelTypeAnyUnfolded) ? 0 : 2);
+  }
 
   auto selectedWidgets = getSelectedWidgets();
 

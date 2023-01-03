@@ -102,6 +102,8 @@ constexpr auto kSampleBrowseGroupSize = ImVec2{290, 110};
 constexpr auto kDeviceNameHorizontal = ImVec2{395, 65};
 constexpr auto kDeviceNameVertical = ImVec2{65, 395};
 
+constexpr auto kFoldButtonPos = ImVec2{65, 45};
+
 constexpr float toFloatColor(int iColor) { return static_cast<float>(iColor) / 255.0f; }
 constexpr ImVec4 toFloatColor(int r, int g, int b, int a = 255) { return ImVec4{toFloatColor(r), toFloatColor(g), toFloatColor(b), toFloatColor(a)}; }
 

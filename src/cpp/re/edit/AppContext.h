@@ -59,6 +59,14 @@ public:
     kXRay
   };
 
+  enum class EPanelRendering : int
+  {
+    kNone,
+    kNormal,
+    kBorder,
+    kXRay
+  };
+
   enum class EBorderRendering : int
   {
     kNone,
@@ -129,6 +137,7 @@ public: // Texture
   inline std::vector<FilmStrip::key_t> getTextureKeys() const { return fTextureManager->getTextureKeys(); };
   inline std::vector<FilmStrip::key_t> findTextureKeys(FilmStrip::Filter const &iFilter) const { return fTextureManager->findTextureKeys(iFilter); }
   inline std::shared_ptr<Texture> getTexture(FilmStrip::key_t const &iKey) const { return fTextureManager->getTexture(iKey); };
+  std::shared_ptr<Texture> getBuiltInTexture(FilmStrip::key_t const &iKey) const;
   inline std::shared_ptr<Texture> findTexture(FilmStrip::key_t const &iKey) const { return fTextureManager->findTexture(iKey); };
   inline std::shared_ptr<Texture> findHDTexture(FilmStrip::key_t const &iKey) const { return fTextureManager->findHDTexture(iKey); }
   void overrideTextureNumFrames(FilmStrip::key_t const &iKey, int iNumFrames) { fTextureManager->overrideNumFrames(iKey, iNumFrames); markEdited(); }
@@ -150,8 +159,10 @@ public: // Texture
 
   void drawRect(ImVec2 const &iPosition, ImVec2 const &iSize, ImU32 iColor) const;
   void RectFilledItem(ImVec2 const &iPosition, ImVec2 const &iSize, ImU32 iColor, float iRounding = 0.0f, ImDrawFlags iFlags = 0) const;
+  void RectItem(ImVec2 const &iPosition, ImVec2 const &iSize, ImU32 iColor, float iRounding = 0.0f, ImDrawFlags iFlags = 0) const;
   void drawRectFilled(ImVec2 const &iPosition, ImVec2 const &iSize, ImU32 iColor, float iRounding = 0.0f, ImDrawFlags iFlags = 0) const;
   void drawLine(const ImVec2& iP1, const ImVec2& iP2, ImU32 iColor, float iThickness = 1.0f) const;
+  void Dummy(ImVec2 const &iPosition, ImVec2 const &iSize) const;
 
 public: // Undo
   constexpr bool isUndoEnabled() const { return fUndoManager->isEnabled(); }
@@ -258,10 +269,13 @@ public: // Undo
 
 public:
   EWidgetRendering fWidgetRendering{EWidgetRendering::kNormal};
+  EPanelRendering fPanelRendering{EPanelRendering::kNormal};
   EBorderRendering fBorderRendering{EBorderRendering::kNone};
   ECustomDisplayRendering fCustomDisplayRendering{ECustomDisplayRendering::kMain};
   ESampleDropZoneRendering fSampleDropZoneRendering{ESampleDropZoneRendering::kFill};
   ENoGraphicsRendering fNoGraphicsRendering{ENoGraphicsRendering::kFill};
+  bool fShowFoldButton{true};
+  bool fShowRackRails{false};
 
   float fZoom{0.20f};
   ImVec2 fGrid{1.0f, 1.0f};

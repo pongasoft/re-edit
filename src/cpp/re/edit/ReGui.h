@@ -185,6 +185,38 @@ inline bool TextRadioButton(char const *iLabel, T *ioValue, T iTrueValue, const 
 }
 
 //------------------------------------------------------------------------
+// ReGui::TextToggleButton
+// Behaves like a toggle button but with a shape of a button
+//------------------------------------------------------------------------
+inline bool TextToggleButton(char const *iLabel, bool *ioValue, const ImVec2& size = ImVec2(0, 0))
+{
+  auto res = false;
+  if(!*ioValue)
+  {
+    ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().DisabledAlpha);
+    if(ImGui::Button(iLabel, size))
+    {
+      *ioValue = true;
+      res = true;
+    }
+    ImGui::PopStyleVar();
+  }
+  else
+  {
+    ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.0);
+    ImGui::PushStyleColor(ImGuiCol_Border, ImGui::GetStyle().Colors[ImGuiCol_Text]);
+    if(ImGui::Button(iLabel, size))
+    {
+      *ioValue = false;
+      res = true;
+    }
+    ImGui::PopStyleColor();
+    ImGui::PopStyleVar();
+  }
+  return res;
+}
+
+//------------------------------------------------------------------------
 // ReGui::ColorEdit
 //------------------------------------------------------------------------
 inline bool ColorEdit(const char* label, JboxColor3 *ioColor, ImGuiColorEditFlags flags = 0)
