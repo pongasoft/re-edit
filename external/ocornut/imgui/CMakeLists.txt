@@ -25,6 +25,7 @@ endif()
 
 add_library(imgui STATIC "${imgui_BUILD_SOURCES}")
 target_compile_definitions(imgui PUBLIC IMGUI_USER_CONFIG="imgui_user_config.h")
+target_compile_definitions(imgui PRIVATE $<$<CONFIG:Release>:IMGUI_DISABLE_DEMO_WINDOWS> $<$<CONFIG:Release>:IMGUI_DISABLE_DEBUG_TOOLS>)
 target_include_directories(imgui PUBLIC "${imgui_CPP_SRC_DIR}" "${stb_CPP_SRC_DIR}")
 target_link_libraries(imgui PUBLIC stb)
 
