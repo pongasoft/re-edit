@@ -139,11 +139,7 @@ bool PanelState::renderTab(AppContext &iCtx)
     fPanel.computeIsHidden(iCtx);
     fPanel.checkForErrors(iCtx);
 
-    int zoom = static_cast<int>(fZoom * 5);
-    if(ImGui::SliderInt("zoom", &zoom, 1, 10))
-      fZoom = static_cast<float>(zoom) / 5.0f;
-    ImGui::SameLine();
-    ImGui::Text("%d%%", static_cast<int>(fZoom * 100));
+    iCtx.renderZoomSelection();
 
     static bool kSquare = iCtx.fGrid.x == iCtx.fGrid.y;
     constexpr auto kGridStep = 5;
@@ -198,8 +194,7 @@ void PanelState::render(AppContext &iCtx)
   if(iCtx.fCurrentPanelState != iCtx.fPreviousPanelState)
     fPanel.markEdited();
 
-  iCtx.setCurrentZoom(fZoom);
-  renderPanel(iCtx, iCtx.fCurrentPanelState != iCtx.fPreviousPanelState);
+  renderPanel(iCtx);
   renderPanelWidgets(iCtx);
   renderWidgets(iCtx);
   renderProperties(iCtx);
@@ -224,18 +219,11 @@ void PanelState::renderWidgets(AppContext &iCtx)
 //------------------------------------------------------------------------
 // PanelState::renderPanel
 //------------------------------------------------------------------------
-void PanelState::renderPanel(AppContext &iCtx, bool iSetScroll)
+void PanelState::renderPanel(AppContext &iCtx)
 {
   if(auto l = iCtx.fPanelWindow.begin())
   {
     fPanel.draw(iCtx);
-    if(iSetScroll)
-    {
-      ImGui::SetScrollX(fScroll.x);
-      ImGui::SetScrollY(fScroll.y);
-    }
-    else
-      fScroll = {ImGui::GetScrollX(), ImGui::GetScrollY()};
   }
 }
 

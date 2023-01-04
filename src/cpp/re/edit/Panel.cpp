@@ -94,7 +94,7 @@ void Panel::draw(AppContext &iCtx)
   auto &io = ImGui::GetIO();
   auto texture = fGraphics.hasValidTexture() ? fGraphics.getTexture() : nullptr;
   ImVec2 clickableArea = ImGui::GetContentRegionAvail();
-  auto backgroundSize = getSize() * iCtx.fZoom;
+  auto backgroundSize = getSize() * iCtx.getZoom();
   clickableArea = {std::max(clickableArea.x, backgroundSize.x), std::max(clickableArea.y, backgroundSize.y)};
 
   // rails are always below
@@ -150,7 +150,7 @@ void Panel::draw(AppContext &iCtx)
   ImGui::SetCursorScreenPos(cp); // TextureItem moves the cursor so we restore it
   ImGui::InvisibleButton("canvas", clickableArea, ImGuiButtonFlags_MouseButtonLeft);
 
-  auto const mousePos = (ImGui::GetMousePos() - backgroundScreenPosition) / iCtx.fZoom; // accounts for scrollbars
+  auto const mousePos = (ImGui::GetMousePos() - backgroundScreenPosition) / iCtx.getZoom(); // accounts for scrollbars
   if(fShiftMouseDrag)
   {
     if(ImGui::IsMouseReleased(ImGuiMouseButton_Left))
@@ -234,7 +234,7 @@ void Panel::draw(AppContext &iCtx)
   {
     if(!fPopupLocation)
       fPopupLocation = ImGui::GetMousePos() - backgroundScreenPosition; // accounts for scrollbars
-    auto widgetLocation = *fPopupLocation / iCtx.fZoom;
+    auto widgetLocation = *fPopupLocation / iCtx.getZoom();
     if(renderSelectedWidgetsMenu(iCtx, selectedWidgets, widgetLocation))
       ImGui::Separator();
     renderAddWidgetMenu(iCtx, widgetLocation);

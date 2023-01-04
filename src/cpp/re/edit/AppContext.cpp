@@ -264,9 +264,9 @@ void AppContext::render()
     ReGui::TextRadioButton("HD Bg.", &fCustomDisplayRendering, AppContext::ECustomDisplayRendering::kBackgroundHD);
     ImGui::PopID();
 
-    ImGui::PushID("Icons");
+    ImGui::PushID("Rack");
     ImGui::AlignTextToFramePadding();
-    ImGui::Text("Icons           ");
+    ImGui::Text("Rack            ");
     ImGui::SameLine();
     ReGui::TextToggleButton("Fold  ", &fShowFoldButton);
     ImGui::SameLine();
@@ -392,7 +392,7 @@ void AppContext::TextureItem(Texture const *iTexture,
                              ImU32 iBorderColor,
                              ImU32 iTextureColor) const
 {
-  iTexture->Item(iPosition, iSize, fZoom, iFrameNumber, iBorderColor, iTextureColor);
+  iTexture->Item(iPosition, iSize, getZoom(), iFrameNumber, iBorderColor, iTextureColor);
 }
 
 //------------------------------------------------------------------------
@@ -404,7 +404,7 @@ void AppContext::drawTexture(Texture const *iTexture,
                              ImU32 iBorderColor,
                              ImU32 iTextureColor) const
 {
-  iTexture->draw(iPosition, fZoom, iFrameNumber, iBorderColor, iTextureColor);
+  iTexture->draw(iPosition, getZoom(), iFrameNumber, iBorderColor, iTextureColor);
 }
 
 //------------------------------------------------------------------------
@@ -413,9 +413,9 @@ void AppContext::drawTexture(Texture const *iTexture,
 void AppContext::drawRect(ImVec2 const &iPosition, ImVec2 const &iSize, ImU32 iColor) const
 {
   auto const cp = ImGui::GetCursorScreenPos();
-  ImVec2 pos(cp + iPosition * fZoom);
+  ImVec2 pos(cp + iPosition * getZoom());
   auto drawList = ImGui::GetWindowDrawList();
-  drawList->AddRect(pos, {pos.x + (iSize.x * fZoom), pos.y + (iSize.y * fZoom)}, iColor);
+  drawList->AddRect(pos, {pos.x + (iSize.x * getZoom()), pos.y + (iSize.y * getZoom())}, iColor);
 }
 
 //------------------------------------------------------------------------
@@ -427,9 +427,9 @@ void AppContext::RectFilledItem(ImVec2 const &iPosition,
                                 float iRounding,
                                 ImDrawFlags iFlags) const
 {
-  auto const cp = ImGui::GetCursorScreenPos() + iPosition * fZoom;
+  auto const cp = ImGui::GetCursorScreenPos() + iPosition * getZoom();
 
-  const ImRect rect{cp, cp + iSize * fZoom};
+  const ImRect rect{cp, cp + iSize * getZoom()};
 
   ImGui::SetCursorScreenPos(cp);
   ImGui::ItemSize(rect);
@@ -438,7 +438,7 @@ void AppContext::RectFilledItem(ImVec2 const &iPosition,
 
   ImGui::SetCursorScreenPos(cp);
   auto drawList = ImGui::GetWindowDrawList();
-  drawList->AddRectFilled(cp, {cp.x + (iSize.x * fZoom), cp.y + (iSize.y * fZoom)}, iColor, iRounding, iFlags);
+  drawList->AddRectFilled(cp, {cp.x + (iSize.x * getZoom()), cp.y + (iSize.y * getZoom())}, iColor, iRounding, iFlags);
 }
 
 //------------------------------------------------------------------------
@@ -450,9 +450,9 @@ void AppContext::RectItem(ImVec2 const &iPosition,
                           float iRounding,
                           ImDrawFlags iFlags) const
 {
-  auto const cp = ImGui::GetCursorScreenPos() + iPosition * fZoom;
+  auto const cp = ImGui::GetCursorScreenPos() + iPosition * getZoom();
 
-  const ImRect rect{cp, cp + iSize * fZoom};
+  const ImRect rect{cp, cp + iSize * getZoom()};
 
   ImGui::SetCursorScreenPos(cp);
   ImGui::ItemSize(rect);
@@ -461,7 +461,7 @@ void AppContext::RectItem(ImVec2 const &iPosition,
 
   ImGui::SetCursorScreenPos(cp);
   auto drawList = ImGui::GetWindowDrawList();
-  drawList->AddRect(cp, {cp.x + (iSize.x * fZoom), cp.y + (iSize.y * fZoom)}, iColor, iRounding, iFlags);
+  drawList->AddRect(cp, {cp.x + (iSize.x * getZoom()), cp.y + (iSize.y * getZoom())}, iColor, iRounding, iFlags);
 }
 
 //------------------------------------------------------------------------
@@ -469,8 +469,8 @@ void AppContext::RectItem(ImVec2 const &iPosition,
 //------------------------------------------------------------------------
 void AppContext::Dummy(ImVec2 const &iPosition, ImVec2 const &iSize) const
 {
-  auto const cp = ImGui::GetCursorScreenPos() + iPosition * fZoom;
-  const ImRect rect{cp, cp + iSize * fZoom};
+  auto const cp = ImGui::GetCursorScreenPos() + iPosition * getZoom();
+  const ImRect rect{cp, cp + iSize * getZoom()};
   ImGui::SetCursorScreenPos(cp);
   ImGui::ItemSize(rect);
   ImGui::ItemAdd(rect, 0);
@@ -487,9 +487,9 @@ void AppContext::drawRectFilled(ImVec2 const &iPosition,
                                  ImDrawFlags iFlags) const
 {
   auto const cp = ImGui::GetCursorScreenPos();
-  ImVec2 pos(cp + iPosition * fZoom);
+  ImVec2 pos(cp + iPosition * getZoom());
   auto drawList = ImGui::GetWindowDrawList();
-  drawList->AddRectFilled(pos, {pos.x + (iSize.x * fZoom), pos.y + (iSize.y * fZoom)}, iColor, iRounding, iFlags);
+  drawList->AddRectFilled(pos, {pos.x + (iSize.x * getZoom()), pos.y + (iSize.y * getZoom())}, iColor, iRounding, iFlags);
 }
 
 //------------------------------------------------------------------------
@@ -499,7 +499,7 @@ void AppContext::drawLine(const ImVec2& iP1, const ImVec2& iP2, ImU32 iColor, fl
 {
   auto const cp = ImGui::GetCursorScreenPos();
   auto drawList = ImGui::GetWindowDrawList();
-  drawList->AddLine(cp + iP1 * fZoom, cp + iP2 * fZoom, iColor, iThickness);
+  drawList->AddLine(cp + iP1 * getZoom(), cp + iP2 * getZoom(), iColor, iThickness);
 }
 
 //------------------------------------------------------------------------
@@ -895,6 +895,14 @@ void AppContext::renderMainMenu()
   }
 }
 
+namespace impl {
+//! adjustZoomForDpi
+float adjustZoomForDpi(float iZoom) {
+  return iZoom * Application::GetCurrent().getCurrentFontDpiScale();
+}
+
+}
+
 //------------------------------------------------------------------------
 // AppContext::beforeRenderFrame
 //------------------------------------------------------------------------
@@ -907,6 +915,7 @@ void AppContext::beforeRenderFrame()
   {
     fItemWidth = 40 * ImGui::CalcTextSize("W").x;
     fRecomputeDimensionsRequested = false;
+    fDpiAdjustedZoom = impl::adjustZoomForDpi(fUserZoom);
   }
 
   if(fReloadTexturesRequested)
@@ -1193,11 +1202,80 @@ void AppContext::importBuiltIns(UserError *oErrors)
 }
 
 //------------------------------------------------------------------------
-// AppContext::setCurrentZoom
+// AppContext::renderZoomSelection
 //------------------------------------------------------------------------
-void AppContext::setCurrentZoom(float iZoom)
+void AppContext::renderZoomSelection()
 {
-  fZoom = iZoom * Application::GetCurrent().getCurrentFontDpiScale();
+  int zoom = static_cast<int>(fUserZoom * 5);
+  if(ImGui::SliderInt("zoom", &zoom, 1, 10))
+  {
+    fUserZoom = static_cast<float>(zoom) / 5.0f;
+    fDpiAdjustedZoom = impl::adjustZoomForDpi(fUserZoom);
+  }
+  ImGui::SameLine();
+  ImGui::Text("%d%%", static_cast<int>(fUserZoom * 100));
+
+//  ImGui::PushID("zoom");
+//  ImGui::AlignTextToFramePadding();
+//  int zoom = static_cast<int>(fUserZoom * 100);
+//  int controlZoom = zoom;
+//  ImGui::Text("zoom");
+//  ImGui::SameLine();
+//  ReGui::TextRadioButton(" 20%", &zoom, 20);
+//  ImGui::SameLine();
+//  ReGui::TextRadioButton(" 40%", &zoom, 40);
+//  ImGui::SameLine();
+//  ReGui::TextRadioButton(" 50%", &zoom, 50);
+//  ImGui::SameLine();
+//  ReGui::TextRadioButton(" 75%", &zoom, 75);
+//  ImGui::SameLine();
+//  ReGui::TextRadioButton("100%", &zoom, 100);
+//  ImGui::SameLine();
+//  ReGui::TextRadioButton("125%", &zoom, 125);
+//  ImGui::SameLine();
+//  ReGui::TextRadioButton("150%", &zoom, 150);
+//  ImGui::SameLine();
+//  ReGui::TextRadioButton("200%", &zoom, 200);
+//  ImGui::PopID();
+//
+//  if(controlZoom != zoom)
+//  {
+//    fUserZoom = static_cast<float>(zoom) / 100.0f;
+//    fDpiAdjustedZoom = impl::adjustZoomForDpi(fUserZoom);
+//  }
+
+//  {
+//  }
+//
+//  {
+//    if(ImGui::SliderFloat("zoomf", &fUserZoom, 0.2f, 2.0f))
+//    {
+//      fDpiAdjustedZoom = impl::adjustZoomForDpi(fUserZoom);
+//    }
+//    ImGui::SameLine();
+//    ImGui::Text("%d%%", static_cast<int>(fUserZoom * 100));
+//  }
+//
+//  {
+//    int zoom = static_cast<int>(fUserZoom * 100);
+//    if(ImGui::InputInt("zoomt", &zoom, 1, 20))
+//    {
+//      fUserZoom = static_cast<float>(zoom) / 100.0f;
+//      fDpiAdjustedZoom = impl::adjustZoomForDpi(fUserZoom);
+//    }
+//    ImGui::SameLine();
+//    ImGui::Text("%d%%", static_cast<int>(fUserZoom * 100));
+//  }
+//
+//  static bool kSlowFrameRate{};
+//
+//  if(kSlowFrameRate)
+//  {
+//    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+//  }
+//
+//  ImGui::Checkbox("Slow Frame Rate", &kSlowFrameRate);
+
 }
 
 //------------------------------------------------------------------------

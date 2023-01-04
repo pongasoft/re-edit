@@ -44,7 +44,7 @@ public:
 
 protected:
   void renderWidgets(AppContext &iCtx);
-  void renderPanel(AppContext &iCtx, bool iSetScroll);
+  void renderPanel(AppContext &iCtx);
   void renderPanelWidgets(AppContext &iCtx);
   void renderProperties(AppContext &iCtx);
 
@@ -53,8 +53,6 @@ public:
 
 private:
   std::vector<WidgetDef> fWidgetDefs{};
-  float fZoom{0.20f};
-  ImVec2 fScroll{};
 };
 
 }

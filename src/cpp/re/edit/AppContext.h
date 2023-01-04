@@ -103,6 +103,7 @@ public:
 
   ImVec2 getCurrentPanelSize() const;
   void renderAddWidgetMenuView(ImVec2 const &iPosition = {});
+  void renderZoomSelection();
   PanelState *getPanelState(PanelType iType) const;
   Panel *getPanel(PanelType iType) const;
   Panel *getCurrentPanel() const;
@@ -110,7 +111,6 @@ public:
 public: // UserPreferences
   inline UserPreferences const &getUserPreferences() const { return *fUserPreferences; }
   inline UserPreferences &getUserPreferences() { return *fUserPreferences; }
-  void setCurrentZoom(float iZoom);
 
 public: // Properties
   inline Object const *findObject(std::string const &iObjectPath) const { return fPropertyManager->findObject(iObjectPath); };
@@ -277,7 +277,8 @@ public:
   bool fShowFoldButton{true};
   bool fShowRackRails{false};
 
-  float fZoom{0.20f};
+  constexpr float getZoom() const { return fDpiAdjustedZoom; }
+
   ImVec2 fGrid{1.0f, 1.0f};
   float fItemWidth{300.0f};
 
@@ -338,6 +339,8 @@ protected:
   std::unique_ptr<PanelState> fBackPanel;
   std::unique_ptr<PanelState> fFoldedBackPanel;
   bool fHasFoldedPanels{};
+  float fUserZoom{0.20f};
+  float fDpiAdjustedZoom{fUserZoom};
   std::optional<std::string> fReEditVersion{};
   ReGui::Window fPanelWindow{"Panel", true, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoCollapse};
   ReGui::Window fPanelWidgetsWindow{"Panel Widgets", true, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoCollapse};

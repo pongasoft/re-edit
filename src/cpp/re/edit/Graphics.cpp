@@ -641,8 +641,8 @@ bool Background::draw(AppContext &iCtx, Graphics const *iParent, ImU32 iBorderCo
         auto texture = iCtx.findTexture(fValue);
         if(texture && texture->isValid())
         {
-          auto zoom = iCtx.fZoom * iParent->getSize().x / texture->frameWidth();
-          texture->draw(iParent->fPosition, iCtx.fZoom, zoom, 0, iBorderColor, impl::computeTextureColor(xRay));
+          auto zoom = iCtx.getZoom() * iParent->getSize().x / texture->frameWidth();
+          texture->draw(iParent->fPosition, iCtx.getZoom(), zoom, 0, iBorderColor, impl::computeTextureColor(xRay));
           return true;
         }
         break;
