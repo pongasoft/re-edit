@@ -198,6 +198,15 @@ void AppContext::render()
   fCurrentPanelState->render(*this);
   fPreviousPanelState = fCurrentPanelState;
 
+  // handle undo/redo via keyboard
+  if(ImGui::IsKeyPressed(ImGuiKey_Z, false) && ImGui::IsKeyDown(ImGuiMod_Shortcut))
+  {
+    if(ImGui::IsKeyDown(ImGuiMod_Shift))
+      redoLastAction();
+    else
+      undoLastAction();
+  }
+
   int flags = needsSaving() ?  ImGuiWindowFlags_UnsavedDocument : ImGuiWindowFlags_None;
 
   if(auto l = fMainWindow.begin(flags))

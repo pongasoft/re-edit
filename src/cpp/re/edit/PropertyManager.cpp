@@ -444,7 +444,7 @@ void PropertyManager::editView(Property const *iProperty)
     case Property::Type::kString:
     {
       auto value = iProperty->owner() != mock::PropertyOwner::kRTOwner ? fDevice->getString(iProperty->path()) : fDevice->getRTString(iProperty->path());
-      if(ImGui::InputText("value", &value))
+      if(ImGui::InputText("value", &value, ImGuiInputTextFlags_NoUndoRedo))
       {
         if(iProperty->owner() != mock::PropertyOwner::kRTOwner)
           fDevice->setString(iProperty->path(), iProperty->path());
