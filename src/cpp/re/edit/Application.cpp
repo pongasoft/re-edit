@@ -569,6 +569,9 @@ void Application::closeProject()
 {
   savePreferences();
   fAppContext = nullptr;
+  auto loggingManager = LoggingManager::instance();
+  loggingManager->clearAll();
+  loggingManager->setShowLog(false);
   if(fState == State::kReLoaded)
   {
     fState = State::kNoReLoaded;
@@ -974,7 +977,7 @@ void Application::renderLoading()
     {
       renderLogoBox(32.0f);
       auto progress = fReLoadingFuture->progress();
-      ImGui::ProgressBar(static_cast<float>(progress.first) / 12.0f,
+      ImGui::ProgressBar(static_cast<float>(progress.first) / 14.0f,
                          {ImGui::GetItemRectSize().x, 0},
                          progress.second.c_str());
       if(ImGui::Button("Cancel"))

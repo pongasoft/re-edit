@@ -41,8 +41,9 @@ public:
 //  bool loadFilmStrip(char const *iPath, int iNumFrames = 1) { return fFilmStripMgr.maybeAddFilmStrip(iPath, iNumFrames); }
 
   void scanDirectory();
-  std::vector<std::string> getTextureKeys() const { return fFilmStripMgr->getKeys(); };
-  std::vector<std::string> findTextureKeys(FilmStrip::Filter const &iFilter) const { return fFilmStripMgr->findKeys(iFilter); }
+  inline std::vector<std::string> getTextureKeys() const { return fFilmStripMgr->getKeys(); };
+  inline std::vector<std::string> findTextureKeys(FilmStrip::Filter const &iFilter) const { return fFilmStripMgr->findKeys(iFilter); }
+  inline bool checkTextureKeyMatchesFilter(FilmStrip::key_t const &iKey, FilmStrip::Filter const &iFilter) const { return fFilmStripMgr->checkKeyMatchesFilter(iKey, iFilter); }
   void overrideNumFrames(std::map<std::string, int> const &iNumFrames) const;
   void overrideNumFrames(std::string const &iKey, int iNumFrames) const;
   std::optional<FilmStrip::key_t> importTexture(fs::path const &iTexturePath);

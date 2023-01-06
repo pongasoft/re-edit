@@ -162,6 +162,7 @@ void AppContext::initPanels(fs::path const &iDevice2DFile,
   iCancellable->progress("Computing num frames...");
   fTextureManager->overrideNumFrames(numFrames);
   markEdited();
+  iCancellable->progress("Checking for errors...");
   checkForErrors();
 }
 

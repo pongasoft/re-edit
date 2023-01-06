@@ -202,6 +202,21 @@ std::vector<FilmStrip::key_t> FilmStripMgr::findKeys(FilmStrip::Filter const &iF
   return res;
 }
 
+
+//------------------------------------------------------------------------
+// FilmStripMgr::checkKeyMatchesFilter
+//------------------------------------------------------------------------
+bool FilmStripMgr::checkKeyMatchesFilter(FilmStrip::key_t const &iKey, FilmStrip::Filter const &iFilter) const
+{
+  for(auto const &[k, source]: fSources)
+  {
+    auto fs = getFilmStrip(k);
+    if(fs && fs->isValid() && iFilter(*fs))
+      return true;
+  }
+  return false;
+}
+
 //------------------------------------------------------------------------
 // FilmStripMgr::getFilmStrip
 //------------------------------------------------------------------------

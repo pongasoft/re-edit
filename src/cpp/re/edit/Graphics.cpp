@@ -164,8 +164,7 @@ void Graphics::findErrors(AppContext &iCtx, UserError &oErrors) const
     {
       if(fFilter)
       {
-        auto keys = iCtx.findTextureKeys(fFilter);
-        if(std::find(keys.begin(), keys.end(), texture->key()) == keys.end())
+        if(!iCtx.checkTextureKeyMatchesFilter(texture->key(), fFilter))
           oErrors.add(fFilter.fDescription);
       }
     }
@@ -487,7 +486,7 @@ void Graphics::reset()
 }
 
 //------------------------------------------------------------------------
-// Graphics::checkForErrors
+// Graphics::findErrors
 //------------------------------------------------------------------------
 void Graphics::findErrors(AppContext &iCtx, UserError &oErrors) const
 {
@@ -515,8 +514,7 @@ void Graphics::findErrors(AppContext &iCtx, UserError &oErrors) const
     {
       if(fFilter)
       {
-        auto keys = iCtx.findTextureKeys(fFilter);
-        if(std::find(keys.begin(), keys.end(), texture->key()) == keys.end())
+        if(!iCtx.checkTextureKeyMatchesFilter(texture->key(), fFilter))
           oErrors.add(fFilter.fDescription);
       }
     }

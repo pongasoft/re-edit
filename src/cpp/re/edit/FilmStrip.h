@@ -253,6 +253,7 @@ public:
   std::set<FilmStrip::key_t> scanDirectory();
   std::vector<FilmStrip::key_t> getKeys() const { return findKeys(FilmStrip::kAllFilter); }
   std::vector<FilmStrip::key_t> findKeys(FilmStrip::Filter const &iFilter) const;
+  bool checkKeyMatchesFilter(FilmStrip::key_t const &iKey, FilmStrip::Filter const &iFilter) const;
   std::optional<FilmStrip::key_t> importTexture(fs::path const &iTexturePath);
   std::set<FilmStrip::key_t> importBuiltIns(std::set<FilmStrip::key_t> const &iKeys, UserError *oErrors = nullptr);
 
