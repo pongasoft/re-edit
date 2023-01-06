@@ -44,6 +44,7 @@ struct gfx_decal_node
   ImVec2 fPosition{};
   std::string fKey{};
   std::optional<std::string> fName{};
+  std::optional<int> fNumFrames{};
 };
 
 struct panel_nodes

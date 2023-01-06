@@ -162,6 +162,7 @@ public:
   bool fHitBoundariesEnabled{true};
   std::variant<ImVec2, Texture::key_t> fTexture{kNoGraphics};
   bool fSizeEnabled{true};
+  bool fCheckForOOBError{true};
   std::shared_ptr<Texture> fDNZTexture{};
   FilmStrip::Filter fFilter{};
   int fFrameNumber{};

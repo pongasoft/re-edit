@@ -21,7 +21,7 @@ front = {
     {
       Knob2 = { offset = { 30, 40 }, { path = "Knob2_path", frames = 32  } }
     },
-    { offset = { 100, 110 }, path = "Decal2_path" },
+    { offset = { 100, 110 }, { path = "Decal2_path" } },
     {
       offset = { 50, 60 },
       Knob3 = { { size = { 5, 15 } } }
@@ -38,7 +38,7 @@ front = {
        {
          offset = {-110, 105},
          label_for_Knob4 = {
-           {path="label_for_Knob4_path"},
+           {path="label_for_Knob4_path", frames = 2},
          },
        },
      }

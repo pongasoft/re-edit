@@ -994,11 +994,9 @@ std::unique_ptr<Widget> Widget::zero_snap_knob()
 //------------------------------------------------------------------------
 std::unique_ptr<Widget> Widget::panel_decal()
 {
-  static const FilmStrip::Filter kGraphicsFilter{[](FilmStrip const &f) { return f.numFrames() == 1; }, "Must have exactly 1 frame"};
-
   auto w = std::make_unique<Widget>(WidgetType::kPanelDecal);
-  w->fGraphics->fFilter = kGraphicsFilter;
   w->fGraphics->fSizeEnabled = false;
+  w->fGraphics->fCheckForOOBError = false;
   return w;
 }
 

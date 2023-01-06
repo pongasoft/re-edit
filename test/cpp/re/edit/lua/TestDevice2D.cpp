@@ -139,6 +139,7 @@ TEST(Device2D, All)
     ASSERT_TRUE(Eq(label_for_Knob4Offset, n.fPosition));
     ASSERT_EQ("label_for_Knob4_path", n.fKey);
     ASSERT_EQ("label_for_Knob4", *n.fName);
+    ASSERT_EQ(2, *n.fNumFrames);
   }
 
   auto foldedBack = d2d->folded_back();
