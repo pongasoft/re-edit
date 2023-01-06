@@ -69,12 +69,21 @@ public:
   static std::unique_ptr<Device2D> fromFile(fs::path const &iLuaFilename);
 
 protected:
+  struct path_t
+  {
+    std::optional<std::string> fPath{};
+    std::optional<ImVec2> fSize{};
+    std::optional<int> fNumFrames{};
+  };
 
 protected:
   std::shared_ptr<panel_nodes> getPanelNodes(char const *iPanelName) const;
   std::shared_ptr<panel_nodes> createPanelNodes(char const *iPanelName);
   void processLuaTable(ImVec2 iOffset, std::vector<std::optional<std::string>> const &iDecalNames, panel_nodes &oPanelNodes);
   void processGfxNode(std::string const &iName, ImVec2 iOffset, panel_nodes &oPanelNodes);
+  void processDecalNode(ImVec2 iOffset, panel_nodes &oPanelNodes);
+  void processDecalNode(std::string const &iName, ImVec2 iOffset, panel_nodes &oPanelNodes);
+  std::optional<path_t> getMaybePathOnTopOfStack();
   std::optional<ImVec2> getOptionalOffset();
 };
 

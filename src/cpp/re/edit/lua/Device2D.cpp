@@ -132,39 +132,86 @@ void Device2D::processGfxNode(std::string const &iName, ImVec2 iOffset, panel_no
       /* .fPosition = */ iOffset
     };
 
-    iterateLuaTable([this, &node](lua_table_key_t const &key) {
+    iterateLuaTable([this, &node, &iOffset, &oPanelNodes](lua_table_key_t const &key) {
       if(std::holds_alternative<std::string>(key))
       {
         // do nothing (already handled)
       }
       else
       {
-        // make sure that we have a table
-        if(lua_type(L, -1) == LUA_TTABLE)
+        auto p = getMaybePathOnTopOfStack();
+        if(p)
         {
-          // check for size
-          lua_getfield(L, -1, "size");
-          if(lua_type(L, -1) == LUA_TTABLE)
-            node.fKeyOrSize = getImVec2();
-          lua_pop(L, 1);
-
-          // override with path if provided
-          auto path = L.getTableValueAsOptionalString("path");
-          if(path)
-            node.fKeyOrSize = path.value();
-
-
-          auto frames = L.getTableValueAsOptionalInteger("frames");
-          if(frames)
-            node.fNumFrames = static_cast<int>(frames.value());
-
-
+          if(p->fPath)
+            node.fKeyOrSize = *p->fPath;
+          else
+            node.fKeyOrSize = *p->fSize;
+          node.fNumFrames = p->fNumFrames;
+        }
+        else
+        {
+          processDecalNode(iOffset, oPanelNodes);
         }
       }
     }, true, false);
 
     oPanelNodes.fNodes[iName] = node;
   }
+}
+
+//------------------------------------------------------------------------
+// Device2D::processDecalNode
+//------------------------------------------------------------------------
+void Device2D::processDecalNode(ImVec2 iOffset, panel_nodes &oPanelNodes)
+{
+  auto maybeOffset = getOptionalOffset();
+  if(maybeOffset)
+    iOffset += *maybeOffset;
+
+  iterateLuaTable([this, &iOffset, &oPanelNodes](lua_table_key_t const &key) {
+    if(std::holds_alternative<std::string>(key))
+    {
+      auto name = std::get<std::string>(key);
+      if(name == "offset")
+      {
+        // do nothing (already handled)
+      }
+      else
+      {
+        processDecalNode(name, iOffset, oPanelNodes);
+      }
+    }
+    else
+    {
+      processDecalNode(iOffset, oPanelNodes);
+    }
+  }, true, false);
+}
+
+//------------------------------------------------------------------------
+// Device2D::processDecalNode
+//------------------------------------------------------------------------
+void Device2D::processDecalNode(std::string const &iName, ImVec2 iOffset, panel_nodes &oPanelNodes)
+{
+  RE_EDIT_LOG_DEBUG("detected named decal node %s", iName);
+  auto maybeOffset = getOptionalOffset();
+  if(maybeOffset)
+    iOffset += *maybeOffset;
+
+  iterateLuaTable([this, &iName, &iOffset, &oPanelNodes](lua_table_key_t const &key) {
+    if(std::holds_alternative<int>(key))
+    {
+      auto p = getMaybePathOnTopOfStack();
+      if(p)
+      {
+        if(p->fPath)
+          oPanelNodes.fDecalNodes.emplace_back(gfx_decal_node{iOffset, *p->fPath, iName});
+      }
+      else
+        processDecalNode(iName, iOffset, oPanelNodes);
+    }
+  }, true, false);
+
 }
 
 //------------------------------------------------------------------------
@@ -177,11 +224,42 @@ std::optional<ImVec2> Device2D::getOptionalOffset()
   {
     // check for size
     lua_getfield(L, -1, "offset");
-    if(lua_type(L, -1) == LUA_TTABLE)
+    if(isTableOnTopOfStack())
       res = getImVec2();
     lua_pop(L, 1);
   }
   return res;
+}
+
+//------------------------------------------------------------------------
+// Device2D::getMaybePathOnTopOfStack
+//------------------------------------------------------------------------
+std::optional<Device2D::path_t> Device2D::getMaybePathOnTopOfStack()
+{
+  if(lua_type(L, -1) == LUA_TTABLE)
+  {
+    path_t p{};
+
+    // check for size
+    lua_getfield(L, -1, "size");
+    if(lua_type(L, -1) == LUA_TTABLE)
+      p.fSize = getImVec2();
+    lua_pop(L, 1);
+
+    // check for path
+    auto path = L.getTableValueAsOptionalString("path");
+    if(path)
+      p.fPath = path.value();
+
+    auto frames = L.getTableValueAsOptionalInteger("frames");
+    if(frames)
+      p.fNumFrames = static_cast<int>(frames.value());
+
+    if(p.fPath || p.fSize)
+      return p;
+  }
+
+  return std::nullopt;
 }
 
 

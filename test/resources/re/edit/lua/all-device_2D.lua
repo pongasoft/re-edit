@@ -27,8 +27,25 @@ front = {
       Knob3 = { { size = { 5, 15 } } }
     }
   }
+ },
+ -- Issue #1 (nested decals)
+ {
+   {
+     offset = {100, 310},
+     Knob4 = {
+       offset = {10, 20},
+       {path="Knob4_path", frames = 4},
+       {
+         offset = {-110, 105},
+         label_for_Knob4 = {
+           {path="label_for_Knob4_path"},
+         },
+       },
+     }
+   }
  }
 }
+
 re_edit = re_edit or {}
 re_edit.front = { decals = {} }
 re_edit.front.decals[1] = "decal1"

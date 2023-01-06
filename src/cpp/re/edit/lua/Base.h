@@ -35,6 +35,8 @@ protected:
   ImVec2 getImVec2(int idx = -1);
   std::optional<ImVec2> getOptionalImVec2(int idx = -1);
   std::optional<ImVec2> getOptionalImVec2TableField(char const *iKey, int idx = -1);
+  inline bool isTableAt(int idx) { return lua_type(L, idx) == LUA_TTABLE; }
+  inline bool isTableOnTopOfStack() { return isTableAt(-1); }
 };
 
 //------------------------------------------------------------------------

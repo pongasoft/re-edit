@@ -44,8 +44,8 @@ TEST(Device2D, All)
 
   auto front = d2d->front();
 
-  ASSERT_EQ(5, front->fNodes.size());
-  ASSERT_EQ(2, front->fDecalNodes.size());
+  ASSERT_EQ(6, front->fNodes.size());
+  ASSERT_EQ(3, front->fDecalNodes.size());
 
   ImVec2 offset{};
 
@@ -116,6 +116,29 @@ TEST(Device2D, All)
     ASSERT_TRUE(Eq(anonymous2Offset, n.fPosition));
     ASSERT_EQ("Decal2_path", n.fKey);
     ASSERT_EQ("decal2", *n.fName);
+  }
+
+  // new scope
+  offset = {100, 310};
+
+  // Knob4
+  {
+    auto knob4Offset = offset + ImVec2{10, 20};
+    auto &n = front->fNodes.at("Knob4");
+    ASSERT_EQ("Knob4", n.fName);
+    ASSERT_TRUE(Eq(knob4Offset, n.fPosition));
+    ASSERT_EQ("Knob4_path", std::get<std::string>(n.fKeyOrSize));
+    ASSERT_EQ(4, n.fNumFrames);
+  }
+
+  // label_for_Knob4
+  {
+    auto label_for_Knob4Offset = offset + ImVec2{10, 20} + ImVec2{-110, 105};
+
+    auto &n = front->fDecalNodes.at(2);
+    ASSERT_TRUE(Eq(label_for_Knob4Offset, n.fPosition));
+    ASSERT_EQ("label_for_Knob4_path", n.fKey);
+    ASSERT_EQ("label_for_Knob4", *n.fName);
   }
 
   auto foldedBack = d2d->folded_back();
