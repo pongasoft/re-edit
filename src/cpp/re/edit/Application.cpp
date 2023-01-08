@@ -424,14 +424,14 @@ void Application::loadProject(fs::path const &iRoot)
       return gui_action_t([this, c, ctx = std::move(appContext)]() {
         if(fState == State::kReLoading)
         {
-            fAppContext = ctx;
-            fState = State::kReLoaded;
-            if(!fContext->isHeadless())
-              ImGui::LoadIniSettingsFromMemory(c.fImGuiIni.c_str(), c.fImGuiIni.size());
-            fContext->setWindowPositionAndSize(c.fNativeWindowPos, c.fNativeWindowSize);
-            fContext->setWindowTitle(fmt::printf("RE Edit - %s", fAppContext->getConfig().fName));
-            savePreferences();
-          }
+          fAppContext = ctx;
+          fState = State::kReLoaded;
+          if(!fContext->isHeadless())
+            ImGui::LoadIniSettingsFromMemory(c.fImGuiIni.c_str(), c.fImGuiIni.size());
+          fContext->setWindowPositionAndSize(c.fNativeWindowPos, c.fNativeWindowSize);
+          fContext->setWindowTitle(fmt::printf("RE Edit - %s", fAppContext->getConfig().fName));
+          savePreferences();
+        }
       });
     }
     catch(Utils::Cancellable::cancelled_t const &e)

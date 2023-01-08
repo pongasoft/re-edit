@@ -248,8 +248,6 @@ void AppContext::handleKeyboardShortcuts()
 void AppContext::render()
 {
   RE_EDIT_INTERNAL_ASSERT(fCurrentPanelState != nullptr);
-  fCurrentPanelState->render(*this);
-  fPreviousPanelState = fCurrentPanelState;
 
   handleKeyboardShortcuts();
 
@@ -385,6 +383,9 @@ void AppContext::render()
                 ImGui::GetIO().Framerate);
 #endif
   }
+
+  fCurrentPanelState->render(*this);
+  fPreviousPanelState = fCurrentPanelState;
 
 }
 
@@ -1391,8 +1392,11 @@ void AppContext::zoomToFit()
 {
   if(auto l = fPanelWindow.begin())
   {
+    // Implementation note: using internal API because the public API GetContentRegionAvail() depends on
+    // scrollbars being visible or not and knowing if a scrollbar is visible is an internal api
+    // see this thread https://github.com/ocornut/imgui/issues/6060#issuecomment-1375635063
     auto const &style = ImGui::GetStyle();
-    auto windowSize = ImGui::GetWindowSize();
+    auto windowSize = ImGui::GetCurrentWindowRead()->OuterRectClipped.GetSize();
     auto panelSize = fCurrentPanelState->fPanel.getSize();
     auto factor = (windowSize - (style.WindowPadding * 2)) / panelSize / Application::GetCurrent().getCurrentFontDpiScale();
     setUserZoom(std::min(factor.x, factor.y));
