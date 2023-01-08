@@ -201,15 +201,33 @@ inline bool hasActiveWidget() { return ImGui::GetCurrentContext()->ActiveId != 0
 //------------------------------------------------------------------------
 void AppContext::handleKeyboardShortcuts()
 {
-  // handle undo/redo via keyboard
-  if(ImGui::IsKeyPressed(ImGuiKey_Z, false) && ImGui::IsKeyDown(ImGuiMod_Shortcut))
+  if(ImGui::IsKeyDown(ImGuiMod_Shortcut))
   {
-    if(!impl::hasActiveWidget())
+    // handle undo/redo via keyboard
+    if(ImGui::IsKeyPressed(ImGuiKey_Z, false))
     {
-      if(ImGui::IsKeyDown(ImGuiMod_Shift))
-        redoLastAction();
-      else
-        undoLastAction();
+      if(!impl::hasActiveWidget())
+      {
+        if(ImGui::IsKeyDown(ImGuiMod_Shift))
+          redoLastAction();
+        else
+          undoLastAction();
+      }
+    }
+    // zoom -
+    else if(ImGui::IsKeyPressed(ImGuiKey_Minus, false) || ImGui::IsKeyPressed(ImGuiKey_KeypadSubtract, false))
+    {
+      decrementZoom();
+    }
+    // zoom +
+    else if(ImGui::IsKeyPressed(ImGuiKey_Equal, false) || ImGui::IsKeyPressed(ImGuiKey_KeypadAdd, false))
+    {
+      incrementZoom();
+    }
+    // zoom to fit
+    else if(ImGui::IsKeyPressed(ImGuiKey_0, false))
+    {
+      zoomToFit();
     }
   }
 }
@@ -926,6 +944,17 @@ void AppContext::renderMainMenu()
       fWidgetsWindow.menuItem();
       fPropertiesWindow.menuItem();
       ImGui::Separator();
+      if(ImGui::BeginMenu("Zoom"))
+      {
+        if(ImGui::MenuItem("Zoom +", ReGui_Prefix(ReGui_Icon_KeySuper, "=")))
+          incrementZoom();
+        if(ImGui::MenuItem("Zoom -", ReGui_Prefix(ReGui_Icon_KeySuper, "-")))
+          decrementZoom();
+        if(ImGui::MenuItem("Zoom to fit", ReGui_Prefix(ReGui_Icon_KeySuper, "0")))
+          zoomToFit();
+        ImGui::EndMenu();
+      }
+      ImGui::Separator();
       if(ImGui::MenuItem("Horizontal Layout"))
         fNewLayoutRequested = config::kDefaultHorizontalLayout;
       if(ImGui::MenuItem("Vertical Layout"))
@@ -936,12 +965,15 @@ void AppContext::renderMainMenu()
   }
 }
 
-namespace impl {
-//! adjustZoomForDpi
-float adjustZoomForDpi(float iZoom) {
-  return iZoom * Application::GetCurrent().getCurrentFontDpiScale();
-}
-
+//------------------------------------------------------------------------
+// AppContext::setUserZoom
+//------------------------------------------------------------------------
+void AppContext::setUserZoom(float iZoom)
+{
+  // we make sure that the zoom factor is within reasonable range
+  iZoom = Utils::clamp(iZoom, 0.1f, 5.0f);
+  fUserZoom = iZoom;
+  fDpiAdjustedZoom = iZoom * Application::GetCurrent().getCurrentFontDpiScale();
 }
 
 //------------------------------------------------------------------------
@@ -956,7 +988,7 @@ void AppContext::beforeRenderFrame()
   {
     fItemWidth = 40 * ImGui::CalcTextSize("W").x;
     fRecomputeDimensionsRequested = false;
-    fDpiAdjustedZoom = impl::adjustZoomForDpi(fUserZoom);
+    setUserZoom(fUserZoom); // will adjust the zoom if necessary
   }
 
   if(fReloadTexturesRequested)
@@ -1255,9 +1287,7 @@ void AppContext::renderZoomSelection()
   ImGui::PushItemWidth(fItemWidth / 2.0f);
   if(ImGui::SliderFloat("##zoomfloat", &zoomPercent, 20.0f, 200.0f, "%3.0f%%"))
   {
-    // slider is manually editable (Ctrl click), so make sure the value is not too extreme
-    fUserZoom = Utils::clamp(zoomPercent / 100.0f, 0.1f, 5.0f);
-    fDpiAdjustedZoom = impl::adjustZoomForDpi(fUserZoom);
+    setUserZoom(zoomPercent / 100.0f);
   }
   ImGui::PopItemWidth();
 
@@ -1272,22 +1302,13 @@ void AppContext::renderZoomSelection()
   ImGui::BeginDisabled(!fPanelWindow.isVisible());
   if(ImGui::Button("Fit "))
   {
-    if(auto l = fPanelWindow.begin())
-    {
-      auto const &style = ImGui::GetStyle();
-      auto windowSize = ImGui::GetWindowSize();
-      auto panelSize = fCurrentPanelState->fPanel.getSize();
-      auto factor = (windowSize - (style.WindowPadding * 2)) / panelSize;
-      fUserZoom = Utils::clamp(std::min(factor.x, factor.y), 0.1f, 5.0f);
-      fDpiAdjustedZoom = impl::adjustZoomForDpi(fUserZoom);
-    }
+    zoomToFit();
   }
   ImGui::EndDisabled();
 
   if(controlZoom != zoom)
   {
-    fUserZoom = static_cast<float>(zoom) / 100.0f;
-    fDpiAdjustedZoom = impl::adjustZoomForDpi(fUserZoom);
+    setUserZoom(static_cast<float>(zoom) / 100.0f);
   }
   ImGui::PopID();
 
@@ -1349,6 +1370,37 @@ void AppContext::renderGridSelection()
   ImGui::PopItemWidth();
 
   ImGui::PopID();
+}
+
+//------------------------------------------------------------------------
+// AppContext::zoomToFit
+//------------------------------------------------------------------------
+void AppContext::zoomToFit()
+{
+  if(auto l = fPanelWindow.begin())
+  {
+    auto const &style = ImGui::GetStyle();
+    auto windowSize = ImGui::GetWindowSize();
+    auto panelSize = fCurrentPanelState->fPanel.getSize();
+    auto factor = (windowSize - (style.WindowPadding * 2)) / panelSize;
+    setUserZoom(std::min(factor.x, factor.y));
+  }
+}
+
+//------------------------------------------------------------------------
+// AppContext::incrementZoom
+//------------------------------------------------------------------------
+void AppContext::incrementZoom()
+{
+  setUserZoom(fUserZoom * 1.1f);
+}
+
+//------------------------------------------------------------------------
+// AppContext::decrementZoom
+//------------------------------------------------------------------------
+void AppContext::decrementZoom()
+{
+  setUserZoom(fUserZoom * 0.9f);
 }
 
 //------------------------------------------------------------------------

@@ -268,6 +268,13 @@ constexpr auto kMenuIcon = fa::kBars;
 #define ReGui_Icon_Tip ICON_FA_Lightbulb
 #define ReGui_Icon_Frames ICON_FA_Film
 
+#if WIN32
+#define ReGui_Icon_KeySuper "CTL"
+#else
+#define ReGui_Icon_KeySuper "CMD"
+#endif
+
+
 //------------------------------------------------------------------------
 // ReGui::ResetButton
 //------------------------------------------------------------------------

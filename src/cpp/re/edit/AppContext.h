@@ -313,6 +313,10 @@ protected:
   void renderTabs();
   void render();
   void handleKeyboardShortcuts();
+  void setUserZoom(float iZoom);
+  void zoomToFit();
+  void incrementZoom();
+  void decrementZoom();
   void populateWidgetUndoAction(WidgetUndoAction *iAction, Widget const *iWidget);
   constexpr bool needsSaving() const { return fNeedsSaving; }
 
