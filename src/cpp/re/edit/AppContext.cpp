@@ -869,7 +869,7 @@ void AppContext::renderMainMenu()
 
       // Redo
       {
-        static constexpr auto kKeyboardShortcut = ReGui_Menu_Shortcut3(ReGui_Icon_KeyShift, ReGui_Icon_KeySuper, "Z");
+        static constexpr auto kKeyboardShortcut = ReGui_Menu_Shortcut3(ReGui_Icon_KeySuper, ReGui_Icon_KeyShift, "Z");
         auto const redoAction = fUndoManager->getLastRedoAction();
         if(redoAction)
         {
@@ -958,11 +958,11 @@ void AppContext::renderMainMenu()
       ImGui::Separator();
       if(ImGui::BeginMenu("Zoom"))
       {
-        if(ImGui::MenuItem("Zoom +", ReGui_Prefix(ReGui_Icon_KeySuper, "=")))
+        if(ImGui::MenuItem("Zoom +", ReGui_Menu_Shortcut2(ReGui_Icon_KeySuper, "=")))
           incrementZoom();
-        if(ImGui::MenuItem("Zoom -", ReGui_Prefix(ReGui_Icon_KeySuper, "-")))
+        if(ImGui::MenuItem("Zoom -", ReGui_Menu_Shortcut2(ReGui_Icon_KeySuper, "-")))
           decrementZoom();
-        if(ImGui::MenuItem("Zoom to fit", ReGui_Prefix(ReGui_Icon_KeySuper, "0")))
+        if(ImGui::MenuItem("Zoom to fit", ReGui_Menu_Shortcut2(ReGui_Icon_KeySuper, "0")))
           zoomToFit();
         ImGui::EndMenu();
       }
@@ -1394,7 +1394,7 @@ void AppContext::zoomToFit()
     auto const &style = ImGui::GetStyle();
     auto windowSize = ImGui::GetWindowSize();
     auto panelSize = fCurrentPanelState->fPanel.getSize();
-    auto factor = (windowSize - (style.WindowPadding * 2)) / panelSize;
+    auto factor = (windowSize - (style.WindowPadding * 2)) / panelSize / Application::GetCurrent().getCurrentFontDpiScale();
     setUserZoom(std::min(factor.x, factor.y));
   }
 }
