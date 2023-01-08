@@ -668,7 +668,7 @@ void String::editView(AppContext &iCtx)
 
   auto editedValue = fValue;
 
-  if(ImGui::InputText(fName, &editedValue, ImGuiInputTextFlags_NoUndoRedo))
+  if(ImGui::InputText(fName, &editedValue))
   {
     iCtx.addOrMergeUndoAttributeChange(this, fValue, editedValue);
     fValue = editedValue;
@@ -1270,7 +1270,7 @@ void ValueTemplates::editView(AppContext &iCtx)
     ImGui::PushItemWidth(itemWidth - (ImGui::GetCursorPosX() - offset));
 
     auto editedValue = fValue[i];
-    if(ImGui::InputText(re::mock::fmt::printf("%s [%d]", fName, i).c_str(), &editedValue, ImGuiInputTextFlags_NoUndoRedo))
+    if(ImGui::InputText(re::mock::fmt::printf("%s [%d]", fName, i).c_str(), &editedValue))
     {
       iCtx.addOrMergeUndoCurrentWidgetChange(&fValue[i],
                                              fValue[i],

@@ -312,6 +312,7 @@ protected:
   void renderMainMenu();
   void renderTabs();
   void render();
+  void handleKeyboardShortcuts();
   void populateWidgetUndoAction(WidgetUndoAction *iAction, Widget const *iWidget);
   constexpr bool needsSaving() const { return fNeedsSaving; }
 

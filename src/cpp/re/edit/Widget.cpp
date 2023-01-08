@@ -256,7 +256,7 @@ void Widget::editView(AppContext &iCtx)
 
   ImGui::SameLine();
 
-  if(ImGui::InputText("name", &editedName, ImGuiInputTextFlags_NoUndoRedo))
+  if(ImGui::InputText("name", &editedName))
   {
     iCtx.addOrMergeUndoWidgetChange(this, &fName, fName, editedName,
                                     fmt::printf("Rename %s %s widget", fName, toString(fType)));

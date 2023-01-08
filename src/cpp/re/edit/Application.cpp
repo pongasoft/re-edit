@@ -1018,6 +1018,7 @@ void Application::renderAppContext()
   {
     loggingManager->debug("Undo", "History[%d]", fAppContext->fUndoManager->getUndoHistory().size());
     loggingManager->debug("Redo", "History[%d]", fAppContext->fUndoManager->getRedoHistory().size());
+    loggingManager->debug("ActiveID", "ActiveID[%d]", ImGui::GetCurrentContext()->ActiveId);
   }
 
   loggingManager->render();

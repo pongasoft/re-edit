@@ -189,6 +189,31 @@ void AppContext::renderTabs()
   }
 }
 
+namespace impl {
+//------------------------------------------------------------------------
+// impl::hasActiveWidget
+//------------------------------------------------------------------------
+inline bool hasActiveWidget() { return ImGui::GetCurrentContext()->ActiveId != 0; }
+}
+
+//------------------------------------------------------------------------
+// AppContext::handleKeyboardShortcuts
+//------------------------------------------------------------------------
+void AppContext::handleKeyboardShortcuts()
+{
+  // handle undo/redo via keyboard
+  if(ImGui::IsKeyPressed(ImGuiKey_Z, false) && ImGui::IsKeyDown(ImGuiMod_Shortcut))
+  {
+    if(!impl::hasActiveWidget())
+    {
+      if(ImGui::IsKeyDown(ImGuiMod_Shift))
+        redoLastAction();
+      else
+        undoLastAction();
+    }
+  }
+}
+
 //------------------------------------------------------------------------
 // AppContext::render
 //------------------------------------------------------------------------
@@ -198,14 +223,7 @@ void AppContext::render()
   fCurrentPanelState->render(*this);
   fPreviousPanelState = fCurrentPanelState;
 
-  // handle undo/redo via keyboard
-  if(ImGui::IsKeyPressed(ImGuiKey_Z, false) && ImGui::IsKeyDown(ImGuiMod_Shortcut))
-  {
-    if(ImGui::IsKeyDown(ImGuiMod_Shift))
-      redoLastAction();
-    else
-      undoLastAction();
-  }
+  handleKeyboardShortcuts();
 
   int flags = needsSaving() ?  ImGuiWindowFlags_UnsavedDocument : ImGuiWindowFlags_None;
 
