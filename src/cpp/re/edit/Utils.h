@@ -105,6 +105,19 @@ inline std::string str_tolower(std::string const &s) {
   return s2;
 }
 
+/**
+ * Make sure that the value remains within its bounds
+ *
+ * @param iValue the value to clamp between `iLower` and `iUpper`
+ * @param iLower the lower bound (must be <= iUpper)
+ * @param iUpper the upper bound (must be >= iLower)
+ */
+template <typename T, typename U>
+inline static T clamp(const U &iValue, const T &iLower, const T &iUpper)
+{
+  auto v = static_cast<T>(iValue);
+  return v < iLower ? iLower : (v > iUpper ? iUpper : v);
+}
 
 }
 

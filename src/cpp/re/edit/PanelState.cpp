@@ -221,6 +221,7 @@ void PanelState::renderWidgets(AppContext &iCtx)
 //------------------------------------------------------------------------
 void PanelState::renderPanel(AppContext &iCtx)
 {
+  ImGui::SetNextWindowContentSize(fPanel.getSize() * iCtx.getZoom());
   if(auto l = iCtx.fPanelWindow.begin())
   {
     fPanel.draw(iCtx);

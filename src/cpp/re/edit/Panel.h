@@ -22,6 +22,7 @@
 #include "Widget.h"
 #include <vector>
 #include <set>
+#include <string>
 #include <optional>
 
 namespace re::edit {

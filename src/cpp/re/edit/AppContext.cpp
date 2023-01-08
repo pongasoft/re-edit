@@ -1225,67 +1225,50 @@ void AppContext::importBuiltIns(UserError *oErrors)
 //------------------------------------------------------------------------
 void AppContext::renderZoomSelection()
 {
-  int zoom = static_cast<int>(fUserZoom * 5);
-  if(ImGui::SliderInt("zoom", &zoom, 1, 10))
+  auto zoomPercent = fUserZoom * 100.0f;
+  ImGui::AlignTextToFramePadding();
+  ImGui::Text("Zoom");
+  ImGui::SameLine();
+  ImGui::PushItemWidth(fItemWidth / 2.0f);
+  if(ImGui::SliderFloat("##zoomfloat", &zoomPercent, 20.0f, 200.0f, "%3.0f%%"))
   {
-    fUserZoom = static_cast<float>(zoom) / 5.0f;
+    // slider is manually editable (Ctrl click), so make sure the value is not too extreme
+    fUserZoom = Utils::clamp(zoomPercent / 100.0f, 0.1f, 5.0f);
     fDpiAdjustedZoom = impl::adjustZoomForDpi(fUserZoom);
   }
+  ImGui::PopItemWidth();
+
   ImGui::SameLine();
-  ImGui::Text("%d%%", static_cast<int>(fUserZoom * 100));
 
-//  ImGui::PushID("zoom");
-//  ImGui::AlignTextToFramePadding();
-//  int zoom = static_cast<int>(fUserZoom * 100);
-//  int controlZoom = zoom;
-//  ImGui::Text("zoom");
-//  ImGui::SameLine();
-//  ReGui::TextRadioButton(" 20%", &zoom, 20);
-//  ImGui::SameLine();
-//  ReGui::TextRadioButton(" 40%", &zoom, 40);
-//  ImGui::SameLine();
-//  ReGui::TextRadioButton(" 50%", &zoom, 50);
-//  ImGui::SameLine();
-//  ReGui::TextRadioButton(" 75%", &zoom, 75);
-//  ImGui::SameLine();
-//  ReGui::TextRadioButton("100%", &zoom, 100);
-//  ImGui::SameLine();
-//  ReGui::TextRadioButton("125%", &zoom, 125);
-//  ImGui::SameLine();
-//  ReGui::TextRadioButton("150%", &zoom, 150);
-//  ImGui::SameLine();
-//  ReGui::TextRadioButton("200%", &zoom, 200);
-//  ImGui::PopID();
-//
-//  if(controlZoom != zoom)
-//  {
-//    fUserZoom = static_cast<float>(zoom) / 100.0f;
-//    fDpiAdjustedZoom = impl::adjustZoomForDpi(fUserZoom);
-//  }
+  ImGui::PushID("zoom");
+  int zoom = static_cast<int>(fUserZoom * 100);
+  int controlZoom = zoom;
+  ReGui::TextRadioButton(" 20%", &zoom, 20);
+  ImGui::SameLine();
+  ReGui::TextRadioButton("100%", &zoom, 100);
+  ImGui::SameLine();
+  ImGui::BeginDisabled(!fPanelWindow.isVisible());
+  if(ImGui::Button("Fit "))
+  {
+    if(auto l = fPanelWindow.begin())
+    {
+      auto const &style = ImGui::GetStyle();
+      auto windowSize = ImGui::GetWindowSize();
+      auto panelSize = fCurrentPanelState->fPanel.getSize();
+      auto factor = (windowSize - (style.WindowPadding * 2)) / panelSize;
+      fUserZoom = Utils::clamp(std::min(factor.x, factor.y), 0.1f, 5.0f);
+      fDpiAdjustedZoom = impl::adjustZoomForDpi(fUserZoom);
+    }
+  }
+  ImGui::EndDisabled();
+  ImGui::PopID();
 
-//  {
-//  }
-//
-//  {
-//    if(ImGui::SliderFloat("zoomf", &fUserZoom, 0.2f, 2.0f))
-//    {
-//      fDpiAdjustedZoom = impl::adjustZoomForDpi(fUserZoom);
-//    }
-//    ImGui::SameLine();
-//    ImGui::Text("%d%%", static_cast<int>(fUserZoom * 100));
-//  }
-//
-//  {
-//    int zoom = static_cast<int>(fUserZoom * 100);
-//    if(ImGui::InputInt("zoomt", &zoom, 1, 20))
-//    {
-//      fUserZoom = static_cast<float>(zoom) / 100.0f;
-//      fDpiAdjustedZoom = impl::adjustZoomForDpi(fUserZoom);
-//    }
-//    ImGui::SameLine();
-//    ImGui::Text("%d%%", static_cast<int>(fUserZoom * 100));
-//  }
-//
+  if(controlZoom != zoom)
+  {
+    fUserZoom = static_cast<float>(zoom) / 100.0f;
+    fDpiAdjustedZoom = impl::adjustZoomForDpi(fUserZoom);
+  }
+
 //  static bool kSlowFrameRate{};
 //
 //  if(kSlowFrameRate)

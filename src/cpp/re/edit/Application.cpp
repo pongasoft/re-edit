@@ -331,6 +331,7 @@ void Application::applyConfigStyle() const
 {
   auto scaleFactor = fFontManager->getCurrentFontDpiScale();
   ImGuiStyle newStyle{};
+  newStyle.WindowMenuButtonPosition = ImGuiDir_Right;
   switch(fConfig.fStyle)
   {
     case config::Style::kLight:
