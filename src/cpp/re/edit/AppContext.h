@@ -104,6 +104,7 @@ public:
   ImVec2 getCurrentPanelSize() const;
   void renderAddWidgetMenuView(ImVec2 const &iPosition = {});
   void renderZoomSelection();
+  void renderGridSelection();
   PanelState *getPanelState(PanelType iType) const;
   Panel *getPanel(PanelType iType) const;
   Panel *getCurrentPanel() const;

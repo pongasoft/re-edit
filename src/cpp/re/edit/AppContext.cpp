@@ -212,6 +212,10 @@ void AppContext::render()
   if(auto l = fMainWindow.begin(flags))
   {
     renderTabs();
+    renderZoomSelection();
+    renderGridSelection();
+
+    ImGui::Separator();
 
     ImGui::PushID("Rendering");
 
@@ -1225,6 +1229,7 @@ void AppContext::importBuiltIns(UserError *oErrors)
 //------------------------------------------------------------------------
 void AppContext::renderZoomSelection()
 {
+  ImGui::PushID("Zoom");
   auto zoomPercent = fUserZoom * 100.0f;
   ImGui::AlignTextToFramePadding();
   ImGui::Text("Zoom");
@@ -1240,7 +1245,6 @@ void AppContext::renderZoomSelection()
 
   ImGui::SameLine();
 
-  ImGui::PushID("zoom");
   int zoom = static_cast<int>(fUserZoom * 100);
   int controlZoom = zoom;
   ReGui::TextRadioButton(" 20%", &zoom, 20);
@@ -1261,13 +1265,13 @@ void AppContext::renderZoomSelection()
     }
   }
   ImGui::EndDisabled();
-  ImGui::PopID();
 
   if(controlZoom != zoom)
   {
     fUserZoom = static_cast<float>(zoom) / 100.0f;
     fDpiAdjustedZoom = impl::adjustZoomForDpi(fUserZoom);
   }
+  ImGui::PopID();
 
 //  static bool kSlowFrameRate{};
 //
@@ -1278,6 +1282,55 @@ void AppContext::renderZoomSelection()
 //
 //  ImGui::Checkbox("Slow Frame Rate", &kSlowFrameRate);
 
+}
+
+//------------------------------------------------------------------------
+// AppContext::renderGridSelection
+//------------------------------------------------------------------------
+void AppContext::renderGridSelection()
+{
+  static bool kSquare = fGrid.x == fGrid.y;
+  constexpr auto kGridStep = 5;
+  constexpr auto kGridFastStep = 50;
+
+  ImGui::PushID("Grid");
+
+  ImGui::AlignTextToFramePadding();
+  ImGui::Text("Grid");
+  ImGui::SameLine();
+
+  ImGui::PushItemWidth(fItemWidth / (kSquare ? 2.0f : 3.0f));
+
+  if(kSquare)
+  {
+    auto size = fGrid.x;
+    if(ReGui::InputInt("##grid", &size, kGridStep, kGridFastStep))
+    {
+      fGrid.x = std::fmax(size, 1.0f);
+      fGrid.y = std::fmax(size, 1.0f);
+    }
+  }
+  else
+  {
+    auto grid = fGrid;
+    if(ReGui::InputInt("w", &grid.x, kGridStep, kGridFastStep))
+      fGrid.x = std::fmax(grid.x, 1.0f);
+    ImGui::SameLine();
+    if(ReGui::InputInt("h", &grid.y, kGridStep, kGridFastStep))
+      fGrid.y = std::fmax(grid.y, 1.0f);
+  }
+
+  ImGui::SameLine();
+
+  if(ImGui::Checkbox("Square", &kSquare))
+  {
+    if(kSquare)
+      fGrid.y = fGrid.x;
+  }
+
+  ImGui::PopItemWidth();
+
+  ImGui::PopID();
 }
 
 //------------------------------------------------------------------------

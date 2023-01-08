@@ -138,46 +138,7 @@ bool PanelState::renderTab(AppContext &iCtx)
   {
     fPanel.computeIsHidden(iCtx);
     fPanel.checkForErrors(iCtx);
-
-    iCtx.renderZoomSelection();
-
-    static bool kSquare = iCtx.fGrid.x == iCtx.fGrid.y;
-    constexpr auto kGridStep = 5;
-    constexpr auto kGridFastStep = 50;
-
-    ImGui::PushItemWidth(iCtx.fItemWidth / (kSquare ? 2.0f : 3.0f));
-
-    if(kSquare)
-    {
-      auto size = iCtx.fGrid.x;
-      if(ReGui::InputInt("grid", &size, kGridStep, kGridFastStep))
-      {
-        iCtx.fGrid.x = std::fmax(size, 1.0f);
-        iCtx.fGrid.y = std::fmax(size, 1.0f);
-      }
-    }
-    else
-    {
-      auto grid = iCtx.fGrid;
-      if(ReGui::InputInt("grid_w", &grid.x, kGridStep, kGridFastStep))
-        iCtx.fGrid.x = std::fmax(grid.x, 1.0f);
-      ImGui::SameLine();
-      if(ReGui::InputInt("grid_h", &grid.y, kGridStep, kGridFastStep))
-        iCtx.fGrid.y = std::fmax(grid.y, 1.0f);
-    }
-
-    ImGui::SameLine();
-
-    if(ImGui::Checkbox("Square", &kSquare))
-    {
-      if(kSquare)
-        iCtx.fGrid.y = iCtx.fGrid.x;
-    }
-
-    ImGui::PopItemWidth();
-
     ImGui::EndTabItem();
-
     return true;
   }
 
