@@ -1075,7 +1075,7 @@ void Application::renderApplicationMenuItems()
       ImGui::MenuItem("No New Update", nullptr, false, false);
     }
   }
-  if(ImGui::MenuItem("Quit"))
+  if(ImGui::MenuItem("Quit", ReGui_Menu_Shortcut2(ReGui_Icon_KeySuper, "Q")))
   {
     maybeExit();
   }

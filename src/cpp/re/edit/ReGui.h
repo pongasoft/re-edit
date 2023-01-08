@@ -252,6 +252,8 @@ constexpr auto kResetIcon = fa::kCircleX;
 constexpr auto kMenuIcon = fa::kBars;
 
 #define ReGui_Prefix(prefix, str) prefix " " str
+#define ReGui_Menu_Shortcut2(key1, key2) key1 " " key2
+#define ReGui_Menu_Shortcut3(key1, key2, key3) key1 " " key2 " " key3
 #define ReGui_Icon_Reset ICON_FA_CircleX
 #define ReGui_Icon_Watch ICON_FA_MagnifyingGlass
 #define ReGui_Icon_Edit ICON_FA_Pencil
@@ -273,6 +275,7 @@ constexpr auto kMenuIcon = fa::kBars;
 #else
 #define ReGui_Icon_KeySuper "CMD"
 #endif
+#define ReGui_Icon_KeyShift "SFT"
 
 
 //------------------------------------------------------------------------

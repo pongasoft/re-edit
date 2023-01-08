@@ -229,6 +229,16 @@ void AppContext::handleKeyboardShortcuts()
     {
       zoomToFit();
     }
+    // Save
+    else if(ImGui::IsKeyPressed(ImGuiKey_S, false))
+    {
+      Application::GetCurrent().maybeSaveProject();
+    }
+    // Quit
+    else if(ImGui::IsKeyPressed(ImGuiKey_Q, false))
+    {
+      Application::GetCurrent().maybeExit();
+    }
   }
 }
 
@@ -831,6 +841,7 @@ void AppContext::renderMainMenu()
     {
       // Undo
       {
+        static constexpr auto kKeyboardShortcut = ReGui_Menu_Shortcut2(ReGui_Icon_KeySuper, "Z");
         auto const undoAction = fUndoManager->getLastUndoAction();
         if(undoAction)
         {
@@ -843,7 +854,7 @@ void AppContext::renderMainMenu()
             else
               desc = re::mock::fmt::printf("%s (%s)", desc, Panel::toString(undoAction->fPanelType));
           }
-          if(ImGui::MenuItem(desc.c_str()))
+          if(ImGui::MenuItem(desc.c_str(), kKeyboardShortcut))
           {
             undoLastAction();
           }
@@ -851,13 +862,14 @@ void AppContext::renderMainMenu()
         else
         {
           ImGui::BeginDisabled();
-          ImGui::MenuItem(ReGui_Prefix(ReGui_Icon_Undo, "Undo"));
+          ImGui::MenuItem(ReGui_Prefix(ReGui_Icon_Undo, "Undo"), kKeyboardShortcut);
           ImGui::EndDisabled();
         }
       }
 
       // Redo
       {
+        static constexpr auto kKeyboardShortcut = ReGui_Menu_Shortcut3(ReGui_Icon_KeyShift, ReGui_Icon_KeySuper, "Z");
         auto const redoAction = fUndoManager->getLastRedoAction();
         if(redoAction)
         {
@@ -870,7 +882,7 @@ void AppContext::renderMainMenu()
             else
               desc = re::mock::fmt::printf("%s (%s)", desc, Panel::toString(undoAction->fPanelType));
           }
-          if(ImGui::MenuItem(desc.c_str()))
+          if(ImGui::MenuItem(desc.c_str(), kKeyboardShortcut))
           {
             redoLastAction();
           }
@@ -878,7 +890,7 @@ void AppContext::renderMainMenu()
         else
         {
           ImGui::BeginDisabled();
-          ImGui::MenuItem(ReGui_Prefix(ReGui_Icon_Redo, "Redo"));
+          ImGui::MenuItem(ReGui_Prefix(ReGui_Icon_Redo, "Redo"), kKeyboardShortcut);
           ImGui::EndDisabled();
         }
       }
@@ -896,7 +908,7 @@ void AppContext::renderMainMenu()
 
     if(ImGui::BeginMenu("File"))
     {
-      if(ImGui::MenuItem(ReGui_Prefix(ReGui_Icon_Save, "Save")))
+      if(ImGui::MenuItem(ReGui_Prefix(ReGui_Icon_Save, "Save"), ReGui_Menu_Shortcut2(ReGui_Icon_KeySuper, "S")))
       {
         Application::GetCurrent().maybeSaveProject();
       }
