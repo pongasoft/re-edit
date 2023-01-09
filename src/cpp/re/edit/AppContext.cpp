@@ -227,7 +227,7 @@ void AppContext::handleKeyboardShortcuts()
     // zoom to fit
     else if(ImGui::IsKeyPressed(ImGuiKey_0, false))
     {
-      zoomToFit();
+      requestZoomToFit();
     }
     // Save
     else if(ImGui::IsKeyPressed(ImGuiKey_S, false))
@@ -248,6 +248,12 @@ void AppContext::handleKeyboardShortcuts()
 void AppContext::render()
 {
   RE_EDIT_INTERNAL_ASSERT(fCurrentPanelState != nullptr);
+
+  if(fZoomToFitRequested && fPanelWindow.isVisible())
+  {
+    fZoomToFitRequested = false;
+    zoomToFit();
+  }
 
   handleKeyboardShortcuts();
 
@@ -967,7 +973,7 @@ void AppContext::renderMainMenu()
         if(ImGui::MenuItem("Zoom -", ReGui_Menu_Shortcut2(ReGui_Icon_KeySuper, "-")))
           decrementZoom();
         if(ImGui::MenuItem("Zoom to fit", ReGui_Menu_Shortcut2(ReGui_Icon_KeySuper, "0")))
-          zoomToFit();
+          requestZoomToFit();
         ImGui::EndMenu();
       }
       ImGui::Separator();
@@ -1318,7 +1324,7 @@ void AppContext::renderZoomSelection()
   ImGui::BeginDisabled(!fPanelWindow.isVisible());
   if(ImGui::Button("Fit "))
   {
-    zoomToFit();
+    requestZoomToFit();
   }
   ImGui::EndDisabled();
 

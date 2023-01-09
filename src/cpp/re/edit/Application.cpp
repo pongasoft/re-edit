@@ -431,6 +431,7 @@ void Application::loadProject(fs::path const &iRoot)
           fContext->setWindowPositionAndSize(c.fNativeWindowPos, c.fNativeWindowSize);
           fContext->setWindowTitle(fmt::printf("RE Edit - %s", fAppContext->getConfig().fName));
           savePreferences();
+          deferNextFrame([ctx] { ctx->requestZoomToFit(); });
         }
       });
     }

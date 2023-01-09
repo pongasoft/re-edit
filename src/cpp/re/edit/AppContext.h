@@ -316,6 +316,7 @@ protected:
   void handleKeyboardShortcuts();
   void setUserZoom(float iZoom);
   void zoomToFit();
+  void requestZoomToFit() { fZoomToFitRequested = true; }
   void incrementZoom();
   void decrementZoom();
   void populateWidgetUndoAction(WidgetUndoAction *iAction, Widget const *iWidget);
@@ -366,6 +367,7 @@ protected:
   bool fReloadDeviceRequested{};
   std::atomic<bool> fMaybeReloadDevice{};
   std::optional<std::string> fNewLayoutRequested{};
+  bool fZoomToFitRequested{};
 
   std::shared_ptr<efsw::FileWatcher> fRootWatcher{};
   std::shared_ptr<efsw::FileWatchListener> fRootListener{};
