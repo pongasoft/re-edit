@@ -1438,20 +1438,21 @@ std::string Panel::device2D() const
   s << "--------------------------------------------------------------------------\n";
   s << fmt::printf("%s = {}\n", panelName);
 
+  s << "\n-- Main panel\n";
+  s << fmt::printf("%s[\"%s\"] = %s\n", panelName, fNodeName, fGraphics.device2D());
+
   if(!fDecalsOrder.empty())
   {
-    s << fmt::printf("re_edit.%s = { decals = {} }\n", panelName);
-    int index = 1;
+    s << "\n-- Decals\n";
     for(auto id: fDecalsOrder)
     {
       auto const &w = fWidgets.at(id);
-      s << fmt::printf("%s[%d] = %s -- %s\n", panelName, index, w->device2D(), w->fName);
-      s << fmt::printf("re_edit.%s.decals[%d] = \"%s\"\n", panelName, index, w->fName);
-      index++;
+      s << fmt::printf("%s[\"%s\"] = %s\n", panelName, w->fName, w->device2D());
     }
   }
 
-  s << fmt::printf("%s[\"%s\"] = %s\n", panelName, fNodeName, fGraphics.device2D());
+
+  s << "\n-- Widgets\n";
   for(auto id: fWidgetsOrder)
   {
     auto const &w = fWidgets.at(id);

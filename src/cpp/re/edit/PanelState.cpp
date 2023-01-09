@@ -18,6 +18,7 @@
 
 #include "PanelState.h"
 #include "Errors.h"
+#include <set>
 
 namespace re::edit {
 
@@ -47,11 +48,17 @@ std::map<std::string, int> PanelState::initPanel(AppContext &iCtx,
 
   iCtx.fCurrentPanelState = this;
 
+  std::set<std::string> widgetNodes{};
+
   // handle background
   {
     auto node = iPanelNodes->findNodeByName(iPanel->fGraphicsNode);
-    if(node && node->hasKey())
-      fPanel.setBackgroundKey(node->getKey());
+    if(node)
+    {
+      widgetNodes.emplace(node->fName);
+      if(node->hasKey())
+        fPanel.setBackgroundKey(node->getKey());
+    }
   }
 
   // Cable origin
@@ -60,7 +67,10 @@ std::map<std::string, int> PanelState::initPanel(AppContext &iCtx,
     {
       auto node = iPanelNodes->findNodeByName(*iPanel->fCableOrigin);
       if(node)
+      {
+        widgetNodes.emplace(node->fName);
         fPanel.setCableOrigin(node->fPosition);
+      }
       else
         RE_EDIT_LOG_WARNING ("Could not locate cable origin for panel [%s]", *iPanel->fCableOrigin,
                              fPanel.getName());
@@ -82,6 +92,11 @@ std::map<std::string, int> PanelState::initPanel(AppContext &iCtx,
     auto node = iPanelNodes->findNodeByName(w->fGraphics.fNode);
     if(node)
     {
+      widgetNodes.emplace(node->fName);
+
+      if(node->hasSize())
+        widget->setSize(node->getSize());
+
       if(node->hasKey())
       {
         auto key = node->getKey();
@@ -90,9 +105,6 @@ std::map<std::string, int> PanelState::initPanel(AppContext &iCtx,
         else
           RE_EDIT_LOG_WARNING("Empty node path for widget %s", node->fName);
       }
-
-      if(node->hasSize())
-        widget->setSize(node->getSize());
 
       if(w->fGraphics.fHitBoundaries)
         widget->setHitBoundaries(*w->fGraphics.fHitBoundaries);
@@ -105,20 +117,29 @@ std::map<std::string, int> PanelState::initPanel(AppContext &iCtx,
     fPanel.addWidget(iCtx, std::move(widget), false);
   }
 
-  // handle decals
-  for(auto &node: iPanelNodes->fDecalNodes)
+  // handle decals: decals are all the nodes that have not been assigned to a widget
+  for(auto &[name, node]: iPanelNodes->fNodes)
   {
-    auto widget = Widget::panel_decal();
-    widget->setPosition(node.fPosition);
-    if(!node.fKey.empty())
-      widget->setTextureKey(node.fKey);
-    else
-      RE_EDIT_LOG_WARNING("Empty node path for decal %s", node.fName ? *node.fName : "anonymous");
+    if(widgetNodes.find(name) != widgetNodes.end())
+      continue;
 
-    if(node.fName)
-      widget->setName(*node.fName);
+    if(node.hasKey())
+    {
+      auto widget = Widget::panel_decal();
+      widget->setPosition(node.fPosition);
 
-    fPanel.addWidget(iCtx, std::move(widget), false);
+      // if the decal already has a name, then use it
+      if(!re::mock::stl::starts_with(name, "__re_edit__panel_decal_"))
+        widget->setName(name);
+
+      auto key = node.getKey();
+      if(!key.empty())
+        widget->setTextureKey(key);
+      else
+        RE_EDIT_LOG_WARNING("Empty node path for decal %s", name);
+
+      fPanel.addWidget(iCtx, std::move(widget), false);
+    }
   }
 
   iCtx.enableUndo();

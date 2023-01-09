@@ -45,32 +45,11 @@ std::shared_ptr<panel_nodes> Device2D::getPanelNodes(char const *iPanelName) con
 //------------------------------------------------------------------------
 std::shared_ptr<panel_nodes> Device2D::createPanelNodes(char const *iPanelName)
 {
-  std::vector<std::optional<std::string>> decalNames{};
-  if(lua_getglobal(L, "re_edit") == LUA_TTABLE)
-  {
-    if(lua_getfield(L, -1, iPanelName) == LUA_TTABLE)
-    {
-      if(lua_getfield(L, -1, "decals") == LUA_TTABLE)
-      {
-        iterateLuaArray([&decalNames, this](auto i) {
-                          auto s = lua_tostring(L, -1);
-                          if(s != nullptr)
-                            decalNames.emplace_back(s);
-                          else
-                            decalNames.emplace_back(std::nullopt);
-                        },
-                        true, false);
-      }
-      lua_pop(L, 1);
-    }
-    lua_pop(L, 1);
-  }
-  lua_pop(L, 1);
 
   auto def = std::make_shared<panel_nodes>();
   if(lua_getglobal(L, iPanelName) == LUA_TTABLE)
   {
-    processLuaTable({}, decalNames, *def);
+    processLuaTable({}, {}, *def);
   }
   lua_pop(L, 1);
   return def;
@@ -80,99 +59,14 @@ std::shared_ptr<panel_nodes> Device2D::createPanelNodes(char const *iPanelName)
 // Device2D::processLuaTable
 // Assumes that the top of the stack contains a lua table to process
 //------------------------------------------------------------------------
-void Device2D::processLuaTable(ImVec2 iOffset, std::vector<std::optional<std::string>> const &iDecalNames, panel_nodes &oPanelNodes)
+ImVec2 Device2D::processLuaTable(std::optional<std::string> const &iName, ImVec2 iOffset, panel_nodes &oPanelNodes)
 {
   // we process offset first because the order in which keys are processed is not guaranteed
   auto maybeOffset = getOptionalOffset();
   if(maybeOffset)
     iOffset += *maybeOffset;
 
-  auto maybeDecal = getMaybePathOnTopOfStack();
-  if(maybeDecal)
-  {
-    if(maybeDecal->fPath)
-    {
-      auto idx = oPanelNodes.fDecalNodes.size();
-      auto decalName = idx < iDecalNames.size() ? iDecalNames[idx] : std::nullopt;
-      oPanelNodes.fDecalNodes.emplace_back(gfx_decal_node{iOffset, *maybeDecal->fPath, decalName, maybeDecal->fNumFrames});
-    }
-  }
-  else
-  {
-    iterateLuaTable([this, &iOffset, &iDecalNames, &oPanelNodes](lua_table_key_t const &key) {
-      if(std::holds_alternative<std::string>(key))
-      {
-        auto name = std::get<std::string>(key);
-        if(name == "offset")
-        {
-          // do nothing (already handled)
-        }
-        else
-        {
-          processGfxNode(name, iOffset, oPanelNodes);
-        }
-      }
-      else
-      {
-        processLuaTable(iOffset, iDecalNames, oPanelNodes);
-      }
-    }, true, false);
-  }
-}
-
-//------------------------------------------------------------------------
-// Device2D::processGfxNode
-//------------------------------------------------------------------------
-void Device2D::processGfxNode(std::string const &iName, ImVec2 iOffset, panel_nodes &oPanelNodes)
-{
-  auto maybeOffset = getOptionalOffset();
-  if(maybeOffset)
-    iOffset += *maybeOffset;
-
-  if(lua_type(L, -1) == LUA_TTABLE)
-  {
-    auto node = gfx_node{
-      /* .fName = */ iName,
-      /* .fPosition = */ iOffset
-    };
-
-    iterateLuaTable([this, &node, &iOffset, &oPanelNodes](lua_table_key_t const &key) {
-      if(std::holds_alternative<std::string>(key))
-      {
-        // do nothing (already handled)
-      }
-      else
-      {
-        auto p = getMaybePathOnTopOfStack();
-        if(p)
-        {
-          if(p->fPath)
-            node.fKeyOrSize = *p->fPath;
-          else
-            node.fKeyOrSize = *p->fSize;
-          node.fNumFrames = p->fNumFrames;
-        }
-        else
-        {
-          processDecalNode(iOffset, oPanelNodes);
-        }
-      }
-    }, true, false);
-
-    oPanelNodes.fNodes[iName] = node;
-  }
-}
-
-//------------------------------------------------------------------------
-// Device2D::processDecalNode
-//------------------------------------------------------------------------
-void Device2D::processDecalNode(ImVec2 iOffset, panel_nodes &oPanelNodes)
-{
-  auto maybeOffset = getOptionalOffset();
-  if(maybeOffset)
-    iOffset += *maybeOffset;
-
-  iterateLuaTable([this, &iOffset, &oPanelNodes](lua_table_key_t const &key) {
+  iterateLuaTable([this, &iName, &iOffset, &oPanelNodes](lua_table_key_t const &key) {
     if(std::holds_alternative<std::string>(key))
     {
       auto name = std::get<std::string>(key);
@@ -182,39 +76,27 @@ void Device2D::processDecalNode(ImVec2 iOffset, panel_nodes &oPanelNodes)
       }
       else
       {
-        processDecalNode(name, iOffset, oPanelNodes);
+        oPanelNodes.maybeAddNode(name, processLuaTable(name, iOffset, oPanelNodes));
       }
     }
     else
     {
-      processDecalNode(iOffset, oPanelNodes);
-    }
-  }, true, false);
-}
-
-//------------------------------------------------------------------------
-// Device2D::processDecalNode
-//------------------------------------------------------------------------
-void Device2D::processDecalNode(std::string const &iName, ImVec2 iOffset, panel_nodes &oPanelNodes)
-{
-  auto maybeOffset = getOptionalOffset();
-  if(maybeOffset)
-    iOffset += *maybeOffset;
-
-  iterateLuaTable([this, &iName, &iOffset, &oPanelNodes](lua_table_key_t const &key) {
-    if(std::holds_alternative<int>(key))
-    {
-      auto p = getMaybePathOnTopOfStack();
-      if(p)
+      auto node = getMaybeNodeOnTopOfStack();
+      if(node)
       {
-        if(p->fPath)
-          oPanelNodes.fDecalNodes.emplace_back(gfx_decal_node{iOffset, *p->fPath, iName, p->fNumFrames});
+        node->fPosition = iOffset;
+        oPanelNodes.addNode(iName, std::move(*node));
       }
       else
-        processDecalNode(iName, iOffset, oPanelNodes);
+      {
+        auto offset = processLuaTable(iName, iOffset, oPanelNodes);
+        if(iName)
+          oPanelNodes.maybeAddNode(*iName, offset);
+      }
     }
   }, true, false);
 
+  return iOffset;
 }
 
 //------------------------------------------------------------------------
@@ -235,31 +117,33 @@ std::optional<ImVec2> Device2D::getOptionalOffset()
 }
 
 //------------------------------------------------------------------------
-// Device2D::getMaybePathOnTopOfStack
+// Device2D::getMaybeNodeOnTopOfStack
 //------------------------------------------------------------------------
-std::optional<Device2D::path_t> Device2D::getMaybePathOnTopOfStack()
+std::optional<gfx_node> Device2D::getMaybeNodeOnTopOfStack()
 {
   if(lua_type(L, -1) == LUA_TTABLE)
   {
-    path_t p{};
+    gfx_node node{};
 
     // check for size
     lua_getfield(L, -1, "size");
     if(lua_type(L, -1) == LUA_TTABLE)
-      p.fSize = getImVec2();
+      node.fKeyOrSize = getImVec2();
     lua_pop(L, 1);
 
     // check for path
     auto path = L.getTableValueAsOptionalString("path");
     if(path)
-      p.fPath = path.value();
+      node.fKeyOrSize = path.value();
 
     auto frames = L.getTableValueAsOptionalInteger("frames");
     if(frames)
-      p.fNumFrames = static_cast<int>(frames.value());
+      node.fNumFrames = static_cast<int>(frames.value());
 
-    if(p.fPath || p.fSize)
-      return p;
+    if(node.hasKey() || node.hasSize())
+    {
+      return node;
+    }
   }
 
   return std::nullopt;
@@ -302,22 +186,31 @@ std::map<std::string, int> panel_nodes::getNumFrames() const
     }
   }
 
-  // handle decals
-  for(auto &node: fDecalNodes)
-  {
-    auto key = node.fKey;
-    if(!key.empty() && node.fNumFrames)
-    {
-      auto numFrame2 = numFrames.find(key);
-      if(numFrame2 != numFrames.end())
-      {
-        if(*node.fNumFrames != numFrame2->second)
-          RE_EDIT_LOG_WARNING("Inconsistent number of frames for %s : %d and %d", key, numFrame2->second, *node.fNumFrames);
-      }
-      numFrames[key] = *node.fNumFrames;
-    }
-  }
   return numFrames;
 }
+
+//------------------------------------------------------------------------
+// panel_nodes::addNode
+//------------------------------------------------------------------------
+void panel_nodes::addNode(std::optional<std::string> const &iName, gfx_node iNode)
+{
+  iNode.fName = iName ? *iName : fmt::printf("__re_edit__panel_decal_%d", ++fAnonymousDecalCount);
+  fNodes[iNode.fName] = std::move(iNode);
+}
+
+//------------------------------------------------------------------------
+// panel_nodes::maybeAddNode
+//------------------------------------------------------------------------
+void panel_nodes::maybeAddNode(std::string const &iName, ImVec2 const &iOffset)
+{
+  if(fNodes.find(iName) == fNodes.end())
+  {
+    gfx_node node{};
+    node.fName = iName;
+    node.fPosition = iOffset;
+    fNodes[iName] = node;
+  }
+}
+
 
 }

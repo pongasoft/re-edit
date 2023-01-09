@@ -44,8 +44,7 @@ TEST(Device2D, All)
 
   auto front = d2d->front();
 
-  ASSERT_EQ(6, front->fNodes.size());
-  ASSERT_EQ(3, front->fDecalNodes.size());
+  ASSERT_EQ(9, front->fNodes.size());
 
   ImVec2 offset{};
 
@@ -102,20 +101,22 @@ TEST(Device2D, All)
 
   // Decal1_path
   {
-    auto &n = front->fDecalNodes.at(0);
+    auto &n = front->fNodes.at("__re_edit__panel_decal_1");
     ASSERT_TRUE(Eq(offset, n.fPosition));
-    ASSERT_EQ("Decal1_path", n.fKey);
-    ASSERT_EQ("decal1", *n.fName);
+    ASSERT_EQ("__re_edit__panel_decal_1", n.fName);
+    ASSERT_EQ("Decal1_path", std::get<std::string>(n.fKeyOrSize));
+    ASSERT_EQ(std::nullopt, n.fNumFrames);
   }
 
   // Decal2_path
   {
     auto anonymous2Offset = offset + ImVec2{100 , 110};
 
-    auto &n = front->fDecalNodes.at(1);
+    auto &n = front->fNodes.at("__re_edit__panel_decal_2");
     ASSERT_TRUE(Eq(anonymous2Offset, n.fPosition));
-    ASSERT_EQ("Decal2_path", n.fKey);
-    ASSERT_EQ("decal2", *n.fName);
+    ASSERT_EQ("__re_edit__panel_decal_2", n.fName);
+    ASSERT_EQ("Decal2_path", std::get<std::string>(n.fKeyOrSize));
+    ASSERT_EQ(std::nullopt, n.fNumFrames);
   }
 
   // new scope
@@ -135,18 +136,17 @@ TEST(Device2D, All)
   {
     auto label_for_Knob4Offset = offset + ImVec2{10, 20} + ImVec2{-110, 105};
 
-    auto &n = front->fDecalNodes.at(2);
+    auto &n = front->fNodes.at("label_for_Knob4");
     ASSERT_TRUE(Eq(label_for_Knob4Offset, n.fPosition));
-    ASSERT_EQ("label_for_Knob4_path", n.fKey);
-    ASSERT_EQ("label_for_Knob4", *n.fName);
+    ASSERT_EQ("label_for_Knob4", n.fName);
+    ASSERT_EQ("label_for_Knob4_path", std::get<std::string>(n.fKeyOrSize));
     ASSERT_EQ(2, *n.fNumFrames);
   }
 
   auto foldedBack = d2d->folded_back();
   offset = {};
 
-  ASSERT_EQ(3, foldedBack->fNodes.size());
-  ASSERT_EQ(1, foldedBack->fDecalNodes.size());
+  ASSERT_EQ(4, foldedBack->fNodes.size());
 
   // Panel_folded_back_bg
   {
@@ -180,10 +180,11 @@ TEST(Device2D, All)
 
   // Decal_path
   {
-    auto &n = foldedBack->fDecalNodes.at(0);
+    auto &n = foldedBack->fNodes.at("__re_edit__panel_decal_1");
     ASSERT_TRUE(Eq(ImVec2{5, 5}, n.fPosition));
-    ASSERT_EQ("Decal_path", n.fKey);
-    ASSERT_EQ(std::nullopt, n.fName);
+    ASSERT_EQ("__re_edit__panel_decal_1", n.fName);
+    ASSERT_EQ("Decal_path", std::get<std::string>(n.fKeyOrSize));
+    ASSERT_EQ(std::nullopt, n.fNumFrames);
   }
 
 

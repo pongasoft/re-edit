@@ -39,22 +39,19 @@ struct gfx_node
   ImVec2 getSize() const { return std::get<ImVec2>(fKeyOrSize); }
 };
 
-struct gfx_decal_node
-{
-  ImVec2 fPosition{};
-  std::string fKey{};
-  std::optional<std::string> fName{};
-  std::optional<int> fNumFrames{};
-};
-
 struct panel_nodes
 {
   std::map<std::string, gfx_node> fNodes{};
-  std::vector<gfx_decal_node> fDecalNodes{};
 
   std::map<std::string, int> getNumFrames() const;
 
   std::optional<gfx_node> findNodeByName(std::string const &iName) const;
+
+  void addNode(std::optional<std::string> const &iName, gfx_node iNode);
+  void maybeAddNode(std::string const &iName, ImVec2 const &iOffset);
+
+private:
+  int fAnonymousDecalCount{};
 };
 
 class Device2D : public Base
@@ -70,21 +67,10 @@ public:
   static std::unique_ptr<Device2D> fromFile(fs::path const &iLuaFilename);
 
 protected:
-  struct path_t
-  {
-    std::optional<std::string> fPath{};
-    std::optional<ImVec2> fSize{};
-    std::optional<int> fNumFrames{};
-  };
-
-protected:
   std::shared_ptr<panel_nodes> getPanelNodes(char const *iPanelName) const;
   std::shared_ptr<panel_nodes> createPanelNodes(char const *iPanelName);
-  void processLuaTable(ImVec2 iOffset, std::vector<std::optional<std::string>> const &iDecalNames, panel_nodes &oPanelNodes);
-  void processGfxNode(std::string const &iName, ImVec2 iOffset, panel_nodes &oPanelNodes);
-  void processDecalNode(ImVec2 iOffset, panel_nodes &oPanelNodes);
-  void processDecalNode(std::string const &iName, ImVec2 iOffset, panel_nodes &oPanelNodes);
-  std::optional<path_t> getMaybePathOnTopOfStack();
+  ImVec2 processLuaTable(std::optional<std::string> const &iName, ImVec2 iOffset, panel_nodes &oPanelNodes);
+  std::optional<gfx_node> getMaybeNodeOnTopOfStack();
   std::optional<ImVec2> getOptionalOffset();
 };
 
