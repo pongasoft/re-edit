@@ -268,6 +268,7 @@ public: // Undo
   void maybeReloadDevice(bool b) { fMaybeReloadDevice = b; }
 
   std::string getDeviceName() const;
+  constexpr bool hasFoldedPanels() const { return fHasFoldedPanels; }
 
 public:
   EWidgetRendering fWidgetRendering{EWidgetRendering::kNormal};

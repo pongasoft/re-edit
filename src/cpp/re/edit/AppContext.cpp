@@ -331,14 +331,17 @@ void AppContext::render()
     ReGui::TextRadioButton("Fill  ", &fSampleDropZoneRendering, AppContext::ESampleDropZoneRendering::kFill);
     ImGui::PopID();
 
-    ImGui::PushID("Fold Icon");
-    ImGui::AlignTextToFramePadding();
-    ImGui::Text("Fold Icon       ");
-    ImGui::SameLine();
-    ReGui::TextRadioButton("None  ", &fShowFoldButton, false);
-    ImGui::SameLine();
-    ReGui::TextRadioButton("Show  ", &fShowFoldButton, true);
-    ImGui::PopID();
+    if(hasFoldedPanels())
+    {
+      ImGui::PushID("Fold Icon");
+      ImGui::AlignTextToFramePadding();
+      ImGui::Text("Fold Icon       ");
+      ImGui::SameLine();
+      ReGui::TextRadioButton("None  ", &fShowFoldButton, false);
+      ImGui::SameLine();
+      ReGui::TextRadioButton("Show  ", &fShowFoldButton, true);
+      ImGui::PopID();
+    }
 
     ImGui::PushID("Rails");
     ImGui::AlignTextToFramePadding();

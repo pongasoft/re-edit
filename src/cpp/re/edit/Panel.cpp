@@ -222,7 +222,7 @@ void Panel::draw(AppContext &iCtx)
   drawCableOrigin(iCtx);
 
   // draw the fold button
-  if(iCtx.fShowFoldButton)
+  if(iCtx.hasFoldedPanels() && iCtx.fShowFoldButton)
   {
     iCtx.drawTexture(iCtx.getBuiltInTexture(BuiltIns::kFoldButton.fKey).get(), kFoldButtonPos,
                      isPanelOfType(fType, kPanelTypeAnyUnfolded) ? 0 : 2);
@@ -1459,8 +1459,11 @@ std::string Panel::device2D() const
     s << fmt::printf("%s[\"%s\"] = %s\n", panelName, w->fName, w->device2D());
   }
   if(fCableOrigin)
-    s << fmt::printf("%s[\"CableOrigin\"] = {offset = {%d, %d}}\n", panelName,
+  {
+    s << "\n-- Cable Origin\n";
+    s << fmt::printf("%s[\"CableOrigin\"] = { offset = { %d, %d } }\n", panelName,
                      static_cast<int>(fCableOrigin->x), static_cast<int>(fCableOrigin->y));
+  }
 
   return s.str();
 }
