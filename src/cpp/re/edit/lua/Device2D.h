@@ -41,6 +41,8 @@ struct gfx_node
 
 struct panel_nodes
 {
+  explicit panel_nodes(std::vector<std::string> iDecalNames);
+
   std::map<std::string, gfx_node> fNodes{};
 
   std::map<std::string, int> getNumFrames() const;
@@ -50,7 +52,11 @@ struct panel_nodes
   void addNode(std::optional<std::string> const &iName, gfx_node iNode);
   void maybeAddNode(std::string const &iName, ImVec2 const &iOffset);
 
+  std::vector<std::string> getDecalNames(std::set<std::string> const &iWidgetNames) const;
+
 private:
+  std::vector<std::string> fDecalNames{}; // stored in device_2D.lua under re_edit.<panel_type>.decals
+  std::vector<std::string> fNodeNames{};  // to keep the order of other names (when reading a project for the first time, orphan nodes are treated as decals)
   int fAnonymousDecalCount{};
 };
 

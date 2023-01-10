@@ -48,14 +48,14 @@ std::map<std::string, int> PanelState::initPanel(AppContext &iCtx,
 
   iCtx.fCurrentPanelState = this;
 
-  std::set<std::string> widgetNodes{};
+  std::set<std::string> widgetNames{};
 
   // handle background
   {
     auto node = iPanelNodes->findNodeByName(iPanel->fGraphicsNode);
     if(node)
     {
-      widgetNodes.emplace(node->fName);
+      widgetNames.emplace(node->fName);
       if(node->hasKey())
         fPanel.setBackgroundKey(node->getKey());
     }
@@ -68,7 +68,7 @@ std::map<std::string, int> PanelState::initPanel(AppContext &iCtx,
       auto node = iPanelNodes->findNodeByName(*iPanel->fCableOrigin);
       if(node)
       {
-        widgetNodes.emplace(node->fName);
+        widgetNames.emplace(node->fName);
         fPanel.setCableOrigin(node->fPosition);
       }
       else
@@ -92,7 +92,7 @@ std::map<std::string, int> PanelState::initPanel(AppContext &iCtx,
     auto node = iPanelNodes->findNodeByName(w->fGraphics.fNode);
     if(node)
     {
-      widgetNodes.emplace(node->fName);
+      widgetNames.emplace(node->fName);
 
       if(node->hasSize())
         widget->setSize(node->getSize());
@@ -118,19 +118,14 @@ std::map<std::string, int> PanelState::initPanel(AppContext &iCtx,
   }
 
   // handle decals: decals are all the nodes that have not been assigned to a widget
-  for(auto &[name, node]: iPanelNodes->fNodes)
+  for(auto &name: iPanelNodes->getDecalNames(widgetNames))
   {
-    if(widgetNodes.find(name) != widgetNodes.end())
-      continue;
+    auto node = iPanelNodes->findNodeByName(name).value(); // we know that the node must exist
 
     if(node.hasKey())
     {
-      auto widget = Widget::panel_decal();
+      auto widget = Widget::panel_decal(name);
       widget->setPosition(node.fPosition);
-
-      // if the decal already has a name, then use it
-      if(!re::mock::stl::starts_with(name, "__re_edit__panel_decal_"))
-        widget->setName(name);
 
       auto key = node.getKey();
       if(!key.empty())

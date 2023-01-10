@@ -38,7 +38,7 @@ class Panel;
 class Widget : public Editable
 {
 public:
-  explicit Widget(WidgetType iType);
+  explicit Widget(WidgetType iType, std::optional<std::string> iName = std::nullopt);
 
   constexpr std::string const &getName() const { return fName; }
   void setName(std::string iName) { fName = std::move(iName); fEdited = true; }
@@ -85,36 +85,36 @@ public:
   std::string device2D() const { return fGraphics->device2D(); }
 
   std::unique_ptr<Widget> copy() const;
-  std::unique_ptr<Widget> clone() const;
+  std::unique_ptr<Widget> clone(std::optional<std::string> iName = std::nullopt) const;
   void copyFrom(Widget const &iWidget);
 //  bool eq(Widget *iWidget) const;
 
-  static std::unique_ptr<Widget> panel_decal();
-  static std::unique_ptr<Widget> analog_knob();
-  static std::unique_ptr<Widget> audio_input_socket();
-  static std::unique_ptr<Widget> audio_output_socket();
-  static std::unique_ptr<Widget> custom_display();
-  static std::unique_ptr<Widget> cv_input_socket();
-  static std::unique_ptr<Widget> cv_output_socket();
-  static std::unique_ptr<Widget> cv_trim_knob();
-  static std::unique_ptr<Widget> device_name();
-  static std::unique_ptr<Widget> momentary_button();
-  static std::unique_ptr<Widget> patch_browse_group();
-  static std::unique_ptr<Widget> patch_name();
-  static std::unique_ptr<Widget> pitch_wheel();
-  static std::unique_ptr<Widget> placeholder();
-  static std::unique_ptr<Widget> popup_button();
-  static std::unique_ptr<Widget> radio_button();
-  static std::unique_ptr<Widget> sample_browse_group();
-  static std::unique_ptr<Widget> sample_drop_zone();
-  static std::unique_ptr<Widget> sequence_fader();
-  static std::unique_ptr<Widget> sequence_meter();
-  static std::unique_ptr<Widget> static_decoration();
-  static std::unique_ptr<Widget> step_button();
-  static std::unique_ptr<Widget> toggle_button();
-  static std::unique_ptr<Widget> up_down_button();
-  static std::unique_ptr<Widget> value_display();
-  static std::unique_ptr<Widget> zero_snap_knob();
+  static std::unique_ptr<Widget> panel_decal(std::optional<std::string> iName = std::nullopt);
+  static std::unique_ptr<Widget> analog_knob(std::optional<std::string> iName = std::nullopt);
+  static std::unique_ptr<Widget> audio_input_socket(std::optional<std::string> iName = std::nullopt);
+  static std::unique_ptr<Widget> audio_output_socket(std::optional<std::string> iName = std::nullopt);
+  static std::unique_ptr<Widget> custom_display(std::optional<std::string> iName = std::nullopt);
+  static std::unique_ptr<Widget> cv_input_socket(std::optional<std::string> iName = std::nullopt);
+  static std::unique_ptr<Widget> cv_output_socket(std::optional<std::string> iName = std::nullopt);
+  static std::unique_ptr<Widget> cv_trim_knob(std::optional<std::string> iName = std::nullopt);
+  static std::unique_ptr<Widget> device_name(std::optional<std::string> iName = std::nullopt);
+  static std::unique_ptr<Widget> momentary_button(std::optional<std::string> iName = std::nullopt);
+  static std::unique_ptr<Widget> patch_browse_group(std::optional<std::string> iName = std::nullopt);
+  static std::unique_ptr<Widget> patch_name(std::optional<std::string> iName = std::nullopt);
+  static std::unique_ptr<Widget> pitch_wheel(std::optional<std::string> iName = std::nullopt);
+  static std::unique_ptr<Widget> placeholder(std::optional<std::string> iName = std::nullopt);
+  static std::unique_ptr<Widget> popup_button(std::optional<std::string> iName = std::nullopt);
+  static std::unique_ptr<Widget> radio_button(std::optional<std::string> iName = std::nullopt);
+  static std::unique_ptr<Widget> sample_browse_group(std::optional<std::string> iName = std::nullopt);
+  static std::unique_ptr<Widget> sample_drop_zone(std::optional<std::string> iName = std::nullopt);
+  static std::unique_ptr<Widget> sequence_fader(std::optional<std::string> iName = std::nullopt);
+  static std::unique_ptr<Widget> sequence_meter(std::optional<std::string> iName = std::nullopt);
+  static std::unique_ptr<Widget> static_decoration(std::optional<std::string> iName = std::nullopt);
+  static std::unique_ptr<Widget> step_button(std::optional<std::string> iName = std::nullopt);
+  static std::unique_ptr<Widget> toggle_button(std::optional<std::string> iName = std::nullopt);
+  static std::unique_ptr<Widget> up_down_button(std::optional<std::string> iName = std::nullopt);
+  static std::unique_ptr<Widget> value_display(std::optional<std::string> iName = std::nullopt);
+  static std::unique_ptr<Widget> zero_snap_knob(std::optional<std::string> iName = std::nullopt);
 
   template<typename T>
   T *findAttributeByNameAndType(std::string const &iAttributeName) const;
@@ -133,6 +133,8 @@ public:
 //  std::string *findValueValue() const { return findAttributeValue<widget::attribute::PropertyPath>("value"); }
 //  std::string *findValueSwitchValue() const { return findAttributeValue<widget::attribute::ValueSwitch>("value_switch"); }
 //  std::string *findVisibilitySwitchValue() const { return findAttributeValue<widget::attribute::VisibilitySwitch>("visibility_switch"); };
+
+  static void resetWidgetIota() { fWidgetIota = 1; }
 
   friend class Panel;
 
@@ -160,7 +162,7 @@ protected:
   Widget *socket(re::mock::JboxObjectType iSocketType, Object::Filter iSocketFilter);
 
 private:
-  void computeDefaultWidgetName();
+  std::string computeDefaultWidgetName() const;
   Widget(Widget const &iOther, std::string iName);
   Widget(Widget const &iOther);
   void init(int id) { fId = id; }
@@ -178,7 +180,7 @@ private:
   widget::attribute::Visibility *fVisibility{};
 
 private:
-  static long fWidgetIota;
+  static inline long fWidgetIota{1};
 };
 
 //------------------------------------------------------------------------

@@ -29,14 +29,13 @@ namespace re::edit {
 using namespace widget;
 using namespace widget::attribute;
 
-long Widget::fWidgetIota = 1;
-
 //------------------------------------------------------------------------
 // Widget::Widget
 //------------------------------------------------------------------------
-Widget::Widget(WidgetType iType) : fType{iType}
+Widget::Widget(WidgetType iType, std::optional<std::string> iName) :
+  fType{iType},
+  fName{iName ? *iName : computeDefaultWidgetName()}
 {
-  computeDefaultWidgetName();
   auto graphics = std::make_unique<Graphics>();
   fGraphics = graphics.get();
   addAttribute(std::move(graphics));
@@ -250,7 +249,7 @@ void Widget::editView(AppContext &iCtx)
   {
     iCtx.addOrMergeUndoWidgetChange(this, nullptr, fName, editedName,
                                     fmt::printf("Rename %s %s widget", fName, toString(fType)));
-    computeDefaultWidgetName();
+    fName = computeDefaultWidgetName();
   }
   ImGui::PopID();
 
@@ -481,15 +480,15 @@ Widget *Widget::horizontal_justification()
 //------------------------------------------------------------------------
 // Widget::computeDefaultWidgetName
 //------------------------------------------------------------------------
-void Widget::computeDefaultWidgetName()
+std::string Widget::computeDefaultWidgetName() const
 {
-  fName = re::mock::fmt::printf("%s_%ld", toString(fType), fWidgetIota++);
+  return re::mock::fmt::printf("%s_%ld", toString(fType), fWidgetIota++);
 }
 
 //------------------------------------------------------------------------
 // Widget::analog_knob
 //------------------------------------------------------------------------
-std::unique_ptr<Widget> Widget::analog_knob()
+std::unique_ptr<Widget> Widget::analog_knob(std::optional<std::string> iName)
 {
   static const Property::Filter kValueFilter{[](const Property &p) {
     return (isOneOf(p.type(), Property::Type::kBoolean | Property::Type::kNumber) && kDocGuiOwnerFilter(p));
@@ -499,7 +498,7 @@ std::unique_ptr<Widget> Widget::analog_knob()
     return p.isDiscrete() && kDocGuiOwnerFilter(p);
   }, "Must be a discrete (stepped) number property (document_owner or gui_owner)"};
 
-  auto w = std::make_unique<Widget>(WidgetType::kAnalogKnob);
+  auto w = std::make_unique<Widget>(WidgetType::kAnalogKnob, iName);
   w ->value(kValueFilter, kValueSwitchFilter)
     ->visibility()
     ->tooltip_position()
@@ -513,12 +512,12 @@ std::unique_ptr<Widget> Widget::analog_knob()
 //------------------------------------------------------------------------
 // Widget::audio_input_socket
 //------------------------------------------------------------------------
-std::unique_ptr<Widget> Widget::audio_input_socket()
+std::unique_ptr<Widget> Widget::audio_input_socket(std::optional<std::string> iName)
 {
   static const Object::Filter kSocketFilter{[](const Object &p) {
     return p.type() == mock::JboxObjectType::kAudioInput;
   }, "Must be an audio input socket"};
-  auto w = std::make_unique<Widget>(WidgetType::kAudioInputSocket);
+  auto w = std::make_unique<Widget>(WidgetType::kAudioInputSocket, iName);
   w ->socket(Object::Type::kAudioInput, kSocketFilter)
     ->setSize(kAudioSocketSize)
     ;
@@ -530,13 +529,13 @@ std::unique_ptr<Widget> Widget::audio_input_socket()
 //------------------------------------------------------------------------
 // Widget::audio_output_socket
 //------------------------------------------------------------------------
-std::unique_ptr<Widget> Widget::audio_output_socket()
+std::unique_ptr<Widget> Widget::audio_output_socket(std::optional<std::string> iName)
 {
   // TODO: "Player devices are allowed to have audio input sockets, but not audio output sockets."
   static const Object::Filter kSocketFilter = {[](const Object &p) {
     return p.type() == mock::JboxObjectType::kAudioOutput;
   }, "Must be an audio output socket"};
-  auto w = std::make_unique<Widget>(WidgetType::kAudioOutputSocket);
+  auto w = std::make_unique<Widget>(WidgetType::kAudioOutputSocket, iName);
   w ->socket(Object::Type::kAudioOutput, kSocketFilter)
     ->setSize(kAudioSocketSize)
     ;
@@ -548,7 +547,7 @@ std::unique_ptr<Widget> Widget::audio_output_socket()
 //------------------------------------------------------------------------
 // Widget::custom_display
 //------------------------------------------------------------------------
-std::unique_ptr<Widget> Widget::custom_display()
+std::unique_ptr<Widget> Widget::custom_display(std::optional<std::string> iName)
 {
   // TODO: making up the rules as I go along (= run the sdk examples) as this is clearly NOT defined precisely
   // TODO: For example error message states that can use only custom properties (ex: cannot use audio socket connected)
@@ -558,7 +557,7 @@ std::unique_ptr<Widget> Widget::custom_display()
             (isOneOf(p.owner(), Property::Owner::kDocOwner | Property::Owner::kGUIOwner | Property::Owner::kRTOwner)));
   }, "Must be a number, string, boolean or sample property (document/gui/rt owner allowed)"};
 
-  auto w = std::make_unique<Widget>(WidgetType::kCustomDisplay);
+  auto w = std::make_unique<Widget>(WidgetType::kCustomDisplay, iName);
 
   w ->addAttribute(Attribute::build<Background>("background", false, ""))
     ->addAttribute(Attribute::build<Integer>("display_width_pixels", true, 0))
@@ -579,12 +578,12 @@ std::unique_ptr<Widget> Widget::custom_display()
 //------------------------------------------------------------------------
 // Widget::cv_input_socket
 //------------------------------------------------------------------------
-std::unique_ptr<Widget> Widget::cv_input_socket()
+std::unique_ptr<Widget> Widget::cv_input_socket(std::optional<std::string> iName)
 {
   static const Object::Filter kSocketFilter{[](const Object &p) {
     return p.type() == mock::JboxObjectType::kCVInput;
   }, "Must be a cv input socket"};
-  auto w = std::make_unique<Widget>(WidgetType::kCVInputSocket);
+  auto w = std::make_unique<Widget>(WidgetType::kCVInputSocket, iName);
   w ->socket(mock::JboxObjectType::kCVInput, kSocketFilter)
     ->setSize(kCVSocketSize)
     ;
@@ -596,12 +595,12 @@ std::unique_ptr<Widget> Widget::cv_input_socket()
 //------------------------------------------------------------------------
 // Widget::cv_output_socket
 //------------------------------------------------------------------------
-std::unique_ptr<Widget> Widget::cv_output_socket()
+std::unique_ptr<Widget> Widget::cv_output_socket(std::optional<std::string> iName)
 {
   static const Object::Filter kSocketFilter{[](const Object &p) {
     return p.type() == mock::JboxObjectType::kCVOutput;
   }, "Must be a cv output socket"};
-  auto w = std::make_unique<Widget>(WidgetType::kCVOutputSocket);
+  auto w = std::make_unique<Widget>(WidgetType::kCVOutputSocket, iName);
   w ->socket(mock::JboxObjectType::kCVOutput, kSocketFilter)
     ->setSize(kCVSocketSize)
     ;
@@ -613,12 +612,12 @@ std::unique_ptr<Widget> Widget::cv_output_socket()
 //------------------------------------------------------------------------
 // Widget::cv_trim_knob
 //------------------------------------------------------------------------
-std::unique_ptr<Widget> Widget::cv_trim_knob()
+std::unique_ptr<Widget> Widget::cv_trim_knob(std::optional<std::string> iName)
 {
   static const Object::Filter kSocketFilter{[](const Object &p) {
     return p.type() == mock::JboxObjectType::kCVInput;
   }, "Must be a cv input socket"};
-  auto w = std::make_unique<Widget>(WidgetType::kCVTrimKnob);
+  auto w = std::make_unique<Widget>(WidgetType::kCVTrimKnob, iName);
   w ->socket(mock::JboxObjectType::kCVInput, kSocketFilter)
     ->setSize(kCVTrimKnobSize)
     ;
@@ -631,11 +630,11 @@ std::unique_ptr<Widget> Widget::cv_trim_knob()
 //------------------------------------------------------------------------
 // Widget::device_name
 //------------------------------------------------------------------------
-std::unique_ptr<Widget> Widget::device_name()
+std::unique_ptr<Widget> Widget::device_name(std::optional<std::string> iName)
 {
   static const auto kGraphicsFilter = FilmStrip::orFilter(FilmStrip::bySizeFilter(kDeviceNameHorizontal, 5),
                                                           FilmStrip::bySizeFilter(kDeviceNameVertical, 5));
-  auto w = std::make_unique<Widget>(WidgetType::kDeviceName);
+  auto w = std::make_unique<Widget>(WidgetType::kDeviceName, iName);
   w->setSize(kDeviceNameHorizontal);
   w->fGraphics->fFilter = kGraphicsFilter;
   w->setTextureKey(BuiltIns::kTapeHorizontal.fKey);
@@ -645,7 +644,7 @@ std::unique_ptr<Widget> Widget::device_name()
 //------------------------------------------------------------------------
 // Widget::momentary_button
 //------------------------------------------------------------------------
-std::unique_ptr<Widget> Widget::momentary_button()
+std::unique_ptr<Widget> Widget::momentary_button(std::optional<std::string> iName)
 {
   static const Property::Filter kValueFilter{[](const Property &p) {
     return (p.type() == Property::Type::kBoolean || p.isDiscrete()) && kDocGuiOwnerFilter(p);
@@ -654,7 +653,7 @@ std::unique_ptr<Widget> Widget::momentary_button()
   static const FilmStrip::Filter kGraphicsFilter{[](FilmStrip const &iFilmStrip) { return iFilmStrip.numFrames() == 2; },
                                                  "Must have exactly 2 frames"};
 
-  auto w = std::make_unique<Widget>(WidgetType::kMomentaryButton);
+  auto w = std::make_unique<Widget>(WidgetType::kMomentaryButton, iName);
   w ->value(kValueFilter)
     ->visibility()
     ->tooltip_position()
@@ -670,9 +669,9 @@ std::unique_ptr<Widget> Widget::momentary_button()
 //------------------------------------------------------------------------
 // Widget::patch_browse_group
 //------------------------------------------------------------------------
-std::unique_ptr<Widget> Widget::patch_browse_group()
+std::unique_ptr<Widget> Widget::patch_browse_group(std::optional<std::string> iName)
 {
-  auto w = std::make_unique<Widget>(WidgetType::kPatchBrowseGroup);
+  auto w = std::make_unique<Widget>(WidgetType::kPatchBrowseGroup, iName);
   w ->tooltip_position()
     ->addAttribute(Attribute::build<Bool>("fx_patch", false, false))
     ;
@@ -685,9 +684,9 @@ std::unique_ptr<Widget> Widget::patch_browse_group()
 //------------------------------------------------------------------------
 // Widget::patch_name
 //------------------------------------------------------------------------
-std::unique_ptr<Widget> Widget::patch_name()
+std::unique_ptr<Widget> Widget::patch_name(std::optional<std::string> iName)
 {
-  auto w = std::make_unique<Widget>(WidgetType::kPatchName);
+  auto w = std::make_unique<Widget>(WidgetType::kPatchName, iName);
   w ->text_style()
     ->addAttribute(Attribute::build<Color3>("fg_color", true, JboxColor3{}))
     ->addAttribute(Attribute::build<Color3>("loader_alt_color", true, JboxColor3{}))
@@ -699,13 +698,13 @@ std::unique_ptr<Widget> Widget::patch_name()
 //------------------------------------------------------------------------
 // Widget::pitch_wheel
 //------------------------------------------------------------------------
-std::unique_ptr<Widget> Widget::pitch_wheel()
+std::unique_ptr<Widget> Widget::pitch_wheel(std::optional<std::string> iName)
 {
   // TODO: note that there is currently no way to filter on performance_pitchbend as this information is not available
   static const Property::Filter kValueFilter{[](const Property &p) {
     return p.type() == Property::Type::kNumber && kDocGuiOwnerFilter(p);
   }, "Must be a number property (document_owner or gui_owner)"};
-  auto w = std::make_unique<Widget>(WidgetType::kPitchWheel);
+  auto w = std::make_unique<Widget>(WidgetType::kPitchWheel, iName);
   w ->value(kValueFilter)
     ->visibility()
     ->tooltip_position()
@@ -719,9 +718,9 @@ std::unique_ptr<Widget> Widget::pitch_wheel()
 //------------------------------------------------------------------------
 // Widget::placeholder
 //------------------------------------------------------------------------
-std::unique_ptr<Widget> Widget::placeholder()
+std::unique_ptr<Widget> Widget::placeholder(std::optional<std::string> iName)
 {
-  auto w = std::make_unique<Widget>(WidgetType::kPlaceholder);
+  auto w = std::make_unique<Widget>(WidgetType::kPlaceholder, iName);
   w->setSize(kPlaceholderSize);
   w->fGraphics->fFilter = FilmStrip::bySizeFilter(kPlaceholderSize);
   w->setTextureKey(BuiltIns::kPlaceholder.fKey);
@@ -731,13 +730,13 @@ std::unique_ptr<Widget> Widget::placeholder()
 //------------------------------------------------------------------------
 // Widget::popup_button
 //------------------------------------------------------------------------
-std::unique_ptr<Widget> Widget::popup_button()
+std::unique_ptr<Widget> Widget::popup_button(std::optional<std::string> iName)
 {
   static const Property::Filter kValueFilter{[](const Property &p) {
     return (p.type() == Property::Type::kBoolean || p.isDiscrete()) && kDocGuiOwnerFilter(p);
   }, "Must be a discrete (stepped) number or boolean property (document_owner or gui_owner)"};
 
-  auto w = std::make_unique<Widget>(WidgetType::kPopupButton);
+  auto w = std::make_unique<Widget>(WidgetType::kPopupButton, iName);
   w ->value(kValueFilter)
     ->visibility()
     ->text_style()
@@ -752,7 +751,7 @@ std::unique_ptr<Widget> Widget::popup_button()
 //------------------------------------------------------------------------
 // Widget::radio_button
 //------------------------------------------------------------------------
-std::unique_ptr<Widget> Widget::radio_button()
+std::unique_ptr<Widget> Widget::radio_button(std::optional<std::string> iName)
 {
   static const Property::Filter kValueFilter{[](const Property &p) {
     return (p.type() == Property::Type::kBoolean || p.isDiscrete()) && kDocGuiOwnerFilter(p);
@@ -760,7 +759,7 @@ std::unique_ptr<Widget> Widget::radio_button()
 
   static const FilmStrip::Filter kGraphicsFilter{[](FilmStrip const &f) { return f.numFrames() == 2; }, "Must have exactly 2 frames"};
 
-  auto w = std::make_unique<Widget>(WidgetType::kRadioButton);
+  auto w = std::make_unique<Widget>(WidgetType::kRadioButton, iName);
   w ->value(kValueFilter)
     ->visibility()
     ->addAttribute(Attribute::build<Index>("index", true, 0, 1))
@@ -777,9 +776,9 @@ std::unique_ptr<Widget> Widget::radio_button()
 //------------------------------------------------------------------------
 // Widget::sample_browse_group
 //------------------------------------------------------------------------
-std::unique_ptr<Widget> Widget::sample_browse_group()
+std::unique_ptr<Widget> Widget::sample_browse_group(std::optional<std::string> iName)
 {
-  auto w = std::make_unique<Widget>(WidgetType::kSampleBrowseGroup);
+  auto w = std::make_unique<Widget>(WidgetType::kSampleBrowseGroup, iName);
   w ->visibility()
     ->tooltip_position()
     ;
@@ -792,9 +791,9 @@ std::unique_ptr<Widget> Widget::sample_browse_group()
 //------------------------------------------------------------------------
 // Widget::sample_drop_zone
 //------------------------------------------------------------------------
-std::unique_ptr<Widget> Widget::sample_drop_zone()
+std::unique_ptr<Widget> Widget::sample_drop_zone(std::optional<std::string> iName)
 {
-  auto w = std::make_unique<Widget>(WidgetType::kSampleDropZone);
+  auto w = std::make_unique<Widget>(WidgetType::kSampleDropZone, iName);
   w ->visibility()
     ->addAttribute(Attribute::build<UserSampleIndex>("user_sample_index", true, 0))
     ;
@@ -804,7 +803,7 @@ std::unique_ptr<Widget> Widget::sample_drop_zone()
 //------------------------------------------------------------------------
 // Widget::sequence_fader
 //------------------------------------------------------------------------
-std::unique_ptr<Widget> Widget::sequence_fader()
+std::unique_ptr<Widget> Widget::sequence_fader(std::optional<std::string> iName)
 {
   static const Property::Filter kValueFilter{[](const Property &p) {
     return isOneOf(p.type(), Property::Type::kBoolean | Property::Type::kNumber) && kDocGuiOwnerFilter(p);
@@ -814,7 +813,7 @@ std::unique_ptr<Widget> Widget::sequence_fader()
     return p.isDiscrete() && kDocGuiOwnerFilter(p);
   }, "Must be a discrete (stepped) number property (document_owner or gui_owner)"};
 
-  auto w = std::make_unique<Widget>(WidgetType::kSequenceFader);
+  auto w = std::make_unique<Widget>(WidgetType::kSequenceFader, iName);
   w ->value(kValueFilter, kValueSwitchFilter)
     ->orientation()
     ->addAttribute(Attribute::build<Integer>("inset1", false, 0))
@@ -833,13 +832,13 @@ std::unique_ptr<Widget> Widget::sequence_fader()
 //------------------------------------------------------------------------
 // Widget::sequence_meter
 //------------------------------------------------------------------------
-std::unique_ptr<Widget> Widget::sequence_meter()
+std::unique_ptr<Widget> Widget::sequence_meter(std::optional<std::string> iName)
 {
   static const Property::Filter kValueFilter{[](const Property &p) {
     return isOneOf(p.type(), Property::Type::kBoolean | Property::Type::kNumber);
   }, "Must be a number or boolean property"};
 
-  auto w = std::make_unique<Widget>(WidgetType::kSequenceMeter);
+  auto w = std::make_unique<Widget>(WidgetType::kSequenceMeter, iName);
   w ->value(kValueFilter)
     ->visibility()
     ;
@@ -849,12 +848,12 @@ std::unique_ptr<Widget> Widget::sequence_meter()
 //------------------------------------------------------------------------
 // Widget::static_decoration
 //------------------------------------------------------------------------
-std::unique_ptr<Widget> Widget::static_decoration()
+std::unique_ptr<Widget> Widget::static_decoration(std::optional<std::string> iName)
 {
   // GUIDefValidation.GUIDefError: RE2DRender: Error in hdgui_2D.lua: Widget type 'static_decoration': Wrong number of frames (2)
   static const FilmStrip::Filter kGraphicsFilter{[](FilmStrip const &f) { return f.numFrames() == 1; }, "Must have exactly 1 frame"};
 
-  auto w = std::make_unique<Widget>(WidgetType::kStaticDecoration);
+  auto w = std::make_unique<Widget>(WidgetType::kStaticDecoration, iName);
   w ->blend_mode()
     ->visibility()
     ;
@@ -866,7 +865,7 @@ std::unique_ptr<Widget> Widget::static_decoration()
 //------------------------------------------------------------------------
 // Widget::step_button
 //------------------------------------------------------------------------
-std::unique_ptr<Widget> Widget::step_button()
+std::unique_ptr<Widget> Widget::step_button(std::optional<std::string> iName)
 {
   static const Property::Filter kValueFilter{[](const Property &p) {
     return (p.type() == Property::Type::kBoolean || p.isDiscrete()) && kDocGuiOwnerFilter(p);
@@ -876,7 +875,7 @@ std::unique_ptr<Widget> Widget::step_button()
     return f.numFrames() == 2 || f.numFrames() == 4;
   }, "Must have 2 or 4 frame"};
 
-  auto w = std::make_unique<Widget>(WidgetType::kStepButton);
+  auto w = std::make_unique<Widget>(WidgetType::kStepButton, iName);
   w ->value(kValueFilter)
     ->visibility()
     ->tooltip_position()
@@ -893,7 +892,7 @@ std::unique_ptr<Widget> Widget::step_button()
 //------------------------------------------------------------------------
 // Widget::toggle_button
 //------------------------------------------------------------------------
-std::unique_ptr<Widget> Widget::toggle_button()
+std::unique_ptr<Widget> Widget::toggle_button(std::optional<std::string> iName)
 {
   static const Property::Filter kValueFilter{[](const Property &p) {
     return (p.type() == Property::Type::kBoolean || p.isDiscrete()) && kDocGuiOwnerFilter(p);
@@ -903,7 +902,7 @@ std::unique_ptr<Widget> Widget::toggle_button()
     return f.numFrames() == 2 || f.numFrames() == 4;
   }, "Must have 2 or 4 frame"};
 
-  auto w = std::make_unique<Widget>(WidgetType::kToggleButton);
+  auto w = std::make_unique<Widget>(WidgetType::kToggleButton, iName);
   w ->value(kValueFilter)
     ->visibility()
     ->tooltip_position()
@@ -919,7 +918,7 @@ std::unique_ptr<Widget> Widget::toggle_button()
 //------------------------------------------------------------------------
 // Widget::up_down_button
 //------------------------------------------------------------------------
-std::unique_ptr<Widget> Widget::up_down_button()
+std::unique_ptr<Widget> Widget::up_down_button(std::optional<std::string> iName)
 {
   static const Property::Filter kValueFilter{[](const Property &p) {
     return p.isDiscrete() && kDocGuiOwnerFilter(p);
@@ -927,7 +926,7 @@ std::unique_ptr<Widget> Widget::up_down_button()
 
   static const FilmStrip::Filter kGraphicsFilter{[](FilmStrip const &f) { return f.numFrames() == 3; }, "Must have exactly 3 frame"};
 
-  auto w = std::make_unique<Widget>(WidgetType::kUpDownButton);
+  auto w = std::make_unique<Widget>(WidgetType::kUpDownButton, iName);
   w ->value(kValueFilter)
     ->visibility()
     ->tooltip_position()
@@ -944,13 +943,13 @@ std::unique_ptr<Widget> Widget::up_down_button()
 //------------------------------------------------------------------------
 // Widget::value_display
 //------------------------------------------------------------------------
-std::unique_ptr<Widget> Widget::value_display()
+std::unique_ptr<Widget> Widget::value_display(std::optional<std::string> iName)
 {
   static const Property::Filter kValueSwitchFilter{[](const Property &p) {
     return p.isDiscrete() && kDocGuiOwnerFilter(p);
   }, "Must be a discrete (stepped) number property (document_owner or gui_owner)"};
 
-  auto w = std::make_unique<Widget>(WidgetType::kValueDisplay);
+  auto w = std::make_unique<Widget>(WidgetType::kValueDisplay, iName);
   w ->value(attribute::ReadOnly::kReadWriteValueFilter, kValueSwitchFilter)
     ->addAttribute(Attribute::build<ValueTemplates>("value_templates", false, {}, 1))
     ->visibility()
@@ -970,7 +969,7 @@ std::unique_ptr<Widget> Widget::value_display()
 //------------------------------------------------------------------------
 // Widget::zero_snap_knob
 //------------------------------------------------------------------------
-std::unique_ptr<Widget> Widget::zero_snap_knob()
+std::unique_ptr<Widget> Widget::zero_snap_knob(std::optional<std::string> iName)
 {
   static const Property::Filter kValueFilter{[](const Property &p) {
     return isOneOf(p.type(), Property::Type::kBoolean | Property::Type::kNumber) && kDocGuiOwnerFilter(p);
@@ -978,7 +977,7 @@ std::unique_ptr<Widget> Widget::zero_snap_knob()
   static const Property::Filter kValueSwitchFilter{[](const Property &p) {
     return p.isDiscrete() && kDocGuiOwnerFilter(p);
   }, "Must be a discrete (stepped) number property (document_owner or gui_owner)"};
-  auto w = std::make_unique<Widget>(WidgetType::kZeroSnapKnob);
+  auto w = std::make_unique<Widget>(WidgetType::kZeroSnapKnob, iName);
   w ->value(kValueFilter, kValueSwitchFilter)
     ->visibility()
     ->tooltip_position()
@@ -992,9 +991,9 @@ std::unique_ptr<Widget> Widget::zero_snap_knob()
 //------------------------------------------------------------------------
 // Widget::panel_decal
 //------------------------------------------------------------------------
-std::unique_ptr<Widget> Widget::panel_decal()
+std::unique_ptr<Widget> Widget::panel_decal(std::optional<std::string> iName)
 {
-  auto w = std::make_unique<Widget>(WidgetType::kPanelDecal);
+  auto w = std::make_unique<Widget>(WidgetType::kPanelDecal, iName);
   w->fGraphics->fSizeEnabled = false;
   w->fGraphics->fCheckForOOBError = false;
   return w;
@@ -1011,7 +1010,7 @@ std::unique_ptr<Widget> Widget::copy() const
 //------------------------------------------------------------------------
 // Widget::clone
 //------------------------------------------------------------------------
-std::unique_ptr<Widget> Widget::clone() const
+std::unique_ptr<Widget> Widget::clone(std::optional<std::string> iName) const
 {
   return std::unique_ptr<Widget>(new Widget(*this));
 }

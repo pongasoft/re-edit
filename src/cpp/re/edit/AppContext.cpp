@@ -125,6 +125,8 @@ void AppContext::initPanels(fs::path const &iDevice2DFile,
                             fs::path const &iHDGui2DFile,
                             Utils::CancellableSPtr const &iCancellable)
 {
+  Widget::resetWidgetIota();
+
   iCancellable->progress("Loading device_2D.lua...");
   auto d2d = lua::Device2D::fromFile(iDevice2DFile);
   fReEditVersion = d2d->getReEditVersion();
@@ -407,7 +409,7 @@ void AppContext::renderAddWidgetMenuView(ImVec2 const &iPosition)
   {
     if(ImGui::MenuItem(def.fName))
     {
-      auto widget = def.fFactory();
+      auto widget = def.fFactory(std::nullopt);
       widget->setPosition(iPosition);
       fCurrentPanelState->fPanel.addWidget(*this, std::move(widget));
     }

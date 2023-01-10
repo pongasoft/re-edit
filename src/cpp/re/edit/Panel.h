@@ -43,7 +43,7 @@ struct WidgetMove
 struct WidgetDef
 {
   // Implementation node: using std::function prevents kAllWidgetDefs to be a constexpr
-  using factory_t = std::unique_ptr<Widget> (*)();
+  using factory_t = std::unique_ptr<Widget> (*)(std::optional<std::string> iName);
 
   WidgetType fType{};
   char const *fName{};

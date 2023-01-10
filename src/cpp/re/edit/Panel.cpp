@@ -470,9 +470,8 @@ std::shared_ptr<Widget> Panel::transmuteWidget(AppContext &iCtx, std::shared_ptr
   if(iCtx.isUndoEnabled())
     iCtx.addUndoAction(createWidgetsUndoAction(fmt::printf("Change %s type", iWidget->getName())));
 
-  auto newWidget = iNewDef.fFactory();
+  auto newWidget = iNewDef.fFactory(iWidget->getName());
   newWidget->copyFrom(*iWidget);
-  newWidget->setName(iWidget->getName());
   return replaceWidget(iWidget->getId(), std::move(newWidget));
 }
 
@@ -1444,10 +1443,14 @@ std::string Panel::device2D() const
   if(!fDecalsOrder.empty())
   {
     s << "\n-- Decals\n";
+    s << fmt::printf("re_edit.%s = { decals = {} }\n", panelName);
+    int index = 1;
     for(auto id: fDecalsOrder)
     {
       auto const &w = fWidgets.at(id);
-      s << fmt::printf("%s[\"%s\"] = %s\n", panelName, w->fName, w->device2D());
+      s << fmt::printf("%s[%d] = %s -- %s\n", panelName, index, w->device2D(), w->fName);
+      s << fmt::printf("re_edit.%s.decals[%d] = \"%s\"\n", panelName, index, w->fName);
+      index++;
     }
   }
 

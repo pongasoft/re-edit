@@ -45,8 +45,29 @@ std::shared_ptr<panel_nodes> Device2D::getPanelNodes(char const *iPanelName) con
 //------------------------------------------------------------------------
 std::shared_ptr<panel_nodes> Device2D::createPanelNodes(char const *iPanelName)
 {
+  std::vector<std::string> decalNames{};
+  if(lua_getglobal(L, "re_edit") == LUA_TTABLE)
+  {
+    if(lua_getfield(L, -1, iPanelName) == LUA_TTABLE)
+    {
+      if(lua_getfield(L, -1, "decals") == LUA_TTABLE)
+      {
+        iterateLuaArray([&decalNames, this](auto i) {
+                          auto s = lua_tostring(L, -1);
+                          if(s != nullptr)
+                            decalNames.emplace_back(s);
+                          else
+                            decalNames.emplace_back(fmt::printf("panel_decal_%d", i));
+                        },
+                        true, false);
+      }
+      lua_pop(L, 1);
+    }
+    lua_pop(L, 1);
+  }
+  lua_pop(L, 1);
 
-  auto def = std::make_shared<panel_nodes>();
+  auto def = std::make_shared<panel_nodes>(decalNames);
   if(lua_getglobal(L, iPanelName) == LUA_TTABLE)
   {
     processLuaTable({}, {}, *def);
@@ -151,6 +172,14 @@ std::optional<gfx_node> Device2D::getMaybeNodeOnTopOfStack()
 
 
 //------------------------------------------------------------------------
+// panel_nodes::panel_nodes
+//------------------------------------------------------------------------
+panel_nodes::panel_nodes(std::vector<std::string> iDecalNames) :
+  fDecalNames{std::move(iDecalNames)}
+{
+}
+
+//------------------------------------------------------------------------
 // panel_nodes::findNodeByName
 //------------------------------------------------------------------------
 std::optional<gfx_node> panel_nodes::findNodeByName(std::string const &iName) const
@@ -194,7 +223,24 @@ std::map<std::string, int> panel_nodes::getNumFrames() const
 //------------------------------------------------------------------------
 void panel_nodes::addNode(std::optional<std::string> const &iName, gfx_node iNode)
 {
-  iNode.fName = iName ? *iName : fmt::printf("__re_edit__panel_decal_%d", ++fAnonymousDecalCount);
+  if(iName)
+  {
+    iNode.fName = *iName;
+    fNodeNames.emplace_back(iNode.fName);
+  }
+  else
+  {
+    if(fAnonymousDecalCount < fDecalNames.size())
+    {
+      iNode.fName = fDecalNames[fAnonymousDecalCount];
+    }
+    else
+    {
+      iNode.fName = fmt::printf("panel_decal_%d", fAnonymousDecalCount + 1);
+      fDecalNames.emplace_back(iNode.fName);
+    }
+    fAnonymousDecalCount++;
+  }
   fNodes[iNode.fName] = std::move(iNode);
 }
 
@@ -208,8 +254,34 @@ void panel_nodes::maybeAddNode(std::string const &iName, ImVec2 const &iOffset)
     gfx_node node{};
     node.fName = iName;
     node.fPosition = iOffset;
+    fNodeNames.emplace_back(iName);
     fNodes[iName] = node;
   }
+}
+
+//------------------------------------------------------------------------
+// panel_nodes::getDecalNames
+//------------------------------------------------------------------------
+std::vector<std::string> panel_nodes::getDecalNames(std::set<std::string> const &iWidgetNames) const
+{
+  std::vector<std::string> res{};
+
+  for(auto &name: fDecalNames)
+  {
+    // in the event that hdgui_2D.lua is modified manually, a widget could be added that is defined as a decal in
+    // device_2D.lua, hence the check to be sure
+    if(iWidgetNames.find(name) == iWidgetNames.end())
+      res.emplace_back(name);
+  }
+
+  for(auto &name: fNodeNames)
+  {
+    // an orphan node name is a decal
+    if(iWidgetNames.find(name) == iWidgetNames.end())
+      res.emplace_back(name);
+  }
+
+  return res;
 }
 
 

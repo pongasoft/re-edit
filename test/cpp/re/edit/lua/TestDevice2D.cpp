@@ -46,11 +46,14 @@ TEST(Device2D, All)
 
   ASSERT_EQ(9, front->fNodes.size());
 
+  std::set<std::string> widgetNames{};
+
   ImVec2 offset{};
 
   // bg
   {
     auto &n = front->fNodes.at("bg");
+    widgetNames.emplace(n.fName);
     ASSERT_EQ("bg", n.fName);
     ASSERT_TRUE(Eq(offset, n.fPosition));
     ASSERT_EQ("front_bg", std::get<std::string>(n.fKeyOrSize));
@@ -63,6 +66,7 @@ TEST(Device2D, All)
   // Label
   {
     auto &n = front->fNodes.at("Label");
+    widgetNames.emplace(n.fName);
     ASSERT_EQ("Label", n.fName);
     ASSERT_TRUE(Eq(offset, n.fPosition));
     ASSERT_EQ("Label_path", std::get<std::string>(n.fKeyOrSize));
@@ -73,6 +77,7 @@ TEST(Device2D, All)
   {
     auto knob1Offset = offset + ImVec2{10 ,20};
     auto &n = front->fNodes.at("Knob1");
+    widgetNames.emplace(n.fName);
     ASSERT_EQ("Knob1", n.fName);
     ASSERT_TRUE(Eq(knob1Offset, n.fPosition));
     ASSERT_EQ("Knob1_path", std::get<std::string>(n.fKeyOrSize));
@@ -83,6 +88,7 @@ TEST(Device2D, All)
   {
     auto knob2Offset = offset + ImVec2{30 , 40};
     auto &n = front->fNodes.at("Knob2");
+    widgetNames.emplace(n.fName);
     ASSERT_EQ("Knob2", n.fName);
     ASSERT_TRUE(Eq(knob2Offset, n.fPosition));
     ASSERT_EQ("Knob2_path", std::get<std::string>(n.fKeyOrSize));
@@ -93,6 +99,7 @@ TEST(Device2D, All)
   {
     auto knob3Offset = offset + ImVec2{50 , 60};
     auto &n = front->fNodes.at("Knob3");
+    widgetNames.emplace(n.fName);
     ASSERT_EQ("Knob3", n.fName);
     ASSERT_TRUE(Eq(knob3Offset, n.fPosition));
     ASSERT_TRUE(Eq(ImVec2{5, 15}, std::get<ImVec2>(n.fKeyOrSize)));
@@ -101,9 +108,9 @@ TEST(Device2D, All)
 
   // Decal1_path
   {
-    auto &n = front->fNodes.at("__re_edit__panel_decal_1");
+    auto &n = front->fNodes.at("decal1");
     ASSERT_TRUE(Eq(offset, n.fPosition));
-    ASSERT_EQ("__re_edit__panel_decal_1", n.fName);
+    ASSERT_EQ("decal1", n.fName);
     ASSERT_EQ("Decal1_path", std::get<std::string>(n.fKeyOrSize));
     ASSERT_EQ(std::nullopt, n.fNumFrames);
   }
@@ -112,9 +119,9 @@ TEST(Device2D, All)
   {
     auto anonymous2Offset = offset + ImVec2{100 , 110};
 
-    auto &n = front->fNodes.at("__re_edit__panel_decal_2");
+    auto &n = front->fNodes.at("decal2");
     ASSERT_TRUE(Eq(anonymous2Offset, n.fPosition));
-    ASSERT_EQ("__re_edit__panel_decal_2", n.fName);
+    ASSERT_EQ("decal2", n.fName);
     ASSERT_EQ("Decal2_path", std::get<std::string>(n.fKeyOrSize));
     ASSERT_EQ(std::nullopt, n.fNumFrames);
   }
@@ -126,6 +133,7 @@ TEST(Device2D, All)
   {
     auto knob4Offset = offset + ImVec2{10, 20};
     auto &n = front->fNodes.at("Knob4");
+    widgetNames.emplace(n.fName);
     ASSERT_EQ("Knob4", n.fName);
     ASSERT_TRUE(Eq(knob4Offset, n.fPosition));
     ASSERT_EQ("Knob4_path", std::get<std::string>(n.fKeyOrSize));
@@ -142,6 +150,9 @@ TEST(Device2D, All)
     ASSERT_EQ("label_for_Knob4_path", std::get<std::string>(n.fKeyOrSize));
     ASSERT_EQ(2, *n.fNumFrames);
   }
+
+  std::vector<std::string> expectedDecalNames{{"decal1", "decal2", "label_for_Knob4"}};
+  ASSERT_EQ(expectedDecalNames, front->getDecalNames(widgetNames));
 
   auto foldedBack = d2d->folded_back();
   offset = {};
@@ -180,9 +191,9 @@ TEST(Device2D, All)
 
   // Decal_path
   {
-    auto &n = foldedBack->fNodes.at("__re_edit__panel_decal_1");
+    auto &n = foldedBack->fNodes.at("panel_decal_1");
     ASSERT_TRUE(Eq(ImVec2{5, 5}, n.fPosition));
-    ASSERT_EQ("__re_edit__panel_decal_1", n.fName);
+    ASSERT_EQ("panel_decal_1", n.fName);
     ASSERT_EQ("Decal_path", std::get<std::string>(n.fKeyOrSize));
     ASSERT_EQ(std::nullopt, n.fNumFrames);
   }
