@@ -94,6 +94,16 @@ pongasoft produces a variety of high quality and free/open source software. If y
 Release Notes
 -------------
 
+* #### 1.1.0 - 2023/01/12
+
+- Added Fold Icon / Rack Rails (thanks to @jengstrom at Reason Studios for the icons)
+- Added Panel rendering (None / Border / Normal / X-Ray) (for example, to see the rails)
+- Changed zoom to be common to all panels and added Zoom to Fit (now defaults when device opens)
+- Added keyboard shortcuts (Save, Undo/Redo, Zoom In/Out/Fit, Quit)
+- Fixes [#1](https://github.com/pongasoft/re-edit/issues/1): _RE Edit fails to load nested decals_
+- Fixes [#2](https://github.com/pongasoft/re-edit/issues/2): _Decals are not rendered properly_
+- Some minor performance improvements
+
 * #### 1.0.0 - 2023/01/02
 
 - First public release
