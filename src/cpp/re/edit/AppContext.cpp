@@ -512,7 +512,6 @@ void AppContext::RectFilledItem(ImVec2 const &iPosition,
 
   const ImRect rect{cp, cp + iSize * getZoom()};
 
-  ImGui::SetCursorScreenPos(cp);
   ImGui::ItemSize(rect);
   if(!ImGui::ItemAdd(rect, 0))
       return;
@@ -535,7 +534,6 @@ void AppContext::RectItem(ImVec2 const &iPosition,
 
   const ImRect rect{cp, cp + iSize * getZoom()};
 
-  ImGui::SetCursorScreenPos(cp);
   ImGui::ItemSize(rect);
   if(!ImGui::ItemAdd(rect, 0))
     return;

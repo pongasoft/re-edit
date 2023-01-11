@@ -23,6 +23,7 @@
 #include "ReGui.h"
 #include "Constants.h"
 #include "LoggingManager.h"
+#include "imgui_internal.h"
 
 namespace re::edit {
 
@@ -93,7 +94,10 @@ void Panel::draw(AppContext &iCtx)
   auto const cp = ImGui::GetCursorScreenPos();
   auto &io = ImGui::GetIO();
   auto texture = fGraphics.hasValidTexture() ? fGraphics.getTexture() : nullptr;
-  ImVec2 clickableArea = ImGui::GetContentRegionAvail();
+  // Implementation note: this fixes the issue that if a widget is dragged outside the panel, it cannot
+  // be picked up again. But this entire positioning, needs to be revisited (the panel should be centered when more
+  // space available)
+  auto clickableArea = ImGui::GetCurrentWindowRead()->OuterRectClipped.GetSize() - (ImGui::GetStyle().WindowPadding * 2);
   auto backgroundSize = getSize() * iCtx.getZoom();
   clickableArea = {std::max(clickableArea.x, backgroundSize.x), std::max(clickableArea.y, backgroundSize.y)};
 
