@@ -293,6 +293,9 @@ protected:
   void reloadTextures();
   void markEdited();
   bool checkForErrors();
+  bool computeErrors();
+  void renderErrors();
+  void renderErrors(Panel const &iPanel);
   void initDevice();
   void initGUI2D(Utils::CancellableSPtr const &iCancellable);
   void reloadDevice();

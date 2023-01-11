@@ -25,6 +25,7 @@
 #include "WidgetAttribute.h"
 #include "Graphics.h"
 #include "Errors.h"
+#include "String.h"
 
 #include <string>
 #include <vector>
@@ -38,10 +39,11 @@ class Panel;
 class Widget : public Editable
 {
 public:
-  explicit Widget(WidgetType iType, std::optional<std::string> iName = std::nullopt);
+  explicit Widget(WidgetType iType, std::optional<std::string> const &iName = std::nullopt);
 
-  constexpr std::string const &getName() const { return fName; }
-  void setName(std::string iName) { fName = std::move(iName); fEdited = true; }
+  constexpr std::string const &getName() const { return fName.value(); }
+  constexpr StringWithHash::hash_t getNameHash() const { return fName.hash(); }
+  void setName(std::string iName);
   constexpr int getId() const { return fId; }
   constexpr WidgetType getType() const { return fType; }
 
@@ -85,36 +87,36 @@ public:
   std::string device2D() const { return fGraphics->device2D(); }
 
   std::unique_ptr<Widget> copy() const;
-  std::unique_ptr<Widget> clone(std::optional<std::string> iName = std::nullopt) const;
+  std::unique_ptr<Widget> clone(std::optional<std::string> const &iName = std::nullopt) const;
   void copyFrom(Widget const &iWidget);
 //  bool eq(Widget *iWidget) const;
 
-  static std::unique_ptr<Widget> panel_decal(std::optional<std::string> iName = std::nullopt);
-  static std::unique_ptr<Widget> analog_knob(std::optional<std::string> iName = std::nullopt);
-  static std::unique_ptr<Widget> audio_input_socket(std::optional<std::string> iName = std::nullopt);
-  static std::unique_ptr<Widget> audio_output_socket(std::optional<std::string> iName = std::nullopt);
-  static std::unique_ptr<Widget> custom_display(std::optional<std::string> iName = std::nullopt);
-  static std::unique_ptr<Widget> cv_input_socket(std::optional<std::string> iName = std::nullopt);
-  static std::unique_ptr<Widget> cv_output_socket(std::optional<std::string> iName = std::nullopt);
-  static std::unique_ptr<Widget> cv_trim_knob(std::optional<std::string> iName = std::nullopt);
-  static std::unique_ptr<Widget> device_name(std::optional<std::string> iName = std::nullopt);
-  static std::unique_ptr<Widget> momentary_button(std::optional<std::string> iName = std::nullopt);
-  static std::unique_ptr<Widget> patch_browse_group(std::optional<std::string> iName = std::nullopt);
-  static std::unique_ptr<Widget> patch_name(std::optional<std::string> iName = std::nullopt);
-  static std::unique_ptr<Widget> pitch_wheel(std::optional<std::string> iName = std::nullopt);
-  static std::unique_ptr<Widget> placeholder(std::optional<std::string> iName = std::nullopt);
-  static std::unique_ptr<Widget> popup_button(std::optional<std::string> iName = std::nullopt);
-  static std::unique_ptr<Widget> radio_button(std::optional<std::string> iName = std::nullopt);
-  static std::unique_ptr<Widget> sample_browse_group(std::optional<std::string> iName = std::nullopt);
-  static std::unique_ptr<Widget> sample_drop_zone(std::optional<std::string> iName = std::nullopt);
-  static std::unique_ptr<Widget> sequence_fader(std::optional<std::string> iName = std::nullopt);
-  static std::unique_ptr<Widget> sequence_meter(std::optional<std::string> iName = std::nullopt);
-  static std::unique_ptr<Widget> static_decoration(std::optional<std::string> iName = std::nullopt);
-  static std::unique_ptr<Widget> step_button(std::optional<std::string> iName = std::nullopt);
-  static std::unique_ptr<Widget> toggle_button(std::optional<std::string> iName = std::nullopt);
-  static std::unique_ptr<Widget> up_down_button(std::optional<std::string> iName = std::nullopt);
-  static std::unique_ptr<Widget> value_display(std::optional<std::string> iName = std::nullopt);
-  static std::unique_ptr<Widget> zero_snap_knob(std::optional<std::string> iName = std::nullopt);
+  static std::unique_ptr<Widget> panel_decal(std::optional<std::string> const &iName = std::nullopt);
+  static std::unique_ptr<Widget> analog_knob(std::optional<std::string> const &iName = std::nullopt);
+  static std::unique_ptr<Widget> audio_input_socket(std::optional<std::string> const &iName = std::nullopt);
+  static std::unique_ptr<Widget> audio_output_socket(std::optional<std::string> const &iName = std::nullopt);
+  static std::unique_ptr<Widget> custom_display(std::optional<std::string> const &iName = std::nullopt);
+  static std::unique_ptr<Widget> cv_input_socket(std::optional<std::string> const &iName = std::nullopt);
+  static std::unique_ptr<Widget> cv_output_socket(std::optional<std::string> const &iName = std::nullopt);
+  static std::unique_ptr<Widget> cv_trim_knob(std::optional<std::string> const &iName = std::nullopt);
+  static std::unique_ptr<Widget> device_name(std::optional<std::string> const &iName = std::nullopt);
+  static std::unique_ptr<Widget> momentary_button(std::optional<std::string> const &iName = std::nullopt);
+  static std::unique_ptr<Widget> patch_browse_group(std::optional<std::string> const &iName = std::nullopt);
+  static std::unique_ptr<Widget> patch_name(std::optional<std::string> const &iName = std::nullopt);
+  static std::unique_ptr<Widget> pitch_wheel(std::optional<std::string> const &iName = std::nullopt);
+  static std::unique_ptr<Widget> placeholder(std::optional<std::string> const &iName = std::nullopt);
+  static std::unique_ptr<Widget> popup_button(std::optional<std::string> const &iName = std::nullopt);
+  static std::unique_ptr<Widget> radio_button(std::optional<std::string> const &iName = std::nullopt);
+  static std::unique_ptr<Widget> sample_browse_group(std::optional<std::string> const &iName = std::nullopt);
+  static std::unique_ptr<Widget> sample_drop_zone(std::optional<std::string> const &iName = std::nullopt);
+  static std::unique_ptr<Widget> sequence_fader(std::optional<std::string> const &iName = std::nullopt);
+  static std::unique_ptr<Widget> sequence_meter(std::optional<std::string> const &iName = std::nullopt);
+  static std::unique_ptr<Widget> static_decoration(std::optional<std::string> const &iName = std::nullopt);
+  static std::unique_ptr<Widget> step_button(std::optional<std::string> const &iName = std::nullopt);
+  static std::unique_ptr<Widget> toggle_button(std::optional<std::string> const &iName = std::nullopt);
+  static std::unique_ptr<Widget> up_down_button(std::optional<std::string> const &iName = std::nullopt);
+  static std::unique_ptr<Widget> value_display(std::optional<std::string> const &iName = std::nullopt);
+  static std::unique_ptr<Widget> zero_snap_knob(std::optional<std::string> const &iName = std::nullopt);
 
   template<typename T>
   T *findAttributeByNameAndType(std::string const &iAttributeName) const;
@@ -170,7 +172,7 @@ private:
 private:
   int fId{-1};
   WidgetType fType{};
-  std::string fName{};
+  StringWithHash fName{};
   bool fSelected{};
   bool fHidden{};
   std::vector<std::unique_ptr<widget::Attribute>> fAttributes{};

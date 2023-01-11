@@ -43,7 +43,7 @@ struct WidgetMove
 struct WidgetDef
 {
   // Implementation node: using std::function prevents kAllWidgetDefs to be a constexpr
-  using factory_t = std::unique_ptr<Widget> (*)(std::optional<std::string> iName);
+  using factory_t = std::unique_ptr<Widget> (*)(std::optional<std::string> const &iName);
 
   WidgetType fType{};
   char const *fName{};
@@ -196,6 +196,7 @@ private:
   std::optional<bool> fDisableSampleDropOnPanel{};
   bool fShowCableOrigin{};
   std::map<int, std::shared_ptr<Widget>> fWidgets{};
+  std::set<StringWithHash::hash_t> fWidgetNameHashes{};
   std::vector<int> fWidgetsOrder{};
   std::vector<int> fDecalsOrder{};
   std::optional<WidgetMove> fWidgetMove{};

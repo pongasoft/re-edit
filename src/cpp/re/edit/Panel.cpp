@@ -792,6 +792,7 @@ bool Panel::checkForErrors(AppContext &iCtx)
   if(fEdited)
   {
     fUserError.clear();
+    fWidgetNameHashes.clear();
     if(fGraphics.checkForErrors(iCtx))
       addAllErrors("graphics", fGraphics);
 
@@ -799,6 +800,9 @@ bool Panel::checkForErrors(AppContext &iCtx)
     {
       if(widget->checkForErrors(iCtx))
         addAllErrors(widget->getName(), *widget);
+      auto [_, inserted] = fWidgetNameHashes.emplace(widget->getNameHash());
+      if(!inserted)
+        fUserError.add("Duplicate widget names [%s]", widget->getName());
     }
 
     fEdited = false;
@@ -1448,8 +1452,8 @@ std::string Panel::device2D() const
     for(auto id: fDecalsOrder)
     {
       auto const &w = fWidgets.at(id);
-      s << fmt::printf("%s[%d] = %s -- %s\n", panelName, index, w->device2D(), w->fName);
-      s << fmt::printf("re_edit.%s.decals[%d] = \"%s\"\n", panelName, index, w->fName);
+      s << fmt::printf("%s[%d] = %s -- %s\n", panelName, index, w->device2D(), w->getName());
+      s << fmt::printf("re_edit.%s.decals[%d] = \"%s\"\n", panelName, index, w->getName());
       index++;
     }
   }
@@ -1459,7 +1463,7 @@ std::string Panel::device2D() const
   for(auto id: fWidgetsOrder)
   {
     auto const &w = fWidgets.at(id);
-    s << fmt::printf("%s[\"%s\"] = %s\n", panelName, w->fName, w->device2D());
+    s << fmt::printf("%s[\"%s\"] = %s\n", panelName, w->getName(), w->device2D());
   }
   if(fCableOrigin)
   {

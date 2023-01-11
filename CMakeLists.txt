@@ -154,6 +154,8 @@ set(re-edit_BUILD_SOURCES
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/PropertyManager.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/ReGui.h"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/ReGui.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/String.h"
+    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/String.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/TextureManager.h"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/TextureManager.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/UndoManager.h"

@@ -842,6 +842,50 @@ bool AppContext::checkForErrors()
   return res;
 }
 
+
+//------------------------------------------------------------------------
+// AppContext::computeErrors
+//------------------------------------------------------------------------
+bool AppContext::computeErrors()
+{
+  markEdited();
+  return checkForErrors();
+}
+
+//------------------------------------------------------------------------
+// AppContext::renderErrors
+//------------------------------------------------------------------------
+void AppContext::renderErrors()
+{
+  renderErrors(fFrontPanel->fPanel);
+  renderErrors(fBackPanel->fPanel);
+  if(fHasFoldedPanels)
+  {
+    renderErrors(fFoldedFrontPanel->fPanel);
+    renderErrors(fFoldedBackPanel->fPanel);
+  }
+
+}
+
+//------------------------------------------------------------------------
+// AppContext::renderErrors
+//------------------------------------------------------------------------
+void AppContext::renderErrors(Panel const &iPanel)
+{
+  if(!iPanel.hasErrors())
+    return;
+
+  ImGui::Text("%s |", iPanel.getName());
+  ImGui::SameLine();
+  ImGui::BeginGroup();
+  for(auto &error: iPanel.getErrors())
+  {
+    ImGui::TextUnformatted(error.c_str());
+  }
+  ImGui::EndGroup();
+}
+
+
 //------------------------------------------------------------------------
 // AppContext::renderMainMenu
 //------------------------------------------------------------------------

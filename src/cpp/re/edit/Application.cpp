@@ -490,25 +490,44 @@ inline void maybeInvoke(Application::gui_action_t const &iAction) { if(iAction) 
 //------------------------------------------------------------------------
 void Application::maybeSaveProject(gui_action_t const &iNextAction)
 {
-  auto action = impl::chain([this]() { saveProject(); }, iNextAction);
-
   if(fAppContext)
   {
-    if(!fAppContext->getReEditVersion())
-    {
-      newDialog(fmt::printf("Saving - %s", fAppContext->getDeviceName()))
-        .preContentMessage("Warning")
-        .text("This is the first time you save this project.\n"
-              "Saving will override hdgui_2d.lua and device_2d.lua.\n"
-              "Are you sure you want to proceed?")
-        .button("Yes (save)", [action] { action(); })
-        .button("No (don't save)", [iNextAction] { impl::maybeInvoke(iNextAction); })
-        ;
-    }
-    else
-    {
-      action();
-    }
+    auto action = impl::chain([this]() { saveProject(); }, iNextAction);
+
+    action = [this, action, iNextAction] {
+      if(!fAppContext->getReEditVersion())
+      {
+        newDialog(fmt::printf("Saving - %s", fAppContext->getDeviceName()))
+          .preContentMessage("Warning")
+          .text("This is the first time you save this project.\n"
+                "Saving will override hdgui_2d.lua and device_2d.lua.\n"
+                "Are you sure you want to proceed?")
+          .button("Yes (save)", [action] { action(); })
+          .button("No (don't save)", [iNextAction] { impl::maybeInvoke(iNextAction); })
+          .button("Cancel", {});
+          ;
+      }
+      else
+        action();
+    };
+
+    action = [this, action, iNextAction] {
+      if(fAppContext->computeErrors())
+      {
+        auto &dialog = newDialog(fmt::printf("Saving - %s", fAppContext->getDeviceName()))
+          .preContentMessage("Warning - Errors detected")
+          .lambda([this] { fAppContext->renderErrors(); })
+          .postContentMessage("Are you sure you want to proceed?")
+          .button("Yes (save)", [action] { action(); })
+          .button("No (don't save)", [iNextAction] { impl::maybeInvoke(iNextAction); })
+          .button("Cancel", {});
+          ;
+      }
+      else
+        action();
+    };
+
+    action();
   }
   else
   {
