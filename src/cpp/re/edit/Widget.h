@@ -41,8 +41,8 @@ class Widget : public Editable
 public:
   explicit Widget(WidgetType iType, std::optional<std::string> const &iName = std::nullopt);
 
-  constexpr std::string const &getName() const { return fName.value(); }
-  constexpr StringWithHash::hash_t getNameHash() const { return fName.hash(); }
+  inline std::string const &getName() const { return fName.value(); }
+  inline StringWithHash::hash_t getNameHash() const { return fName.hash(); }
   void setName(std::string iName);
   constexpr int getId() const { return fId; }
   constexpr WidgetType getType() const { return fType; }
