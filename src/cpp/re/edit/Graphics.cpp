@@ -498,10 +498,13 @@ void Graphics::findErrors(AppContext &iCtx, UserError &oErrors) const
     {
       oErrors.add("Out of bound");
     }
-    p = getBottomRight();
-    if(p.x < 0 || p.y < 0 || p.x > max.x || p.y > max.y)
+    else
     {
-      oErrors.add("Out of bound");
+      p = getBottomRight();
+      if(p.x < 0 || p.y < 0 || p.x > max.x || p.y > max.y)
+      {
+        oErrors.add("Out of bound");
+      }
     }
   }
 
