@@ -844,7 +844,12 @@ void Application::renderWelcome()
   ImGui::SetNextWindowSize(viewport->Size);
   ImGui::SetNextWindowPos({});
 
-  if(ImGui::Begin(config::kWelcomeWindowTitle, nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_HorizontalScrollbar))
+  constexpr auto flags = ImGuiWindowFlags_NoMove
+                         | ImGuiWindowFlags_NoCollapse
+                         | ImGuiWindowFlags_NoTitleBar
+                         | ImGuiWindowFlags_NoResize
+                         | ImGuiWindowFlags_HorizontalScrollbar;
+  if(ImGui::Begin(config::kWelcomeWindowTitle, nullptr, flags))
   {
     ImGui::BeginGroup();
     {
@@ -1087,13 +1092,17 @@ void Application::renderApplicationMenuItems()
     bool newVersion = hasNewVersion();
     if(newVersion)
     {
-      if(ImGui::MenuItem(fmt::printf("Download - %s", fLatestRelease->fVersion).c_str()))
+      if(ImGui::MenuItem(fmt::printf("  Download - %s", fLatestRelease->fVersion).c_str()))
         downloadLatestVersion();
     }
     else
     {
-      ImGui::MenuItem("No New Update", nullptr, false, false);
+      ImGui::MenuItem("  No New Update", nullptr, false, false);
     }
+  }
+  if(ImGui::MenuItem("Clear Recent List"))
+  {
+    fConfig.clearDeviceConfigHistory();
   }
   if(ImGui::MenuItem("Quit", ReGui_Menu_Shortcut2(ReGui_Icon_KeySuper, "Q")))
   {

@@ -233,6 +233,11 @@ struct Global
     else
       return {};
   }
+
+  void clearDeviceConfigHistory()
+  {
+    fDeviceHistory.clear();
+  }
 };
 
 
