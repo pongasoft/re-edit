@@ -170,7 +170,6 @@ void Panel::draw(AppContext &iCtx)
         selectWidgets(iCtx, fShiftMouseDrag->fInitialPosition, fShiftMouseDrag->fCurrentPosition);
       }
     }
-
   }
   else if(fMouseDrag)
   {
@@ -198,20 +197,69 @@ void Panel::draw(AppContext &iCtx)
         moveWidgets(iCtx, fMouseDrag->fCurrentPosition, grid);
     }
   }
+  else if(fSpaceMouseDrag)
+  {
+    iCtx.setMouseCursorNextFrame(ImGuiMouseCursor_Hand);
+    if(ImGui::IsMouseReleased(ImGuiMouseButton_Left) || !ImGui::IsKeyDown(ImGuiKey_Space))
+    {
+      fSpaceMouseDrag = std::nullopt;
+    }
+    else
+    {
+      fSpaceMouseDrag->fCurrentPosition = ImGui::GetMousePos();
+      {
+        auto max = ImGui::GetScrollMaxX();
+        if(max > 0)
+        {
+          auto delta = fSpaceMouseDrag->fLastUpdatePosition.x - fSpaceMouseDrag->fCurrentPosition.x;
+          if(delta != 0)
+            ImGui::SetScrollX(Utils::clamp(ImGui::GetScrollX() + delta, 0.0f, max));
+        }
+      }
+      {
+        auto max = ImGui::GetScrollMaxY();
+        if(max > 0)
+        {
+          auto delta = fSpaceMouseDrag->fLastUpdatePosition.y - fSpaceMouseDrag->fCurrentPosition.y;
+          if(delta != 0)
+            ImGui::SetScrollY(Utils::clamp(ImGui::GetScrollY() + delta, 0.0f, max));
+        }
+      }
+    }
+
+    fSpaceMouseDrag->fLastUpdatePosition = fSpaceMouseDrag->fCurrentPosition;
+  }
   else if(ImGui::IsItemClicked(ImGuiMouseButton_Left))
   {
     if(io.KeyShift)
-      fShiftMouseDrag = MouseDrag{mousePos, mousePos, mousePos};
+    {
+      fShiftMouseDrag = MouseDrag{mousePos};
+    }
+    else if(ImGui::IsKeyDown(ImGuiKey_Space))
+    {
+      // Implementation note: we must use screen position because due to scrolling while dragging, mousePos actually
+      // changes, so it is never stable!
+      if(ImGui::GetScrollMaxX() > 0 || ImGui::GetScrollMaxY() > 0)
+      {
+        auto screenMousePos = ImGui::GetMousePos();
+        fSpaceMouseDrag = MouseDrag{screenMousePos};
+      }
+      iCtx.setMouseCursorNextFrame(ImGuiMouseCursor_Hand);
+    }
     else
     {
       if(selectWidget(iCtx, mousePos, ReGui::IsSingleSelectKey(io)))
       {
-        fMouseDrag = MouseDrag{mousePos, mousePos, mousePos};
+        fMouseDrag = MouseDrag{mousePos};
         fWidgetMove = WidgetMove{mousePos};
       }
       else
-        fShiftMouseDrag = MouseDrag{mousePos, mousePos, mousePos};
+        fShiftMouseDrag = MouseDrag{mousePos};
     }
+  }
+  else if(ImGui::IsItemHovered() && ImGui::IsKeyDown(ImGuiKey_Space))
+  {
+    iCtx.setMouseCursorNextFrame(ImGuiMouseCursor_Hand);
   }
 
   ImGui::SetCursorScreenPos(cp); // InvisibleButton moves the cursor so we restore it

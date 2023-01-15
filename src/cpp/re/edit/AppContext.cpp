@@ -1090,6 +1090,12 @@ void AppContext::beforeRenderFrame()
 //------------------------------------------------------------------------
 void AppContext::newFrame()
 {
+  if(fMouseCursor != ImGuiMouseCursor_None)
+  {
+    ImGui::SetMouseCursor(fMouseCursor);
+    fMouseCursor = ImGuiMouseCursor_None;
+  }
+
   if(fNewLayoutRequested)
   {
     auto newLayoutRequest = *fNewLayoutRequested;

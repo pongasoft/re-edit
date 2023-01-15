@@ -108,6 +108,7 @@ public:
   PanelState *getPanelState(PanelType iType) const;
   Panel *getPanel(PanelType iType) const;
   Panel *getCurrentPanel() const;
+  inline void setMouseCursorNextFrame(ImGuiMouseCursor iMouseCursor) { fMouseCursor = iMouseCursor; }
 
 public: // UserPreferences
   inline UserPreferences const &getUserPreferences() const { return *fUserPreferences; }
@@ -371,6 +372,7 @@ protected:
   std::atomic<bool> fMaybeReloadDevice{};
   std::optional<std::string> fNewLayoutRequested{};
   bool fZoomToFitRequested{};
+  ImGuiMouseCursor fMouseCursor{ImGuiMouseCursor_None};
 
   std::shared_ptr<efsw::FileWatcher> fRootWatcher{};
   std::shared_ptr<efsw::FileWatchListener> fRootListener{};

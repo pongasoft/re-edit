@@ -29,6 +29,8 @@ namespace re::edit {
 
 struct MouseDrag
 {
+  explicit MouseDrag(ImVec2 const &iPos) : fInitialPosition{iPos}, fLastUpdatePosition{iPos}, fCurrentPosition{iPos} {}
+
   ImVec2 fInitialPosition{};
   ImVec2 fLastUpdatePosition{};
   ImVec2 fCurrentPosition{};
@@ -202,6 +204,7 @@ private:
   std::optional<WidgetMove> fWidgetMove{};
   std::optional<MouseDrag> fMouseDrag{};
   std::optional<MouseDrag> fShiftMouseDrag{};
+  std::optional<MouseDrag> fSpaceMouseDrag{};
   std::optional<ImVec2> fPopupLocation{};
   int fWidgetCounter{1}; // used for unique id
   MultiSelectionList fWidgetsSelectionList{*this, "widget", fWidgetsOrder};
