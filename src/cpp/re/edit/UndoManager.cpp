@@ -153,7 +153,10 @@ std::shared_ptr<RedoAction> CompositeUndoAction::execute()
 
   for(auto &action: fActions)
   {
-    redo->fActions.emplace_back(action->execute());
+    auto redoAction = action->execute();
+    if(redoAction)
+      redoAction->fUndoAction = action;
+    redo->fActions.emplace_back(redoAction);
   }
 
   return redo;
