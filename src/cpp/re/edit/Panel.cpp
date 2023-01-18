@@ -570,7 +570,6 @@ std::shared_ptr<Widget> Panel::replaceWidget(int iWidgetId, std::shared_ptr<Widg
     }
   }
   std::swap(fWidgets[iWidgetId], iWidget);
-  fSelectedWidgets = std::nullopt;
   return iWidget;
 }
 
@@ -686,14 +685,12 @@ void Panel::selectWidget(int id, bool iMultiple)
   {
     clearSelection();
     widget->fSelected = true;
-    fSelectedWidgets = std::nullopt;
   }
   else
   {
     if(widget->fSelected)
       unselectWidget(id);
     widget->fSelected = true;
-    fSelectedWidgets = std::nullopt;
   }
 }
 
@@ -716,7 +713,6 @@ void Panel::unselectWidget(int id)
 {
   auto widget = getWidget(id);
   widget->fSelected = false;
-  fSelectedWidgets = std::nullopt;
 }
 
 //------------------------------------------------------------------------
@@ -726,7 +722,6 @@ void Panel::clearSelection()
 {
   for(auto &p: fWidgets)
     p.second->fSelected = false;
-  fSelectedWidgets = std::nullopt;
 }
 
 namespace impl {
@@ -777,15 +772,14 @@ void Panel::moveWidgets(AppContext &iCtx, ImVec2 const &iPosition, ImVec2 const 
     auto delta = totalDelta - fWidgetMove->fDelta;
     if(delta.x != 0 || delta.y != 0)
     {
-      auto selectedWidgets = getSelectedWidgets();
-      if(iCtx.beginUndoTx(fmt::printf("Move %d widgets", selectedWidgets.size()), &fWidgetMove))
+      if(iCtx.beginUndoTx(fmt::printf("Move %d widgets", fComputedSelectedWidgets.size()), &fWidgetMove))
       {
-        for(auto &widget: selectedWidgets)
+        for(auto &widget: fComputedSelectedWidgets)
           iCtx.addUndoWidgetChange(widget.get(), fmt::printf("Move %s", widget->getName()));
         iCtx.commitUndoTx();
       }
 
-      for(auto &widget: selectedWidgets)
+      for(auto &widget: fComputedSelectedWidgets)
       {
         widget->move(delta);
       }
@@ -799,7 +793,7 @@ void Panel::moveWidgets(AppContext &iCtx, ImVec2 const &iPosition, ImVec2 const 
 //------------------------------------------------------------------------
 void Panel::endMoveWidgets(AppContext &iCtx, ImVec2 const &iPosition)
 {
-  for(auto &widget: getSelectedWidgets())
+  for(auto &widget: fComputedSelectedWidgets)
   {
     auto position = widget->getPosition();
     position.x = std::round(position.x);
@@ -810,23 +804,6 @@ void Panel::endMoveWidgets(AppContext &iCtx, ImVec2 const &iPosition)
   iCtx.resetUndoMergeKey();
 
   fWidgetMove = std::nullopt;
-}
-
-//------------------------------------------------------------------------
-// Panel::getSelectedWidgets
-//------------------------------------------------------------------------
-std::vector<std::shared_ptr<Widget>> Panel::getSelectedWidgets() const
-{
-  if(fSelectedWidgets)
-    return *fSelectedWidgets;
-  std::vector<std::shared_ptr<Widget>> c{};
-  for(auto &[id, w]: fWidgets)
-  {
-    if(w->isSelected())
-      c.emplace_back(w);
-  }
-  fSelectedWidgets = c;
-  return c;
 }
 
 //------------------------------------------------------------------------
@@ -883,8 +860,6 @@ bool Panel::checkForErrors(AppContext &iCtx)
 //------------------------------------------------------------------------
 void Panel::editView(AppContext &iCtx)
 {
-  auto selectedWidgets = getSelectedWidgets();
-
   if(ImGui::Begin("Panel Widgets"))
   {
 //
@@ -892,7 +867,7 @@ void Panel::editView(AppContext &iCtx)
     ImGui::PushItemWidth(iCtx.fItemWidth);
 //    ImGui::Text("region = %f | itemWidth = %f", ImGui::GetContentRegionAvail().x, kItemWidth);
 
-    auto size = selectedWidgets.size();
+    auto size = fComputedSelectedWidgets.size();
     switch(size)
     {
       case 0:
@@ -903,13 +878,13 @@ void Panel::editView(AppContext &iCtx)
 
       case 1:
       {
-        editSingleSelectionView(iCtx, selectedWidgets[0]);
+        editSingleSelectionView(iCtx, fComputedSelectedWidgets[0]);
         break;
       }
 
       default:
       {
-        editMultiSelectionView(iCtx, selectedWidgets);
+        editMultiSelectionView(iCtx, fComputedSelectedWidgets);
         break;
       }
     }
@@ -1098,7 +1073,7 @@ void Panel::editMultiSelectionView(AppContext &iCtx, std::vector<std::shared_ptr
     fEdited = true;
     if(iCtx.beginUndoTx("Move Widgets", this))
     {
-      for(auto &widget: getSelectedWidgets())
+      for(auto &widget: fComputedSelectedWidgets)
         iCtx.addUndoWidgetChange(widget.get(), fmt::printf("Move %s", widget->getName()));
       iCtx.commitUndoTx();
     }
@@ -1109,7 +1084,7 @@ void Panel::editMultiSelectionView(AppContext &iCtx, std::vector<std::shared_ptr
     fEdited = true;
     if(iCtx.beginUndoTx("Move Widgets", this))
     {
-      for(auto &widget: getSelectedWidgets())
+      for(auto &widget: fComputedSelectedWidgets)
         iCtx.addUndoWidgetChange(widget.get(), fmt::printf("Move %s", widget->getName()));
       iCtx.commitUndoTx();
     }
@@ -1215,13 +1190,11 @@ void Panel::MultiSelectionList::handleClick(std::shared_ptr<Widget> const &iWidg
     if(!iWidget->isSelected())
     {
       iWidget->fSelected = true;
-      fPanel.fSelectedWidgets = std::nullopt;
       fLastSelected = id;
     }
     else
     {
       iWidget->fSelected = false;
-      fPanel.fSelectedWidgets = std::nullopt;
       fLastSelected = std::nullopt;
     }
     return;
@@ -1242,7 +1215,6 @@ void Panel::MultiSelectionList::handleClick(std::shared_ptr<Widget> const &iWidg
         fPanel.getWidget(elt)->fSelected = true;
     }
 
-    fPanel.fSelectedWidgets = std::nullopt;
     fLastSelected = id;
     return;
   }
@@ -1614,7 +1586,6 @@ std::shared_ptr<Panel::PanelWidgets> Panel::thawWidgets(std::shared_ptr<PanelWid
   fWidgets = iPanelWidgets->fWidgets;
   fWidgetsOrder = iPanelWidgets->fWidgetsOrder;
   fDecalsOrder = iPanelWidgets->fDecalsOrder;
-  fSelectedWidgets = std::nullopt;
   markEdited();
   return ws;
 }
@@ -1654,7 +1625,6 @@ void Panel::selectWidgets(AppContext &iCtx, ImVec2 const &iPosition1, ImVec2 con
     if(!w->isSelected() && w->overlaps(topLeft, bottomRight))
     {
       w->fSelected = true;
-      fSelectedWidgets = std::nullopt;
     }
   }
 }

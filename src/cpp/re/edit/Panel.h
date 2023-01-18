@@ -115,7 +115,6 @@ public:
   void duplicateWidgets(AppContext &iCtx, std::vector<std::shared_ptr<Widget>> const &iWidgets);
   std::shared_ptr<Widget> transmuteWidget(AppContext &iCtx, const std::shared_ptr<Widget>& iWidget, WidgetDef const &iNewDef);
   std::shared_ptr<Widget> replaceWidget(int iWidgetId, std::shared_ptr<Widget> iWidget);
-  std::vector<std::shared_ptr<Widget>> getSelectedWidgets() const;
   std::shared_ptr<Widget> getWidget(int id) const;
 
   void selectWidget(int id, bool iMultiple);
@@ -220,7 +219,6 @@ private:
   int fWidgetCounter{1}; // used for unique id
   MultiSelectionList fWidgetsSelectionList{*this, "widget", fWidgetsOrder};
   MultiSelectionList fDecalsSelectionList{*this, "decal", fDecalsOrder};
-  mutable std::optional<std::vector<std::shared_ptr<Widget>>> fSelectedWidgets{};
   std::vector<std::shared_ptr<Widget>> fComputedSelectedWidgets{};
   std::optional<ReGui::Rect> fComputedSelectedRect{};
 };
