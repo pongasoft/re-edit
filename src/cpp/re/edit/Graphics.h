@@ -138,9 +138,9 @@ public:
 
   void findErrors(AppContext &iCtx, UserError &oErrors) const override;
 
-  void draw(AppContext &iCtx, ImU32 iBorderColor, bool iXRay) const;
-  void drawBorder(AppContext &iCtx, ImU32 iBorderColor) const;
-  void drawHitBoundaries(AppContext &iCtx, ImU32 iColor) const;
+  void draw(AppContext &iCtx, ReGui::Canvas &iCanvas, ImU32 iBorderColor, bool iXRay) const;
+  void drawBorder(ReGui::Canvas &iCanvas, ImU32 iBorderColor) const;
+  void drawHitBoundaries(ReGui::Canvas &iCanvas, ImU32 iColor) const;
 
   std::unique_ptr<Attribute> clone() const override { return Attribute::clone<Graphics>(*this); }
 
@@ -177,7 +177,7 @@ public:
   void collectUsedTexturePaths(std::set<fs::path> &oPaths) const override;
 
   void editView(AppContext &iCtx) override;
-  bool draw(AppContext &iCtx, Graphics const *iParent, ImU32 iBorderColor, bool xRay) const;
+  bool draw(AppContext &iCtx, ReGui::Canvas &iCanvas, Graphics const *iParent, ImU32 iBorderColor, bool xRay) const;
 
   std::unique_ptr<Attribute> clone() const override { return Attribute::clone<Background>(*this); }
 

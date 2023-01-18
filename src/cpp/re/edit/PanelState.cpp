@@ -152,7 +152,7 @@ bool PanelState::renderTab(AppContext &iCtx)
   auto flags = fPanel.hasErrors() ? ImGuiTabItemFlags_UnsavedDocument : ImGuiTabItemFlags_None;
   if(ImGui::BeginTabItem(fPanel.getName(), nullptr, flags))
   {
-    fPanel.computeIsHidden(iCtx);
+    fPanel.computeEachFrame(iCtx);
     fPanel.checkForErrors(iCtx);
     ImGui::EndTabItem();
     return true;
@@ -198,10 +198,13 @@ void PanelState::renderWidgets(AppContext &iCtx)
 //------------------------------------------------------------------------
 void PanelState::renderPanel(AppContext &iCtx)
 {
-  ImGui::SetNextWindowContentSize(fPanel.getSize() * iCtx.getZoom());
   if(auto l = iCtx.fPanelWindow.begin())
   {
-    fPanel.draw(iCtx);
+    auto &canvas = iCtx.getPanelCanvas();
+    canvas.begin(fPanel.getSize(), {iCtx.getZoom(), iCtx.isZoomFitContent()});
+    fPanel.draw(iCtx, canvas);
+    canvas.end();
+    iCtx.setZoom(canvas.getZoom());
   }
 }
 

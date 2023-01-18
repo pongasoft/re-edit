@@ -76,7 +76,7 @@ public:
   inline bool overlaps(ImVec2 const &iTopLeft, ImVec2 const &iBottomRight) const { return fGraphics->overlaps(iTopLeft, iBottomRight); }
 
   void init(AppContext &iCtx);
-  void draw(AppContext &iCtx);
+  void draw(AppContext &iCtx, ReGui::Canvas &iCanvas);
   void editView(AppContext &iCtx);
   bool checkForErrors(AppContext &iCtx) override;
   void markEdited() override;

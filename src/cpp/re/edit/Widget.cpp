@@ -105,7 +105,7 @@ Widget::Widget(Widget const &iOther, std::string iName) :
 //------------------------------------------------------------------------
 // Widget::draw
 //------------------------------------------------------------------------
-void Widget::draw(AppContext &iCtx)
+void Widget::draw(AppContext &iCtx, ReGui::Canvas &iCanvas)
 {
   if(isHidden())
     return;
@@ -123,7 +123,7 @@ void Widget::draw(AppContext &iCtx)
   if(iCtx.fWidgetRendering == AppContext::EWidgetRendering::kNone)
   {
     // border and hit boundaries
-    fGraphics->drawBorder(iCtx, borderColor);
+    fGraphics->drawBorder(iCanvas, borderColor);
   }
   else
   {
@@ -135,17 +135,17 @@ void Widget::draw(AppContext &iCtx)
         switch(iCtx.fCustomDisplayRendering)
         {
           case AppContext::ECustomDisplayRendering::kNone:
-            fGraphics->drawBorder(iCtx, borderColor);
+            fGraphics->drawBorder(iCanvas, borderColor);
             break;
           case AppContext::ECustomDisplayRendering::kMain:
-            fGraphics->draw(iCtx, borderColor, xRay);
+            fGraphics->draw(iCtx, iCanvas, borderColor, xRay);
             break;
           case AppContext::ECustomDisplayRendering::kBackgroundSD:
           case AppContext::ECustomDisplayRendering::kBackgroundHD:
           {
             auto bgAttribute = findAttributeByNameAndType<Background>("background");
-            if(!bgAttribute->draw(iCtx, fGraphics, borderColor, xRay))
-              fGraphics->drawBorder(iCtx, borderColor);
+            if(!bgAttribute->draw(iCtx, iCanvas, fGraphics, borderColor, xRay))
+              fGraphics->drawBorder(iCanvas, borderColor);
             break;
           }
           default:
@@ -157,25 +157,25 @@ void Widget::draw(AppContext &iCtx)
         switch(iCtx.fSampleDropZoneRendering)
         {
           case AppContext::ESampleDropZoneRendering::kNone:
-            fGraphics->drawBorder(iCtx, borderColor);
+            fGraphics->drawBorder(iCanvas, borderColor);
             break;
           case AppContext::ESampleDropZoneRendering::kFill:
-            fGraphics->draw(iCtx, borderColor, xRay);
+            fGraphics->draw(iCtx, iCanvas, borderColor, xRay);
             break;
         }
         break;
 
       default:
-        fGraphics->draw(iCtx, borderColor, xRay);
+        fGraphics->draw(iCtx, iCanvas, borderColor, xRay);
         break;
     }
   }
 
   if(iCtx.fBorderRendering == AppContext::EBorderRendering::kHitBoundaries)
-    fGraphics->drawHitBoundaries(iCtx, ReGui::GetColorU32(kHitBoundariesColor));
+    fGraphics->drawHitBoundaries(iCanvas, ReGui::GetColorU32(kHitBoundariesColor));
 
   if(hasErrors())
-    iCtx.drawRectFilled(fGraphics->fPosition, fGraphics->getSize(), iCtx.getUserPreferences().fWidgetErrorColor);
+    iCanvas.addRectFilled(fGraphics->fPosition, fGraphics->getSize(), iCtx.getUserPreferences().fWidgetErrorColor);
 }
 
 //------------------------------------------------------------------------

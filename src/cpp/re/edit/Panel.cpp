@@ -88,206 +88,79 @@ std::shared_ptr<Widget> Panel::getWidget(int id) const
 //------------------------------------------------------------------------
 // Panel::draw
 //------------------------------------------------------------------------
-void Panel::draw(AppContext &iCtx)
+void Panel::draw(AppContext &iCtx, ReGui::Canvas &iCanvas)
 {
-  ImVec2 backgroundScreenPosition;
-  auto const cp = ImGui::GetCursorScreenPos();
-  auto &io = ImGui::GetIO();
-  auto texture = fGraphics.hasValidTexture() ? fGraphics.getTexture() : nullptr;
-  // Implementation note: this fixes the issue that if a widget is dragged outside the panel, it cannot
-  // be picked up again. But this entire positioning, needs to be revisited (the panel should be centered when more
-  // space available)
-  auto clickableArea = ImGui::GetCurrentWindowRead()->OuterRectClipped.GetSize() - (ImGui::GetStyle().WindowPadding * 2);
-  auto backgroundSize = getSize() * iCtx.getZoom();
-  clickableArea = {std::max(clickableArea.x, backgroundSize.x), std::max(clickableArea.y, backgroundSize.y)};
+//  ImVec2 backgroundScreenPosition;
+//  auto const cp = ImGui::GetCursorScreenPos();
+//  auto &io = ImGui::GetIO();
+//  // Implementation note: this fixes the issue that if a widget is dragged outside the panel, it cannot
+//  // be picked up again. But this entire positioning, needs to be revisited (the panel should be centered when more
+//  // space available)
+//  auto clickableArea = ImGui::GetCurrentWindowRead()->OuterRectClipped.GetSize() - (ImGui::GetStyle().WindowPadding * 2);
+//  auto backgroundSize = getSize() * iCtx.getZoom();
+//  clickableArea = {std::max(clickableArea.x, backgroundSize.x), std::max(clickableArea.y, backgroundSize.y)};
 
   // rails are always below
   if(iCtx.fShowRackRails)
-  {
-    auto rails = iCtx.getBuiltInTexture(BuiltIns::kRackRails.fKey);
-    int leftFrame = 0;
-    int rightFrame = 1;
-    if(!isPanelOfType(fType, kPanelTypeAnyFront))
-    {
-      leftFrame = 2;
-      rightFrame = 3;
-    }
-    auto heightRU = isPanelOfType(fType, kPanelTypeAnyUnfolded) ? fDeviceHeightRU : 1;
-    auto leftPos = ImVec2{};
-    auto rightPos = ImVec2{kDevicePixelWidth - rails->frameWidth(), 0};
-    auto increment = ImVec2{ 0, rails->frameHeight() };
-    for(int i = 0 ; i < heightRU; i++, leftPos += increment, rightPos += increment)
-    {
-      iCtx.drawTexture(rails.get(), leftPos, leftFrame);
-      iCtx.drawTexture(rails.get(), rightPos, rightFrame);
-    }
-  }
+    drawRails(iCtx, iCanvas);
 
   if(iCtx.fPanelRendering != AppContext::EPanelRendering::kNone)
-  {
-    if(iCtx.fPanelRendering == AppContext::EPanelRendering::kBorder)
-    {
-      iCtx.RectItem(ImVec2{}, getSize(), ImGui::GetColorU32(ImGui::GetStyle().Colors[ImGuiCol_Text]));
-    }
-    else
-    {
-      if(texture)
-      {
-        auto textureColor = iCtx.fPanelRendering == AppContext::EPanelRendering::kXRay ?
-                            ReGui::GetColorU32(kXRayColor) :
-                            ReGui::GetColorU32(kWhiteColor);
+    drawPanel(iCtx, iCanvas);
 
-        iCtx.TextureItem(texture, {}, {}, 0, ReGui::kTransparentColorU32, textureColor);
-      }
-      else
-        iCtx.RectFilledItem(ImVec2{}, getSize(), iCtx.getUserPreferences().fWidgetErrorColor);
-    }
+//  backgroundScreenPosition = ImGui::GetItemRectMin(); // accounts for scrollbar!
+//
+//  // we use an invisible button to capture mouse events
+//  ImGui::SetCursorScreenPos(cp); // TextureItem moves the cursor so we restore it
+//  ImGui::InvisibleButton("canvas", clickableArea, ImGuiButtonFlags_MouseButtonLeft);
+
+  // always draw decals first
+  drawWidgets(iCtx, iCanvas, fDecalsOrder);
+
+  // then draws the widgets
+  drawWidgets(iCtx, iCanvas, fWidgetsOrder);
+
+  // then the cable origin
+  drawCableOrigin(iCtx, iCanvas);
+
+  // draw the fold button
+  if(iCtx.hasFoldedPanels() && iCtx.fShowFoldButton)
+  {
+    iCanvas.addTexture(iCtx.getBuiltInTexture(BuiltIns::kFoldButton.fKey).get(),
+                       kFoldButtonPos,
+                       isPanelOfType(fType, kPanelTypeAnyUnfolded) ? 0 : 2);
   }
-  else
+
+  iCanvas.makeResponsive();
+
+  auto const mousePos = iCanvas.getCanvasMousePos();
+
+  if(fSelectWidgetsAction)
   {
-    iCtx.Dummy(ImVec2{}, getSize());
+    handleSelectWidgetsAction(iCtx, mousePos);
   }
-
-  backgroundScreenPosition = ImGui::GetItemRectMin(); // accounts for scrollbar!
-
-  // we use an invisible button to capture mouse events
-  ImGui::SetCursorScreenPos(cp); // TextureItem moves the cursor so we restore it
-  ImGui::InvisibleButton("canvas", clickableArea, ImGuiButtonFlags_MouseButtonLeft);
-
-  auto const mousePos = (ImGui::GetMousePos() - backgroundScreenPosition) / iCtx.getZoom(); // accounts for scrollbars
-  if(fShiftMouseDrag)
+  else if(fMoveWidgetsAction)
   {
-    if(ImGui::IsMouseReleased(ImGuiMouseButton_Left))
-    {
-      fShiftMouseDrag = std::nullopt;
-    }
-    else
-    {
-      fShiftMouseDrag->fCurrentPosition = mousePos;
-      if(fShiftMouseDrag->fInitialPosition.x != fShiftMouseDrag->fCurrentPosition.x ||
-         fShiftMouseDrag->fInitialPosition.y != fShiftMouseDrag->fCurrentPosition.y)
-      {
-        selectWidgets(iCtx, fShiftMouseDrag->fInitialPosition, fShiftMouseDrag->fCurrentPosition);
-      }
-    }
+    handleMoveWidgetsAction(iCtx, mousePos);
   }
-  else if(fMouseDrag)
+  else if(fMoveCanvasAction)
   {
-    if(ImGui::IsMouseReleased(ImGuiMouseButton_Left))
-    {
-      fMouseDrag = std::nullopt;
-      endMoveWidgets(iCtx, mousePos);
-    }
-    else
-    {
-      bool shouldMoveWidgets = false;
-      auto grid = ImGui::GetIO().KeyAlt ? ImVec2{1.0f, 1.0f} : iCtx.fGrid;
-      fMouseDrag->fCurrentPosition = mousePos;
-      if(std::abs(fMouseDrag->fLastUpdatePosition.x - fMouseDrag->fCurrentPosition.x) >= grid.x)
-      {
-        fMouseDrag->fLastUpdatePosition.x = fMouseDrag->fCurrentPosition.x;
-        shouldMoveWidgets = true;
-      }
-      if(std::abs(fMouseDrag->fLastUpdatePosition.y - fMouseDrag->fCurrentPosition.y) >= grid.y)
-      {
-        fMouseDrag->fLastUpdatePosition.y = fMouseDrag->fCurrentPosition.y;
-        shouldMoveWidgets = true;
-      }
-      if(shouldMoveWidgets)
-        moveWidgets(iCtx, fMouseDrag->fCurrentPosition, grid);
-    }
-  }
-  else if(fSpaceMouseDrag)
-  {
-    iCtx.setMouseCursorNextFrame(ImGuiMouseCursor_Hand);
-    if(ImGui::IsMouseReleased(ImGuiMouseButton_Left) || !ImGui::IsKeyDown(ImGuiKey_Space))
-    {
-      fSpaceMouseDrag = std::nullopt;
-    }
-    else
-    {
-      fSpaceMouseDrag->fCurrentPosition = ImGui::GetMousePos();
-      {
-        auto max = ImGui::GetScrollMaxX();
-        if(max > 0)
-        {
-          auto delta = fSpaceMouseDrag->fLastUpdatePosition.x - fSpaceMouseDrag->fCurrentPosition.x;
-          if(delta != 0)
-            ImGui::SetScrollX(Utils::clamp(ImGui::GetScrollX() + delta, 0.0f, max));
-        }
-      }
-      {
-        auto max = ImGui::GetScrollMaxY();
-        if(max > 0)
-        {
-          auto delta = fSpaceMouseDrag->fLastUpdatePosition.y - fSpaceMouseDrag->fCurrentPosition.y;
-          if(delta != 0)
-            ImGui::SetScrollY(Utils::clamp(ImGui::GetScrollY() + delta, 0.0f, max));
-        }
-      }
-    }
-
-    fSpaceMouseDrag->fLastUpdatePosition = fSpaceMouseDrag->fCurrentPosition;
+    handleMoveCanvasAction(iCtx, iCanvas);
   }
   else if(ImGui::IsItemClicked(ImGuiMouseButton_Left))
   {
-    if(io.KeyShift)
-    {
-      fShiftMouseDrag = MouseDrag{mousePos};
-    }
-    else if(ImGui::IsKeyDown(ImGuiKey_Space))
-    {
-      // Implementation note: we must use screen position because due to scrolling while dragging, mousePos actually
-      // changes, so it is never stable!
-      if(ImGui::GetScrollMaxX() > 0 || ImGui::GetScrollMaxY() > 0)
-      {
-        auto screenMousePos = ImGui::GetMousePos();
-        fSpaceMouseDrag = MouseDrag{screenMousePos};
-      }
-      iCtx.setMouseCursorNextFrame(ImGuiMouseCursor_Hand);
-    }
-    else
-    {
-      if(selectWidget(iCtx, mousePos, ReGui::IsSingleSelectKey(io)))
-      {
-        fMouseDrag = MouseDrag{mousePos};
-        fWidgetMove = WidgetMove{mousePos};
-      }
-      else
-        fShiftMouseDrag = MouseDrag{mousePos};
-    }
+    handleLeftMouseClick(iCtx, mousePos);
   }
   else if(ImGui::IsItemHovered() && ImGui::IsKeyDown(ImGuiKey_Space))
   {
     iCtx.setMouseCursorNextFrame(ImGuiMouseCursor_Hand);
   }
 
-  ImGui::SetCursorScreenPos(cp); // InvisibleButton moves the cursor so we restore it
-
-  // always draw decals first
-  drawWidgets(iCtx, fDecalsOrder);
-
-  // then draws the widgets
-  drawWidgets(iCtx, fWidgetsOrder);
-
-  // then the cable origin
-  drawCableOrigin(iCtx);
-
-  // draw the fold button
-  if(iCtx.hasFoldedPanels() && iCtx.fShowFoldButton)
-  {
-    iCtx.drawTexture(iCtx.getBuiltInTexture(BuiltIns::kFoldButton.fKey).get(), kFoldButtonPos,
-                     isPanelOfType(fType, kPanelTypeAnyUnfolded) ? 0 : 2);
-  }
-
-  auto selectedWidgets = getSelectedWidgets();
-
   if(ImGui::BeginPopupContextItem())
   {
     if(!fPopupLocation)
-      fPopupLocation = ImGui::GetMousePos() - backgroundScreenPosition; // accounts for scrollbars
+      fPopupLocation = mousePos; // accounts for scrollbars
     auto widgetLocation = *fPopupLocation / iCtx.getZoom();
-    if(renderSelectedWidgetsMenu(iCtx, selectedWidgets, widgetLocation))
+    if(renderSelectedWidgetsMenu(iCtx, fComputedSelectedWidgets, widgetLocation))
       ImGui::Separator();
     renderAddWidgetMenu(iCtx, widgetLocation);
     ImGui::EndPopup();
@@ -295,39 +168,27 @@ void Panel::draw(AppContext &iCtx)
   else
     fPopupLocation = std::nullopt;
 
-  if(fMouseDrag && !selectedWidgets.empty() && (!ReGui::AnySpecialKey() || io.KeyAlt))
+  if(fMoveWidgetsAction && fComputedSelectedRect && (!ReGui::AnySpecialKey() || ImGui::GetIO().KeyAlt))
   {
-    auto min = selectedWidgets[0]->getTopLeft();
-    auto max = selectedWidgets[0]->getBottomRight();
-
-    if(selectedWidgets.size() > 1)
-    {
-      std::for_each(selectedWidgets.begin() + 1, selectedWidgets.end(), [&min, &max](auto c) {
-        auto pos = c->getTopLeft();
-        if(pos.x < min.x)
-          min.x = pos.x;
-        if(pos.y < min.y)
-          min.y = pos.y;
-        pos = c->getBottomRight();
-        if(pos.x > max.x)
-          max.x = pos.x;
-        if(pos.y > max.y)
-          max.y = pos.y;
-      });
-    }
-
     auto frameSize = getSize();
     auto color = ImGui::GetColorU32({1,1,0,0.5});
-    iCtx.drawLine({0, min.y}, {frameSize.x, min.y}, color);
-    iCtx.drawLine({min.x, 0}, {min.x, frameSize.y}, color);
-    iCtx.drawLine({0, max.y}, {frameSize.x, max.y}, color);
-    iCtx.drawLine({max.x, 0}, {max.x, frameSize.y}, color);
+    iCanvas.addHorizontalLine(fComputedSelectedRect->Min, color);
+    iCanvas.addVerticalLine(fComputedSelectedRect->Min, color);
+    iCanvas.addHorizontalLine(fComputedSelectedRect->Max, color);
+    iCanvas.addVerticalLine(fComputedSelectedRect->Max, color);
   }
 
-  if(fShiftMouseDrag)
+//  if(fComputedSelectedRect)
+//  {
+//    iCanvas.setFocus(fComputedSelectedRect->GetCenter());
+//  }
+//  else
+//    iCanvas.setFocus(std::nullopt);
+
+  if(fSelectWidgetsAction)
   {
     auto color = ImGui::GetColorU32({1,1,0,1});
-    iCtx.drawRect(fShiftMouseDrag->fInitialPosition, fShiftMouseDrag->fCurrentPosition - fShiftMouseDrag->fInitialPosition, color);
+    iCanvas.addRect(fSelectWidgetsAction->fInitialPosition, fSelectWidgetsAction->fCurrentPosition - fSelectWidgetsAction->fInitialPosition, color);
   }
 
 //  auto logging = LoggingManager::instance();
@@ -343,34 +204,188 @@ void Panel::draw(AppContext &iCtx)
 }
 
 //------------------------------------------------------------------------
+// Panel::drawRails
+//------------------------------------------------------------------------
+void Panel::drawRails(AppContext const &iCtx, ReGui::Canvas const &iCanvas) const
+{
+  auto rails = iCtx.getBuiltInTexture(BuiltIns::kRackRails.fKey);
+  int leftFrame = 0;
+  int rightFrame = 1;
+  if(!isPanelOfType(fType, kPanelTypeAnyFront))
+  {
+    leftFrame = 2;
+    rightFrame = 3;
+  }
+  auto heightRU = isPanelOfType(fType, kPanelTypeAnyUnfolded) ? fDeviceHeightRU : 1;
+  auto leftPos = ImVec2{};
+  auto rightPos = ImVec2{kDevicePixelWidth - rails->frameWidth(), 0};
+  auto increment = ImVec2{ 0, rails->frameHeight() };
+  for(int i = 0 ; i < heightRU; i++, leftPos += increment, rightPos += increment)
+  {
+    iCanvas.addTexture(rails.get(), leftPos, leftFrame);
+    iCanvas.addTexture(rails.get(), rightPos, rightFrame);
+  }
+}
+
+//------------------------------------------------------------------------
+// Panel::drawPanel
+//------------------------------------------------------------------------
+void Panel::drawPanel(AppContext const &iCtx, ReGui::Canvas const &iCanvas) const
+{
+  auto texture = fGraphics.hasValidTexture() ? fGraphics.getTexture() : nullptr;
+
+  if(iCtx.fPanelRendering == AppContext::EPanelRendering::kBorder)
+  {
+    iCanvas.addRect(ImVec2{}, getSize(), ImGui::GetColorU32(ImGui::GetStyle().Colors[ImGuiCol_Text]));
+  }
+  else
+  {
+    if(texture)
+    {
+      auto textureColor = iCtx.fPanelRendering == AppContext::EPanelRendering::kXRay ?
+                          ReGui::GetColorU32(kXRayColor) :
+                          ReGui::GetColorU32(kWhiteColor);
+      iCanvas.addTexture(texture, {}, 0, ReGui::kTransparentColorU32, textureColor);
+    }
+    else
+      iCanvas.addRectFilled(ImVec2{}, getSize(), iCtx.getUserPreferences().fWidgetErrorColor);
+  }
+}
+
+//------------------------------------------------------------------------
 // Panel::drawWidgets
 //------------------------------------------------------------------------
-void Panel::drawWidgets(AppContext &iCtx, std::vector<int> const &iOrder)
+void Panel::drawWidgets(AppContext &iCtx, ReGui::Canvas &iCanvas, std::vector<int> const &iOrder)
 {
   for(auto id: iOrder)
   {
     auto &w = fWidgets[id];
-    w->draw(iCtx);
+    w->draw(iCtx, iCanvas);
   }
 }
 
 //------------------------------------------------------------------------
 // Panel::drawCableOrigin
 //------------------------------------------------------------------------
-void Panel::drawCableOrigin(AppContext &iCtx)
+void Panel::drawCableOrigin(AppContext &iCtx, ReGui::Canvas &iCanvas)
 {
   static constexpr auto kCableOriginSize = 10.0f;
   if(fShowCableOrigin && fCableOrigin)
   {
-    iCtx.drawLine({ fCableOrigin->x - kCableOriginSize, fCableOrigin->y - kCableOriginSize},
+    iCanvas.addLine({ fCableOrigin->x - kCableOriginSize, fCableOrigin->y - kCableOriginSize},
                   { fCableOrigin->x + kCableOriginSize, fCableOrigin->y + kCableOriginSize},
                   iCtx.getUserPreferences().fSelectedWidgetColor);
-    iCtx.drawLine({ fCableOrigin->x - kCableOriginSize, fCableOrigin->y + kCableOriginSize},
-                  { fCableOrigin->x + kCableOriginSize, fCableOrigin->y - kCableOriginSize},
-                  iCtx.getUserPreferences().fSelectedWidgetColor);
+    iCanvas.addLine({ fCableOrigin->x - kCableOriginSize, fCableOrigin->y + kCableOriginSize},
+                    { fCableOrigin->x + kCableOriginSize, fCableOrigin->y - kCableOriginSize},
+                    iCtx.getUserPreferences().fSelectedWidgetColor);
   }
 }
 
+//------------------------------------------------------------------------
+// Panel::handleLeftMouseClick
+//------------------------------------------------------------------------
+void Panel::handleLeftMouseClick(AppContext &iCtx, ReGui::Canvas::canvas_pos_t const &iMousePos)
+{
+  auto &io = ImGui::GetIO();
+  bool moveCanvasAction = false;
+
+  if(io.KeyShift)
+  {
+    fSelectWidgetsAction = MouseDrag{iMousePos};
+  }
+  else if(ImGui::IsKeyDown(ImGuiKey_Space))
+  {
+    moveCanvasAction = true;
+  }
+  else
+  {
+    if(selectWidget(iCtx, iMousePos, ReGui::IsSingleSelectKey(io)))
+    {
+      fMoveWidgetsAction = MouseDrag{iMousePos};
+      fWidgetMove = WidgetMove{iMousePos};
+    }
+    else
+      moveCanvasAction = true;
+  }
+
+  if(moveCanvasAction)
+  {
+    // Implementation note: we must use screen position because due to scrolling while dragging, mousePos actually
+    // changes, so it is never stable!
+    auto screenMousePos = ImGui::GetMousePos();
+    fMoveCanvasAction = MouseDrag{screenMousePos};
+    iCtx.setMouseCursorNextFrame(ImGuiMouseCursor_Hand);
+  }
+}
+
+//------------------------------------------------------------------------
+// Panel::handleShiftMouseDrag
+//------------------------------------------------------------------------
+void Panel::handleSelectWidgetsAction(AppContext &iCtx, ReGui::Canvas::canvas_pos_t const &iMousePos)
+{
+  if(ImGui::IsMouseReleased(ImGuiMouseButton_Left))
+  {
+    fSelectWidgetsAction = std::nullopt;
+  }
+  else
+  {
+    fSelectWidgetsAction->fCurrentPosition = iMousePos;
+    if(fSelectWidgetsAction->fInitialPosition.x != fSelectWidgetsAction->fCurrentPosition.x ||
+       fSelectWidgetsAction->fInitialPosition.y != fSelectWidgetsAction->fCurrentPosition.y)
+    {
+      selectWidgets(iCtx, fSelectWidgetsAction->fInitialPosition, fSelectWidgetsAction->fCurrentPosition);
+    }
+  }
+}
+
+//------------------------------------------------------------------------
+// Panel::handleMoveWidgetsAction
+//------------------------------------------------------------------------
+void Panel::handleMoveWidgetsAction(AppContext &iCtx, ReGui::Canvas::canvas_pos_t const &iMousePos)
+{
+  if(ImGui::IsMouseReleased(ImGuiMouseButton_Left))
+  {
+    fMoveWidgetsAction = std::nullopt;
+    endMoveWidgets(iCtx, iMousePos);
+  }
+  else
+  {
+    bool shouldMoveWidgets = false;
+    auto grid = ImGui::GetIO().KeyAlt ? ImVec2{1.0f, 1.0f} : iCtx.fGrid;
+    fMoveWidgetsAction->fCurrentPosition = iMousePos;
+    if(std::abs(fMoveWidgetsAction->fLastUpdatePosition.x - fMoveWidgetsAction->fCurrentPosition.x) >= grid.x)
+    {
+      fMoveWidgetsAction->fLastUpdatePosition.x = fMoveWidgetsAction->fCurrentPosition.x;
+      shouldMoveWidgets = true;
+    }
+    if(std::abs(fMoveWidgetsAction->fLastUpdatePosition.y - fMoveWidgetsAction->fCurrentPosition.y) >= grid.y)
+    {
+      fMoveWidgetsAction->fLastUpdatePosition.y = fMoveWidgetsAction->fCurrentPosition.y;
+      shouldMoveWidgets = true;
+    }
+    if(shouldMoveWidgets)
+      moveWidgets(iCtx, fMoveWidgetsAction->fCurrentPosition, grid);
+  }
+}
+
+//------------------------------------------------------------------------
+// Panel::handleMoveCanvasAction
+//------------------------------------------------------------------------
+void Panel::handleMoveCanvasAction(AppContext &iCtx, ReGui::Canvas &iCanvas)
+{
+  iCtx.setMouseCursorNextFrame(ImGuiMouseCursor_Hand);
+  if(ImGui::IsMouseReleased(ImGuiMouseButton_Left))
+  {
+    fMoveCanvasAction = std::nullopt;
+  }
+  else
+  {
+    fMoveCanvasAction->fCurrentPosition = ImGui::GetMousePos();
+    iCanvas.moveByDeltaScreenPos(fMoveCanvasAction->fCurrentPosition - fMoveCanvasAction->fLastUpdatePosition);
+  }
+
+  fMoveCanvasAction->fLastUpdatePosition = fMoveCanvasAction->fCurrentPosition;
+}
 
 //------------------------------------------------------------------------
 // Panel::renderAddWidgetMenu
@@ -861,15 +876,6 @@ bool Panel::checkForErrors(AppContext &iCtx)
   }
 
   return hasErrors();
-}
-
-//------------------------------------------------------------------------
-// PanelState::computeIsHidden
-//------------------------------------------------------------------------
-void Panel::computeIsHidden(AppContext &iCtx)
-{
-  for(auto &[n, widget]: fWidgets)
-    widget->computeIsHidden(iCtx);
 }
 
 //------------------------------------------------------------------------
@@ -1649,6 +1655,45 @@ void Panel::selectWidgets(AppContext &iCtx, ImVec2 const &iPosition1, ImVec2 con
     {
       w->fSelected = true;
       fSelectedWidgets = std::nullopt;
+    }
+  }
+}
+
+//------------------------------------------------------------------------
+// Panel::computeEachFrame
+//------------------------------------------------------------------------
+void Panel::computeEachFrame(AppContext &iCtx)
+{
+  fComputedSelectedWidgets.clear();
+  fComputedSelectedRect = std::nullopt;
+
+  fComputedRect = {{}, fSize};
+
+  for(auto &[_, w]: fWidgets)
+  {
+    w->computeIsHidden(iCtx);
+
+    auto tl = w->getTopLeft();
+    fComputedRect.Min.x = std::min(fComputedRect.Min.x, tl.x);
+    fComputedRect.Min.y = std::min(fComputedRect.Min.y, tl.y);
+    auto br = w->getBottomRight();
+    fComputedRect.Max.x = std::max(fComputedRect.Max.x, br.x);
+    fComputedRect.Max.y = std::max(fComputedRect.Max.y, br.y);
+
+    if(w->isSelected())
+    {
+      fComputedSelectedWidgets.emplace_back(w);
+      if(fComputedSelectedRect)
+      {
+        fComputedSelectedRect->Min.x = std::min(fComputedSelectedRect->Min.x, tl.x);
+        fComputedSelectedRect->Min.y = std::min(fComputedSelectedRect->Min.y, tl.y);
+        fComputedSelectedRect->Max.x = std::max(fComputedSelectedRect->Max.x, br.x);
+        fComputedSelectedRect->Max.y = std::max(fComputedSelectedRect->Max.y, br.y);
+      }
+      else
+      {
+        fComputedSelectedRect = ReGui::Rect{tl, br};
+      }
     }
   }
 }

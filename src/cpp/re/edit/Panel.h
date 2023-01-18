@@ -93,11 +93,14 @@ public:
   char const *getName() const;
   constexpr std::string const &getNodeName() const { return fNodeName; };
   constexpr ImVec2 getSize() const { return fSize; }
+  constexpr ImVec2 getTotalSize() const { return fComputedRect.GetSize(); }
+  constexpr ImVec2 getTopLeftOffset() const { return {-fComputedRect.Min.x, -fComputedRect.Min.y}; }
+  constexpr ReGui::Rect getRect() const { return fComputedRect; }
   constexpr PanelType getType() const { return fType; }
 
   void setDeviceHeightRU(int iDeviceHeightRU);
 
-  void draw(AppContext &iCtx);
+  void draw(AppContext &iCtx, ReGui::Canvas &iCanvas);
   void editView(AppContext &iCtx);
   void editOrderView(AppContext &iCtx);
   void markEdited() override;
@@ -157,14 +160,21 @@ private:
   std::shared_ptr<Widget> findWidgetOnTopAt(ImVec2 const &iPosition) const;
   void moveWidgets(AppContext &iCtx, ImVec2 const &iPosition, ImVec2 const &iGrid);
   void endMoveWidgets(AppContext &iCtx, ImVec2 const &iPosition);
-  void computeIsHidden(AppContext &iCtx);
+  void computeEachFrame(AppContext &iCtx);
   void renderAddWidgetMenu(AppContext &iCtx, ImVec2 const &iPosition = {});
   bool renderSelectedWidgetsMenu(AppContext &iCtx,
                                  std::vector<std::shared_ptr<Widget>> const &iSelectedWidgets,
                                  std::optional<ImVec2> iPosition = std::nullopt);
   void renderWidgetMenu(AppContext &iCtx, std::shared_ptr<Widget> const &iWidget);
-  void drawWidgets(AppContext &iCtx, std::vector<int> const &iOrder);
-  void drawCableOrigin(AppContext &iCtx);
+  void drawWidgets(AppContext &iCtx, ReGui::Canvas &iCanvas, std::vector<int> const &iOrder);
+  void drawCableOrigin(AppContext &iCtx, ReGui::Canvas &iCanvas);
+  void drawRails(AppContext const &iCtx, ReGui::Canvas const &iCanvas) const;
+  void drawPanel(AppContext const &iCtx, ReGui::Canvas const &iCanvas) const;
+
+  void handleLeftMouseClick(AppContext &iCtx, ReGui::Canvas::canvas_pos_t const &iMousePos);
+  void handleSelectWidgetsAction(AppContext &iCtx, ReGui::Canvas::canvas_pos_t const &iMousePos);
+  void handleMoveWidgetsAction(AppContext &iCtx, ReGui::Canvas::canvas_pos_t const &iMousePos);
+  void handleMoveCanvasAction(AppContext &iCtx, ReGui::Canvas &iCanvas);
 
 private:
   class MultiSelectionList
@@ -192,6 +202,7 @@ private:
   PanelType fType;
   int fDeviceHeightRU{1};
   ImVec2 fSize{kDevicePixelWidth, toPixelHeight(1)};
+  ReGui::Rect fComputedRect{{}, fSize};
   std::string fNodeName;
   re::edit::panel::Graphics fGraphics{};
   std::optional<ImVec2> fCableOrigin;
@@ -202,14 +213,16 @@ private:
   std::vector<int> fWidgetsOrder{};
   std::vector<int> fDecalsOrder{};
   std::optional<WidgetMove> fWidgetMove{};
-  std::optional<MouseDrag> fMouseDrag{};
-  std::optional<MouseDrag> fShiftMouseDrag{};
-  std::optional<MouseDrag> fSpaceMouseDrag{};
+  std::optional<MouseDrag> fMoveWidgetsAction{};
+  std::optional<MouseDrag> fSelectWidgetsAction{};
+  std::optional<MouseDrag> fMoveCanvasAction{};
   std::optional<ImVec2> fPopupLocation{};
   int fWidgetCounter{1}; // used for unique id
   MultiSelectionList fWidgetsSelectionList{*this, "widget", fWidgetsOrder};
   MultiSelectionList fDecalsSelectionList{*this, "decal", fDecalsOrder};
   mutable std::optional<std::vector<std::shared_ptr<Widget>>> fSelectedWidgets{};
+  std::vector<std::shared_ptr<Widget>> fComputedSelectedWidgets{};
+  std::optional<ReGui::Rect> fComputedSelectedRect{};
 };
 
 }

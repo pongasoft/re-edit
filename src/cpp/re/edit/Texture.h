@@ -96,6 +96,15 @@ public:
     doDraw(false, iPosition, {}, iPositionZoom, iTextureZoom, iFrameNumber, iBorderColor, iTextureColor);
   }
 
+  inline void draw(ImVec2 const &iScreenPosition,
+                   ImVec2 const &iSize,
+                   int iFrameNumber = 0,
+                   ImU32 iBorderColor = ReGui::kTransparentColorU32,
+                   ImU32 iTextureColor = ReGui::kWhiteColorU32) const
+  {
+    doDraw(false, iScreenPosition, iSize, iFrameNumber, iBorderColor, iTextureColor);
+  }
+
   void addData(std::unique_ptr<Data> iData) { fData.emplace_back(std::move(iData)); }
   void clearData() { fData.clear(); }
 
@@ -107,6 +116,13 @@ protected:
               ImVec2 const &iSize,
               float iPositionZoom,
               float iTextureZoom,
+              int iFrameNumber,
+              ImU32 iBorderColor,
+              ImU32 iTextureColor) const;
+
+  void doDraw(bool iAddItem,
+              ImVec2 const &iScreenPosition,
+              ImVec2 const &iSize,
               int iFrameNumber,
               ImU32 iBorderColor,
               ImU32 iTextureColor) const;

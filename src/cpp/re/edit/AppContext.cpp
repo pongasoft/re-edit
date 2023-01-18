@@ -251,12 +251,6 @@ void AppContext::render()
 {
   RE_EDIT_INTERNAL_ASSERT(fCurrentPanelState != nullptr);
 
-  if(fZoomToFitRequested && fPanelWindow.isVisible())
-  {
-    fZoomToFitRequested = false;
-    zoomToFit();
-  }
-
   handleKeyboardShortcuts();
 
   int flags = needsSaving() ?  ImGuiWindowFlags_UnsavedDocument : ImGuiWindowFlags_None;
@@ -1040,6 +1034,17 @@ void AppContext::setUserZoom(float iZoom)
   iZoom = Utils::clamp(iZoom, 0.1f, 5.0f);
   fUserZoom = iZoom;
   fDpiAdjustedZoom = iZoom * Application::GetCurrent().getCurrentFontDpiScale();
+  fZoomFitContent = false;
+}
+
+//------------------------------------------------------------------------
+// AppContext::setZoom
+//------------------------------------------------------------------------
+void AppContext::setZoom(ReGui::Canvas::Zoom const &iZoom)
+{
+  fDpiAdjustedZoom = iZoom.fValue;
+  fUserZoom = fDpiAdjustedZoom / Application::GetCurrent().getCurrentFontDpiScale();
+  fZoomFitContent = iZoom.fFitContent;
 }
 
 //------------------------------------------------------------------------
@@ -1371,12 +1376,7 @@ void AppContext::renderZoomSelection()
   ImGui::SameLine();
   ReGui::TextRadioButton("100%", &zoom, 100);
   ImGui::SameLine();
-  ImGui::BeginDisabled(!fPanelWindow.isVisible());
-  if(ImGui::Button("Fit "))
-  {
-    requestZoomToFit();
-  }
-  ImGui::EndDisabled();
+  ReGui::TextToggleButton("Fit ", &fZoomFitContent);
 
   if(controlZoom != zoom)
   {
@@ -1442,24 +1442,6 @@ void AppContext::renderGridSelection()
   ImGui::PopItemWidth();
 
   ImGui::PopID();
-}
-
-//------------------------------------------------------------------------
-// AppContext::zoomToFit
-//------------------------------------------------------------------------
-void AppContext::zoomToFit()
-{
-  if(auto l = fPanelWindow.begin())
-  {
-    // Implementation note: using internal API because the public API GetContentRegionAvail() depends on
-    // scrollbars being visible or not and knowing if a scrollbar is visible is an internal api
-    // see this thread https://github.com/ocornut/imgui/issues/6060#issuecomment-1375635063
-    auto const &style = ImGui::GetStyle();
-    auto windowSize = ImGui::GetCurrentWindowRead()->OuterRectClipped.GetSize();
-    auto panelSize = fCurrentPanelState->fPanel.getSize();
-    auto factor = (windowSize - (style.WindowPadding * 2)) / panelSize / Application::GetCurrent().getCurrentFontDpiScale();
-    setUserZoom(std::min(factor.x, factor.y));
-  }
 }
 
 //------------------------------------------------------------------------

@@ -171,17 +171,31 @@ void Texture::doDraw(bool iAddItem,
 {
   if(fData.empty())
     return;
-
   auto const cp = ImGui::GetCursorScreenPos() + iPosition * iPositionZoom;
+  auto const size = ImVec2{(iSize.x == 0 ? frameWidth()  : iSize.x) * iTextureZoom,
+                           (iSize.y == 0 ? frameHeight() : iSize.y) * iTextureZoom};
+  doDraw(iAddItem, cp, size, iFrameNumber, iBorderColor, iTextureColor);
+}
 
-  auto size = ImVec2{(iSize.x == 0 ? frameWidth()  : iSize.x) * iTextureZoom,
-                     (iSize.y == 0 ? frameHeight() : iSize.y) * iTextureZoom};
-  const ImRect rect{cp, cp + size};
+//------------------------------------------------------------------------
+// Texture::doDraw
+//------------------------------------------------------------------------
+void Texture::doDraw(bool iAddItem,
+                     ImVec2 const &iScreenPosition,
+                     ImVec2 const &iSize,
+                     int iFrameNumber,
+                     ImU32 iBorderColor,
+                     ImU32 iTextureColor) const
+{
+  if(fData.empty())
+    return;
+
+  const ImRect rect{iScreenPosition, iScreenPosition + iSize};
 
   // do we treat the texture as a ImGui item (clickable, etc...)
   if(iAddItem)
   {
-    ImGui::SetCursorScreenPos(cp);
+    ImGui::SetCursorScreenPos(iScreenPosition);
     ImGui::ItemSize(rect);
     if(!ImGui::ItemAdd(rect, 0))
       return;

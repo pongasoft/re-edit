@@ -195,12 +195,12 @@ constexpr ImU32 computeTextureColor(bool iXRay)
 //------------------------------------------------------------------------
 // Graphics::draw
 //------------------------------------------------------------------------
-void Graphics::draw(AppContext &iCtx, ImU32 iBorderColor, bool iXRay) const
+void Graphics::draw(AppContext &iCtx, ReGui::Canvas &iCanvas, ImU32 iBorderColor, bool iXRay) const
 {
   auto texture = hasTexture() ? getTexture() : nullptr;
   if(texture && texture->isValid())
   {
-    iCtx.drawTexture(texture, fPosition, fFrameNumber, iBorderColor, impl::computeTextureColor(iXRay));
+    iCanvas.addTexture(texture, fPosition, fFrameNumber, iBorderColor, impl::computeTextureColor(iXRay));
   }
   else
   {
@@ -210,38 +210,38 @@ void Graphics::draw(AppContext &iCtx, ImU32 iBorderColor, bool iXRay) const
     switch(iCtx.fNoGraphicsRendering)
     {
       case AppContext::ENoGraphicsRendering::kFill:
-        iCtx.drawRectFilled(fPosition, getSize(), color);
+        iCanvas.addRectFilled(fPosition, getSize(), color);
         break;
       case AppContext::ENoGraphicsRendering::kBorder:
-        iCtx.drawRect(fPosition, getSize(), color);
+        iCanvas.addRect(fPosition, getSize(), color);
         break;
       case AppContext::ENoGraphicsRendering::kNone:
         // do nothing
         break;
     }
-    drawBorder(iCtx, iBorderColor);
+    drawBorder(iCanvas, iBorderColor);
   }
 }
 
 //------------------------------------------------------------------------
 // Graphics::drawBorder
 //------------------------------------------------------------------------
-void Graphics::drawBorder(AppContext &iCtx, ImU32 iBorderColor) const
+void Graphics::drawBorder(ReGui::Canvas &iCanvas, ImU32 iBorderColor) const
 {
   if(!ReGui::ColorIsTransparent(iBorderColor))
-    iCtx.drawRect(fPosition, getSize(), iBorderColor);
+    iCanvas.addRect(fPosition, getSize(), iBorderColor);
 }
 
 //------------------------------------------------------------------------
 // Graphics::drawHitBoundaries
 //------------------------------------------------------------------------
-void Graphics::drawHitBoundaries(AppContext &iCtx, ImU32 iColor) const
+void Graphics::drawHitBoundaries(ReGui::Canvas &iCanvas, ImU32 iColor) const
 {
   if(fHitBoundariesEnabled)
-    iCtx.drawRect(fPosition + ImVec2{fHitBoundaries.fLeftInset, fHitBoundaries.fTopInset},
-                  getSize() - ImVec2{fHitBoundaries.fLeftInset + fHitBoundaries.fRightInset,
-                                     fHitBoundaries.fTopInset + fHitBoundaries.fBottomInset},
-                  iColor);
+    iCanvas.addRect(fPosition + ImVec2{fHitBoundaries.fLeftInset, fHitBoundaries.fTopInset},
+                    getSize() - ImVec2{fHitBoundaries.fLeftInset + fHitBoundaries.fRightInset,
+                                       fHitBoundaries.fTopInset + fHitBoundaries.fBottomInset},
+                    iColor);
 }
 
 //------------------------------------------------------------------------
@@ -634,7 +634,7 @@ bool Graphics::copyFrom(Attribute const *iFromAttribute)
 //------------------------------------------------------------------------
 // Background::draw
 //------------------------------------------------------------------------
-bool Background::draw(AppContext &iCtx, Graphics const *iParent, ImU32 iBorderColor, bool xRay) const
+bool Background::draw(AppContext &iCtx, ReGui::Canvas &iCanvas, Graphics const *iParent, ImU32 iBorderColor, bool xRay) const
 {
   if(fProvided)
   {
@@ -645,8 +645,8 @@ bool Background::draw(AppContext &iCtx, Graphics const *iParent, ImU32 iBorderCo
         auto texture = iCtx.findTexture(fValue);
         if(texture && texture->isValid())
         {
-          auto zoom = iCtx.getZoom() * iParent->getSize().x / texture->frameWidth();
-          texture->draw(iParent->fPosition, iCtx.getZoom(), zoom, 0, iBorderColor, impl::computeTextureColor(xRay));
+          auto scale = iParent->getSize() / texture->frameSize();
+          iCanvas.addScaledTexture(texture.get(), scale, iParent->fPosition, 0, iBorderColor, impl::computeTextureColor(xRay));
           return true;
         }
         break;
@@ -657,7 +657,7 @@ bool Background::draw(AppContext &iCtx, Graphics const *iParent, ImU32 iBorderCo
         auto texture = iCtx.findHDTexture(fValue);
         if(texture && texture->isValid())
         {
-          iCtx.drawTexture(texture.get(), iParent->fPosition, 0, iBorderColor, impl::computeTextureColor(xRay));
+          iCanvas.addTexture(texture.get(), iParent->fPosition, 0, iBorderColor, impl::computeTextureColor(xRay));
           return true;
         }
         break;

@@ -33,6 +33,7 @@
 #include "Errors.h"
 #include "Config.h"
 #include "Utils.h"
+#include "Canvas.h"
 
 namespace efsw {
 class FileWatcher;
@@ -282,6 +283,7 @@ public:
   bool fShowRackRails{false};
 
   constexpr float getZoom() const { return fDpiAdjustedZoom; }
+  constexpr bool isZoomFitContent() const { return fZoomFitContent; }
 
   ImVec2 fGrid{1.0f, 1.0f};
   float fItemWidth{300.0f};
@@ -311,6 +313,7 @@ protected:
                   fs::path const &iHDGui2DFile,
                   Utils::CancellableSPtr const &iCancellable);
   inline void setCurrentWidget(Widget const *iWidget) { fCurrentWidget = iWidget; }
+  inline ReGui::Canvas &getPanelCanvas() { return fPanelCanvas; }
   void newFrame();
   void beforeRenderFrame();
   void afterRenderFrame();
@@ -319,8 +322,8 @@ protected:
   void render();
   void handleKeyboardShortcuts();
   void setUserZoom(float iZoom);
-  void zoomToFit();
-  void requestZoomToFit() { fZoomToFitRequested = true; }
+  void setZoom(ReGui::Canvas::Zoom const &iZoom);
+  void requestZoomToFit() { fZoomFitContent = true; }
   void incrementZoom();
   void decrementZoom();
   void populateWidgetUndoAction(WidgetUndoAction *iAction, Widget const *iWidget);
@@ -354,8 +357,9 @@ protected:
   bool fHasFoldedPanels{};
   float fUserZoom{0.20f};
   float fDpiAdjustedZoom{fUserZoom};
+  bool fZoomFitContent{true};
   std::optional<std::string> fReEditVersion{};
-  ReGui::Window fPanelWindow{"Panel", true, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoCollapse};
+  ReGui::Window fPanelWindow{"Panel", true, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoCollapse};
   ReGui::Window fPanelWidgetsWindow{"Panel Widgets", true, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoCollapse};
   ReGui::Window fWidgetsWindow{"Widgets", true, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoCollapse};
   ReGui::Window fPropertiesWindow{"Properties", true, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoCollapse};
@@ -363,6 +367,7 @@ protected:
   PanelState *fCurrentPanelState{};
   PanelState *fPreviousPanelState{};
   Widget const *fCurrentWidget{};
+  ReGui::Canvas fPanelCanvas{};
   bool fNeedsSaving{};
   std::shared_ptr<UndoAction> fLastSavedUndoAction{};
   bool fRecomputeDimensionsRequested{true};
@@ -371,7 +376,6 @@ protected:
   bool fReloadDeviceRequested{};
   std::atomic<bool> fMaybeReloadDevice{};
   std::optional<std::string> fNewLayoutRequested{};
-  bool fZoomToFitRequested{};
   ImGuiMouseCursor fMouseCursor{ImGuiMouseCursor_None};
 
   std::shared_ptr<efsw::FileWatcher> fRootWatcher{};
