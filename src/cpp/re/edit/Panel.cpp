@@ -528,7 +528,6 @@ void Panel::duplicateWidgets(AppContext &iCtx, std::vector<std::shared_ptr<Widge
   });
 }
 
-
 //------------------------------------------------------------------------
 // Panel::transmuteWidget
 //------------------------------------------------------------------------
@@ -782,6 +781,8 @@ void Panel::moveWidgets(AppContext &iCtx, ImVec2 const &iPosition, ImVec2 const 
       for(auto &widget: fComputedSelectedWidgets)
       {
         widget->move(delta);
+        if(widget->isEdited())
+          fEdited = true;
       }
       fWidgetMove->fDelta = totalDelta;
     }
