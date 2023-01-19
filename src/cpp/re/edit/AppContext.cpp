@@ -342,9 +342,17 @@ void AppContext::render()
     ImGui::AlignTextToFramePadding();
     ImGui::Text("Rack Rails      ");
     ImGui::SameLine();
-    ReGui::TextRadioButton("None  ", &fShowRackRails, false);
+    if(ReGui::TextRadioButton("None  ", &fShowRackRails, false))
+    {
+      if(fPanelRendering == EPanelRendering::kXRay)
+        fPanelRendering = EPanelRendering::kNormal;
+    }
     ImGui::SameLine();
-    ReGui::TextRadioButton("Show  ", &fShowRackRails, true);
+    if(ReGui::TextRadioButton("Show  ", &fShowRackRails, true))
+    {
+      if(fPanelRendering == EPanelRendering::kNormal)
+        fPanelRendering = EPanelRendering::kXRay;
+    }
     ImGui::PopID();
 
     ImGui::PopID();
@@ -456,6 +464,14 @@ ImVec2 AppContext::getCurrentPanelSize() const
 void AppContext::toggleWidgetRenderingXRay()
 {
   fWidgetRendering = fWidgetRendering == EWidgetRendering::kXRay ? EWidgetRendering::kNormal : EWidgetRendering::kXRay;
+}
+
+//------------------------------------------------------------------------
+// AppContext::toggleWidgetBorder
+//------------------------------------------------------------------------
+void AppContext::toggleWidgetBorder()
+{
+  fBorderRendering = fBorderRendering == EBorderRendering::kNone ? EBorderRendering::kNormal : EBorderRendering::kNone;
 }
 
 //------------------------------------------------------------------------

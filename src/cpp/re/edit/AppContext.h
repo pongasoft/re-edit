@@ -111,6 +111,7 @@ public:
   Panel *getCurrentPanel() const;
   inline void setMouseCursorNextFrame(ImGuiMouseCursor iMouseCursor) { fMouseCursor = iMouseCursor; }
   void toggleWidgetRenderingXRay();
+  void toggleWidgetBorder();
   void toggleRails();
 
 public: // UserPreferences

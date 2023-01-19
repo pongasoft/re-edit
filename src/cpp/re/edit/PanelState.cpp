@@ -170,7 +170,14 @@ void PanelState::render(AppContext &iCtx)
   // when this panel becomes current, we force a check for widget errors as things may have changed (like
   // removed images, motherboard...)
   if(iCtx.fCurrentPanelState != iCtx.fPreviousPanelState)
+  {
     fPanel.markEdited();
+    if(iCtx.fPreviousPanelState &&
+       iCtx.fCurrentPanelState->isUnfoldedPanel() != iCtx.fPreviousPanelState->isUnfoldedPanel())
+    {
+      iCtx.requestZoomToFit();
+    }
+  }
 
   renderPanel(iCtx);
   renderPanelWidgets(iCtx);

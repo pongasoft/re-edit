@@ -31,6 +31,8 @@ public:
   explicit PanelState(PanelType iPanelType);
 
   constexpr PanelType getType() const { return fPanel.getType(); }
+  constexpr bool isUnfoldedPanel() const { return isPanelOfType(getType(), kPanelTypeAnyUnfolded); }
+
   std::vector<WidgetDef> const &getAllowedWidgets() const { return fWidgetDefs; }
 
   std::map<std::string, int> initPanel(AppContext &iCtx,

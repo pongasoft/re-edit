@@ -414,9 +414,13 @@ void Panel::handleCanvasInputs(AppContext &iCtx, ReGui::Canvas &iCanvas)
   if(ImGui::IsKeyPressed(ImGuiKey_F, false))
     iCanvas.zoomToFit();
 
-  // toggle X-Ray (X key)
+  // toggle Widget X-Ray (X key)
   if(ImGui::IsKeyPressed(ImGuiKey_X, false))
     iCtx.toggleWidgetRenderingXRay();
+
+  // toggle Widget Border (B key)
+  if(ImGui::IsKeyPressed(ImGuiKey_B, false))
+    iCtx.toggleWidgetBorder();
 
   // toggle rails (R key)
   if(ImGui::IsKeyPressed(ImGuiKey_R, false))
