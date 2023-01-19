@@ -545,10 +545,13 @@ struct Rect
 //  constexpr void        TranslateX(float dx)                { Min.x += dx; Max.x += dx; }
 //  constexpr void        TranslateY(float dy)                { Min.y += dy; Max.y += dy; }
 //  constexpr void        ClipWith(const Rect& r)             { Min = ImMax(Min, r.Min); Max = ImMin(Max, r.Max); }                   // Simple version, may lead to an inverted rectangle, which is fine for Contains/Overlaps test but not for display.
-//  constexpr void        ClipWithFull(const Rect& r)         { Min = ImClamp(Min, r.Min, r.Max); Max = ImClamp(Max, r.Min, r.Max); } // Full version, ensure both points are fully clipped.
+  constexpr void        ClipWithFull(const Rect& r)         { Min = ImClamp(Min, r.Min, r.Max); Max = ImClamp(Max, r.Min, r.Max); } // Full version, ensure both points are fully clipped.
 //  constexpr void        Floor()                             { Min.x = IM_FLOOR(Min.x); Min.y = IM_FLOOR(Min.y); Max.x = IM_FLOOR(Max.x); Max.y = IM_FLOOR(Max.y); }
 //  constexpr bool        IsInverted() const                  { return Min.x > Max.x || Min.y > Max.y; }
   constexpr ImVec4      ToVec4() const                      { return {Min.x, Min.y, Max.x, Max.y}; }
+
+private:
+  static constexpr ImVec2 ImClamp(const ImVec2& v, const ImVec2& mn, ImVec2 mx)      { return ImVec2((v.x < mn.x) ? mn.x : (v.x > mx.x) ? mx.x : v.x, (v.y < mn.y) ? mn.y : (v.y > mx.y) ? mx.y : v.y); }
 };
 
 }

@@ -69,7 +69,7 @@ void Canvas::updateZoom(Zoom iZoom, std::optional<canvas_pos_t> const &iFocus)
     if(iZoom.value() != fZoom.value())
     {
       // if focus is provided we use it, otherwise we use the center of the canvas as a reference point
-      auto focus = iFocus ? *iFocus : fromScreenPos(fCanvasPos + fCanvasSize / 2.0f);
+      auto focus = iFocus ? *iFocus : computeDefaultFocus();
       fOffset = fOffset - focus * (iZoom.value() - fZoom.value());
     }
     fZoom = iZoom;
@@ -209,6 +209,17 @@ void Canvas::zoomBy(float iPercent, std::optional<canvas_pos_t> iFocus)
 {
   auto zoom = fZoom.update(fZoom.value() * iPercent, false);
   updateZoom(zoom, iFocus ? iFocus : fFocus);
+}
+
+//------------------------------------------------------------------------
+// Canvas::computeDefaultFocus
+//------------------------------------------------------------------------
+Canvas::canvas_pos_t Canvas::computeDefaultFocus() const
+{
+  ReGui::Rect content {{0,0}, fContentSize};
+  ReGui::Rect canvas {fromScreenPos(fCanvasPos), fromScreenPos(fCanvasPos + fCanvasSize)};
+  content.ClipWithFull(canvas);
+  return content.GetCenter();
 }
 
 

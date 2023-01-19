@@ -108,6 +108,7 @@ protected:
   void updateZoom(Zoom iZoom, std::optional<canvas_pos_t> const &iFocus);
   void centerContent();
   float computeZoomToFit() const;
+  canvas_pos_t computeDefaultFocus() const;
 
 private:
   screen_pos_t fCanvasPos{};
