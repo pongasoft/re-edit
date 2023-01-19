@@ -390,6 +390,10 @@ void Panel::handleCanvasInputs(AppContext &iCtx, ReGui::Canvas &iCanvas)
 {
   constexpr float deltaAmount = 100.0f;
 
+  if(ReGui::AnySpecialKey())
+    return;
+
+  // canvas scroll (arrows)
   ImVec2 delta{};
   if(ImGui::IsKeyPressed(ImGuiKey_RightArrow, true))
     delta.x = -deltaAmount;
@@ -402,9 +406,29 @@ void Panel::handleCanvasInputs(AppContext &iCtx, ReGui::Canvas &iCanvas)
   if(delta.x != 0 || delta.y != 0)
     iCanvas.moveByDeltaCanvasPos(delta);
 
-  auto mouseVerticalWheel = ImGui::GetIO().MouseWheel;
-  if(mouseVerticalWheel != 0)
-    iCanvas.zoomBy(mouseVerticalWheel > 0 ? 0.9f : 1.1f, iCanvas.getCanvasMousePos());
+  // canvas center (C key)
+  if(ImGui::IsKeyPressed(ImGuiKey_C, false))
+    iCanvas.centerContent();
+
+  // canvas zoom to fit (F key)
+  if(ImGui::IsKeyPressed(ImGuiKey_F, false))
+    iCanvas.zoomToFit();
+
+  // toggle X-Ray (X key)
+  if(ImGui::IsKeyPressed(ImGuiKey_X, false))
+    iCtx.toggleWidgetRenderingXRay();
+
+  // toggle rails (R key)
+  if(ImGui::IsKeyPressed(ImGuiKey_R, false))
+    iCtx.toggleRails();
+
+  // canvas zoom (mouse wheel)
+  if(iCanvas.isHovered())
+  {
+    auto mouseVerticalWheel = ImGui::GetIO().MouseWheel;
+    if(mouseVerticalWheel != 0)
+      iCanvas.zoomBy(mouseVerticalWheel > 0 ? 0.9f : 1.1f, iCanvas.getCanvasMousePos());
+  }
 }
 
 //------------------------------------------------------------------------

@@ -64,6 +64,8 @@ public:
 
   Zoom end();
 
+  void centerContent();
+
   void addTexture(Texture const *iTexture,
                   canvas_pos_t const &iPos = {0,0},
                   int iFrameNumber = 0,
@@ -100,13 +102,13 @@ public:
   void moveByDeltaScreenPos(screen_pos_t const &iDelta);
   inline void moveByDeltaCanvasPos(canvas_pos_t const &iDelta) { moveByDeltaScreenPos(iDelta * fZoom.value()); }
   void zoomBy(float iPercent, std::optional<canvas_pos_t> iFocus = std::nullopt);
+  void zoomToFit();
 
 protected:
   constexpr screen_pos_t toScreenPos(canvas_pos_t const &iPos) const { return fCanvasPos + fOffset + iPos * fZoom.value(); }
   constexpr canvas_pos_t fromScreenPos(screen_pos_t const &iPos) const { return (iPos - fCanvasPos - fOffset) / fZoom.value(); }
 
   void updateZoom(Zoom iZoom, std::optional<canvas_pos_t> const &iFocus);
-  void centerContent();
   float computeZoomToFit() const;
   canvas_pos_t computeDefaultFocus() const;
 

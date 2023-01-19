@@ -451,6 +451,31 @@ ImVec2 AppContext::getCurrentPanelSize() const
 }
 
 //------------------------------------------------------------------------
+// AppContext::toggleWidgetRenderingXRay
+//------------------------------------------------------------------------
+void AppContext::toggleWidgetRenderingXRay()
+{
+  fWidgetRendering = fWidgetRendering == EWidgetRendering::kXRay ? EWidgetRendering::kNormal : EWidgetRendering::kXRay;
+}
+
+//------------------------------------------------------------------------
+// AppContext::toggleRails
+//------------------------------------------------------------------------
+void AppContext::toggleRails()
+{
+  if(fShowRackRails)
+  {
+    fShowRackRails = false;
+    fPanelRendering = EPanelRendering::kNormal;
+  }
+  else
+  {
+    fShowRackRails = true;
+    fPanelRendering = EPanelRendering::kXRay;
+  }
+}
+
+//------------------------------------------------------------------------
 // AppContext::TextureItem
 //------------------------------------------------------------------------
 void AppContext::TextureItem(Texture const *iTexture,
@@ -1003,7 +1028,7 @@ void AppContext::renderMainMenu()
           incrementZoom();
         if(ImGui::MenuItem("Zoom -", ReGui_Menu_Shortcut2(ReGui_Icon_KeySuper, "-")))
           decrementZoom();
-        if(ImGui::MenuItem("Zoom to fit", ReGui_Menu_Shortcut2(ReGui_Icon_KeySuper, "0")))
+        if(ImGui::MenuItem("Zoom to fit", ReGui_Menu_Shortcut2(ReGui_Icon_KeySuper, "0"), fZoomFitContent))
           requestZoomToFit();
         ImGui::EndMenu();
       }

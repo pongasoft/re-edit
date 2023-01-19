@@ -199,6 +199,7 @@ void PanelState::renderWidgets(AppContext &iCtx)
 //------------------------------------------------------------------------
 void PanelState::renderPanel(AppContext &iCtx)
 {
+  ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{});
   if(auto l = iCtx.fPanelWindow.begin())
   {
     auto &canvas = iCtx.getPanelCanvas();
@@ -207,6 +208,7 @@ void PanelState::renderPanel(AppContext &iCtx)
     fPanel.draw(iCtx, canvas);
     iCtx.setZoom(canvas.end());
   }
+  ImGui::PopStyleVar();
 }
 
 //------------------------------------------------------------------------

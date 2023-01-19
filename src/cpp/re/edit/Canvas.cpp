@@ -212,6 +212,15 @@ void Canvas::zoomBy(float iPercent, std::optional<canvas_pos_t> iFocus)
 }
 
 //------------------------------------------------------------------------
+// Canvas::zoomToFit
+//------------------------------------------------------------------------
+void Canvas::zoomToFit()
+{
+  fZoom = fZoom.update(computeZoomToFit(), true);
+  centerContent();
+}
+
+//------------------------------------------------------------------------
 // Canvas::computeDefaultFocus
 //------------------------------------------------------------------------
 Canvas::canvas_pos_t Canvas::computeDefaultFocus() const
@@ -221,7 +230,6 @@ Canvas::canvas_pos_t Canvas::computeDefaultFocus() const
   content.ClipWithFull(canvas);
   return content.GetCenter();
 }
-
 
 //------------------------------------------------------------------------
 // Canvas::Zoom::Zoom

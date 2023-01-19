@@ -110,6 +110,8 @@ public:
   Panel *getPanel(PanelType iType) const;
   Panel *getCurrentPanel() const;
   inline void setMouseCursorNextFrame(ImGuiMouseCursor iMouseCursor) { fMouseCursor = iMouseCursor; }
+  void toggleWidgetRenderingXRay();
+  void toggleRails();
 
 public: // UserPreferences
   inline UserPreferences const &getUserPreferences() const { return *fUserPreferences; }
