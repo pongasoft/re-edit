@@ -18,6 +18,7 @@
 
 #include "Canvas.h"
 #include "Texture.h"
+#include "Utils.h"
 
 namespace re::edit::ReGui {
 
@@ -32,7 +33,7 @@ void Canvas::begin(screen_pos_t const &iCanvasPos,
   fCanvasPos = iCanvasPos;
   fCanvasSize = {std::max(1.0f, iCanvasSize.x), std::max(1.0f, iCanvasSize.y)};
   fContentSize = iContentSize;
-  setZoom(iZoom);
+  updateZoom(iZoom, fFocus);
 }
 
 //------------------------------------------------------------------------
@@ -46,33 +47,32 @@ void Canvas::begin(ImVec2 const &iContentSize, Zoom iZoom)
 //------------------------------------------------------------------------
 // Canvas::end
 //------------------------------------------------------------------------
-void Canvas::end()
+Canvas::Zoom Canvas::end()
 {
-  // empty for now
+  fIsActive = false;
+  fIsHovered = false;
+  return fZoom;
 }
 
 //------------------------------------------------------------------------
-// Canvas::setZoom
+// Canvas::updateZoom
 //------------------------------------------------------------------------
-void Canvas::setZoom(Zoom iZoom)
+void Canvas::updateZoom(Zoom iZoom, std::optional<canvas_pos_t> const &iFocus)
 {
-  if(iZoom.fFitContent)
+  if(iZoom.fitContent())
   {
-    fZoom.fValue = computeZoomToFit();
-    fZoom.fFitContent = true;
+    fZoom = iZoom.update(computeZoomToFit(), true);
     centerContent();
   }
   else
   {
-    auto newZoom = std::max(0.1f, iZoom.fValue);
-    if(newZoom != fZoom.fValue)
+    if(iZoom.value() != fZoom.value())
     {
       // if focus is provided we use it, otherwise we use the center of the canvas as a reference point
-      auto focus = fFocus ? *fFocus : fromScreenPos(fCanvasPos + fCanvasSize / 2.0f);
-      fOffset = fOffset - focus * (newZoom - fZoom.fValue);
+      auto focus = iFocus ? *iFocus : fromScreenPos(fCanvasPos + fCanvasSize / 2.0f);
+      fOffset = fOffset - focus * (iZoom.value() - fZoom.value());
     }
-    fZoom.fValue = newZoom;
-    fZoom.fFitContent = false;
+    fZoom = iZoom;
   }
 }
 
@@ -81,7 +81,7 @@ void Canvas::setZoom(Zoom iZoom)
 //------------------------------------------------------------------------
 void Canvas::centerContent()
 {
-  fOffset = (fCanvasSize - (fContentSize * fZoom.fValue)) / 2.0f;
+  fOffset = (fCanvasSize - (fContentSize * fZoom.value())) / 2.0f;
 }
 
 //------------------------------------------------------------------------
@@ -101,12 +101,14 @@ float Canvas::computeZoomToFit() const
 //------------------------------------------------------------------------
 // Canvas::makeResponsive
 //------------------------------------------------------------------------
-void Canvas::makeResponsive(ImGuiMouseButton flags) const
+void Canvas::makeResponsive(ImGuiMouseButton flags)
 {
   ImGui::PushID(this);
   auto cp = ImGui::GetCursorScreenPos();
   ImGui::SetCursorScreenPos(fCanvasPos);
   ImGui::InvisibleButton("canvas", fCanvasSize, flags);
+  fIsActive = ImGui::IsItemActive();
+  fIsHovered = ImGui::IsItemHovered();
   ImGui::SetCursorScreenPos(cp);
   ImGui::PopID();
 }
@@ -120,7 +122,7 @@ void Canvas::addTexture(Texture const *iTexture,
                         ImU32 iBorderColor,
                         ImU32 iTextureColor) const
 {
-  iTexture->draw(toScreenPos(iPos), iTexture->frameSize() * fZoom.fValue, iFrameNumber, iBorderColor, iTextureColor);
+  iTexture->draw(toScreenPos(iPos), iTexture->frameSize() * fZoom.value(), iFrameNumber, iBorderColor, iTextureColor);
 }
 
 //------------------------------------------------------------------------
@@ -133,7 +135,7 @@ void Canvas::addScaledTexture(Texture const *iTexture,
                               ImU32 iBorderColor,
                               ImU32 iTextureColor) const
 {
-  iTexture->draw(toScreenPos(iPos), iTexture->frameSize() * fZoom.fValue * iScale, iFrameNumber, iBorderColor, iTextureColor);
+  iTexture->draw(toScreenPos(iPos), iTexture->frameSize() * fZoom.value() * iScale, iFrameNumber, iBorderColor, iTextureColor);
 }
 
 //------------------------------------------------------------------------
@@ -143,7 +145,7 @@ void Canvas::addRectFilled(Canvas::canvas_pos_t const &iPos, canvas_size_t const
 {
   ImDrawList* dl = ImGui::GetWindowDrawList();
   auto min = toScreenPos(iPos);
-  dl->AddRectFilled(min, min + iSize * fZoom.fValue, iCol);
+  dl->AddRectFilled(min, min + iSize * fZoom.value(), iCol);
 }
 
 //------------------------------------------------------------------------
@@ -153,7 +155,7 @@ void Canvas::addRect(Canvas::canvas_pos_t const &iPos, canvas_size_t const &iSiz
 {
   ImDrawList* dl = ImGui::GetWindowDrawList();
   auto min = toScreenPos(iPos);
-  dl->AddRect(min, min + iSize * fZoom.fValue, iCol);
+  dl->AddRect(min, min + iSize * fZoom.value(), iCol);
 }
 
 //------------------------------------------------------------------------
@@ -197,9 +199,28 @@ void Canvas::addHorizontalLine(canvas_pos_t const &p, ImU32 iColor, float iThick
 void Canvas::moveByDeltaScreenPos(Canvas::screen_pos_t const &iDelta)
 {
   fOffset += iDelta;
-  fZoom.fFitContent = false;
+  fZoom = fZoom.update(fZoom.value(), false);
+}
+
+//------------------------------------------------------------------------
+// Canvas::zoomBy
+//------------------------------------------------------------------------
+void Canvas::zoomBy(float iPercent, std::optional<canvas_pos_t> iFocus)
+{
+  auto zoom = fZoom.update(fZoom.value() * iPercent, false);
+  updateZoom(zoom, iFocus ? iFocus : fFocus);
 }
 
 
+//------------------------------------------------------------------------
+// Canvas::Zoom::Zoom
+//------------------------------------------------------------------------
+Canvas::Zoom::Zoom(float iValue, bool iFitContent, float iMinValue, float iMaxValue)
+: fValue{Utils::clamp(iValue, iMinValue, iMaxValue)},
+  fFitContent{iFitContent},
+  fMinValue{iMinValue},
+  fMaxValue{iMaxValue}
+{
+}
 
 }

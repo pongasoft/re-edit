@@ -33,8 +33,18 @@ class Canvas
 public:
   struct Zoom
   {
-    float fValue{1.0f};
-    bool fFitContent{};
+    Zoom(float iValue, bool iFitContent, float iMinValue, float iMaxValue);
+
+    constexpr float value() const {return fValue; }
+    constexpr bool fitContent() const {return fFitContent; }
+
+    inline Zoom update(float iValue, bool iFitContent) const { return Zoom{iValue, iFitContent, fMinValue, fMaxValue}; }
+
+  private:
+    float fValue;
+    bool fFitContent;
+    float fMinValue;
+    float fMaxValue;
   };
 
 public:
@@ -44,8 +54,6 @@ public:
   using canvas_size_t = ImVec2;
 
 public:
-  constexpr Zoom getZoom() const { return fZoom; }
-
   void begin(ImVec2 const &iContentSize, Zoom iZoom);
 
   void begin(screen_pos_t const &iCanvasPos,
@@ -54,7 +62,7 @@ public:
              Zoom iZoom);
 
 
-  void end();
+  Zoom end();
 
   void addTexture(Texture const *iTexture,
                   canvas_pos_t const &iPos = {0,0},
@@ -78,7 +86,11 @@ public:
   void addVerticalLine(canvas_pos_t const &p, ImU32 iColor, float iThickness = 1.0f) const;
   void addHorizontalLine(canvas_pos_t const &p, ImU32 iColor, float iThickness = 1.0f) const;
 
-  void makeResponsive(ImGuiMouseButton flags = 0) const;
+  void makeResponsive(ImGuiMouseButton flags = 0);
+
+  bool isActive() const { return fIsActive; }
+  bool isHovered() const { return fIsHovered; }
+  bool canReceiveInput() const { return isActive() || !ImGui::IsAnyItemActive(); }
 
   inline canvas_pos_t getCanvasMousePos() const { return fromScreenPos(ImGui::GetMousePos()); }
 
@@ -86,12 +98,14 @@ public:
   std::optional<canvas_pos_t> getFocus() const { return fFocus; }
 
   void moveByDeltaScreenPos(screen_pos_t const &iDelta);
+  inline void moveByDeltaCanvasPos(canvas_pos_t const &iDelta) { moveByDeltaScreenPos(iDelta * fZoom.value()); }
+  void zoomBy(float iPercent, std::optional<canvas_pos_t> iFocus = std::nullopt);
 
 protected:
-  constexpr screen_pos_t toScreenPos(canvas_pos_t const &iPos) const { return fCanvasPos + fOffset + iPos * fZoom.fValue; }
-  constexpr canvas_pos_t fromScreenPos(screen_pos_t const &iPos) const { return (iPos - fCanvasPos - fOffset) / fZoom.fValue; }
+  constexpr screen_pos_t toScreenPos(canvas_pos_t const &iPos) const { return fCanvasPos + fOffset + iPos * fZoom.value(); }
+  constexpr canvas_pos_t fromScreenPos(screen_pos_t const &iPos) const { return (iPos - fCanvasPos - fOffset) / fZoom.value(); }
 
-  void setZoom(Zoom iZoom);
+  void updateZoom(Zoom iZoom, std::optional<canvas_pos_t> const &iFocus);
   void centerContent();
   float computeZoomToFit() const;
 
@@ -100,7 +114,10 @@ private:
   screen_size_t fCanvasSize{};
   canvas_size_t fContentSize{}; // original / NOT zoomed
   std::optional<canvas_pos_t> fFocus{};
-  Zoom fZoom{};
+  Zoom fZoom{1.0f, true, 1.0f, 1.0f};
+
+  bool fIsActive{};
+  bool fIsHovered{};
 
   screen_pos_t fOffset{};
 };

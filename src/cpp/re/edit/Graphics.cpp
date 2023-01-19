@@ -132,7 +132,7 @@ void Graphics::editView(AppContext &iCtx)
     ImGui::EndCombo();
   }
 
-  if(hasTexture() && ImGui::IsItemHovered())
+  if(hasTexture() && ReGui::ShowTooltip())
   {
     ImGui::BeginTooltip();
     ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
@@ -320,7 +320,7 @@ void Graphics::editView(AppContext &iCtx,
     ImGui::EndCombo();
   }
 
-  if(hasTexture() && ImGui::IsItemHovered())
+  if(hasTexture() && ReGui::ShowTooltip())
   {
     ImGui::BeginTooltip();
     ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);

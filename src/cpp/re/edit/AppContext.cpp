@@ -191,13 +191,6 @@ void AppContext::renderTabs()
   }
 }
 
-namespace impl {
-//------------------------------------------------------------------------
-// impl::hasActiveWidget
-//------------------------------------------------------------------------
-inline bool hasActiveWidget() { return ImGui::GetCurrentContext()->ActiveId != 0; }
-}
-
 //------------------------------------------------------------------------
 // AppContext::handleKeyboardShortcuts
 //------------------------------------------------------------------------
@@ -208,7 +201,7 @@ void AppContext::handleKeyboardShortcuts()
     // handle undo/redo via keyboard
     if(ImGui::IsKeyPressed(ImGuiKey_Z, false))
     {
-      if(!impl::hasActiveWidget())
+      if(!ImGui::IsAnyItemActive())
       {
         if(ImGui::IsKeyDown(ImGuiMod_Shift))
           redoLastAction();
@@ -1031,7 +1024,7 @@ void AppContext::renderMainMenu()
 void AppContext::setUserZoom(float iZoom)
 {
   // we make sure that the zoom factor is within reasonable range
-  iZoom = Utils::clamp(iZoom, 0.1f, 5.0f);
+  iZoom = Utils::clamp(iZoom, Panel::kZoomMin, Panel::kZoomMax);
   fUserZoom = iZoom;
   fDpiAdjustedZoom = iZoom * Application::GetCurrent().getCurrentFontDpiScale();
   fZoomFitContent = false;
@@ -1042,9 +1035,9 @@ void AppContext::setUserZoom(float iZoom)
 //------------------------------------------------------------------------
 void AppContext::setZoom(ReGui::Canvas::Zoom const &iZoom)
 {
-  fDpiAdjustedZoom = iZoom.fValue;
+  fDpiAdjustedZoom = iZoom.value();
   fUserZoom = fDpiAdjustedZoom / Application::GetCurrent().getCurrentFontDpiScale();
-  fZoomFitContent = iZoom.fFitContent;
+  fZoomFitContent = iZoom.fitContent();
 }
 
 //------------------------------------------------------------------------
@@ -1362,7 +1355,7 @@ void AppContext::renderZoomSelection()
   ImGui::Text("Zoom");
   ImGui::SameLine();
   ImGui::PushItemWidth(fItemWidth / 2.0f);
-  if(ImGui::SliderFloat("##zoomfloat", &zoomPercent, 20.0f, 200.0f, "%3.0f%%"))
+  if(ImGui::SliderFloat("##zoomfloat", &zoomPercent, Panel::kZoomMin * 100.f, Panel::kZoomMax * 100.f, "%3.0f%%"))
   {
     setUserZoom(zoomPercent / 100.0f);
   }

@@ -130,6 +130,12 @@ void Panel::draw(AppContext &iCtx, ReGui::Canvas &iCanvas)
                        isPanelOfType(fType, kPanelTypeAnyUnfolded) ? 0 : 2);
   }
 
+  if(fSelectWidgetsAction)
+  {
+    auto color = ImGui::GetColorU32({1,1,0,1});
+    iCanvas.addRect(fSelectWidgetsAction->fInitialPosition, fSelectWidgetsAction->fCurrentPosition - fSelectWidgetsAction->fInitialPosition, color);
+  }
+
   iCanvas.makeResponsive();
 
   auto const mousePos = iCanvas.getCanvasMousePos();
@@ -150,10 +156,13 @@ void Panel::draw(AppContext &iCtx, ReGui::Canvas &iCanvas)
   {
     handleLeftMouseClick(iCtx, mousePos);
   }
-  else if(ImGui::IsItemHovered() && ImGui::IsKeyDown(ImGuiKey_Space))
+  else if(iCanvas.isHovered() && iCanvas.canReceiveInput() && ImGui::IsKeyDown(ImGuiKey_Space))
   {
     iCtx.setMouseCursorNextFrame(ImGuiMouseCursor_Hand);
   }
+
+  if(iCanvas.canReceiveInput())
+    handleCanvasInputs(iCtx, iCanvas);
 
   if(ImGui::BeginPopupContextItem())
   {
@@ -176,19 +185,6 @@ void Panel::draw(AppContext &iCtx, ReGui::Canvas &iCanvas)
     iCanvas.addVerticalLine(fComputedSelectedRect->Min, color);
     iCanvas.addHorizontalLine(fComputedSelectedRect->Max, color);
     iCanvas.addVerticalLine(fComputedSelectedRect->Max, color);
-  }
-
-//  if(fComputedSelectedRect)
-//  {
-//    iCanvas.setFocus(fComputedSelectedRect->GetCenter());
-//  }
-//  else
-//    iCanvas.setFocus(std::nullopt);
-
-  if(fSelectWidgetsAction)
-  {
-    auto color = ImGui::GetColorU32({1,1,0,1});
-    iCanvas.addRect(fSelectWidgetsAction->fInitialPosition, fSelectWidgetsAction->fCurrentPosition - fSelectWidgetsAction->fInitialPosition, color);
   }
 
 //  auto logging = LoggingManager::instance();
@@ -385,6 +381,30 @@ void Panel::handleMoveCanvasAction(AppContext &iCtx, ReGui::Canvas &iCanvas)
   }
 
   fMoveCanvasAction->fLastUpdatePosition = fMoveCanvasAction->fCurrentPosition;
+}
+
+//------------------------------------------------------------------------
+// Panel::handleCanvasInputs
+//------------------------------------------------------------------------
+void Panel::handleCanvasInputs(AppContext &iCtx, ReGui::Canvas &iCanvas)
+{
+  constexpr float deltaAmount = 100.0f;
+
+  ImVec2 delta{};
+  if(ImGui::IsKeyPressed(ImGuiKey_RightArrow, true))
+    delta.x = -deltaAmount;
+  if(ImGui::IsKeyPressed(ImGuiKey_LeftArrow, true))
+    delta.x = deltaAmount;
+  if(ImGui::IsKeyPressed(ImGuiKey_UpArrow, true))
+    delta.y = deltaAmount;
+  if(ImGui::IsKeyPressed(ImGuiKey_DownArrow, true))
+    delta.y = -deltaAmount;
+  if(delta.x != 0 || delta.y != 0)
+    iCanvas.moveByDeltaCanvasPos(delta);
+
+  auto mouseVerticalWheel = ImGui::GetIO().MouseWheel;
+  if(mouseVerticalWheel != 0)
+    iCanvas.zoomBy(mouseVerticalWheel > 0 ? 0.9f : 1.1f, iCanvas.getCanvasMousePos());
 }
 
 //------------------------------------------------------------------------

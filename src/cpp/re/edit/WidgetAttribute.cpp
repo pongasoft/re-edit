@@ -53,7 +53,7 @@ bool Editable::errorView()
   if(hasErrors())
   {
     ReGui::ErrorIcon();
-    if(ImGui::IsItemHovered())
+    if(ReGui::ShowTooltip())
     {
       ImGui::BeginTooltip();
       ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
@@ -766,7 +766,7 @@ void PropertyPath::editView(AppContext &iCtx,
 
   if(!fValue.empty())
   {
-    if(ImGui::IsItemHovered())
+    if(ReGui::ShowTooltip())
     {
       ImGui::BeginTooltip();
       ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
@@ -954,7 +954,7 @@ void Socket::editView(AppContext &iCtx)
 
   if(!fValue.empty())
   {
-    if(ImGui::IsItemHovered())
+    if(ReGui::ShowTooltip())
     {
       ImGui::BeginTooltip();
       ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
@@ -1005,7 +1005,7 @@ void PropertyPathList::editStaticListView(AppContext &iCtx,
 
     if(!value.empty())
     {
-      if(ImGui::IsItemHovered())
+      if(ReGui::ShowTooltip())
       {
         ImGui::BeginTooltip();
         ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);

@@ -87,6 +87,9 @@ class Panel : public Editable
 public:
   static char const *toString(PanelType iType);
 
+  static constexpr auto kZoomMin = 0.1f;
+  static constexpr auto kZoomMax = 5.0f;
+
 public:
   explicit Panel(PanelType iType);
 
@@ -174,6 +177,7 @@ private:
   void handleSelectWidgetsAction(AppContext &iCtx, ReGui::Canvas::canvas_pos_t const &iMousePos);
   void handleMoveWidgetsAction(AppContext &iCtx, ReGui::Canvas::canvas_pos_t const &iMousePos);
   void handleMoveCanvasAction(AppContext &iCtx, ReGui::Canvas &iCanvas);
+  void handleCanvasInputs(AppContext &iCtx, ReGui::Canvas &iCanvas);
 
 private:
   class MultiSelectionList

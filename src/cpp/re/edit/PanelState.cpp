@@ -18,6 +18,7 @@
 
 #include "PanelState.h"
 #include "Errors.h"
+#include "Application.h"
 #include <set>
 
 namespace re::edit {
@@ -201,10 +202,10 @@ void PanelState::renderPanel(AppContext &iCtx)
   if(auto l = iCtx.fPanelWindow.begin())
   {
     auto &canvas = iCtx.getPanelCanvas();
-    canvas.begin(fPanel.getSize(), {iCtx.getZoom(), iCtx.isZoomFitContent()});
+    auto dpiScale = Application::GetCurrent().getCurrentFontDpiScale();
+    canvas.begin(fPanel.getSize(), {iCtx.getZoom(), iCtx.isZoomFitContent(), Panel::kZoomMin * dpiScale, Panel::kZoomMax * dpiScale});
     fPanel.draw(iCtx, canvas);
-    canvas.end();
-    iCtx.setZoom(canvas.getZoom());
+    iCtx.setZoom(canvas.end());
   }
 }
 
@@ -262,7 +263,7 @@ void PanelState::renderProperties(AppContext &iCtx)
             iCtx.fPropertyManager->removeFromWatchlist(path);
           ImGui::SameLine();
           ImGui::TextWrapped("%s", path.c_str());
-          if(ImGui::IsItemHovered())
+          if(ReGui::ShowTooltip())
           {
             ImGui::BeginTooltip();
             ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);

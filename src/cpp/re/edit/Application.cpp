@@ -1141,7 +1141,7 @@ void Application::renderMainMenu()
             {
               maybeCloseProject(std::nullopt, [this, path = item.fPath]() { loadProject(path); });
             }
-            if(ImGui::IsItemHovered())
+            if(ReGui::ShowTooltip())
             {
               ImGui::BeginTooltip();
               ImGui::TextUnformatted(item.fPath.c_str());

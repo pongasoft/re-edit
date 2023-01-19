@@ -90,7 +90,6 @@ constexpr int k1UPixelSize = 345;
 constexpr int kDevicePixelWidth = 3770;
 constexpr int kFoldedDevicePixelHeight = 150;
 
-
 constexpr auto kNoGraphics = ImVec2{100, 100};
 
 constexpr auto kAudioSocketSize = ImVec2{95, 105};

@@ -361,6 +361,14 @@ constexpr bool IsSingleSelectKey(ImGuiIO const &io)
 }
 
 //------------------------------------------------------------------------
+// ReGui::ShowTooltip
+//------------------------------------------------------------------------
+inline bool ShowTooltip()
+{
+  return ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal);
+}
+
+//------------------------------------------------------------------------
 // ReGui::ToolTip
 //------------------------------------------------------------------------
 template<typename F>
@@ -381,7 +389,7 @@ void CopyToClipboard(F &&iContent)
 {
   ImGui::PushID(&iContent);
   bool copy_to_clipboard = ImGui::Button(ReGui_Icon_Copy);
-  if(ImGui::IsItemHovered())
+  if(ReGui::ShowTooltip())
   {
     ReGui::ToolTip([]{
       ImGui::TextUnformatted("Copy to clipboard");
