@@ -151,26 +151,6 @@ public: // Texture
   std::optional<FilmStrip::key_t> importTextureBlocking();
   std::size_t importTexturesBlocking();
 
-  void TextureItem(Texture const *iTexture,
-                   ImVec2 const &iPosition = {0,0},
-                   ImVec2 const &iSize = {0,0},
-                   int iFrameNumber = 0,
-                   ImU32 iBorderColor = ReGui::kTransparentColorU32,
-                   ImU32 iTextureColor = ReGui::kWhiteColorU32) const;
-
-  void drawTexture(Texture const *iTexture,
-                   ImVec2 const &iPosition = {0,0},
-                   int iFrameNumber = 0,
-                   ImU32 iBorderColor = ReGui::kTransparentColorU32,
-                   ImU32 iTextureColor = ReGui::kWhiteColorU32) const;
-
-  void drawRect(ImVec2 const &iPosition, ImVec2 const &iSize, ImU32 iColor) const;
-  void RectFilledItem(ImVec2 const &iPosition, ImVec2 const &iSize, ImU32 iColor, float iRounding = 0.0f, ImDrawFlags iFlags = 0) const;
-  void RectItem(ImVec2 const &iPosition, ImVec2 const &iSize, ImU32 iColor, float iRounding = 0.0f, ImDrawFlags iFlags = 0) const;
-  void drawRectFilled(ImVec2 const &iPosition, ImVec2 const &iSize, ImU32 iColor, float iRounding = 0.0f, ImDrawFlags iFlags = 0) const;
-  void drawLine(const ImVec2& iP1, const ImVec2& iP2, ImU32 iColor, float iThickness = 1.0f) const;
-  void Dummy(ImVec2 const &iPosition, ImVec2 const &iSize) const;
-
 public: // Undo
   constexpr bool isUndoEnabled() const { return fUndoManager->isEnabled(); }
   constexpr void enableUndo() { fUndoManager->enable(); }

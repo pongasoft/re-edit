@@ -809,7 +809,7 @@ void Application::renderLogoBox(float iPadding)
   ReGui::Box(logoModifier, [this, textSizeHeight, newVersion]() {
     auto logo = getLogo();
     auto computedHeight = 2.0f * textSizeHeight + (ImGui::GetStyle().ItemSpacing.y);
-    logo->Item({}, {computedHeight, computedHeight});
+    logo->Item({computedHeight, computedHeight});
 
     ImGui::SameLine();
 
@@ -932,7 +932,7 @@ void Application::renderWelcome()
           ImGui::BeginGroup();
           {
             ImGui::AlignTextToFramePadding();
-            icon->Item({}, {buttonHeight, buttonHeight}, 1.0f, impl::getFrameNumberFromDeviceType(item.fType));
+            icon->Item({buttonHeight, buttonHeight}, impl::getFrameNumberFromDeviceType(item.fType));
             ImGui::SameLine();
             if(ImGui::Button(fmt::printf("%s\n%s", item.fName, item.fPath).c_str()))
               loadProjectDeferred(fs::path(item.fPath));

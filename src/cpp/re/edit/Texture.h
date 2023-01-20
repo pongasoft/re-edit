@@ -67,37 +67,16 @@ public:
 
   std::shared_ptr<FilmStrip> getFilmStrip() const { return fFilmStrip; }
 
-  inline void Item(ImVec2 const &iPosition,
-                   ImVec2 const &iSize = {},
-                   float iZoom = 1.0f,
+  inline void Item(ImVec2 const &iSize = {},
                    int iFrameNumber = 0,
                    ImU32 iBorderColor = ReGui::kTransparentColorU32,
                    ImU32 iTextureColor = ReGui::kWhiteColorU32) const
   {
-    doDraw(true, iPosition, iSize, iZoom, iZoom, iFrameNumber, iBorderColor, iTextureColor);
-  }
-
-  inline void draw(ImVec2 const &iPosition,
-                   float iZoom,
-                   int iFrameNumber,
-                   ImU32 iBorderColor = ReGui::kTransparentColorU32,
-                   ImU32 iTextureColor = ReGui::kWhiteColorU32) const
-  {
-    doDraw(false, iPosition, {}, iZoom, iZoom, iFrameNumber, iBorderColor, iTextureColor);
-  }
-
-  inline void draw(ImVec2 const &iPosition,
-                   float iPositionZoom,
-                   float iTextureZoom,
-                   int iFrameNumber,
-                   ImU32 iBorderColor = ReGui::kTransparentColorU32,
-                   ImU32 iTextureColor = ReGui::kWhiteColorU32) const
-  {
-    doDraw(false, iPosition, {}, iPositionZoom, iTextureZoom, iFrameNumber, iBorderColor, iTextureColor);
+    doDraw(true, ImGui::GetCursorScreenPos(), iSize, iFrameNumber, iBorderColor, iTextureColor);
   }
 
   inline void draw(ImVec2 const &iScreenPosition,
-                   ImVec2 const &iSize,
+                   ImVec2 const &iSize = {},
                    int iFrameNumber = 0,
                    ImU32 iBorderColor = ReGui::kTransparentColorU32,
                    ImU32 iTextureColor = ReGui::kWhiteColorU32) const
@@ -111,15 +90,6 @@ public:
   friend class TextureManager;
 
 protected:
-  void doDraw(bool iAddItem,
-              ImVec2 const &iPosition,
-              ImVec2 const &iSize,
-              float iPositionZoom,
-              float iTextureZoom,
-              int iFrameNumber,
-              ImU32 iBorderColor,
-              ImU32 iTextureColor) const;
-
   void doDraw(bool iAddItem,
               ImVec2 const &iScreenPosition,
               ImVec2 const &iSize,

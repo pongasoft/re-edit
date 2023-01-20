@@ -156,27 +156,6 @@ void TextureManager::overrideNumFrames(std::string const &iKey, int iNumFrames) 
   getTexture(iKey)->fFilmStrip->overrideNumFrames(iNumFrames);
 }
 
-
-//------------------------------------------------------------------------
-// Texture::doDraw
-//------------------------------------------------------------------------
-void Texture::doDraw(bool iAddItem,
-                     ImVec2 const &iPosition,
-                     ImVec2 const &iSize,
-                     float iPositionZoom,
-                     float iTextureZoom,
-                     int iFrameNumber,
-                     ImU32 iBorderColor,
-                     ImU32 iTextureColor) const
-{
-  if(fData.empty())
-    return;
-  auto const cp = ImGui::GetCursorScreenPos() + iPosition * iPositionZoom;
-  auto const size = ImVec2{(iSize.x == 0 ? frameWidth()  : iSize.x) * iTextureZoom,
-                           (iSize.y == 0 ? frameHeight() : iSize.y) * iTextureZoom};
-  doDraw(iAddItem, cp, size, iFrameNumber, iBorderColor, iTextureColor);
-}
-
 //------------------------------------------------------------------------
 // Texture::doDraw
 //------------------------------------------------------------------------
@@ -190,7 +169,9 @@ void Texture::doDraw(bool iAddItem,
   if(fData.empty())
     return;
 
-  const ImRect rect{iScreenPosition, iScreenPosition + iSize};
+  auto const size = ImVec2{iSize.x == 0 ? frameWidth()  : iSize.x, iSize.y == 0 ? frameHeight() : iSize.y};
+
+  const ImRect rect{iScreenPosition, iScreenPosition + size};
 
   // do we treat the texture as a ImGui item (clickable, etc...)
   if(iAddItem)
