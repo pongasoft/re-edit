@@ -213,7 +213,7 @@ if(APPLE)
   set_target_properties(${target} PROPERTIES
       BUNDLE True
       MACOSX_BUNDLE_GUI_IDENTIFIER com.pongasoft.re-edit
-      MACOSX_BUNDLE_BUNDLE_NAME re-edit
+      MACOSX_BUNDLE_BUNDLE_NAME "RE Edit"
       MACOSX_BUNDLE_BUNDLE_VERSION "${re-edit_VERSION}"
       MACOSX_BUNDLE_SHORT_VERSION_STRING "${re-edit_VERSION}"
       MACOSX_BUNDLE_ICON_NAME "AppIcon"
