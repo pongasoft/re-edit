@@ -36,10 +36,10 @@ Look & Feel
 -----------
 
 #### Dark Style
-![RE Edit - Dark](https://github.com/pongasoft/re-edit/releases/download/v1.1.0/re-edit-dark.png)
+![RE Edit - Dark](https://github.com/pongasoft/re-edit/releases/download/v1.2.0/re-edit-dark.png)
 
 #### Light Style
-![RE Edit - Light](https://github.com/pongasoft/re-edit/releases/download/v1.1.0/re-edit-light.png)
+![RE Edit - Light](https://github.com/pongasoft/re-edit/releases/download/v1.2.0/re-edit-light.png)
 
 Build
 -----
