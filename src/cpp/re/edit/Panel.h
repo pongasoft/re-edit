@@ -103,7 +103,7 @@ public:
 
   void setDeviceHeightRU(int iDeviceHeightRU);
 
-  void draw(AppContext &iCtx, ReGui::Canvas &iCanvas);
+  void draw(AppContext &iCtx, ReGui::Canvas &iCanvas, ImVec2 const &iPopupWindowPadding);
   void editView(AppContext &iCtx);
   void editOrderView(AppContext &iCtx);
   void markEdited() override;

@@ -88,30 +88,14 @@ std::shared_ptr<Widget> Panel::getWidget(int id) const
 //------------------------------------------------------------------------
 // Panel::draw
 //------------------------------------------------------------------------
-void Panel::draw(AppContext &iCtx, ReGui::Canvas &iCanvas)
+void Panel::draw(AppContext &iCtx, ReGui::Canvas &iCanvas, ImVec2 const &iPopupWindowPadding)
 {
-//  ImVec2 backgroundScreenPosition;
-//  auto const cp = ImGui::GetCursorScreenPos();
-//  auto &io = ImGui::GetIO();
-//  // Implementation note: this fixes the issue that if a widget is dragged outside the panel, it cannot
-//  // be picked up again. But this entire positioning, needs to be revisited (the panel should be centered when more
-//  // space available)
-//  auto clickableArea = ImGui::GetCurrentWindowRead()->OuterRectClipped.GetSize() - (ImGui::GetStyle().WindowPadding * 2);
-//  auto backgroundSize = getSize() * iCtx.getZoom();
-//  clickableArea = {std::max(clickableArea.x, backgroundSize.x), std::max(clickableArea.y, backgroundSize.y)};
-
   // rails are always below
   if(iCtx.fShowRackRails)
     drawRails(iCtx, iCanvas);
 
   if(iCtx.fPanelRendering != AppContext::EPanelRendering::kNone)
     drawPanel(iCtx, iCanvas);
-
-//  backgroundScreenPosition = ImGui::GetItemRectMin(); // accounts for scrollbar!
-//
-//  // we use an invisible button to capture mouse events
-//  ImGui::SetCursorScreenPos(cp); // TextureItem moves the cursor so we restore it
-//  ImGui::InvisibleButton("canvas", clickableArea, ImGuiButtonFlags_MouseButtonLeft);
 
   // always draw decals first
   drawWidgets(iCtx, iCanvas, fDecalsOrder);
@@ -164,11 +148,12 @@ void Panel::draw(AppContext &iCtx, ReGui::Canvas &iCanvas)
   if(iCanvas.canReceiveInput())
     handleCanvasInputs(iCtx, iCanvas);
 
+  ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, iPopupWindowPadding);
   if(ImGui::BeginPopupContextItem())
   {
     if(!fPopupLocation)
-      fPopupLocation = mousePos; // accounts for scrollbars
-    auto widgetLocation = *fPopupLocation / iCtx.getZoom();
+      fPopupLocation = mousePos;
+    auto widgetLocation = *fPopupLocation;
     if(renderSelectedWidgetsMenu(iCtx, fComputedSelectedWidgets, widgetLocation))
       ImGui::Separator();
     renderAddWidgetMenu(iCtx, widgetLocation);
@@ -176,6 +161,7 @@ void Panel::draw(AppContext &iCtx, ReGui::Canvas &iCanvas)
   }
   else
     fPopupLocation = std::nullopt;
+  ImGui::PopStyleVar();
 
   if(fMoveWidgetsAction && fComputedSelectedRect && (!ReGui::AnySpecialKey() || ImGui::GetIO().KeyAlt))
   {

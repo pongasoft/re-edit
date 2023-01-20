@@ -206,13 +206,14 @@ void PanelState::renderWidgets(AppContext &iCtx)
 //------------------------------------------------------------------------
 void PanelState::renderPanel(AppContext &iCtx)
 {
+  auto windowPadding = ImGui::GetStyle().WindowPadding;
   ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{});
   if(auto l = iCtx.fPanelWindow.begin())
   {
     auto &canvas = iCtx.getPanelCanvas();
     auto dpiScale = Application::GetCurrent().getCurrentFontDpiScale();
     canvas.begin(fPanel.getSize(), {iCtx.getZoom(), iCtx.isZoomFitContent(), Panel::kZoomMin * dpiScale, Panel::kZoomMax * dpiScale});
-    fPanel.draw(iCtx, canvas);
+    fPanel.draw(iCtx, canvas, windowPadding);
     iCtx.setZoom(canvas.end());
   }
   ImGui::PopStyleVar();
