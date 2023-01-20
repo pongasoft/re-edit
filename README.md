@@ -94,6 +94,23 @@ pongasoft produces a variety of high quality and free/open source software. If y
 Release Notes
 -------------
 
+* #### 1.2.0 - 2023/01/20
+
+- Major redesign of the panel: 
+  - no more scrollbars
+  - input shortcuts
+    - click + drag to move freely (or space + click + drag if on top of a widget to disable selecting the widget)
+    - arrows to move the panel
+    - mouse wheel to zoom in/out (zoom focus point is wherever the mouse pointer is)
+    - `X` to toggle Widget X-Ray
+    - `F` for Zoom to fit
+    - `C` for Center panel
+    - `B` to toggle Widget borders
+    - `R` to toggle Rails (+ panel X-Ray to see them)
+- added "Clear Recent List" menu entry
+- fixed crash on redo
+- fixed improper error reporting when moving multiple widgets
+
 * #### 1.1.0 - 2023/01/12
 
 - Added Fold Icon / Rack Rails (thanks to @jengstrom at Reason Studios for the icons)
