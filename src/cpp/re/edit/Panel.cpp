@@ -417,7 +417,10 @@ void Panel::handleCanvasInputs(AppContext &iCtx, ReGui::Canvas &iCanvas)
   {
     auto mouseVerticalWheel = ImGui::GetIO().MouseWheel;
     if(mouseVerticalWheel != 0)
-      iCanvas.zoomBy(mouseVerticalWheel > 0 ? 0.9f : 1.1f, iCanvas.getCanvasMousePos());
+    {
+      auto zoom = 1.0f - mouseVerticalWheel * 0.05f;
+      iCanvas.zoomBy(zoom, iCanvas.getCanvasMousePos());
+    }
   }
 }
 
