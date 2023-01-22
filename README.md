@@ -94,6 +94,11 @@ pongasoft produces a variety of high quality and free/open source software. If y
 Release Notes
 -------------
 
+* #### 1.2.1 - 2023/01/22
+
+- Fixed application name on macOS
+- Fixed trackpad and mouse wheel sensitivity issue when zooming in/out
+
 * #### 1.2.0 - 2023/01/20
 
 - Major redesign of the panel: 
