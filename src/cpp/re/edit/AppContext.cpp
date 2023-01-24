@@ -254,7 +254,7 @@ void AppContext::render()
     renderZoomSelection();
     renderGridSelection();
 
-    ImGui::Separator();
+    ReGui::TextSeparator("Rendering");
 
     ImGui::PushID("Rendering");
 

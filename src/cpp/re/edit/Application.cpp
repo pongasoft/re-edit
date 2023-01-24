@@ -1406,40 +1406,33 @@ void Application::newAboutDialog()
 //------------------------------------------------------------------------
 void Application::about() const
 {
-  ImGui::SetNextItemOpen(true, ImGuiCond_Appearing);
-  if(ImGui::TreeNodeEx("RE Edit", ImGuiTreeNodeFlags_Framed))
-  {
-    ImGui::Text("Version:      %s", kFullVersion);
-    ImGui::Text("Git Version:  %s", kGitVersion);
-    ImGui::Text("Git Tag:      %s", kGitTag);
-    ImGui::Text("Architecture: %s", kArchiveArchitecture);
-    ImGui::Text("re-mock:      %s", kReMockVersion);
-    ImGui::TreePop();
-  }
+  ReGui::TextSeparator("RE Edit");
+  ImGui::Text("Version:      %s", kFullVersion);
+  ImGui::Text("Git Version:  %s", kGitVersion);
+  ImGui::Text("Git Tag:      %s", kGitTag);
+  ImGui::Text("Architecture: %s", kArchiveArchitecture);
+  ImGui::Text("re-mock:      %s", kReMockVersion);
 
   if(fAppContext)
   {
     constexpr auto boolToString = [](bool b) { return b ? "true" : "false"; };
 
-    ImGui::SetNextItemOpen(true, ImGuiCond_Appearing);
-    if(ImGui::TreeNodeEx("Rack Extension", ImGuiTreeNodeFlags_Framed))
-    {
-      auto const &info = fAppContext->fPropertyManager->getDeviceInfo();
-      ImGui::Text("long_name:                       %s", info.fLongName.c_str());
-      ImGui::Text("medium_name:                     %s", info.fMediumName.c_str());
-      ImGui::Text("short_name:                      %s", info.fShortName.c_str());
-      ImGui::Text("product_id:                      %s", info.fProductId.c_str());
-      ImGui::Text("manufacturer:                    %s", info.fManufacturer.c_str());
-      ImGui::Text("version_number:                  %s", info.fVersionNumber.c_str());
-      ImGui::Text("device_type:                     %s", deviceTypeToString(info.fDeviceType));
-      ImGui::Text("supports_patches:                %s", boolToString(info.fSupportPatches));
-      ImGui::Text("default_patch:                   %s", info.fDefaultPatch.c_str());
-      ImGui::Text("accepts_notes:                   %s", boolToString(info.fAcceptNotes));
-      ImGui::Text("auto_create_note_lane:           %s", boolToString(info.fAutoCreateNoteLane));
-      ImGui::Text("supports_performance_automation: %s", boolToString(info.fSupportsPerformanceAutomation));
-      ImGui::Text("device_height_ru:                %d", info.fDeviceHeightRU);
-      ImGui::TreePop();
-    }
+    ReGui::TextSeparator("Rack Extension");
+
+    auto const &info = fAppContext->fPropertyManager->getDeviceInfo();
+    ImGui::Text("long_name:                       %s", info.fLongName.c_str());
+    ImGui::Text("medium_name:                     %s", info.fMediumName.c_str());
+    ImGui::Text("short_name:                      %s", info.fShortName.c_str());
+    ImGui::Text("product_id:                      %s", info.fProductId.c_str());
+    ImGui::Text("manufacturer:                    %s", info.fManufacturer.c_str());
+    ImGui::Text("version_number:                  %s", info.fVersionNumber.c_str());
+    ImGui::Text("device_type:                     %s", deviceTypeToString(info.fDeviceType));
+    ImGui::Text("supports_patches:                %s", boolToString(info.fSupportPatches));
+    ImGui::Text("default_patch:                   %s", info.fDefaultPatch.c_str());
+    ImGui::Text("accepts_notes:                   %s", boolToString(info.fAcceptNotes));
+    ImGui::Text("auto_create_note_lane:           %s", boolToString(info.fAutoCreateNoteLane));
+    ImGui::Text("supports_performance_automation: %s", boolToString(info.fSupportsPerformanceAutomation));
+    ImGui::Text("device_height_ru:                %d", info.fDeviceHeightRU);
   }
 
   static const std::vector<std::tuple<char const *, char const *, char const *>> kLicenses = {

@@ -18,6 +18,7 @@
 
 #include "ReGui.h"
 #include "Errors.h"
+#include "imgui_internal.h"
 
 namespace re::edit::ReGui {
 
@@ -86,6 +87,121 @@ void Box(Modifier const &iModifier, std::function<void()> const &iBoxContent, Im
 }
 
 //------------------------------------------------------------------------
+// ReGui::CenteredSeparator
+// copied from https://github.com/ocornut/imgui/issues/1643#issuecomment-369376479
+//------------------------------------------------------------------------
+void CenteredSeparator(float width)
+{
+  ImGuiWindow* window = ImGui::GetCurrentWindow();
+  if (window->SkipItems)
+    return;
+  ImGuiContext& g = *GImGui;
+  /*
+  // Commented out because it is not tested, but it should work, but it won't be centered
+  ImGuiWindowFlags flags = 0;
+  if ((flags & (ImGuiSeparatorFlags_Horizontal | ImGuiSeparatorFlags_Vertical)) == 0)
+      flags |= (window->DC.LayoutType == ImGuiLayoutType_Horizontal) ? ImGuiSeparatorFlags_Vertical : ImGuiSeparatorFlags_Horizontal;
+  IM_ASSERT(ImIsPowerOfTwo((int)(flags & (ImGuiSeparatorFlags_Horizontal | ImGuiSeparatorFlags_Vertical))));   // Check that only 1 option is selected
+  if (flags & ImGuiSeparatorFlags_Vertical)
+  {
+      VerticalSeparator();
+      return;
+  }
+  */
+
+  // Horizontal Separator
+  float x1, x2;
+  if (window->DC.CurrentColumns == nullptr && (width == 0))
+  {
+    // Span whole window
+    ///x1 = window->Pos.x; // This fails with SameLine(); CenteredSeparator();
+    // Nah, we have to detect if we have a sameline in a different way
+    x1 = window->DC.CursorPos.x;
+    x2 = x1 + window->Size.x;
+  }
+  else
+  {
+    // Start at the cursor
+    x1 = window->DC.CursorPos.x;
+    if (width != 0) {
+      x2 = x1 + width;
+    }
+    else
+    {
+      x2 = window->ClipRect.Max.x;
+      // Pad right side of columns (except the last one)
+      if (window->DC.CurrentColumns && (window->DC.CurrentColumns->Current < window->DC.CurrentColumns->Count - 1))
+        x2 -= g.Style.ItemSpacing.x;
+    }
+  }
+  float y1 = window->DC.CursorPos.y + std::floorf(window->DC.CurrLineSize.y / 2.0f);
+  float y2 = y1 + 1.0f;
+
+  window->DC.CursorPos.x += width; //+ g.Style.ItemSpacing.x;
+
+  // TODO YP: unclear what this should be (does not compile)
+//  if (!window->DC.GroupStack.empty())
+//    x1 += window->DC.IndentX;
+
+  const ImRect bb(ImVec2(x1, y1), ImVec2(x2, y2));
+  ImGui::ItemSize(ImVec2(0.0f, 0.0f)); // NB: we don't provide our width so that it doesn't get feed back into AutoFit, we don't provide height to not alter layout.
+  if(!ImGui::ItemAdd(bb, 0))
+  {
+    return;
+  }
+
+  window->DrawList->AddLine(bb.Min, ImVec2(bb.Max.x, bb.Min.y), ImGui::GetColorU32(ImGuiCol_Border));
+
+}
+
+
+//------------------------------------------------------------------------
+// ReGui::PreSeparator
+// Create a centered separator which can be immediately followed by an item
+// copied from https://github.com/ocornut/imgui/issues/1643#issuecomment-369376479
+//------------------------------------------------------------------------
+void PreSeparator(float width)
+{
+  ImGuiWindow* window = ImGui::GetCurrentWindow();
+  if(window->DC.CurrLineSize.y == 0)
+    window->DC.CurrLineSize.y = ImGui::GetTextLineHeight();
+  CenteredSeparator(width);
+  ImGui::SameLine();
+}
+
+//------------------------------------------------------------------------
+// ReGui::SameLineSeparator
+// Create a centered separator right after the current item.
+// Eg.:
+// ```cpp
+//    ImGui::PreSeparator(10);
+//    ImGui::Text("Section VI");
+//    ImGui::SameLineSeparator();
+// ```
+// copied from https://github.com/ocornut/imgui/issues/1643#issuecomment-369376479
+//------------------------------------------------------------------------
+inline void SameLineSeparator(float width = 0)
+{
+  ImGui::SameLine();
+  CenteredSeparator(width);
+}
+
+//------------------------------------------------------------------------
+// ReGui::TextSeparator
+//------------------------------------------------------------------------
+void TextSeparator(char const *text, float pre_width)
+{
+  ImGuiContext& g = *GImGui;
+
+  PreSeparator(pre_width);
+  if(g.LogEnabled)
+    ImGui::LogSetNextTextDecoration("---", "---");
+  ImGui::Text(text);
+  SameLineSeparator();
+
+}
+
+//------------------------------------------------------------------------
 // ReGui::MultiLineText
 //------------------------------------------------------------------------
 void MultiLineText(std::string const &iText)
@@ -97,7 +213,6 @@ void MultiLineText(std::string const &iText)
     ImGui::TextUnformatted(line.c_str());
   }
 }
-
 
 //------------------------------------------------------------------------
 // Window::Lifecycle::~Lifecycle
