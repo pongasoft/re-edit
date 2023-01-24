@@ -274,6 +274,7 @@ void Panel::handleLeftMouseClick(AppContext &iCtx, ReGui::Canvas::canvas_pos_t c
   if(io.KeyShift)
   {
     fSelectWidgetsAction = MouseDrag{iMousePos};
+    selectWidget(iCtx, iMousePos, true);
   }
   else if(ImGui::IsKeyDown(ImGuiKey_Space))
   {
@@ -1088,21 +1089,8 @@ void Panel::editMultiSelectionView(AppContext &iCtx, std::vector<std::shared_ptr
   ImGui::SameLine();
   ImGui::Text("%ld selected", iSelectedWidgets.size());
 
-  auto min = iSelectedWidgets[0]->getTopLeft();
-  auto max = iSelectedWidgets[0]->getBottomRight();
-
-  std::for_each(iSelectedWidgets.begin() + 1, iSelectedWidgets.end(), [&min, &max](auto c) {
-    auto pos = c->getTopLeft();
-    if(pos.x < min.x)
-      min.x = pos.x;
-    if(pos.y < min.y)
-      min.y = pos.y;
-    pos = c->getBottomRight();
-    if(pos.x > max.x)
-      max.x = pos.x;
-    if(pos.y > max.y)
-      max.y = pos.y;
-  });
+  auto min = fComputedSelectedRect->Min;
+  auto max = fComputedSelectedRect->Max;
 
   auto editedMin = min;
 
