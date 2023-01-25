@@ -115,6 +115,7 @@ class CompositeUndoAction : public UndoAction
 public:
   std::shared_ptr<RedoAction> execute() override;
   inline void add(std::shared_ptr<UndoAction> iAction) { fActions.emplace_back(std::move(iAction)); }
+  std::shared_ptr<UndoAction> popLastUndoAction();
 
 public:
   std::vector<std::shared_ptr<UndoAction>> fActions{};

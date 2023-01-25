@@ -126,6 +126,9 @@ std::shared_ptr<RedoAction> UndoManager::getLastRedoAction() const
 //------------------------------------------------------------------------
 std::shared_ptr<UndoAction> UndoManager::popLastUndoAction()
 {
+  if(!isEnabled())
+    return nullptr;
+
   if(fUndoHistory.empty())
     return nullptr;
 
@@ -160,6 +163,20 @@ std::shared_ptr<RedoAction> CompositeUndoAction::execute()
   }
 
   return redo;
+}
+
+//------------------------------------------------------------------------
+// CompositeUndoAction::popLastUndoAction
+//------------------------------------------------------------------------
+std::shared_ptr<UndoAction> CompositeUndoAction::popLastUndoAction()
+{
+  if(fActions.empty())
+    return nullptr;
+
+  auto end = fActions.end() - 1;
+  auto res = *end;
+  fActions.erase(end);
+  return res;
 }
 
 //------------------------------------------------------------------------

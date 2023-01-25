@@ -612,6 +612,24 @@ std::string Graphics::device2D() const
                                  path);
 }
 
+
+//------------------------------------------------------------------------
+// Graphics::toValueString
+//------------------------------------------------------------------------
+std::string Graphics::toValueString() const
+{
+  if(hasTexture())
+  {
+    auto texture = getTexture();
+    return fmt::printf("graphics = \"%s\"", texture->key());
+  }
+  else
+  {
+    auto size = getSize();
+    return fmt::printf("graphics = { %d, %d }", static_cast<int>(size.x),  static_cast<int>(size.y));
+  }
+}
+
 //------------------------------------------------------------------------
 // Graphics::copyFrom
 //------------------------------------------------------------------------
@@ -620,7 +638,6 @@ bool Graphics::copyFrom(Attribute const *iFromAttribute)
   auto fromAttribute = dynamic_cast<Graphics const *>(iFromAttribute);
   if(fromAttribute)
   {
-    fPosition = fromAttribute->fPosition;
     fHitBoundaries = fromAttribute->fHitBoundaries;
     fTexture = fromAttribute->fTexture;
     fDNZTexture = fromAttribute->fDNZTexture;

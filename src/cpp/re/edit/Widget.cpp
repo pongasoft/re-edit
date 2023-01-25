@@ -1010,7 +1010,7 @@ std::unique_ptr<Widget> Widget::copy() const
 //------------------------------------------------------------------------
 // Widget::clone
 //------------------------------------------------------------------------
-std::unique_ptr<Widget> Widget::clone(std::optional<std::string> const &iName) const
+std::unique_ptr<Widget> Widget::clone() const
 {
   return std::unique_ptr<Widget>(new Widget(*this));
 }
@@ -1018,14 +1018,37 @@ std::unique_ptr<Widget> Widget::clone(std::optional<std::string> const &iName) c
 //------------------------------------------------------------------------
 // Widget::copyFrom
 //------------------------------------------------------------------------
-void Widget::copyFrom(Widget const &iWidget)
+bool Widget::copyFrom(Widget const &iWidget)
 {
+  bool res = false;
   for(auto &att: fAttributes)
   {
     auto otherAtt = iWidget.findAttributeByName(att->fName);
     if(otherAtt)
-      att->copyFrom(otherAtt);
+      res |= att->copyFrom(otherAtt);
   }
+
+  if(res)
+    fEdited = true;
+
+  return res;
+}
+
+//------------------------------------------------------------------------
+// Widget::copyFrom
+//------------------------------------------------------------------------
+bool Widget::copyFrom(widget::Attribute const *iAttribute)
+{
+  auto att = findAttributeByName(iAttribute->fName);
+  if(att)
+  {
+    auto res = att->copyFrom(iAttribute);
+    if(res)
+      fEdited = true;
+    return res;
+  }
+  else
+    return false;
 }
 
 ////------------------------------------------------------------------------

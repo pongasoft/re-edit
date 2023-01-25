@@ -22,6 +22,7 @@
 #include "imgui_internal.h"
 #include "Application.h"
 #include "Utils.h"
+#include "Clipboard.h"
 #include <regex>
 #include <efsw/efsw.hpp>
 #include <nfd.h>
@@ -405,10 +406,19 @@ void AppContext::renderAddWidgetMenuView(ImVec2 const &iPosition)
     if(ImGui::MenuItem(def.fName))
     {
       auto widget = def.fFactory(std::nullopt);
-      widget->setPosition(iPosition);
+      widget->setPosition(iPosition - widget->getSize() / 2.0f);
       fCurrentPanelState->fPanel.addWidget(*this, std::move(widget));
     }
   }
+}
+
+
+//------------------------------------------------------------------------
+// AppContext::isWidgetAllowed
+//------------------------------------------------------------------------
+bool AppContext::isWidgetAllowed(WidgetType iType) const
+{
+  return fCurrentPanelState->isWidgetAllowed(iType);
 }
 
 //------------------------------------------------------------------------
@@ -507,6 +517,17 @@ void AppContext::addUndoAction(std::shared_ptr<UndoAction> iAction)
   }
   else
     fUndoManager->addUndoAction(std::move(iAction));
+}
+
+//------------------------------------------------------------------------
+// AppContext::rollbackUndoAction
+//------------------------------------------------------------------------
+void AppContext::rollbackUndoAction()
+{
+  if(fUndoTransaction)
+    fUndoTransaction->popLastUndoAction();
+  else
+    fUndoManager->popLastUndoAction();
 }
 
 //------------------------------------------------------------------------
@@ -1384,6 +1405,90 @@ std::shared_ptr<Texture> AppContext::getBuiltInTexture(FilmStrip::key_t const &i
   return Application::GetCurrent().getTexture(iKey);
 }
 
+//------------------------------------------------------------------------
+// AppContext::copyToClipboard
+//------------------------------------------------------------------------
+void AppContext::copyToClipboard(std::shared_ptr<Widget> const &iWidget, int iAttributeId)
+{
+  fClipboard.addItem(iWidget->clone(), iAttributeId);
+}
+
+//------------------------------------------------------------------------
+// AppContext::pasteFromClipboard
+//------------------------------------------------------------------------
+bool AppContext::pasteFromClipboard(std::shared_ptr<Widget> const &oWidget)
+{
+  if(fClipboard.isEmpty() || oWidget == nullptr)
+    return false;
+
+  auto item = fClipboard.getItem();
+
+  if(item->isWidgetItem())
+  {
+    if(isUndoEnabled())
+      addUndoWidgetChange(oWidget.get(), fmt::printf("Paste all widget attributes from [%s] to [%s]", item->getWidget()->getName(), oWidget->getName()));
+
+    if(!oWidget->copyFrom(*item->getWidget()))
+    {
+      if(isUndoEnabled())
+        rollbackUndoAction();
+      return false;
+    }
+  }
+  else if(item->isAttributeItem())
+  {
+    if(isUndoEnabled())
+      addUndoWidgetChange(oWidget.get(), fmt::printf("Paste attribute [%s] to widget [%s]", item->getAttribute()->fName, oWidget->getName()));
+
+    if(!oWidget->copyFrom(item->getAttribute()))
+    {
+      if(isUndoEnabled())
+        rollbackUndoAction();
+      return false;
+    }
+  }
+  else
+    return false;
+
+  return true;
+}
+
+//------------------------------------------------------------------------
+// AppContext::pasteFromClipboard
+//------------------------------------------------------------------------
+bool AppContext::pasteFromClipboard(std::vector<std::shared_ptr<Widget>> const &oWidgets)
+{
+  if(fClipboard.isEmpty() || oWidgets.empty())
+    return false;
+
+  bool res = false;
+
+  if(isUndoEnabled())
+    beginUndoTx(fmt::printf("Paste %s to [%ld] widgets", fClipboard.getItem()->getDescription(), oWidgets.size()));
+
+  for(auto &w: oWidgets)
+  {
+    res |= pasteFromClipboard(w);
+  }
+
+  if(isUndoEnabled())
+    commitUndoTx();
+
+  return res;
+}
+
+//------------------------------------------------------------------------
+// AppContext::isClipboardAllowedPanelWidget
+//------------------------------------------------------------------------
+bool AppContext::isClipboardAllowedPanelWidget() const
+{
+  if(isClipboardEmpty())
+    return false;
+  auto clipboardItem = getClipboardItem();
+  if(!clipboardItem->isWidgetItem())
+    return false;
+  return isWidgetAllowed(clipboardItem->getWidget()->getType());
+}
 
 ////------------------------------------------------------------------------
 //// AppContext::onNativeWindowPositionChange

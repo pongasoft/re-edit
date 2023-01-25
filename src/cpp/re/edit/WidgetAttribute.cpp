@@ -390,6 +390,18 @@ std::string Value::toString() const
                                fValues.toString());
 }
 
+
+//------------------------------------------------------------------------
+// Value::toValueString
+//------------------------------------------------------------------------
+std::string Value::toValueString() const
+{
+  if(fUseSwitch)
+    return fmt::printf("%s = \"%s\" ([%ld] values)", fValueSwitch.fName, fValueSwitch.fValue, fValues.fValue.size());
+  else
+    return fmt::printf("%s = \"%s\"", fValue.fName, fValue.fValue);
+}
+
 //------------------------------------------------------------------------
 // Value::findErrors
 //------------------------------------------------------------------------
@@ -632,6 +644,15 @@ std::string Visibility::toString() const
                                fName,
                                fSwitch.toString(),
                                fValues.toString());
+}
+
+
+//------------------------------------------------------------------------
+// Visibility::toValueString
+//------------------------------------------------------------------------
+std::string Visibility::toValueString() const
+{
+  return fmt::printf("%s = \"%s\" ([%ld] values)", fSwitch.fName, fSwitch.fValue, fValues.fValue.size());
 }
 
 static const Property::Filter kIsDiscreteFilter{[](const Property &p) { return p.isDiscrete(); }, "Must be a discrete (stepped) number property"};

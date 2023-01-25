@@ -148,7 +148,7 @@ private:
 protected:
   void editNoSelectionView(AppContext &iCtx);
   void editSingleSelectionView(AppContext &iCtx, std::shared_ptr<Widget> const &iWidget);
-  void editMultiSelectionView(AppContext &iCtx, std::vector<std::shared_ptr<Widget>> const &iSelectedWidgets);
+  void editMultiSelectionView(AppContext &iCtx);
 
   std::shared_ptr<PanelWidgets> freezeWidgets() const;
   std::shared_ptr<PanelWidgets> thawWidgets(std::shared_ptr<PanelWidgets> const &iPanelWidgets);
@@ -164,8 +164,7 @@ private:
   void endMoveWidgets(AppContext &iCtx, ImVec2 const &iPosition);
   void computeEachFrame(AppContext &iCtx);
   void renderAddWidgetMenu(AppContext &iCtx, ImVec2 const &iPosition = {});
-  bool renderSelectedWidgetsMenu(AppContext &iCtx,
-                                 std::vector<std::shared_ptr<Widget>> const &iSelectedWidgets,
+  void renderSelectedWidgetsMenu(AppContext &iCtx,
                                  std::optional<ImVec2> iPosition = std::nullopt);
   void renderWidgetMenu(AppContext &iCtx, std::shared_ptr<Widget> const &iWidget);
   void drawWidgets(AppContext &iCtx, ReGui::Canvas &iCanvas, std::vector<int> const &iOrder);

@@ -89,6 +89,8 @@ public:
 
   std::string device2D() const;
 
+  std::string toValueString() const override;
+
   inline bool contains(ImVec2 const &iPosition) const { return impl::isContained(iPosition, fPosition, getBottomRight()); };
 
   inline bool overlaps(ImVec2 const &iTopLeft, ImVec2 const &iBottomRight) const {
@@ -175,6 +177,8 @@ public:
 
   std::string getValueAsLua() const override;
   void collectUsedTexturePaths(std::set<fs::path> &oPaths) const override;
+
+  std::string toValueString() const override { return fmt::printf("%s = \"%s\"", fName, fValue); }
 
   void editView(AppContext &iCtx) override;
   bool draw(AppContext &iCtx, ReGui::Canvas &iCanvas, Graphics const *iParent, ImU32 iBorderColor, bool xRay) const;

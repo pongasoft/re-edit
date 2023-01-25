@@ -81,7 +81,9 @@ enum class WidgetType : int
   kValueDisplay,
   kZeroSnapKnob,
 
-  kPanelDecal // re-edit widget
+  kPanelDecal, // re-edit widget
+
+  kInternalWidgetTypeSize = kPanelDecal
 };
 
 char const *toString(WidgetType iType);

@@ -361,6 +361,16 @@ constexpr bool IsSingleSelectKey(ImGuiIO const &io)
 }
 
 //------------------------------------------------------------------------
+// ReGui::BeginDisabled
+// return whether disabled or not
+//------------------------------------------------------------------------
+inline bool BeginDisabled(bool disabled = true)
+{
+  ImGui::BeginDisabled(disabled);
+  return disabled;
+}
+
+//------------------------------------------------------------------------
 // ReGui::ShowTooltip
 //------------------------------------------------------------------------
 inline bool ShowTooltip()

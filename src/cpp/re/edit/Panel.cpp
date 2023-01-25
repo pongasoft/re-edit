@@ -154,8 +154,8 @@ void Panel::draw(AppContext &iCtx, ReGui::Canvas &iCanvas, ImVec2 const &iPopupW
     if(!fPopupLocation)
       fPopupLocation = mousePos;
     auto widgetLocation = *fPopupLocation;
-    if(renderSelectedWidgetsMenu(iCtx, fComputedSelectedWidgets, widgetLocation))
-      ImGui::Separator();
+    renderSelectedWidgetsMenu(iCtx, widgetLocation);
+    ReGui::TextSeparator("Panel");
     renderAddWidgetMenu(iCtx, widgetLocation);
     ImGui::EndPopup();
   }
@@ -430,6 +430,22 @@ void Panel::handleCanvasInputs(AppContext &iCtx, ReGui::Canvas &iCanvas)
 //------------------------------------------------------------------------
 void Panel::renderAddWidgetMenu(AppContext &iCtx, ImVec2 const &iPosition)
 {
+  auto disabled = ReGui::BeginDisabled(!iCtx.isClipboardAllowedPanelWidget());
+  if(ImGui::MenuItem("Paste"))
+  {
+    auto widget = iCtx.getClipboardItem()->getWidget()->copy();
+    widget->setPosition(iPosition - widget->getSize() / 2.0);
+    addWidget(iCtx, std::move(widget), fComputedSelectedWidgets.empty());
+  }
+
+  if(!disabled && ReGui::ShowTooltip())
+  {
+    ReGui::ToolTip([&iCtx] {
+      ImGui::TextUnformatted(iCtx.getClipboardItem()->getDescription().c_str());
+    });
+  }
+  ImGui::EndDisabled();
+
   if(ImGui::BeginMenu("Add Widget"))
   {
     iCtx.renderAddWidgetMenuView(iPosition);
@@ -438,7 +454,7 @@ void Panel::renderAddWidgetMenu(AppContext &iCtx, ImVec2 const &iPosition)
   if(ImGui::MenuItem("Add Decal"))
   {
     auto widget = Widget::panel_decal();
-    widget->setPosition(iPosition);
+    widget->setPosition(iPosition - widget->getSize() / 2.0f);
     addWidget(iCtx, std::move(widget));
   }
 }
@@ -448,75 +464,105 @@ void Panel::renderAddWidgetMenu(AppContext &iCtx, ImVec2 const &iPosition)
 //------------------------------------------------------------------------
 void Panel::renderWidgetMenu(AppContext &iCtx, std::shared_ptr<Widget> const &iWidget)
 {
-  if(ImGui::MenuItem(fmt::printf("%s %s",
-                                 iWidget->isSelected() ? "Unselect" : "Select",
-                                 iWidget->getName()).c_str()))
+  ReGui::TextSeparator(iWidget->getName().c_str());
+  if(ImGui::MenuItem(iWidget->isSelected() ? "Unselect" : "Select"))
     toggleWidgetSelection(iWidget->getId(), true);
-  if(ImGui::MenuItem(fmt::printf(ReGui_Prefix(ReGui_Icon_Duplicate, "Duplicate %s"),
-                                 iWidget->getName()).c_str()))
+
+  if(ImGui::MenuItem("Copy"))
+    iCtx.copyToClipboard(iWidget);
+
+  if(ImGui::BeginMenu("Copy Value"))
+  {
+    for(auto &att: iWidget->fAttributes)
+    {
+      if(ImGui::MenuItem(att->toValueString().c_str()))
+        iCtx.copyToClipboard(iWidget, att->fId);
+    }
+    ImGui::EndMenu();
+  }
+
+  auto disabled = ReGui::BeginDisabled(iCtx.isClipboardEmpty());
+  if(ImGui::MenuItem("Paste"))
+  {
+    if(iCtx.pasteFromClipboard(iWidget))
+      fEdited = true;
+  }
+
+  if(!disabled && ReGui::ShowTooltip())
+  {
+    ReGui::ToolTip([&iCtx] {
+      ImGui::TextUnformatted(iCtx.getClipboardItem()->getDescription().c_str());
+    });
+  }
+  ImGui::EndDisabled();
+
+
+  if(ImGui::MenuItem("Duplicate"))
     addWidget(iCtx, iWidget->copy());
-  if(ImGui::MenuItem(fmt::printf("Delete %s",
-                                 iWidget->getName()).c_str()))
+
+  if(ImGui::MenuItem("Delete"))
     deleteWidget(iCtx, iWidget->getId());
 
   if(iWidget->canBeShown())
-  {
-    ImGui::Separator();
     iWidget->renderShowMenu(iCtx);
-  }
 }
 
 //------------------------------------------------------------------------
 // Panel::renderSelectedWidgetsMenu
 //------------------------------------------------------------------------
-bool Panel::renderSelectedWidgetsMenu(AppContext &iCtx,
-                                      std::vector<std::shared_ptr<Widget>> const &iSelectedWidgets,
-                                      std::optional<ImVec2> iPosition)
+void Panel::renderSelectedWidgetsMenu(AppContext &iCtx, std::optional<ImVec2> iPosition)
 {
-  bool needSeparator = false;
-
   std::shared_ptr<Widget> widget{};
 
   if(iPosition)
   {
     widget = findWidgetOnTopAt(*iPosition);
     if(widget)
-    {
       renderWidgetMenu(iCtx, widget);
-      needSeparator = true;
-    }
   }
-  if(!iSelectedWidgets.empty())
+  if(!fComputedSelectedWidgets.empty())
   {
-    if(iSelectedWidgets.size() == 1)
+    if(fComputedSelectedWidgets.size() == 1)
     {
-      if(iSelectedWidgets[0] != widget)
+      if(fComputedSelectedWidgets[0] != widget)
       {
-        if(needSeparator)
-          ImGui::Separator();
-
-        renderWidgetMenu(iCtx, iSelectedWidgets[0]);
+        renderWidgetMenu(iCtx, fComputedSelectedWidgets[0]);
       }
     }
     else
     {
-      if(needSeparator)
-        ImGui::Separator();
+      ReGui::TextSeparator(fmt::printf("Selected Widgets (%ld)", fComputedSelectedWidgets.size()).c_str());
 
-      if(ImGui::MenuItem("Clear Selection"))
+      if(ImGui::MenuItem("Unselect"))
         clearSelection();
-      if(ImGui::MenuItem(ReGui_Prefix(ReGui_Icon_Duplicate, "Duplicate Widgets")))
+
+      auto disabled = ReGui::BeginDisabled(iCtx.isClipboardEmpty());
+      if(ImGui::MenuItem("Paste"))
       {
-        duplicateWidgets(iCtx, iSelectedWidgets);
+        if(iCtx.pasteFromClipboard(fComputedSelectedWidgets))
+          fEdited = true;
       }
-      if(ImGui::MenuItem("Delete Widgets"))
+
+      if(!disabled && ReGui::ShowTooltip())
       {
-        deleteWidgets(iCtx, iSelectedWidgets);
+        ReGui::ToolTip([&iCtx] {
+          ImGui::TextUnformatted(iCtx.getClipboardItem()->getDescription().c_str());
+        });
       }
+      ImGui::EndDisabled();
+
+      if(ImGui::MenuItem("Duplicate"))
+      {
+        duplicateWidgets(iCtx, fComputedSelectedWidgets);
+      }
+
+      if(ImGui::MenuItem("Delete"))
+      {
+        deleteWidgets(iCtx, fComputedSelectedWidgets);
+      }
+
     }
-    needSeparator = true;
   }
-  return needSeparator;
 }
 
 //------------------------------------------------------------------------
@@ -921,7 +967,7 @@ void Panel::editView(AppContext &iCtx)
 
       default:
       {
-        editMultiSelectionView(iCtx, fComputedSelectedWidgets);
+        editMultiSelectionView(iCtx);
         break;
       }
     }
@@ -1073,19 +1119,19 @@ void Panel::editSingleSelectionView(AppContext &iCtx, std::shared_ptr<Widget> co
 //------------------------------------------------------------------------
 // Panel::editMultiSelectionView
 //------------------------------------------------------------------------
-void Panel::editMultiSelectionView(AppContext &iCtx, std::vector<std::shared_ptr<Widget>> const &iSelectedWidgets)
+void Panel::editMultiSelectionView(AppContext &iCtx)
 {
   if(ReGui::MenuButton())
     ImGui::OpenPopup("Menu");
 
   if(ImGui::BeginPopup("Menu"))
   {
-    renderSelectedWidgetsMenu(iCtx, iSelectedWidgets);
+    renderSelectedWidgetsMenu(iCtx);
     ImGui::EndPopup();
   }
 
   ImGui::SameLine();
-  ImGui::Text("%ld selected", iSelectedWidgets.size());
+  ImGui::Text("%ld selected", fComputedSelectedWidgets.size());
 
   auto min = fComputedSelectedRect->Min;
   auto max = fComputedSelectedRect->Max;
@@ -1118,7 +1164,7 @@ void Panel::editMultiSelectionView(AppContext &iCtx, std::vector<std::shared_ptr
   if(delta.x != 0 || delta.y != 0)
   {
     fEdited = true;
-    for(auto &w: iSelectedWidgets)
+    for(auto &w: fComputedSelectedWidgets)
       w->move(delta);
   }
 
@@ -1130,7 +1176,7 @@ void Panel::editMultiSelectionView(AppContext &iCtx, std::vector<std::shared_ptr
   {
     fEdited = true;
     iCtx.beginUndoTx("Align Widgets Top");
-    for(auto &w: iSelectedWidgets)
+    for(auto &w: fComputedSelectedWidgets)
     {
       iCtx.addUndoWidgetChange(w.get(), fmt::printf("Align %s Top", w->getName()));
       auto position = w->getPosition();
@@ -1143,7 +1189,7 @@ void Panel::editMultiSelectionView(AppContext &iCtx, std::vector<std::shared_ptr
   {
     fEdited = true;
     iCtx.beginUndoTx("Align Widgets Left");
-    for(auto &w: iSelectedWidgets)
+    for(auto &w: fComputedSelectedWidgets)
     {
       iCtx.addUndoWidgetChange(w.get(), fmt::printf("Align %s Left", w->getName()));
       auto position = w->getPosition();
@@ -1158,7 +1204,7 @@ void Panel::editMultiSelectionView(AppContext &iCtx, std::vector<std::shared_ptr
   {
     fEdited = true;
     iCtx.beginUndoTx("Align Widgets Right");
-    for(auto &w: iSelectedWidgets)
+    for(auto &w: fComputedSelectedWidgets)
     {
       iCtx.addUndoWidgetChange(w.get(), fmt::printf("Align %s Right", w->getName()));
       auto position = w->getPosition();
@@ -1171,7 +1217,7 @@ void Panel::editMultiSelectionView(AppContext &iCtx, std::vector<std::shared_ptr
   {
     fEdited = true;
     iCtx.beginUndoTx("Align Widgets Bottom");
-    for(auto &w: iSelectedWidgets)
+    for(auto &w: fComputedSelectedWidgets)
     {
       iCtx.addUndoWidgetChange(w.get(), fmt::printf("Align %s Bottom", w->getName()));
       auto position = w->getPosition();

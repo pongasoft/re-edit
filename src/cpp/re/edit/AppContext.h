@@ -34,6 +34,7 @@
 #include "Config.h"
 #include "Utils.h"
 #include "Canvas.h"
+#include "Clipboard.h"
 
 namespace efsw {
 class FileWatcher;
@@ -104,6 +105,7 @@ public:
 
   ImVec2 getCurrentPanelSize() const;
   void renderAddWidgetMenuView(ImVec2 const &iPosition = {});
+  bool isWidgetAllowed(WidgetType iType) const;
   void renderZoomSelection();
   void renderGridSelection();
   PanelState *getPanelState(PanelType iType) const;
@@ -139,6 +141,14 @@ public: // Properties
   void removePropertyFromWatchlist(std::string const &iPropertyPath) { fPropertyManager->removeFromWatchlist(iPropertyPath); }
   constexpr int getUserSamplesCount() const { return fPropertyManager->getUserSamplesCount(); }
 
+public: // Clipboard
+  inline bool isClipboardEmpty() const { return fClipboard.isEmpty(); }
+  bool isClipboardAllowedPanelWidget() const;
+  inline Clipboard::Item const *getClipboardItem() const { return fClipboard.getItem(); }
+  void copyToClipboard(std::shared_ptr<Widget> const &iWidget, int iAttributeId = -1);
+  bool pasteFromClipboard(std::shared_ptr<Widget> const &oWidget);
+  bool pasteFromClipboard(std::vector<std::shared_ptr<Widget>> const &oWidgets);
+
 public: // Texture
   inline std::vector<FilmStrip::key_t> getTextureKeys() const { return fTextureManager->getTextureKeys(); };
   inline std::vector<FilmStrip::key_t> findTextureKeys(FilmStrip::Filter const &iFilter) const { return fTextureManager->findTextureKeys(iFilter); }
@@ -168,6 +178,7 @@ public: // Undo
   }
 
   void addUndoAction(std::shared_ptr<UndoAction> iAction);
+  void rollbackUndoAction();
 
   template<typename T, typename UndoLambda, typename RedoLambda>
   inline void addOrMergeUndoLambdas(void *iMergeKey, T const &iOldValue, T const &iNewValue, std::string const &iDescription, UndoLambda u, RedoLambda r)
@@ -351,6 +362,7 @@ protected:
   PanelState *fPreviousPanelState{};
   Widget const *fCurrentWidget{};
   ReGui::Canvas fPanelCanvas{};
+  Clipboard fClipboard{};
   bool fNeedsSaving{};
   std::shared_ptr<UndoAction> fLastSavedUndoAction{};
   bool fRecomputeDimensionsRequested{true};

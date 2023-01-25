@@ -1143,9 +1143,9 @@ void Application::renderMainMenu()
             }
             if(ReGui::ShowTooltip())
             {
-              ImGui::BeginTooltip();
-              ImGui::TextUnformatted(item.fPath.c_str());
-              ImGui::EndTooltip();
+              ReGui::ToolTip([&item] {
+                ImGui::TextUnformatted(item.fPath.c_str());
+              });
             }
             ImGui::PopID();
           }

@@ -87,8 +87,9 @@ public:
   std::string device2D() const { return fGraphics->device2D(); }
 
   std::unique_ptr<Widget> copy() const;
-  std::unique_ptr<Widget> clone(std::optional<std::string> const &iName = std::nullopt) const;
-  void copyFrom(Widget const &iWidget);
+  std::unique_ptr<Widget> clone() const;
+  bool copyFrom(Widget const &iWidget);
+  bool copyFrom(widget::Attribute const *iAttribute);
 //  bool eq(Widget *iWidget) const;
 
   static std::unique_ptr<Widget> panel_decal(std::optional<std::string> const &iName = std::nullopt);

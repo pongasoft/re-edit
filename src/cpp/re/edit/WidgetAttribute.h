@@ -86,6 +86,7 @@ public:
   virtual void editView(AppContext &iCtx) {}
   virtual void init(AppContext &iCtx) {}
   virtual std::string toString() const;
+  virtual std::string toValueString() const { return "TBD"; }
 
   template<typename T, typename... ConstructorArgs>
   static std::unique_ptr<T> build(char const *iName, bool iRequired, typename T::value_t const &iDefaultValue, ConstructorArgs&& ...iArgs);
@@ -124,6 +125,7 @@ public:
   void hdgui2D(attribute_list_t &oAttributes) const override;
   void resetView(AppContext &iCtx);
   virtual std::string getValueAsLua() const = 0;
+  std::string toValueString() const override { return fmt::printf("%s = %s", fName, getValueAsLua()); }
   void reset() override;
 
   bool copyFrom(Attribute const *iFromAttribute) override;
@@ -260,6 +262,7 @@ public:
     fFilter{std::move(iFilter)}
     {}
   std::string getValueAsLua() const override;
+  std::string toValueString() const override { return fmt::printf("%s = [%ld] properties", fName, fValue.size()); }
   void editView(AppContext &iCtx) override;
   void editStaticListView(AppContext &iCtx,
                           Property::Filter const &iFilter,
@@ -330,6 +333,8 @@ public:
 
   std::string toString() const override;
 
+  std::string toValueString() const override;
+
   void reset() override;
 
   std::unique_ptr<Attribute> clone() const override { return Attribute::clone<Value>(*this); }
@@ -373,6 +378,7 @@ public:
   void reset() override;
 
   std::string toString() const override;
+  std::string toValueString() const override;
 
   bool isHidden(AppContext const &iCtx) const;
 
@@ -485,6 +491,8 @@ public:
     SingleAttribute<std::vector<std::string>>{iName}, fValueAttributeId{iValueAttributeId} {}
   std::string getValueAsLua() const override;
   void editView(AppContext &iCtx) override;
+
+  std::string toValueString() const override { return fmt::printf("%s = [%ld] templates", fName, fValue.size()); }
 
   void findErrors(AppContext &iCtx, UserError &oErrors) const override;
 
