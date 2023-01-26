@@ -595,7 +595,7 @@ int Panel::addWidget(AppContext &iCtx, std::shared_ptr<Widget> iWidget, char con
 //------------------------------------------------------------------------
 void Panel::duplicateWidget(AppContext &iCtx, std::shared_ptr<Widget> const &iWidget, bool iMakeSingleSelected)
 {
-  auto w = iWidget->copy();
+  auto w = copy(iWidget.get());
   w->setPosition(iWidget->getPosition() + ImVec2{iWidget->getSize().x + 5,0});
   w->select();
   addWidget(iCtx, std::move(w), "Duplicate", iMakeSingleSelected);
@@ -624,7 +624,7 @@ bool Panel::pasteWidget(AppContext &iCtx, Widget const *iWidget, ImVec2 const &i
 {
   if(iCtx.isWidgetAllowed(iWidget->getType()))
   {
-    auto widget = iWidget->copy();
+    auto widget = copy(iWidget);
     widget->setPositionFromCenter(iPosition);
     addWidget(iCtx, std::move(widget), "Paste");
     return true;
@@ -665,7 +665,7 @@ bool Panel::pasteWidgets(AppContext &iCtx, std::vector<std::unique_ptr<Widget>> 
       {
         if(iCtx.isWidgetAllowed(w->getType()))
         {
-          auto widget = w->copy();
+          auto widget = copy(w.get());
           widget->setPosition(iPosition + w->getPosition() - min);
           widget->select();
           addWidget(iCtx, std::move(widget), "Paste", false);
@@ -1002,6 +1002,25 @@ bool Panel::checkForErrors(AppContext &iCtx)
   }
 
   return hasErrors();
+}
+
+//------------------------------------------------------------------------
+// Panel::computeUniqueWidgetNameForCopy
+//------------------------------------------------------------------------
+std::string Panel::computeUniqueWidgetNameForCopy(std::string const &iOriginalName) const
+{
+  StringWithHash sw{fmt::printf("%s Copy", iOriginalName)};
+
+  if(fWidgetNameHashes.find(sw.hash()) == fWidgetNameHashes.end())
+    return sw.value();
+
+  int i = 2;
+  for(;; i++)
+  {
+    StringWithHash sw2{fmt::printf("%s Copy (%d)", iOriginalName, i)};
+    if(fWidgetNameHashes.find(sw2.hash()) == fWidgetNameHashes.end())
+      return sw2.value();
+  }
 }
 
 //------------------------------------------------------------------------

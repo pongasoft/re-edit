@@ -1000,9 +1000,9 @@ std::unique_ptr<Widget> Widget::panel_decal(std::optional<std::string> const &iN
 //------------------------------------------------------------------------
 // Widget::copy
 //------------------------------------------------------------------------
-std::unique_ptr<Widget> Widget::copy() const
+std::unique_ptr<Widget> Widget::copy(std::string iName) const
 {
-  return std::unique_ptr<Widget>(new Widget(*this, re::mock::fmt::printf("%s Copy", fName.c_str())));
+  return std::unique_ptr<Widget>(new Widget(*this, std::move(iName)));
 }
 
 //------------------------------------------------------------------------

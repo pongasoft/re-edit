@@ -89,7 +89,7 @@ public:
   std::string hdgui2D() const;
   std::string device2D() const { return fGraphics->device2D(); }
 
-  std::unique_ptr<Widget> copy() const;
+  std::unique_ptr<Widget> copy(std::string iName) const;
   std::unique_ptr<Widget> clone() const;
   bool copyFrom(Widget const &iWidget);
   bool copyFrom(widget::Attribute const *iAttribute);

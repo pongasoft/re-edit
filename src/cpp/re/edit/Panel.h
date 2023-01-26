@@ -181,6 +181,8 @@ private:
   void handleMoveWidgetsAction(AppContext &iCtx, ReGui::Canvas::canvas_pos_t const &iMousePos);
   void handleMoveCanvasAction(AppContext &iCtx, ReGui::Canvas &iCanvas);
   void handleCanvasInputs(AppContext &iCtx, ReGui::Canvas &iCanvas);
+  std::string computeUniqueWidgetNameForCopy(std::string const &iOriginalName) const;
+  inline std::unique_ptr<Widget> copy(Widget const *iWidget) const { return iWidget->copy(computeUniqueWidgetNameForCopy(iWidget->getName())); }
 
 private:
   class MultiSelectionList
