@@ -98,8 +98,6 @@ Widget::Widget(Widget const &iOther, std::string iName) :
     }
     fAttributes.emplace_back(std::move(newAttribute));
   }
-  fGraphics->setPosition(iOther.getPosition() + ImVec2(iOther.fGraphics->getSize().x + 5,0));
-  fSelected = true;
 }
 
 //------------------------------------------------------------------------
@@ -1147,6 +1145,79 @@ void Widget::setName(std::string iName)
 {
   fName = StringWithHash(std::move(iName));
   fEdited = true;
+}
+
+namespace clipboard {
+
+//------------------------------------------------------------------------
+// WidgetData::WidgetData
+//------------------------------------------------------------------------
+WidgetData::WidgetData(std::unique_ptr<Widget> iWidget) :
+  Data(fmt::printf("Widget: %s", iWidget->getName())),
+  fWidget{std::move(iWidget)}
+{
+  // empty
+}
+
+//------------------------------------------------------------------------
+// WidgetData::copyFrom
+//------------------------------------------------------------------------
+std::unique_ptr<WidgetData> WidgetData::copyFrom(std::shared_ptr<Widget> const &iWidget)
+{
+  RE_EDIT_INTERNAL_ASSERT(iWidget != nullptr);
+  return std::make_unique<WidgetData>(iWidget->clone());
+}
+
+//------------------------------------------------------------------------
+// WidgetAttributeData::WidgetAttributeData
+//------------------------------------------------------------------------
+WidgetAttributeData::WidgetAttributeData(std::unique_ptr<Widget> iWidget, int iAttributeId) :
+  Data(fmt::printf("Attribute: %s", iWidget->findAttributeById(iAttributeId)->toValueString())),
+  fWidget{std::move(iWidget)},
+  fAttributeId{iAttributeId}
+{
+  // empty
+}
+
+//------------------------------------------------------------------------
+// WidgetAttributeData::getAttribute
+//------------------------------------------------------------------------
+widget::Attribute const *WidgetAttributeData::getAttribute() const
+{
+  return fWidget->findAttributeById(fAttributeId);
+}
+
+//------------------------------------------------------------------------
+// WidgetAttributeData::copyFrom
+//------------------------------------------------------------------------
+std::unique_ptr<WidgetAttributeData> WidgetAttributeData::copyFrom(std::shared_ptr<Widget> const &iWidget, int iAttributeId)
+{
+  RE_EDIT_INTERNAL_ASSERT(iWidget != nullptr && iAttributeId >= 0);
+  return std::make_unique<WidgetAttributeData>(iWidget->clone(), iAttributeId);
+}
+
+//------------------------------------------------------------------------
+// WidgetListData::WidgetListData
+//------------------------------------------------------------------------
+WidgetListData::WidgetListData(std::vector<std::unique_ptr<Widget>> iWidgets) :
+  Data(fmt::printf("Widgets: %ld", iWidgets.size())),
+  fWidgets{std::move(iWidgets)}
+{
+  // empty
+}
+
+//------------------------------------------------------------------------
+// WidgetListData::copyFrom
+//------------------------------------------------------------------------
+std::unique_ptr<WidgetListData> WidgetListData::copyFrom(std::vector<std::shared_ptr<Widget>> const &iWidgets)
+{
+  std::vector<std::unique_ptr<Widget>> list{};
+  list.reserve(iWidgets.size());
+  for(auto &w: iWidgets)
+    list.emplace_back(w->clone());
+  return std::make_unique<WidgetListData>(std::move(list));
+}
+
 }
 
 }

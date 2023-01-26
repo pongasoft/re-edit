@@ -114,8 +114,11 @@ public:
   inline void setBackgroundKey(Texture::key_t const &iTextureKey) { fGraphics.setTextureKey(iTextureKey); fEdited = true; }
   inline void setCableOrigin(ImVec2 const &iPosition) { fCableOrigin = iPosition; fEdited = true; }
   void setOptions(std::vector<std::string> const &iOptions);
-  int addWidget(AppContext &iCtx, std::shared_ptr<Widget> iWidget, bool iMakeSelected = true);
+  int addWidget(AppContext &iCtx, std::shared_ptr<Widget> iWidget, char const *iUndoActionName = "Add", bool iMakeSingleSelected = true);
+  void duplicateWidget(AppContext &iCtx, std::shared_ptr<Widget> const &iWidget, bool iMakeSingleSelected = true);
   void duplicateWidgets(AppContext &iCtx, std::vector<std::shared_ptr<Widget>> const &iWidgets);
+  bool pasteWidget(AppContext &iCtx, Widget const *iWidget, ImVec2 const &iPosition);
+  bool pasteWidgets(AppContext &iCtx, std::vector<std::unique_ptr<Widget>> const &iWidgets, ImVec2 const &iPosition);
   std::shared_ptr<Widget> transmuteWidget(AppContext &iCtx, const std::shared_ptr<Widget>& iWidget, WidgetDef const &iNewDef);
   std::shared_ptr<Widget> replaceWidget(int iWidgetId, std::shared_ptr<Widget> iWidget);
   std::shared_ptr<Widget> getWidget(int id) const;
@@ -143,6 +146,7 @@ private:
     std::map<int, std::shared_ptr<Widget>> fWidgets{};
     std::vector<int> fWidgetsOrder{};
     std::vector<int> fDecalsOrder{};
+    std::vector<int> fSelectedWidgets{};
   };
 
 protected:

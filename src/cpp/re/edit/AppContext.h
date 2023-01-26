@@ -142,12 +142,17 @@ public: // Properties
   constexpr int getUserSamplesCount() const { return fPropertyManager->getUserSamplesCount(); }
 
 public: // Clipboard
-  inline bool isClipboardEmpty() const { return fClipboard.isEmpty(); }
+  inline bool isClipboardMatchesType(clipboard::DataType iType) const { return fClipboard.matchesType(iType); }
+  inline std::string const &getClipboardDescription() const { return fClipboard.getData()->getDescription(); }
+  void renderClipboardTooltip() const;
   bool isClipboardAllowedPanelWidget() const;
-  inline Clipboard::Item const *getClipboardItem() const { return fClipboard.getItem(); }
+  template<typename T>
+  inline T const *getClipboardData() const { return dynamic_cast<T const *>(fClipboard.getData()); }
   void copyToClipboard(std::shared_ptr<Widget> const &iWidget, int iAttributeId = -1);
+  void copyToClipboard(std::vector<std::shared_ptr<Widget>> const &iWidgets);
   bool pasteFromClipboard(std::shared_ptr<Widget> const &oWidget);
   bool pasteFromClipboard(std::vector<std::shared_ptr<Widget>> const &oWidgets);
+  bool pasteFromClipboard(Panel &oPanel, ImVec2 const &iPosition);
 
 public: // Texture
   inline std::vector<FilmStrip::key_t> getTextureKeys() const { return fTextureManager->getTextureKeys(); };

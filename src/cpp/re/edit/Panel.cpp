@@ -433,17 +433,13 @@ void Panel::renderAddWidgetMenu(AppContext &iCtx, ImVec2 const &iPosition)
   auto disabled = ReGui::BeginDisabled(!iCtx.isClipboardAllowedPanelWidget());
   if(ImGui::MenuItem("Paste"))
   {
-    auto widget = iCtx.getClipboardItem()->getWidget()->copy();
-    widget->setPosition(iPosition - widget->getSize() / 2.0);
-    addWidget(iCtx, std::move(widget), fComputedSelectedWidgets.empty());
+    if(iCtx.pasteFromClipboard(*this, iPosition))
+      fEdited = true;
   }
 
-  if(!disabled && ReGui::ShowTooltip())
-  {
-    ReGui::ToolTip([&iCtx] {
-      ImGui::TextUnformatted(iCtx.getClipboardItem()->getDescription().c_str());
-    });
-  }
+  if(!disabled)
+    iCtx.renderClipboardTooltip();
+
   ImGui::EndDisabled();
 
   if(ImGui::BeginMenu("Add Widget"))
@@ -481,24 +477,20 @@ void Panel::renderWidgetMenu(AppContext &iCtx, std::shared_ptr<Widget> const &iW
     ImGui::EndMenu();
   }
 
-  auto disabled = ReGui::BeginDisabled(iCtx.isClipboardEmpty());
+  auto disabled = ReGui::BeginDisabled(!iCtx.isClipboardMatchesType(clipboard::DataType::kWidget | clipboard::DataType::kWidgetAttribute));
   if(ImGui::MenuItem("Paste"))
   {
     if(iCtx.pasteFromClipboard(iWidget))
       fEdited = true;
   }
 
-  if(!disabled && ReGui::ShowTooltip())
-  {
-    ReGui::ToolTip([&iCtx] {
-      ImGui::TextUnformatted(iCtx.getClipboardItem()->getDescription().c_str());
-    });
-  }
+  if(!disabled)
+    iCtx.renderClipboardTooltip();
+
   ImGui::EndDisabled();
 
-
   if(ImGui::MenuItem("Duplicate"))
-    addWidget(iCtx, iWidget->copy());
+    duplicateWidget(iCtx, iWidget);
 
   if(ImGui::MenuItem("Delete"))
     deleteWidget(iCtx, iWidget->getId());
@@ -536,19 +528,19 @@ void Panel::renderSelectedWidgetsMenu(AppContext &iCtx, std::optional<ImVec2> iP
       if(ImGui::MenuItem("Unselect"))
         clearSelection();
 
-      auto disabled = ReGui::BeginDisabled(iCtx.isClipboardEmpty());
+      if(ImGui::MenuItem("Copy"))
+        iCtx.copyToClipboard(fComputedSelectedWidgets);
+
+      auto disabled = ReGui::BeginDisabled(!iCtx.isClipboardMatchesType(clipboard::DataType::kWidget | clipboard::DataType::kWidgetAttribute));
       if(ImGui::MenuItem("Paste"))
       {
         if(iCtx.pasteFromClipboard(fComputedSelectedWidgets))
           fEdited = true;
       }
 
-      if(!disabled && ReGui::ShowTooltip())
-      {
-        ReGui::ToolTip([&iCtx] {
-          ImGui::TextUnformatted(iCtx.getClipboardItem()->getDescription().c_str());
-        });
-      }
+      if(!disabled)
+        iCtx.renderClipboardTooltip();
+
       ImGui::EndDisabled();
 
       if(ImGui::MenuItem("Duplicate"))
@@ -568,12 +560,12 @@ void Panel::renderSelectedWidgetsMenu(AppContext &iCtx, std::optional<ImVec2> iP
 //------------------------------------------------------------------------
 // Panel::addWidget
 //------------------------------------------------------------------------
-int Panel::addWidget(AppContext &iCtx, std::shared_ptr<Widget> iWidget, bool iMakeSelected)
+int Panel::addWidget(AppContext &iCtx, std::shared_ptr<Widget> iWidget, char const *iUndoActionName, bool iMakeSingleSelected)
 {
   RE_EDIT_INTERNAL_ASSERT(iWidget != nullptr);
 
   if(iCtx.isUndoEnabled())
-    iCtx.addUndoAction(createWidgetsUndoAction(fmt::printf("Add %s", re::edit::toString(iWidget->fType))));
+    iCtx.addUndoAction(createWidgetsUndoAction(fmt::printf("%s %s", iUndoActionName, re::edit::toString(iWidget->fType))));
 
   auto const id = fWidgetCounter++;
 
@@ -587,15 +579,26 @@ int Panel::addWidget(AppContext &iCtx, std::shared_ptr<Widget> iWidget, bool iMa
   iWidget->markEdited();
   fEdited = true;
 
-  fWidgets[id] = std::move(iWidget);
-
-  if(iMakeSelected)
+  if(iMakeSingleSelected)
   {
     clearSelection();
-    selectWidget(id, true);
+    iWidget->select();
   }
 
+  fWidgets[id] = std::move(iWidget);
+
   return id;
+}
+
+//------------------------------------------------------------------------
+// Panel::duplicateWidget
+//------------------------------------------------------------------------
+void Panel::duplicateWidget(AppContext &iCtx, std::shared_ptr<Widget> const &iWidget, bool iMakeSingleSelected)
+{
+  auto w = iWidget->copy();
+  w->setPosition(iWidget->getPosition() + ImVec2{iWidget->getSize().x + 5,0});
+  w->select();
+  addWidget(iCtx, std::move(w), "Duplicate", iMakeSingleSelected);
 }
 
 //------------------------------------------------------------------------
@@ -606,10 +609,73 @@ void Panel::duplicateWidgets(AppContext &iCtx, std::vector<std::shared_ptr<Widge
   if(iCtx.isUndoEnabled())
     iCtx.addUndoAction(createWidgetsUndoAction(fmt::printf("Duplicate %d widgets", iWidgets.size())));
 
+  clearSelection();
+
   iCtx.withUndoDisabled([this, &iCtx, &iWidgets](){
     for(auto const &w: iWidgets)
-      addWidget(iCtx, w->copy());
+      duplicateWidget(iCtx, w, false);
   });
+}
+
+//------------------------------------------------------------------------
+// Panel::pasteWidget
+//------------------------------------------------------------------------
+bool Panel::pasteWidget(AppContext &iCtx, Widget const *iWidget, ImVec2 const &iPosition)
+{
+  if(iCtx.isWidgetAllowed(iWidget->getType()))
+  {
+    auto widget = iWidget->copy();
+    widget->setPositionFromCenter(iPosition);
+    addWidget(iCtx, std::move(widget), "Paste");
+    return true;
+  }
+  return false;
+}
+
+//------------------------------------------------------------------------
+// Panel::pasteWidgets
+//------------------------------------------------------------------------
+bool Panel::pasteWidgets(AppContext &iCtx, std::vector<std::unique_ptr<Widget>> const &iWidgets, ImVec2 const &iPosition)
+{
+  if(iWidgets.empty())
+    return false;
+
+  auto count = std::count_if(iWidgets.begin(), iWidgets.end(), [&iCtx](auto &w) { return iCtx.isWidgetAllowed(w->getType()); });
+  if(count == 1)
+  {
+    return pasteWidget(iCtx, iWidgets[0].get(), iPosition);
+  }
+  else
+  {
+    ImVec2 min{std::numeric_limits<float>::max(), std::numeric_limits<float>::max()};
+    for(auto &w: iWidgets)
+    {
+      auto tl = w->getTopLeft();
+      min.x = std::min(min.x, tl.x);
+      min.y = std::min(min.y, tl.y);
+    }
+
+    if(iCtx.isUndoEnabled())
+      iCtx.addUndoAction(createWidgetsUndoAction(fmt::printf("Paste %d widgets", iWidgets.size())));
+
+    clearSelection();
+
+    iCtx.withUndoDisabled([this, &iCtx, &iWidgets, &iPosition, &min](){
+      for(auto &w: iWidgets)
+      {
+        if(iCtx.isWidgetAllowed(w->getType()))
+        {
+          auto widget = w->copy();
+          widget->setPosition(iPosition + w->getPosition() - min);
+          widget->select();
+          addWidget(iCtx, std::move(widget), "Paste", false);
+        }
+      }
+    });
+
+    return true;
+  }
+
 }
 
 //------------------------------------------------------------------------
@@ -1637,6 +1703,11 @@ std::shared_ptr<Panel::PanelWidgets> Panel::freezeWidgets() const
   ws->fWidgets = fWidgets;
   ws->fWidgetsOrder = fWidgetsOrder;
   ws->fDecalsOrder = fDecalsOrder;
+  for(auto &[id, w]: fWidgets)
+  {
+    if(w->isSelected())
+      ws->fSelectedWidgets.emplace_back(id);
+  }
   return ws;
 }
 
@@ -1649,9 +1720,17 @@ std::shared_ptr<Panel::PanelWidgets> Panel::thawWidgets(std::shared_ptr<PanelWid
   ws->fWidgets = std::move(fWidgets);
   ws->fWidgetsOrder = std::move(fWidgetsOrder);
   ws->fDecalsOrder = std::move(fDecalsOrder);
+  for(auto &[id, w]: ws->fWidgets)
+  {
+    if(w->isSelected())
+      ws->fSelectedWidgets.emplace_back(id);
+  }
   fWidgets = iPanelWidgets->fWidgets;
   fWidgetsOrder = iPanelWidgets->fWidgetsOrder;
   fDecalsOrder = iPanelWidgets->fDecalsOrder;
+  clearSelection();
+  for(auto id: iPanelWidgets->fSelectedWidgets)
+    fWidgets[id]->select();
   markEdited();
   return ws;
 }

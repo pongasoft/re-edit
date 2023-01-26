@@ -21,44 +21,60 @@
 
 #include <memory>
 #include <string>
+#include <bitmask_operators.hpp>
+#include "Errors.h"
+
+namespace re::edit::clipboard {
+
+enum class DataType : int
+{
+  kNone             = 0,
+  kWidget           = 1 << 0,
+  kWidgetAttribute  = 1 << 1,
+  kWidgetList       = 1 << 2
+};
+
+class Data
+{
+public:
+  explicit Data(std::string iDescription) : fDescription{std::move(iDescription)} {}
+  virtual ~Data() = default;
+  virtual clipboard::DataType getType() const = 0;
+  inline std::string const &getDescription() const { return fDescription; }
+
+private:
+  std::string fDescription;
+};
+
+class NoData : public Data
+{
+public:
+  NoData() : Data("No clipboard") {}
+  DataType getType() const override { return DataType::kNone; }
+};
+
+}
+
+template<>
+struct enable_bitmask_operators<re::edit::clipboard::DataType> {
+  static const bool enable = true;
+};
 
 namespace re::edit {
-
-class Widget;
-
-namespace widget { class Attribute; };
 
 class Clipboard
 {
 public:
-  struct Item
-  {
-    explicit Item(std::unique_ptr<Widget> iWidget, int iAttributeId = -1);
-    ~Item();
-
-    constexpr bool isWidgetItem() const { return fAttributeId < 0;}
-    constexpr bool isAttributeItem() const { return !isWidgetItem(); }
-
-    inline Widget const *getWidget() const { return fWidget.get(); }
-    widget::Attribute const *getAttribute() const;
-    inline std::string const &getDescription() const { return fDescription; }
-
-  private:
-    // implementation note: should be using unique_ptr but it requires the Widget type to be defined creating a cycle :(
-    std::unique_ptr<Widget> fWidget;
-    int fAttributeId;
-
-    std::string fDescription;
-  };
-
-public:
-  constexpr bool isEmpty() const { return fItem == nullptr; }
-  Item const *getItem() const { return fItem.get(); }
-  void addItem(std::unique_ptr<Widget> iWidget, int iAttributeId = -1);
+  inline clipboard::DataType getType() const { return fData->getType(); }
+  constexpr bool isEmpty() const { return getType() == clipboard::DataType::kNone; }
+  inline bool matchesType(clipboard::DataType iType) const { return (fData->getType() & iType) != clipboard::DataType::kNone; }
+  clipboard::Data const *getData() const { return fData.get(); }
+  void setData(std::unique_ptr<clipboard::Data> iData) { RE_EDIT_INTERNAL_ASSERT(iData != nullptr); fData = std::move(iData); }
 
 private:
-  std::unique_ptr<Item> fItem{};
+  std::unique_ptr<clipboard::Data> fData{new clipboard::NoData{}};
 };
+
 
 }
 

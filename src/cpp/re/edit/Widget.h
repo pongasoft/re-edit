@@ -26,6 +26,7 @@
 #include "Graphics.h"
 #include "Errors.h"
 #include "String.h"
+#include "Clipboard.h"
 
 #include <string>
 #include <vector>
@@ -52,8 +53,10 @@ public:
   constexpr ImVec2 getBottomRight() const { return fGraphics->getBottomRight(); }
   inline ImVec2 getSize() const { return fGraphics->getSize(); }
   constexpr void setPosition(ImVec2 const &iPosition) { fGraphics->setPosition(iPosition); fEdited |= fGraphics->isEdited(); }
+  constexpr void setPositionFromCenter(ImVec2 const &iCenterPosition) { setPosition(iCenterPosition - getSize() / 2.0f); }
 
   constexpr bool isSelected() const { return fSelected; }
+  constexpr void select() { fSelected = true; }
 
   constexpr bool isHidden() const { return fHidden; }
   constexpr bool canBeShown() const { return fHidden && fVisibility && !fVisibility->fSwitch.fValue.empty() && !fVisibility->fValues.fValue.empty(); }
@@ -204,6 +207,50 @@ T *Widget::findAttributeByIdAndType(int id) const
   return dynamic_cast<T *>(fAttributes[id].get());
 }
 
+namespace clipboard {
+  class WidgetData : public Data
+  {
+  public:
+    explicit WidgetData(std::unique_ptr<Widget> iWidget);
+    DataType getType() const override { return DataType::kWidget; }
+    Widget const *getWidget() const { return fWidget.get(); }
+
+    static std::unique_ptr<WidgetData> copyFrom(std::shared_ptr<Widget> const &iWidget);
+
+  private:
+    std::unique_ptr<Widget> fWidget{};
+  };
+
+class WidgetAttributeData : public Data
+{
+public:
+  WidgetAttributeData(std::unique_ptr<Widget> iWidget, int iAttributeId);
+  DataType getType() const override { return DataType::kWidgetAttribute; }
+  widget::Attribute const *getAttribute() const;
+
+  static std::unique_ptr<WidgetAttributeData> copyFrom(std::shared_ptr<Widget> const &iWidget, int iAttributeId);
+
+private:
+  std::unique_ptr<Widget> fWidget;
+  int fAttributeId;
+};
+
+class WidgetListData : public Data
+{
+public:
+  explicit WidgetListData(std::vector<std::unique_ptr<Widget>> iWidgets);
+  DataType getType() const override { return DataType::kWidgetList; }
+
+  auto size() const { return fWidgets.size(); }
+  std::vector<std::unique_ptr<Widget>> const &getWidgets() const { return fWidgets; }
+
+  static std::unique_ptr<WidgetListData> copyFrom(std::vector<std::shared_ptr<Widget>> const &iWidgets);
+
+private:
+  std::vector<std::unique_ptr<Widget>> fWidgets{};
+};
+
+}
 
 }
 
