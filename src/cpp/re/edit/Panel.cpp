@@ -489,9 +489,6 @@ void Panel::renderWidgetMenu(AppContext &iCtx, std::shared_ptr<Widget> const &iW
 
   ImGui::EndDisabled();
 
-  if(ImGui::MenuItem("Duplicate"))
-    duplicateWidget(iCtx, iWidget);
-
   if(ImGui::MenuItem("Delete"))
     deleteWidget(iCtx, iWidget->getId());
 
@@ -543,11 +540,6 @@ void Panel::renderSelectedWidgetsMenu(AppContext &iCtx, std::optional<ImVec2> iP
 
       ImGui::EndDisabled();
 
-      if(ImGui::MenuItem("Duplicate"))
-      {
-        duplicateWidgets(iCtx, fComputedSelectedWidgets);
-      }
-
       if(ImGui::MenuItem("Delete"))
       {
         deleteWidgets(iCtx, fComputedSelectedWidgets);
@@ -588,33 +580,6 @@ int Panel::addWidget(AppContext &iCtx, std::shared_ptr<Widget> iWidget, char con
   fWidgets[id] = std::move(iWidget);
 
   return id;
-}
-
-//------------------------------------------------------------------------
-// Panel::duplicateWidget
-//------------------------------------------------------------------------
-void Panel::duplicateWidget(AppContext &iCtx, std::shared_ptr<Widget> const &iWidget, bool iMakeSingleSelected)
-{
-  auto w = copy(iWidget.get());
-  w->setPosition(iWidget->getPosition() + ImVec2{iWidget->getSize().x + 5,0});
-  w->select();
-  addWidget(iCtx, std::move(w), "Duplicate", iMakeSingleSelected);
-}
-
-//------------------------------------------------------------------------
-// Panel::duplicateWidgets
-//------------------------------------------------------------------------
-void Panel::duplicateWidgets(AppContext &iCtx, std::vector<std::shared_ptr<Widget>> const &iWidgets)
-{
-  if(iCtx.isUndoEnabled())
-    iCtx.addUndoAction(createWidgetsUndoAction(fmt::printf("Duplicate %d widgets", iWidgets.size())));
-
-  clearSelection();
-
-  iCtx.withUndoDisabled([this, &iCtx, &iWidgets](){
-    for(auto const &w: iWidgets)
-      duplicateWidget(iCtx, w, false);
-  });
 }
 
 //------------------------------------------------------------------------
@@ -1402,8 +1367,8 @@ void Panel::MultiSelectionList::editView(AppContext &iCtx)
   if(ImGui::Button("Dwn"))
     moveSelectionDown();
   ImGui::SameLine();
-  if(ImGui::Button("Dup"))
-    duplicateSelection(iCtx);
+  if(ImGui::Button("Cpy"))
+    copySelection(iCtx);
   ImGui::SameLine();
   if(ImGui::Button("Del"))
     deleteSelection(iCtx);
@@ -1525,11 +1490,11 @@ void Panel::MultiSelectionList::clearSelection()
 }
 
 //------------------------------------------------------------------------
-// Panel::MultiSelectionList::duplicateSelection
+// Panel::MultiSelectionList::copySelection
 //------------------------------------------------------------------------
-void Panel::MultiSelectionList::duplicateSelection(AppContext &iCtx)
+void Panel::MultiSelectionList::copySelection(AppContext &iCtx)
 {
-  fPanel.duplicateWidgets(iCtx, getSelectedWidgets());
+  iCtx.copyToClipboard(getSelectedWidgets());
   fLastSelected = std::nullopt;
 }
 
