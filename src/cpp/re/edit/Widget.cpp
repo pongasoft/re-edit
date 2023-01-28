@@ -1088,30 +1088,41 @@ void Widget::showIfHidden(AppContext &iCtx)
 }
 
 //------------------------------------------------------------------------
-// Widget::renderShowMenu
+// Widget::renderVisibilityMenu
 //------------------------------------------------------------------------
-void Widget::renderShowMenu(AppContext &iCtx)
+void Widget::renderVisibilityMenu(AppContext &iCtx)
 {
-  if(canBeShown())
+  if(hasVisibility())
   {
-    auto const &path = fVisibility->fSwitch.fValue;
-    auto const &values = fVisibility->fValues.fValue;
-    if(values.size() == 1)
+    if(ImGui::BeginMenu("Visibility"))
     {
-      if(ImGui::MenuItem(fmt::printf("Show [%s=%d]", path, values[0]).c_str()))
-        iCtx.setPropertyValueAsInt(path, values[0]);
-    }
-    else
-    {
-      if(ImGui::BeginMenu(fmt::printf("Show [%s]", path).c_str()))
+      auto const &path = fVisibility->fSwitch.fValue;
+      ReGui::TextSeparator(path.c_str());
+      if(ImGui::MenuItem(ReGui_Prefix(ReGui_Icon_Watch, "Watch")))
+        iCtx.addPropertyToWatchlist(path);
+      if(fHidden)
       {
-        for(auto value: values)
+        auto const &values = fVisibility->fValues.fValue;
+        if(!values.empty())
         {
-          if(ImGui::MenuItem(fmt::printf("value=%d", value).c_str()))
-            iCtx.setPropertyValueAsInt(path, value);
+          if(ImGui::MenuItem(fmt::printf("Show [value=%d]", values[0]).c_str()))
+            iCtx.setPropertyValueAsInt(path, values[0]);
+          if(values.size() > 1)
+          {
+            if(ImGui::BeginMenu(fmt::printf("Show with value", path).c_str()))
+            {
+              ReGui::TextSeparator("value");
+              for(auto value: values)
+              {
+                if(ImGui::MenuItem(fmt::printf("%d", value).c_str()))
+                  iCtx.setPropertyValueAsInt(path, value);
+              }
+              ImGui::EndMenu();
+            }
+          }
         }
-        ImGui::EndMenu();
       }
+      ImGui::EndMenu();
     }
   }
 }

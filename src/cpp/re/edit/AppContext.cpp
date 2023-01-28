@@ -397,28 +397,30 @@ void AppContext::render()
 }
 
 //------------------------------------------------------------------------
-// AppContext::renderAddWidgetMenuView
+// AppContext::renderWidgetDefMenuItems
 //------------------------------------------------------------------------
-void AppContext::renderAddWidgetMenuView(ImVec2 const &iPosition)
+bool AppContext::renderWidgetDefMenuItems(PanelType iPanelType, std::function<void(WidgetDef const &)> const &iAction)
 {
-  for(auto const &def: fCurrentPanelState->fWidgetDefs)
+  bool res = false;
+  for(auto const &def: getPanelState(iPanelType)->getAllowedWidgets())
   {
     if(ImGui::MenuItem(def.fName))
     {
-      auto widget = def.fFactory(std::nullopt);
-      widget->setPosition(iPosition - widget->getSize() / 2.0f);
-      fCurrentPanelState->fPanel.addWidget(*this, std::move(widget));
+      iAction(def);
+      res = true;
     }
   }
+
+  return res;
 }
 
 
 //------------------------------------------------------------------------
 // AppContext::isWidgetAllowed
 //------------------------------------------------------------------------
-bool AppContext::isWidgetAllowed(WidgetType iType) const
+bool AppContext::isWidgetAllowed(PanelType iPanelType, WidgetType iWidgetType) const
 {
-  return fCurrentPanelState->isWidgetAllowed(iType);
+  return getPanelState(iPanelType)->isWidgetAllowed(iWidgetType);
 }
 
 //------------------------------------------------------------------------
@@ -1505,22 +1507,22 @@ bool AppContext::pasteFromClipboard(Panel &oPanel, ImVec2 const &iPosition)
 }
 
 //------------------------------------------------------------------------
-// AppContext::isClipboardAllowedPanelWidget
+// AppContext::isClipboardWidgetAllowedForPanel
 //------------------------------------------------------------------------
-bool AppContext::isClipboardAllowedPanelWidget() const
+bool AppContext::isClipboardWidgetAllowedForPanel(PanelType iType) const
 {
   if(!isClipboardMatchesType(clipboard::DataType::kWidget | clipboard::DataType::kWidgetList))
     return false;
 
   if(auto data = getClipboardData<clipboard::WidgetData>())
   {
-    return isWidgetAllowed(data->getWidget()->getType());
+    return isWidgetAllowed(iType, data->getWidget()->getType());
   }
 
   if(auto data = getClipboardData<clipboard::WidgetListData>())
   {
     auto const &widgets = data->getWidgets();
-    return std::count_if(widgets.begin(), widgets.end(), [this](auto &w) { return isWidgetAllowed(w->getType()); }) > 0;
+    return std::count_if(widgets.begin(), widgets.end(), [this, iType](auto &w) { return isWidgetAllowed(iType, w->getType()); }) > 0;
   }
 
   return false;

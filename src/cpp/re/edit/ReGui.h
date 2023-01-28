@@ -264,6 +264,7 @@ constexpr auto kMenuIcon = fa::kBars;
 #define ReGui_Icon_ReloadMotherboard ICON_FA_Microchip
 #define ReGui_Icon_Sort ICON_FA_ArrowUpArrowDown
 #define ReGui_Icon_Copy ICON_FA_Clipboard
+#define ReGui_Icon_Hidden_Widget ICON_FA_EyeSlash
 #define ReGui_Icon_Duplicate ICON_FA_Clone
 #define ReGui_Icon_Tip ICON_FA_Lightbulb
 #define ReGui_Icon_Frames ICON_FA_Film

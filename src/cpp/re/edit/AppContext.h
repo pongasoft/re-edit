@@ -24,6 +24,7 @@
 #include <memory>
 #include <exception>
 #include <atomic>
+#include <functional>
 #include "TextureManager.h"
 #include "FontManager.h"
 #include "PreferencesManager.h"
@@ -46,6 +47,7 @@ namespace re::edit {
 class Panel;
 class PanelState;
 class Widget;
+struct WidgetDef;
 
 namespace widget {
 class Attribute;
@@ -104,8 +106,8 @@ public:
   static AppContext &GetCurrent() { RE_EDIT_INTERNAL_ASSERT(kCurrent != nullptr); return *kCurrent; }
 
   ImVec2 getCurrentPanelSize() const;
-  void renderAddWidgetMenuView(ImVec2 const &iPosition = {});
-  bool isWidgetAllowed(WidgetType iType) const;
+  bool renderWidgetDefMenuItems(PanelType iPanelType, std::function<void(WidgetDef const &)> const &iAction);
+  bool isWidgetAllowed(PanelType iPanelType, WidgetType iWidgetType) const;
   void renderZoomSelection();
   void renderGridSelection();
   PanelState *getPanelState(PanelType iType) const;
@@ -145,7 +147,7 @@ public: // Clipboard
   inline bool isClipboardMatchesType(clipboard::DataType iType) const { return fClipboard.matchesType(iType); }
   inline std::string const &getClipboardDescription() const { return fClipboard.getData()->getDescription(); }
   void renderClipboardTooltip() const;
-  bool isClipboardAllowedPanelWidget() const;
+  bool isClipboardWidgetAllowedForPanel(PanelType iType) const;
   template<typename T>
   inline T const *getClipboardData() const { return dynamic_cast<T const *>(fClipboard.getData()); }
   void copyToClipboard(std::shared_ptr<Widget> const &iWidget, int iAttributeId = -1);

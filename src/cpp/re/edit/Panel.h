@@ -115,6 +115,7 @@ public:
   inline void setCableOrigin(ImVec2 const &iPosition) { fCableOrigin = iPosition; fEdited = true; }
   void setOptions(std::vector<std::string> const &iOptions);
   int addWidget(AppContext &iCtx, std::shared_ptr<Widget> iWidget, char const *iUndoActionName = "Add", bool iMakeSingleSelected = true);
+  int addWidget(AppContext &iCtx, WidgetDef const &iDef, ImVec2 const &iPosition);
   bool pasteWidget(AppContext &iCtx, Widget const *iWidget, ImVec2 const &iPosition);
   bool pasteWidgets(AppContext &iCtx, std::vector<std::unique_ptr<Widget>> const &iWidgets, ImVec2 const &iPosition);
   std::shared_ptr<Widget> transmuteWidget(AppContext &iCtx, const std::shared_ptr<Widget>& iWidget, WidgetDef const &iNewDef);
@@ -124,6 +125,8 @@ public:
   void selectWidget(int id, bool iMultiple);
   void toggleWidgetSelection(int id, bool iMultiple);
   void unselectWidget(int id);
+  void selectAll(bool iIncludeHiddenWidgets = false);
+  void selectByType(WidgetType iType, bool iIncludeHiddenWidgets = false);
   void clearSelection();
 
   /**
@@ -165,7 +168,7 @@ private:
   void moveWidgets(AppContext &iCtx, ImVec2 const &iPosition, ImVec2 const &iGrid);
   void endMoveWidgets(AppContext &iCtx, ImVec2 const &iPosition);
   void computeEachFrame(AppContext &iCtx);
-  void renderAddWidgetMenu(AppContext &iCtx, ImVec2 const &iPosition = {});
+  bool renderPanelWidgetMenu(AppContext &iCtx, ImVec2 const &iPosition = {});
   void renderSelectedWidgetsMenu(AppContext &iCtx,
                                  std::optional<ImVec2> iPosition = std::nullopt);
   void renderWidgetMenu(AppContext &iCtx, std::shared_ptr<Widget> const &iWidget);
@@ -191,10 +194,7 @@ private:
     void editView(AppContext &iCtx);
     void moveSelectionUp();
     void moveSelectionDown();
-    void selectAll();
-    void clearSelection();
-    void copySelection(AppContext &iCtx);
-    void deleteSelection(AppContext &iCtx);
+
     std::vector<std::shared_ptr<Widget>> getSelectedWidgets() const;
 
   public:

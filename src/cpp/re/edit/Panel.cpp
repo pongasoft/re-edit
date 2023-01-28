@@ -156,7 +156,7 @@ void Panel::draw(AppContext &iCtx, ReGui::Canvas &iCanvas, ImVec2 const &iPopupW
     auto widgetLocation = *fPopupLocation;
     renderSelectedWidgetsMenu(iCtx, widgetLocation);
     ReGui::TextSeparator("Panel");
-    renderAddWidgetMenu(iCtx, widgetLocation);
+    renderPanelWidgetMenu(iCtx, widgetLocation);
     ImGui::EndPopup();
   }
   else
@@ -426,15 +426,40 @@ void Panel::handleCanvasInputs(AppContext &iCtx, ReGui::Canvas &iCanvas)
 }
 
 //------------------------------------------------------------------------
-// Panel::renderAddWidgetMenu
+// Panel::renderPanelWidgetMenu
 //------------------------------------------------------------------------
-void Panel::renderAddWidgetMenu(AppContext &iCtx, ImVec2 const &iPosition)
+bool Panel::renderPanelWidgetMenu(AppContext &iCtx, ImVec2 const &iPosition)
 {
-  auto disabled = ReGui::BeginDisabled(!iCtx.isClipboardAllowedPanelWidget());
+  auto res = false;
+
+  auto alt = ImGui::GetIO().KeyAlt;
+
+  ImGui::BeginDisabled(fComputedSelectedWidgets.empty());
+  if(ImGui::MenuItem("Unselect All"))
+  {
+    clearSelection();
+    res = true;
+  }
+  ImGui::EndDisabled();
+
+  if(ImGui::MenuItem(alt ? "Select All (+ " ReGui_Icon_Hidden_Widget ")": "Select All"))
+  {
+    selectAll(alt);
+    res = true;
+  }
+
+  if(ImGui::BeginMenu(alt ? "Select By Type (+ " ReGui_Icon_Hidden_Widget ")" : "Select By Type"))
+  {
+    res = iCtx.renderWidgetDefMenuItems(fType, [this, alt](WidgetDef const &iDef) { selectByType(iDef.fType, alt); });
+    ImGui::EndMenu();
+  }
+
+  auto disabled = ReGui::BeginDisabled(!iCtx.isClipboardWidgetAllowedForPanel(fType));
   if(ImGui::MenuItem("Paste"))
   {
     if(iCtx.pasteFromClipboard(*this, iPosition))
       fEdited = true;
+    res = true;
   }
 
   if(!disabled)
@@ -444,15 +469,18 @@ void Panel::renderAddWidgetMenu(AppContext &iCtx, ImVec2 const &iPosition)
 
   if(ImGui::BeginMenu("Add Widget"))
   {
-    iCtx.renderAddWidgetMenuView(iPosition);
+    res = iCtx.renderWidgetDefMenuItems(fType, [this, &iCtx, &iPosition](WidgetDef const &iDef) { addWidget(iCtx, iDef, iPosition); });
     ImGui::EndMenu();
   }
   if(ImGui::MenuItem("Add Decal"))
   {
     auto widget = Widget::panel_decal();
-    widget->setPosition(iPosition - widget->getSize() / 2.0f);
+    widget->setPositionFromCenter(iPosition);
     addWidget(iCtx, std::move(widget));
+    res = true;
   }
+
+  return false;
 }
 
 //------------------------------------------------------------------------
@@ -492,8 +520,7 @@ void Panel::renderWidgetMenu(AppContext &iCtx, std::shared_ptr<Widget> const &iW
   if(ImGui::MenuItem("Delete"))
     deleteWidget(iCtx, iWidget->getId());
 
-  if(iWidget->canBeShown())
-    iWidget->renderShowMenu(iCtx);
+  iWidget->renderVisibilityMenu(iCtx);
 }
 
 //------------------------------------------------------------------------
@@ -583,11 +610,21 @@ int Panel::addWidget(AppContext &iCtx, std::shared_ptr<Widget> iWidget, char con
 }
 
 //------------------------------------------------------------------------
+// Panel::addWidget
+//------------------------------------------------------------------------
+int Panel::addWidget(AppContext &iCtx, WidgetDef const &iDef, ImVec2 const &iPosition)
+{
+  auto widget = iDef.fFactory(std::nullopt);
+  widget->setPositionFromCenter(iPosition);
+  return addWidget(iCtx, std::move(widget));
+}
+
+//------------------------------------------------------------------------
 // Panel::pasteWidget
 //------------------------------------------------------------------------
 bool Panel::pasteWidget(AppContext &iCtx, Widget const *iWidget, ImVec2 const &iPosition)
 {
-  if(iCtx.isWidgetAllowed(iWidget->getType()))
+  if(iCtx.isWidgetAllowed(fType, iWidget->getType()))
   {
     auto widget = copy(iWidget);
     widget->setPositionFromCenter(iPosition);
@@ -605,7 +642,7 @@ bool Panel::pasteWidgets(AppContext &iCtx, std::vector<std::unique_ptr<Widget>> 
   if(iWidgets.empty())
     return false;
 
-  auto count = std::count_if(iWidgets.begin(), iWidgets.end(), [&iCtx](auto &w) { return iCtx.isWidgetAllowed(w->getType()); });
+  auto count = std::count_if(iWidgets.begin(), iWidgets.end(), [&iCtx, type = fType](auto &w) { return iCtx.isWidgetAllowed(type, w->getType()); });
   if(count == 1)
   {
     return pasteWidget(iCtx, iWidgets[0].get(), iPosition);
@@ -628,7 +665,7 @@ bool Panel::pasteWidgets(AppContext &iCtx, std::vector<std::unique_ptr<Widget>> 
     iCtx.withUndoDisabled([this, &iCtx, &iWidgets, &iPosition, &min](){
       for(auto &w: iWidgets)
       {
-        if(iCtx.isWidgetAllowed(w->getType()))
+        if(iCtx.isWidgetAllowed(fType, w->getType()))
         {
           auto widget = copy(w.get());
           widget->setPosition(iPosition + w->getPosition() - min);
@@ -819,12 +856,35 @@ void Panel::toggleWidgetSelection(int id, bool iMultiple)
 }
 
 //------------------------------------------------------------------------
+// Panel::selectAll
+//------------------------------------------------------------------------
+void Panel::selectAll(bool iIncludeHiddenWidgets)
+{
+  for(auto &[id, w]: fWidgets)
+  {
+    w->setSelected(iIncludeHiddenWidgets || !w->isHidden());
+  }
+}
+
+//------------------------------------------------------------------------
+// Panel::selectByType
+//------------------------------------------------------------------------
+void Panel::selectByType(WidgetType iType, bool iIncludeHiddenWidgets)
+{
+  for(auto &[id, w]: fWidgets)
+  {
+    if(w->getType() == iType && (iIncludeHiddenWidgets || !w->isHidden()))
+      w->select();
+  }
+}
+
+//------------------------------------------------------------------------
 // Panel::unselectWidget
 //------------------------------------------------------------------------
 void Panel::unselectWidget(int id)
 {
   auto widget = getWidget(id);
-  widget->fSelected = false;
+  widget->unselect();
 }
 
 //------------------------------------------------------------------------
@@ -833,7 +893,7 @@ void Panel::unselectWidget(int id)
 void Panel::clearSelection()
 {
   for(auto &p: fWidgets)
-    p.second->fSelected = false;
+    p.second->unselect();
 }
 
 namespace impl {
@@ -1040,7 +1100,7 @@ void Panel::editNoSelectionView(AppContext &iCtx)
 
   if(ImGui::BeginPopup("Menu"))
   {
-    renderAddWidgetMenu(iCtx);
+    renderPanelWidgetMenu(iCtx);
     ImGui::EndPopup();
   }
 
@@ -1355,23 +1415,22 @@ void Panel::MultiSelectionList::handleClick(std::shared_ptr<Widget> const &iWidg
 //------------------------------------------------------------------------
 void Panel::MultiSelectionList::editView(AppContext &iCtx)
 {
-  if(ImGui::Button("All"))
-    selectAll();
+  if(ReGui::MenuButton())
+    ImGui::OpenPopup("Menu");
+
+  if(ImGui::BeginPopup("Menu"))
+  {
+    if(fPanel.renderPanelWidgetMenu(iCtx, fPanel.getSize() / 2.0f))
+      fLastSelected = std::nullopt;
+    ImGui::EndPopup();
+  }
+
   ImGui::SameLine();
-  if(ImGui::Button("Clr"))
-    clearSelection();
-  ImGui::SameLine();
-  if(ImGui::Button("Up "))
+  if(ImGui::Button("Up  "))
     moveSelectionUp();
   ImGui::SameLine();
-  if(ImGui::Button("Dwn"))
+  if(ImGui::Button("Down"))
     moveSelectionDown();
-  ImGui::SameLine();
-  if(ImGui::Button("Cpy"))
-    copySelection(iCtx);
-  ImGui::SameLine();
-  if(ImGui::Button("Del"))
-    deleteSelection(iCtx);
 
   ImGui::Separator();
 
@@ -1467,44 +1526,6 @@ void Panel::MultiSelectionList::moveSelectionDown()
     fList = std::move(list);
   }
 
-}
-
-//------------------------------------------------------------------------
-// Panel::MultiSelectionList::selectAll
-//------------------------------------------------------------------------
-void Panel::MultiSelectionList::selectAll()
-{
-  fPanel.clearSelection();
-  for(auto id: fList)
-    fPanel.getWidget(id)->fSelected = true;
-  fLastSelected = std::nullopt;
-}
-
-//------------------------------------------------------------------------
-// Panel::MultiSelectionList::clearSelection
-//------------------------------------------------------------------------
-void Panel::MultiSelectionList::clearSelection()
-{
-  fPanel.clearSelection();
-  fLastSelected = std::nullopt;
-}
-
-//------------------------------------------------------------------------
-// Panel::MultiSelectionList::copySelection
-//------------------------------------------------------------------------
-void Panel::MultiSelectionList::copySelection(AppContext &iCtx)
-{
-  iCtx.copyToClipboard(getSelectedWidgets());
-  fLastSelected = std::nullopt;
-}
-
-//------------------------------------------------------------------------
-// Panel::MultiSelectionList::deleteSelection
-//------------------------------------------------------------------------
-void Panel::MultiSelectionList::deleteSelection(AppContext &iCtx)
-{
-  fPanel.deleteWidgets(iCtx, getSelectedWidgets());
-  fLastSelected = std::nullopt;
 }
 
 //------------------------------------------------------------------------

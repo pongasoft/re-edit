@@ -57,9 +57,12 @@ public:
 
   constexpr bool isSelected() const { return fSelected; }
   constexpr void select() { fSelected = true; }
+  constexpr void unselect() { fSelected = false; }
+  constexpr void setSelected(bool b) { fSelected = b; }
 
   constexpr bool isHidden() const { return fHidden; }
   constexpr bool canBeShown() const { return fHidden && fVisibility && !fVisibility->fSwitch.fValue.empty() && !fVisibility->fValues.fValue.empty(); }
+  constexpr bool hasVisibility() const { return fVisibility && !fVisibility->fSwitch.fValue.empty(); }
 
   constexpr void setHitBoundaries(HitBoundaries const &iHitBoundaries) { fGraphics->setHitBoundaries(iHitBoundaries); fEdited |= fGraphics->isEdited(); }
   constexpr void disableHitBoundaries() { fGraphics->fHitBoundariesEnabled = false; }
@@ -147,7 +150,7 @@ public:
 protected:
   void computeIsHidden(AppContext &iCtx);
   void showIfHidden(AppContext &iCtx);
-  void renderShowMenu(AppContext &iCtx);
+  void renderVisibilityMenu(AppContext &iCtx);
   bool isPanelDecal() const { return fType == WidgetType::kPanelDecal; }
 
 protected:

@@ -873,8 +873,8 @@ void Application::renderWelcome()
         renderApplicationMenuItems();
         ImGui::EndPopup();
       }
-      ImGui::EndGroup();
       ImGui::PopStyleVar();
+      ImGui::EndGroup();
     }
 
     ImGui::SameLine(0, padding);
