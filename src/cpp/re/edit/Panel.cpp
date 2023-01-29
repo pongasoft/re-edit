@@ -153,10 +153,7 @@ void Panel::draw(AppContext &iCtx, ReGui::Canvas &iCanvas, ImVec2 const &iPopupW
   {
     if(!fPopupLocation)
       fPopupLocation = mousePos;
-    auto widgetLocation = *fPopupLocation;
-    renderSelectedWidgetsMenu(iCtx, widgetLocation);
-    ReGui::TextSeparator("Panel");
-    renderPanelWidgetMenu(iCtx, widgetLocation);
+    renderPanelMenus(iCtx, *fPopupLocation);
     ImGui::EndPopup();
   }
   else
@@ -430,6 +427,8 @@ void Panel::handleCanvasInputs(AppContext &iCtx, ReGui::Canvas &iCanvas)
 //------------------------------------------------------------------------
 bool Panel::renderPanelWidgetMenu(AppContext &iCtx, ImVec2 const &iPosition)
 {
+  ReGui::TextSeparator("Panel");
+
   auto res = false;
 
   auto alt = ImGui::GetIO().KeyAlt;
@@ -524,54 +523,68 @@ void Panel::renderWidgetMenu(AppContext &iCtx, std::shared_ptr<Widget> const &iW
 }
 
 //------------------------------------------------------------------------
-// Panel::renderSelectedWidgetsMenu
+// Panel::renderPanelMenus
 //------------------------------------------------------------------------
-void Panel::renderSelectedWidgetsMenu(AppContext &iCtx, std::optional<ImVec2> iPosition)
+void Panel::renderPanelMenus(AppContext &iCtx, std::optional<ImVec2> iPosition)
 {
   std::shared_ptr<Widget> widget{};
 
   if(iPosition)
-  {
     widget = findWidgetOnTopAt(*iPosition);
-    if(widget)
-      renderWidgetMenu(iCtx, widget);
-  }
-  if(!fComputedSelectedWidgets.empty())
+
+  if(widget)
   {
-    if(fComputedSelectedWidgets.size() == 1)
+    if(!fComputedSelectedWidgets.empty())
     {
-      if(fComputedSelectedWidgets[0] != widget)
-      {
-        renderWidgetMenu(iCtx, fComputedSelectedWidgets[0]);
-      }
+      if(!widget->isSelected())
+        renderWidgetMenu(iCtx, widget);
+      else
+        renderSelectedWidgetsMenu(iCtx);
     }
     else
+      renderWidgetMenu(iCtx, widget);
+  }
+  else
+  {
+    renderPanelWidgetMenu(iCtx, iPosition ? *iPosition : getCenter());
+  }
+}
+
+//------------------------------------------------------------------------
+// Panel::renderSelectedWidgetsMenu
+//------------------------------------------------------------------------
+void Panel::renderSelectedWidgetsMenu(AppContext &iCtx)
+{
+  if(fComputedSelectedWidgets.empty())
+    return;
+
+  if(fComputedSelectedWidgets.size() == 1)
+    renderWidgetMenu(iCtx, fComputedSelectedWidgets[0]);
+  else
+  {
+    ReGui::TextSeparator(fmt::printf("Selected Widgets (%ld)", fComputedSelectedWidgets.size()).c_str());
+
+    if(ImGui::MenuItem("Unselect"))
+      clearSelection();
+
+    if(ImGui::MenuItem("Copy"))
+      iCtx.copyToClipboard(fComputedSelectedWidgets);
+
+    auto disabled = ReGui::BeginDisabled(!iCtx.isClipboardMatchesType(clipboard::DataType::kWidget | clipboard::DataType::kWidgetAttribute));
+    if(ImGui::MenuItem("Paste"))
     {
-      ReGui::TextSeparator(fmt::printf("Selected Widgets (%ld)", fComputedSelectedWidgets.size()).c_str());
+      if(iCtx.pasteFromClipboard(fComputedSelectedWidgets))
+        fEdited = true;
+    }
 
-      if(ImGui::MenuItem("Unselect"))
-        clearSelection();
+    if(!disabled)
+      iCtx.renderClipboardTooltip();
 
-      if(ImGui::MenuItem("Copy"))
-        iCtx.copyToClipboard(fComputedSelectedWidgets);
+    ImGui::EndDisabled();
 
-      auto disabled = ReGui::BeginDisabled(!iCtx.isClipboardMatchesType(clipboard::DataType::kWidget | clipboard::DataType::kWidgetAttribute));
-      if(ImGui::MenuItem("Paste"))
-      {
-        if(iCtx.pasteFromClipboard(fComputedSelectedWidgets))
-          fEdited = true;
-      }
-
-      if(!disabled)
-        iCtx.renderClipboardTooltip();
-
-      ImGui::EndDisabled();
-
-      if(ImGui::MenuItem("Delete"))
-      {
-        deleteWidgets(iCtx, fComputedSelectedWidgets);
-      }
-
+    if(ImGui::MenuItem("Delete"))
+    {
+      deleteWidgets(iCtx, fComputedSelectedWidgets);
     }
   }
 }
@@ -1420,7 +1433,7 @@ void Panel::MultiSelectionList::editView(AppContext &iCtx)
 
   if(ImGui::BeginPopup("Menu"))
   {
-    if(fPanel.renderPanelWidgetMenu(iCtx, fPanel.getSize() / 2.0f))
+    if(fPanel.renderPanelWidgetMenu(iCtx, fPanel.getCenter()))
       fLastSelected = std::nullopt;
     ImGui::EndPopup();
   }

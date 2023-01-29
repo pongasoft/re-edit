@@ -96,6 +96,7 @@ public:
   char const *getName() const;
   constexpr std::string const &getNodeName() const { return fNodeName; };
   constexpr ImVec2 getSize() const { return fSize; }
+  constexpr ImVec2 getCenter() const { return getSize() / 2.0f; }
   constexpr ImVec2 getTotalSize() const { return fComputedRect.GetSize(); }
   constexpr ImVec2 getTopLeftOffset() const { return {-fComputedRect.Min.x, -fComputedRect.Min.y}; }
   constexpr ReGui::Rect getRect() const { return fComputedRect; }
@@ -169,8 +170,8 @@ private:
   void endMoveWidgets(AppContext &iCtx, ImVec2 const &iPosition);
   void computeEachFrame(AppContext &iCtx);
   bool renderPanelWidgetMenu(AppContext &iCtx, ImVec2 const &iPosition = {});
-  void renderSelectedWidgetsMenu(AppContext &iCtx,
-                                 std::optional<ImVec2> iPosition = std::nullopt);
+  void renderPanelMenus(AppContext &iCtx, std::optional<ImVec2> iPosition = std::nullopt);
+  void renderSelectedWidgetsMenu(AppContext &iCtx);
   void renderWidgetMenu(AppContext &iCtx, std::shared_ptr<Widget> const &iWidget);
   void drawWidgets(AppContext &iCtx, ReGui::Canvas &iCanvas, std::vector<int> const &iOrder);
   void drawCableOrigin(AppContext &iCtx, ReGui::Canvas &iCanvas);
