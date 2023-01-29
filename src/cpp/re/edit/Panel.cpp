@@ -86,6 +86,18 @@ std::shared_ptr<Widget> Panel::getWidget(int id) const
 }
 
 //------------------------------------------------------------------------
+// Panel::findWidget
+//------------------------------------------------------------------------
+std::shared_ptr<Widget> Panel::findWidget(int id) const
+{
+  auto iter = fWidgets.find(id);
+  if(iter == fWidgets.end())
+    return nullptr;
+  else
+    return iter->second;
+}
+
+//------------------------------------------------------------------------
 // Panel::draw
 //------------------------------------------------------------------------
 void Panel::draw(AppContext &iCtx, ReGui::Canvas &iCanvas, ImVec2 const &iPopupWindowPadding)
@@ -145,10 +157,11 @@ void Panel::draw(AppContext &iCtx, ReGui::Canvas &iCanvas, ImVec2 const &iPopupW
     iCtx.setMouseCursorNextFrame(ImGuiMouseCursor_Hand);
   }
 
+  ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, iPopupWindowPadding);
+
   if(iCanvas.canReceiveInput())
     handleCanvasInputs(iCtx, iCanvas);
 
-  ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, iPopupWindowPadding);
   if(ImGui::BeginPopupContextItem())
   {
     if(!fPopupLocation)
@@ -410,13 +423,21 @@ void Panel::handleCanvasInputs(AppContext &iCtx, ReGui::Canvas &iCanvas)
   if(ImGui::IsKeyPressed(ImGuiKey_R, false))
     iCtx.toggleRails();
 
-  // toggle rails (A key)
+  // toggle select/unselect ALL (A key)
   if(ImGui::IsKeyPressed(ImGuiKey_A, false))
     toggleSelectAll();
 
   // canvas zoom (mouse wheel)
   if(iCanvas.isHovered())
   {
+    // tooltip (Q key)
+    if(ImGui::IsKeyDown(ImGuiKey_Q))
+    {
+      auto w = findWidgetOnTopAt(iCanvas.getCanvasMousePos());
+      if(w)
+        ReGui::ToolTip([this, w] { renderWidgetValues(w); });
+    }
+
     auto mouseVerticalWheel = ImGui::GetIO().MouseWheel;
     if(mouseVerticalWheel != 0)
     {
@@ -1156,6 +1177,19 @@ void Panel::editView(AppContext &iCtx)
   }
   ImGui::End();
 
+}
+
+
+//------------------------------------------------------------------------
+// Panel::renderWidgetValues
+//------------------------------------------------------------------------
+void Panel::renderWidgetValues(std::shared_ptr<Widget> const &iWidget)
+{
+  ReGui::TextSeparator(fmt::printf("%s [%s]", iWidget->getName(), re::edit::toString(iWidget->getType())).c_str());
+  for(auto &att: iWidget->fAttributes)
+  {
+    ImGui::TextUnformatted(att->toValueString().c_str());
+  }
 }
 
 //------------------------------------------------------------------------

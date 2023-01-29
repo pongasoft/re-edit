@@ -122,6 +122,7 @@ public:
   std::shared_ptr<Widget> transmuteWidget(AppContext &iCtx, const std::shared_ptr<Widget>& iWidget, WidgetDef const &iNewDef);
   std::shared_ptr<Widget> replaceWidget(int iWidgetId, std::shared_ptr<Widget> iWidget);
   std::shared_ptr<Widget> getWidget(int id) const;
+  std::shared_ptr<Widget> findWidget(int id) const;
 
   void selectWidget(int id, bool iMultiple);
   void toggleWidgetSelection(int id, bool iMultiple);
@@ -174,6 +175,7 @@ private:
   bool renderPanelMenus(AppContext &iCtx, std::optional<ImVec2> iPosition = std::nullopt);
   bool renderSelectedWidgetsMenu(AppContext &iCtx);
   bool renderWidgetMenu(AppContext &iCtx, std::shared_ptr<Widget> const &iWidget);
+  void renderWidgetValues(std::shared_ptr<Widget> const &iWidget);
   void drawWidgets(AppContext &iCtx, ReGui::Canvas &iCanvas, std::vector<int> const &iOrder);
   void drawCableOrigin(AppContext &iCtx, ReGui::Canvas &iCanvas);
   void drawRails(AppContext const &iCtx, ReGui::Canvas const &iCanvas) const;
