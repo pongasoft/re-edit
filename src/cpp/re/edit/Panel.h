@@ -127,6 +127,7 @@ public:
   void toggleWidgetSelection(int id, bool iMultiple);
   void unselectWidget(int id);
   void selectAll(bool iIncludeHiddenWidgets = false);
+  void toggleSelectAll(bool iIncludeHiddenWidgets = false);
   void selectByType(WidgetType iType, bool iIncludeHiddenWidgets = false);
   void clearSelection();
 
@@ -170,9 +171,9 @@ private:
   void endMoveWidgets(AppContext &iCtx, ImVec2 const &iPosition);
   void computeEachFrame(AppContext &iCtx);
   bool renderPanelWidgetMenu(AppContext &iCtx, ImVec2 const &iPosition = {});
-  void renderPanelMenus(AppContext &iCtx, std::optional<ImVec2> iPosition = std::nullopt);
-  void renderSelectedWidgetsMenu(AppContext &iCtx);
-  void renderWidgetMenu(AppContext &iCtx, std::shared_ptr<Widget> const &iWidget);
+  bool renderPanelMenus(AppContext &iCtx, std::optional<ImVec2> iPosition = std::nullopt);
+  bool renderSelectedWidgetsMenu(AppContext &iCtx);
+  bool renderWidgetMenu(AppContext &iCtx, std::shared_ptr<Widget> const &iWidget);
   void drawWidgets(AppContext &iCtx, ReGui::Canvas &iCanvas, std::vector<int> const &iOrder);
   void drawCableOrigin(AppContext &iCtx, ReGui::Canvas &iCanvas);
   void drawRails(AppContext const &iCtx, ReGui::Canvas const &iCanvas) const;

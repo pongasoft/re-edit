@@ -410,6 +410,10 @@ void Panel::handleCanvasInputs(AppContext &iCtx, ReGui::Canvas &iCanvas)
   if(ImGui::IsKeyPressed(ImGuiKey_R, false))
     iCtx.toggleRails();
 
+  // toggle rails (A key)
+  if(ImGui::IsKeyPressed(ImGuiKey_A, false))
+    toggleSelectAll();
+
   // canvas zoom (mouse wheel)
   if(iCanvas.isHovered())
   {
@@ -437,19 +441,19 @@ bool Panel::renderPanelWidgetMenu(AppContext &iCtx, ImVec2 const &iPosition)
   if(ImGui::MenuItem("Unselect All"))
   {
     clearSelection();
-    res = true;
+    res |= true;
   }
   ImGui::EndDisabled();
 
   if(ImGui::MenuItem(alt ? "Select All (+ " ReGui_Icon_Hidden_Widget ")": "Select All"))
   {
     selectAll(alt);
-    res = true;
+    res |= true;
   }
 
   if(ImGui::BeginMenu(alt ? "Select By Type (+ " ReGui_Icon_Hidden_Widget ")" : "Select By Type"))
   {
-    res = iCtx.renderWidgetDefMenuItems(fType, [this, alt](WidgetDef const &iDef) { selectByType(iDef.fType, alt); });
+    res |= iCtx.renderWidgetDefMenuItems(fType, [this, alt](WidgetDef const &iDef) { selectByType(iDef.fType, alt); });
     ImGui::EndMenu();
   }
 
@@ -458,7 +462,7 @@ bool Panel::renderPanelWidgetMenu(AppContext &iCtx, ImVec2 const &iPosition)
   {
     if(iCtx.pasteFromClipboard(*this, iPosition))
       fEdited = true;
-    res = true;
+    res |= true;
   }
 
   if(!disabled)
@@ -468,7 +472,7 @@ bool Panel::renderPanelWidgetMenu(AppContext &iCtx, ImVec2 const &iPosition)
 
   if(ImGui::BeginMenu("Add Widget"))
   {
-    res = iCtx.renderWidgetDefMenuItems(fType, [this, &iCtx, &iPosition](WidgetDef const &iDef) { addWidget(iCtx, iDef, iPosition); });
+    res |= iCtx.renderWidgetDefMenuItems(fType, [this, &iCtx, &iPosition](WidgetDef const &iDef) { addWidget(iCtx, iDef, iPosition); });
     ImGui::EndMenu();
   }
   if(ImGui::MenuItem("Add Decal"))
@@ -476,7 +480,7 @@ bool Panel::renderPanelWidgetMenu(AppContext &iCtx, ImVec2 const &iPosition)
     auto widget = Widget::panel_decal();
     widget->setPositionFromCenter(iPosition);
     addWidget(iCtx, std::move(widget));
-    res = true;
+    res |= true;
   }
 
   return false;
@@ -485,11 +489,16 @@ bool Panel::renderPanelWidgetMenu(AppContext &iCtx, ImVec2 const &iPosition)
 //------------------------------------------------------------------------
 // Panel::renderWidgetMenu
 //------------------------------------------------------------------------
-void Panel::renderWidgetMenu(AppContext &iCtx, std::shared_ptr<Widget> const &iWidget)
+bool Panel::renderWidgetMenu(AppContext &iCtx, std::shared_ptr<Widget> const &iWidget)
 {
+  bool res = false;
+
   ReGui::TextSeparator(iWidget->getName().c_str());
   if(ImGui::MenuItem(iWidget->isSelected() ? "Unselect" : "Select"))
+  {
     toggleWidgetSelection(iWidget->getId(), true);
+    res |= true;
+  }
 
   if(ImGui::MenuItem("Copy"))
     iCtx.copyToClipboard(iWidget);
@@ -508,7 +517,10 @@ void Panel::renderWidgetMenu(AppContext &iCtx, std::shared_ptr<Widget> const &iW
   if(ImGui::MenuItem("Paste"))
   {
     if(iCtx.pasteFromClipboard(iWidget))
+    {
       fEdited = true;
+      res |= true;
+    }
   }
 
   if(!disabled)
@@ -517,16 +529,23 @@ void Panel::renderWidgetMenu(AppContext &iCtx, std::shared_ptr<Widget> const &iW
   ImGui::EndDisabled();
 
   if(ImGui::MenuItem("Delete"))
+  {
     deleteWidget(iCtx, iWidget->getId());
+    res |= true;
+  }
 
   iWidget->renderVisibilityMenu(iCtx);
+
+  return res;
 }
 
 //------------------------------------------------------------------------
 // Panel::renderPanelMenus
 //------------------------------------------------------------------------
-void Panel::renderPanelMenus(AppContext &iCtx, std::optional<ImVec2> iPosition)
+bool Panel::renderPanelMenus(AppContext &iCtx, std::optional<ImVec2> iPosition)
 {
+  bool res = false;
+
   std::shared_ptr<Widget> widget{};
 
   if(iPosition)
@@ -537,35 +556,42 @@ void Panel::renderPanelMenus(AppContext &iCtx, std::optional<ImVec2> iPosition)
     if(!fComputedSelectedWidgets.empty())
     {
       if(!widget->isSelected())
-        renderWidgetMenu(iCtx, widget);
+        res |= renderWidgetMenu(iCtx, widget);
       else
-        renderSelectedWidgetsMenu(iCtx);
+        res |= renderSelectedWidgetsMenu(iCtx);
     }
     else
-      renderWidgetMenu(iCtx, widget);
+      res |= renderWidgetMenu(iCtx, widget);
   }
   else
   {
-    renderPanelWidgetMenu(iCtx, iPosition ? *iPosition : getCenter());
+    res |= renderPanelWidgetMenu(iCtx, iPosition ? *iPosition : getCenter());
   }
+
+  return res;
 }
 
 //------------------------------------------------------------------------
 // Panel::renderSelectedWidgetsMenu
 //------------------------------------------------------------------------
-void Panel::renderSelectedWidgetsMenu(AppContext &iCtx)
+bool Panel::renderSelectedWidgetsMenu(AppContext &iCtx)
 {
   if(fComputedSelectedWidgets.empty())
-    return;
+    return false;
+
+  bool res = false;
 
   if(fComputedSelectedWidgets.size() == 1)
-    renderWidgetMenu(iCtx, fComputedSelectedWidgets[0]);
+    res |= renderWidgetMenu(iCtx, fComputedSelectedWidgets[0]);
   else
   {
     ReGui::TextSeparator(fmt::printf("Selected Widgets (%ld)", fComputedSelectedWidgets.size()).c_str());
 
     if(ImGui::MenuItem("Unselect"))
+    {
       clearSelection();
+      res |= true;
+    }
 
     if(ImGui::MenuItem("Copy"))
       iCtx.copyToClipboard(fComputedSelectedWidgets);
@@ -574,7 +600,10 @@ void Panel::renderSelectedWidgetsMenu(AppContext &iCtx)
     if(ImGui::MenuItem("Paste"))
     {
       if(iCtx.pasteFromClipboard(fComputedSelectedWidgets))
+      {
         fEdited = true;
+        res |= true;
+      }
     }
 
     if(!disabled)
@@ -585,8 +614,24 @@ void Panel::renderSelectedWidgetsMenu(AppContext &iCtx)
     if(ImGui::MenuItem("Delete"))
     {
       deleteWidgets(iCtx, fComputedSelectedWidgets);
+      res |= true;
+    }
+
+    if(ImGui::BeginMenu(fmt::printf("Widgets (%ld)", fComputedSelectedWidgets.size()).c_str()))
+    {
+      for(auto &w: fComputedSelectedWidgets)
+      {
+        if(ImGui::BeginMenu(w->getName().c_str()))
+        {
+          res |= renderWidgetMenu(iCtx, w);
+          ImGui::EndMenu();
+        }
+      }
+      ImGui::EndMenu();
     }
   }
+
+  return res;
 }
 
 //------------------------------------------------------------------------
@@ -878,6 +923,17 @@ void Panel::selectAll(bool iIncludeHiddenWidgets)
   {
     w->setSelected(iIncludeHiddenWidgets || !w->isHidden());
   }
+}
+
+//------------------------------------------------------------------------
+// Panel::selectAll
+//------------------------------------------------------------------------
+void Panel::toggleSelectAll(bool iIncludeHiddenWidgets)
+{
+  if(fComputedSelectedWidgets.empty())
+    selectAll(iIncludeHiddenWidgets);
+  else
+    clearSelection();
 }
 
 //------------------------------------------------------------------------
@@ -1434,8 +1490,16 @@ void Panel::MultiSelectionList::editView(AppContext &iCtx)
 
   if(ImGui::BeginPopup("Menu"))
   {
-    if(fPanel.renderPanelWidgetMenu(iCtx, fPanel.getCenter()))
-      fLastSelected = std::nullopt;
+    if(fPanel.fComputedSelectedWidgets.empty())
+    {
+      if(fPanel.renderPanelWidgetMenu(iCtx, fPanel.getCenter()))
+        fLastSelected = std::nullopt;
+    }
+    else
+    {
+      if(fPanel.renderSelectedWidgetsMenu(iCtx))
+        fLastSelected = std::nullopt;
+    }
     ImGui::EndPopup();
   }
 
