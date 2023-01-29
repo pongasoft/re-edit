@@ -148,20 +148,12 @@ std::map<std::string, int> PanelState::initPanel(AppContext &iCtx,
 }
 
 //------------------------------------------------------------------------
-// PanelState::renderTab
+// PanelState::beforeRender
 //------------------------------------------------------------------------
-bool PanelState::renderTab(AppContext &iCtx)
+void PanelState::beforeRender(AppContext &iCtx)
 {
-  auto flags = fPanel.hasErrors() ? ImGuiTabItemFlags_UnsavedDocument : ImGuiTabItemFlags_None;
-  if(ImGui::BeginTabItem(fPanel.getName(), nullptr, flags))
-  {
-    fPanel.computeEachFrame(iCtx);
-    fPanel.checkForErrors(iCtx);
-    ImGui::EndTabItem();
-    return true;
-  }
-
-  return false;
+  fPanel.computeEachFrame(iCtx);
+  fPanel.checkForErrors(iCtx);
 }
 
 //------------------------------------------------------------------------

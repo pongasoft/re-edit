@@ -174,22 +174,43 @@ void AppContext::initPanels(fs::path const &iDevice2DFile,
 //------------------------------------------------------------------------
 void AppContext::renderTabs()
 {
-  if(ImGui::BeginTabBar("Panels", ImGuiTabBarFlags_None))
-  {
-    if(fFrontPanel->renderTab(*this))
-      fCurrentPanelState = fFrontPanel.get();
-    if(fBackPanel->renderTab(*this))
-      fCurrentPanelState = fBackPanel.get();
-    if(fHasFoldedPanels)
-    {
-      if(fFoldedFrontPanel->renderTab(*this))
-        fCurrentPanelState = fFoldedFrontPanel.get();
-      if(fFoldedBackPanel->renderTab(*this))
-        fCurrentPanelState = fFoldedBackPanel.get();
-    }
+  ImGui::PushID("Panels");
 
-    ImGui::EndTabBar();
+  auto type = fCurrentPanelState->getType();
+
+  auto tab2 = [this, &type](PanelType iType, char const *iName) {
+    auto panelState = getPanelState(iType);
+    ReGui::RadioButton(iName, &type, panelState->getType(), [hasErrors = panelState->fPanel.hasErrors(), iName] {
+      ImGui::TextUnformatted(iName);
+      if(hasErrors)
+      {
+        ImGui::SameLine();
+        ReGui::ErrorIcon();
+      }
+    });
+  };
+
+  ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImGui::GetStyle().FramePadding * 2.0f);
+
+  tab2(PanelType::kFront, "Front");
+  ImGui::SameLine();
+  tab2(PanelType::kBack, "Back");
+  if(fHasFoldedPanels)
+  {
+    ImGui::SameLine();
+    tab2(PanelType::kFoldedFront, "Fld Front");
+    ImGui::SameLine();
+    tab2(PanelType::kFoldedBack, "Fld Back");
   }
+
+  ImGui::PopStyleVar();
+
+  if(type != fCurrentPanelState->getType())
+    fCurrentPanelState = getPanelState(type);
+
+  ImGui::PopID();
+
+  fCurrentPanelState->beforeRender(*this);
 }
 
 //------------------------------------------------------------------------
@@ -254,6 +275,34 @@ void AppContext::render()
     renderTabs();
     renderZoomSelection();
     renderGridSelection();
+
+    if(hasNotifications())
+    {
+      ReGui::TextSeparator("Notifications");
+      if(maybeReloadTextures())
+      {
+        ImGui::AlignTextToFramePadding();
+        ReGui::TipIcon();ImGui::SameLine();ImGui::TextUnformatted("Detected image changes");
+        ImGui::SameLine();
+        if(ImGui::Button(ReGui_Prefix(ReGui_Icon_RescanImages, "Rescan")))
+          fReloadTexturesRequested = true;
+        ImGui::SameLine();
+        if(ImGui::Button(ReGui_Prefix(ReGui_Icon_Reset, "Dismiss")))
+          maybeReloadTextures(false);
+      }
+
+      if(maybeReloadDevice())
+      {
+        ImGui::AlignTextToFramePadding();
+        ReGui::TipIcon();ImGui::SameLine();ImGui::TextUnformatted("Detected device changes");
+        ImGui::SameLine();
+        if(ImGui::Button(ReGui_Prefix(ReGui_Icon_ReloadMotherboard, "Reload")))
+          fReloadDeviceRequested = true;
+        ImGui::SameLine();
+        if(ImGui::Button(ReGui_Prefix(ReGui_Icon_Reset, "Dismiss")))
+          maybeReloadDevice(false);
+      }
+    }
 
     ReGui::TextSeparator("Rendering");
 
@@ -357,32 +406,6 @@ void AppContext::render()
     ImGui::PopID();
 
     ImGui::PopID();
-
-    if(maybeReloadTextures())
-    {
-      ImGui::Separator();
-      ImGui::AlignTextToFramePadding();
-      ReGui::TipIcon();ImGui::SameLine();ImGui::TextUnformatted("Detected image changes");
-      ImGui::SameLine();
-      if(ImGui::Button(ReGui_Prefix(ReGui_Icon_RescanImages, "Rescan")))
-        fReloadTexturesRequested = true;
-      ImGui::SameLine();
-      if(ImGui::Button(ReGui_Prefix(ReGui_Icon_Reset, "Dismiss")))
-        maybeReloadTextures(false);
-    }
-
-    if(maybeReloadDevice())
-    {
-      ImGui::Separator();
-      ImGui::AlignTextToFramePadding();
-      ReGui::TipIcon();ImGui::SameLine();ImGui::TextUnformatted("Detected device changes");
-      ImGui::SameLine();
-      if(ImGui::Button(ReGui_Prefix(ReGui_Icon_ReloadMotherboard, "Reload")))
-        fReloadDeviceRequested = true;
-      ImGui::SameLine();
-      if(ImGui::Button(ReGui_Prefix(ReGui_Icon_Reset, "Dismiss")))
-        maybeReloadDevice(false);
-    }
 
 #ifndef NDEBUG
     ImGui::Separator();

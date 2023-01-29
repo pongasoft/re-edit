@@ -42,6 +42,7 @@ static constexpr ImVec2& operator/=(ImVec2& lhs, const ImVec2& rhs)             
 static constexpr ImVec4 operator+(const ImVec4& lhs, const ImVec4& rhs)            { return {lhs.x + rhs.x, lhs.y + rhs.y, lhs.z + rhs.z, lhs.w + rhs.w}; }
 static constexpr ImVec4 operator-(const ImVec4& lhs, const ImVec4& rhs)            { return {lhs.x - rhs.x, lhs.y - rhs.y, lhs.z - rhs.z, lhs.w - rhs.w}; }
 static constexpr ImVec4 operator*(const ImVec4& lhs, const ImVec4& rhs)            { return {lhs.x * rhs.x, lhs.y * rhs.y, lhs.z * rhs.z, lhs.w * rhs.w}; }
+static constexpr ImVec4 operator*(const ImVec4& lhs, const float rhs)              { return {lhs.x * rhs, lhs.y * rhs, lhs.z * rhs, lhs.w * rhs}; }
 
 static constexpr bool operator==(const ImVec2& lhs, const ImVec2& rhs)
 {
@@ -72,6 +73,18 @@ constexpr ImU32 GetColorU32(ImVec4 const &iColor)
   out |= ((ImU32)impl::ImF32ToInt8Sat(iColor.z)) << IM_COL32_B_SHIFT;
   out |= ((ImU32)impl::ImF32ToInt8Sat(iColor.w)) << IM_COL32_A_SHIFT;
   return out;
+}
+
+//------------------------------------------------------------------------
+// ReGui::GetColorU32
+// Applies provided alpha (copied from ImGui)
+//------------------------------------------------------------------------
+constexpr ImU32 GetColorU32(ImVec4 const &iColor, float iAlpha)
+{
+  auto col = GetColorU32(iColor);
+  ImU32 a = (col & IM_COL32_A_MASK) >> IM_COL32_A_SHIFT;
+  a = (ImU32)(a * iAlpha); // We don't need to clamp 0..255 because Style.Alpha is in 0..1 range.
+  return (col & ~IM_COL32_A_MASK) | (a << IM_COL32_A_SHIFT);
 }
 
 //------------------------------------------------------------------------
@@ -173,11 +186,7 @@ inline bool TextRadioButton(char const *iLabel, T *ioValue, T iTrueValue, const 
   {
     ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.0);
     ImGui::PushStyleColor(ImGuiCol_Border, ImGui::GetStyle().Colors[ImGuiCol_Text]);
-    if(ImGui::Button(iLabel, size))
-    {
-      *ioValue = iTrueValue;
-      res = true;
-    }
+    ImGui::Button(iLabel, size);
     ImGui::PopStyleColor();
     ImGui::PopStyleVar();
   }
@@ -472,6 +481,48 @@ struct Modifier
  * @param iSplitter optional unless you want to nest boxes
  */
 void Box(Modifier const &iModifier, std::function<void()> const &iBoxContent, ImDrawListSplitter *iSplitter = nullptr);
+
+//------------------------------------------------------------------------
+// ReGui::RadioButton
+// Like a TextRadioButton but for any kind of content
+//------------------------------------------------------------------------
+template<typename T>
+inline bool RadioButton(char const *iLabel, T *ioValue, T iTrueValue, std::function<void()> const &iContent)
+{
+  ImGui::PushID(iLabel);
+  auto res = false;
+  if(*ioValue != iTrueValue)
+  {
+    auto &style = ImGui::GetStyle();
+
+    auto const modifier = ReGui::Modifier{}
+      .padding(style.FramePadding.x, style.FramePadding.y)
+      .backgroundColor(ReGui::GetColorU32(style.Colors[ImGuiCol_Button], ImGui::GetStyle().DisabledAlpha));
+
+    ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().DisabledAlpha);
+    ReGui::Box(modifier, iContent);
+    ImGui::PopStyleVar();
+
+    if(ImGui::IsItemClicked(ImGuiMouseButton_Left))
+    {
+      *ioValue = iTrueValue;
+      res = true;
+    }
+  }
+  else
+  {
+    auto &style = ImGui::GetStyle();
+
+    auto const modifier = ReGui::Modifier{}
+      .padding(style.FramePadding.x, style.FramePadding.y)
+      .backgroundColor(ReGui::GetColorU32(style.Colors[ImGuiCol_Button]))
+      .borderColor(ReGui::GetColorU32(style.Colors[ImGuiCol_Text]));
+
+    ReGui::Box(modifier, iContent);
+  }
+  ImGui::PopID();
+  return res;
+}
 
 //------------------------------------------------------------------------
 // ReGui::Window

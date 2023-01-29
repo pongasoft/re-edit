@@ -264,8 +264,9 @@ public: // Undo
   friend class Widget;
   friend class Application;
 
-  bool maybeReloadTextures() const { return fMaybeReloadTextures; }
-  bool maybeReloadDevice() const { return fMaybeReloadDevice; }
+  inline bool maybeReloadTextures() const { return fMaybeReloadTextures; }
+  inline bool maybeReloadDevice() const { return fMaybeReloadDevice; }
+  inline bool hasNotifications() const { return maybeReloadDevice() || maybeReloadTextures(); }
 
   void maybeReloadTextures(bool b) { fMaybeReloadTextures = b; }
   void maybeReloadDevice(bool b) { fMaybeReloadDevice = b; }
