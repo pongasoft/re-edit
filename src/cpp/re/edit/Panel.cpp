@@ -703,6 +703,7 @@ std::shared_ptr<Widget> Panel::transmuteWidget(AppContext &iCtx, std::shared_ptr
 
   auto newWidget = iNewDef.fFactory(iWidget->getName());
   newWidget->copyFrom(*iWidget);
+  newWidget->setPosition(iWidget->getPosition());
   return replaceWidget(iWidget->getId(), std::move(newWidget));
 }
 
