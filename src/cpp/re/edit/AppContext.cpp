@@ -403,9 +403,17 @@ void AppContext::render()
       if(fPanelRendering == EPanelRendering::kNormal)
         fPanelRendering = EPanelRendering::kXRay;
     }
-    ImGui::PopID();
+    ImGui::PopID(); // Rails
 
-    ImGui::PopID();
+    ImGui::PopID(); // Rendering
+
+    ReGui::TextSeparator("Clipboard");
+    if(ReGui::ResetButton())
+    {
+      fClipboard.reset();
+    }
+    ImGui::SameLine();
+    ImGui::TextUnformatted(fClipboard.getData()->getDescription().c_str());
 
 #ifndef NDEBUG
     ImGui::Separator();

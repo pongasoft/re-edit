@@ -70,6 +70,7 @@ public:
   inline bool matchesType(clipboard::DataType iType) const { return (fData->getType() & iType) != clipboard::DataType::kNone; }
   clipboard::Data const *getData() const { return fData.get(); }
   void setData(std::unique_ptr<clipboard::Data> iData) { RE_EDIT_INTERNAL_ASSERT(iData != nullptr); fData = std::move(iData); }
+  void reset() { fData = std::make_unique<clipboard::NoData>(); }
 
 private:
   std::unique_ptr<clipboard::Data> fData{new clipboard::NoData{}};
