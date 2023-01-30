@@ -823,6 +823,14 @@ void Application::renderLogoBox(float iPadding)
 }
 
 //------------------------------------------------------------------------
+// Application::getDeviceTypeIcon
+//------------------------------------------------------------------------
+Icon Application::getDeviceTypeIcon(config::Device const &iDevice) const
+{
+  return {fTextureManager->getTexture(BuiltIns::kDeviceType.fKey), impl::getFrameNumberFromDeviceType(iDevice.fType)};
+}
+
+//------------------------------------------------------------------------
 // Application::renderWelcome
 //------------------------------------------------------------------------
 void Application::renderWelcome()
@@ -1141,10 +1149,20 @@ void Application::renderMainMenu()
             {
               maybeCloseProject(std::nullopt, [this, path = item.fPath]() { loadProject(path); });
             }
-            if(ReGui::ShowTooltip())
+            if(ReGui::ShowQuickView())
             {
-              ReGui::ToolTip([&item] {
-                ImGui::TextUnformatted(item.fPath.c_str());
+              ReGui::ToolTip([this, &item] {
+                auto textSizeHeight = ImGui::CalcTextSize("R").y;
+                auto buttonHeight = 2.0f * (textSizeHeight + ImGui::GetStyle().FramePadding.y);
+                ImGui::BeginGroup();
+                {
+                  ImGui::AlignTextToFramePadding();
+                  auto icon = getDeviceTypeIcon(item);
+                  icon.Item({buttonHeight, buttonHeight});
+                  ImGui::SameLine();
+                  ImGui::TextUnformatted(fmt::printf("%s\n%s", item.fName, item.fPath).c_str());
+                }
+                ImGui::EndGroup();
               });
             }
             ImGui::PopID();
@@ -1466,7 +1484,6 @@ void Application::about() const
     ImGui::TreePop();
   }
 }
-
 
 
 }

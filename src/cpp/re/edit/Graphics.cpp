@@ -132,20 +132,18 @@ void Graphics::editView(AppContext &iCtx)
     ImGui::EndCombo();
   }
 
-  if(hasTexture() && ReGui::ShowTooltip())
+  if(hasTexture() && ReGui::ShowQuickView())
   {
-    ImGui::BeginTooltip();
-    ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
-    auto texture = getTexture();
-    if(texture->isValid())
-      ImGui::TextUnformatted(fmt::printf("%dx%d | %d frames",
-                                         static_cast<int>(texture->frameWidth()),
-                                         static_cast<int>(texture->frameHeight()),
-                                         texture->numFrames()).c_str());
-    else
-      ImGui::TextUnformatted(fmt::printf("%s", texture->getFilmStrip()->errorMessage()).c_str());
-    ImGui::PopTextWrapPos();
-    ImGui::EndTooltip();
+    ReGui::ToolTip([this] {
+      auto texture = getTexture();
+      if(texture->isValid())
+        ImGui::TextUnformatted(fmt::printf("%dx%d | %d frames",
+                                           static_cast<int>(texture->frameWidth()),
+                                           static_cast<int>(texture->frameHeight()),
+                                           texture->numFrames()).c_str());
+      else
+        ImGui::TextUnformatted(fmt::printf("%s", texture->getFilmStrip()->errorMessage()).c_str());
+    });
   }
 
 }
@@ -320,20 +318,20 @@ void Graphics::editView(AppContext &iCtx,
     ImGui::EndCombo();
   }
 
-  if(hasTexture() && ReGui::ShowTooltip())
+  if(hasTexture() && ReGui::ShowQuickView())
   {
-    ImGui::BeginTooltip();
-    ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
-    auto texture = getTexture();
-    if(texture->isValid())
-      ImGui::TextUnformatted(fmt::printf("%dx%d | %d frames",
-                                         static_cast<int>(texture->frameWidth()),
-                                         static_cast<int>(texture->frameHeight()),
-                                         texture->numFrames()).c_str());
-    else
-      ImGui::TextUnformatted(fmt::printf("%s", texture->getFilmStrip()->errorMessage()).c_str());
-    ImGui::PopTextWrapPos();
-    ImGui::EndTooltip();
+    ReGui::ToolTip([this] {
+      auto texture = getTexture();
+      ReGui::TextSeparator(texture->key().c_str());
+      ImGui::Text("path   = GUI2D/%s.png", texture->key().c_str());
+      if(texture->isValid())
+      {
+        ImGui::Text("size   = %dx%d", static_cast<int>(texture->frameWidth()), static_cast<int>(texture->frameHeight()));
+        ImGui::Text("frames = %d", texture->numFrames());
+      }
+      else
+        ImGui::Text("error  = %s", texture->getFilmStrip()->errorMessage().c_str());
+    });
   }
 
   if(hasSize() && fSizeEnabled)

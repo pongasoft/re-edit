@@ -267,13 +267,11 @@ void PanelState::renderProperties(AppContext &iCtx)
             iCtx.fPropertyManager->removeFromWatchlist(path);
           ImGui::SameLine();
           ImGui::TextWrapped("%s", path.c_str());
-          if(ReGui::ShowTooltip())
+          if(ReGui::ShowQuickView())
           {
-            ImGui::BeginTooltip();
-            ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
-            ImGui::TextUnformatted(iCtx.getPropertyInfo(path).c_str());
-            ImGui::PopTextWrapPos();
-            ImGui::EndTooltip();
+            ReGui::ToolTip([&iCtx, &path] {
+              ImGui::TextUnformatted(iCtx.getPropertyInfo(path).c_str());
+            });
           }
           ImGui::Indent();
           iCtx.fPropertyManager->editView(path);

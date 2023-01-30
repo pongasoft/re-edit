@@ -430,8 +430,8 @@ void Panel::handleCanvasInputs(AppContext &iCtx, ReGui::Canvas &iCanvas)
   // canvas zoom (mouse wheel)
   if(iCanvas.isHovered())
   {
-    // tooltip (Q key)
-    if(ImGui::IsKeyDown(ImGuiKey_Q))
+    // Quick View (Q key)
+    if(ReGui::IsQuickView())
     {
       auto w = findWidgetOnTopAt(iCanvas.getCanvasMousePos());
       if(w)
@@ -1564,6 +1564,11 @@ void Panel::MultiSelectionList::editView(AppContext &iCtx)
         fPanel.renderWidgetMenu(iCtx, widget);
         ImGui::EndPopup();
       }
+      else if(ReGui::ShowQuickView())
+      {
+        ReGui::ToolTip([this, widget] { fPanel.renderWidgetValues(widget); });
+      }
+
       if(widget->isHidden())
       {
         ImGui::SameLine();

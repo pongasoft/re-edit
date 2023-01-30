@@ -102,6 +102,19 @@ protected:
   std::vector<std::unique_ptr<Data>> fData{};
 };
 
+struct Icon
+{
+  std::shared_ptr<Texture> fTexture{};
+  int fFrameNumber{};
+
+  inline void Item(ImVec2 const &iSize = {},
+                   ImU32 iBorderColor = ReGui::kTransparentColorU32,
+                   ImU32 iTextureColor = ReGui::kWhiteColorU32) const
+  {
+    fTexture->Item(iSize, fFrameNumber, iBorderColor, iTextureColor);
+  }
+};
+
 }
 
 #endif //RE_EDIT_TEXTURE_H

@@ -55,12 +55,10 @@ bool Editable::errorView()
     ReGui::ErrorIcon();
     if(ReGui::ShowTooltip())
     {
-      ImGui::BeginTooltip();
-      ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
-      for(auto const &error: getErrors())
-        ImGui::TextUnformatted(error.c_str());
-      ImGui::PopTextWrapPos();
-      ImGui::EndTooltip();
+      ReGui::ToolTip([this] {
+        for(auto const &error: getErrors())
+          ImGui::TextUnformatted(error.c_str());
+      });
     }
     return true;
   }
@@ -787,13 +785,11 @@ void PropertyPath::editView(AppContext &iCtx,
 
   if(!fValue.empty())
   {
-    if(ReGui::ShowTooltip())
+    if(ReGui::ShowQuickView())
     {
-      ImGui::BeginTooltip();
-      ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
-      iTooltipPropertyView(iCtx);
-      ImGui::PopTextWrapPos();
-      ImGui::EndTooltip();
+      ReGui::ToolTip([&iCtx, &iTooltipPropertyView] {
+        iTooltipPropertyView(iCtx);
+      });
     }
   }
 }
@@ -975,23 +971,21 @@ void Socket::editView(AppContext &iCtx)
 
   if(!fValue.empty())
   {
-    if(ReGui::ShowTooltip())
+    if(ReGui::ShowQuickView())
     {
-      ImGui::BeginTooltip();
-      ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
-      ImGui::TextUnformatted(iCtx.getPropertyInfo(re::mock::fmt::printf("%s/%s", fValue, "connected")).c_str());
-      switch(fObjectType)
-      {
-        case re::mock::JboxObjectType::kAudioOutput:
-        case re::mock::JboxObjectType::kCVOutput:
-          ImGui::TextUnformatted(iCtx.getPropertyInfo(re::mock::fmt::printf("%s/%s", fValue, "dsp_latency")).c_str());
-          break;
-        default:
-          // nothing to do
-          break;
-      }
-      ImGui::PopTextWrapPos();
-      ImGui::EndTooltip();
+      ReGui::ToolTip([this, &iCtx] {
+        ImGui::TextUnformatted(iCtx.getPropertyInfo(re::mock::fmt::printf("%s/%s", fValue, "connected")).c_str());
+        switch(fObjectType)
+        {
+          case re::mock::JboxObjectType::kAudioOutput:
+          case re::mock::JboxObjectType::kCVOutput:
+            ImGui::TextUnformatted(iCtx.getPropertyInfo(re::mock::fmt::printf("%s/%s", fValue, "dsp_latency")).c_str());
+            break;
+          default:
+            // nothing to do
+            break;
+        }
+      });
     }
   }
 }
@@ -1026,13 +1020,11 @@ void PropertyPathList::editStaticListView(AppContext &iCtx,
 
     if(!value.empty())
     {
-      if(ReGui::ShowTooltip())
+      if(ReGui::ShowQuickView())
       {
-        ImGui::BeginTooltip();
-        ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
-        ImGui::TextUnformatted(iCtx.getPropertyInfo(value).c_str());
-        ImGui::PopTextWrapPos();
-        ImGui::EndTooltip();
+        ReGui::ToolTip([&iCtx, &value] {
+          ImGui::TextUnformatted(iCtx.getPropertyInfo(value).c_str());
+        });
       }
     }
 

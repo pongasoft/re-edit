@@ -99,6 +99,7 @@ public:
   inline float getCurrentFontDpiScale() const { return fFontManager->getCurrentFontDpiScale(); }
   std::shared_ptr<Texture> getLogo() const;
   inline std::shared_ptr<Texture> getTexture(FilmStrip::key_t const &iKey) const { return fTextureManager->getTexture(iKey); }
+  Icon getDeviceTypeIcon(config::Device const &iDevice) const;
 
   void onNativeWindowFontDpiScaleChange(float iFontDpiScale);
   void onNativeWindowFontScaleChange(float iFontScale);
