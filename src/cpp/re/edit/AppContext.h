@@ -256,8 +256,8 @@ public: // Undo
 
   void resetUndoMergeKey();
 
-  void undoLastAction() { fUndoManager->undoLastAction(); }
-  void redoLastAction() { fUndoManager->redoLastAction(); }
+  void undoLastAction();
+  void redoLastAction();
 
   inline Widget const *getCurrentWidget() const { return fCurrentWidget; }
 
@@ -300,6 +300,7 @@ protected:
   void markEdited();
   bool checkForErrors();
   bool computeErrors();
+  bool computeErrors(PanelType iType);
   void renderErrors();
   void renderErrors(Panel const &iPanel);
   void initDevice();

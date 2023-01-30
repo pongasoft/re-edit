@@ -815,6 +815,20 @@ bool AppContext::computeErrors()
 }
 
 //------------------------------------------------------------------------
+// AppContext::computeErrors
+//------------------------------------------------------------------------
+bool AppContext::computeErrors(PanelType iType)
+{
+  auto panelState = getPanelState(iType);
+  panelState->fPanel.markEdited();
+  auto currentPanel = fCurrentPanelState;
+  fCurrentPanelState = panelState;
+  auto res = panelState->fPanel.checkForErrors(*this);
+  fCurrentPanelState = currentPanel;
+  return res;
+}
+
+//------------------------------------------------------------------------
 // AppContext::renderErrors
 //------------------------------------------------------------------------
 void AppContext::renderErrors()
@@ -1578,6 +1592,39 @@ void AppContext::renderClipboardTooltip() const
     ReGui::ToolTip([this] {
       ImGui::TextUnformatted(getClipboardDescription().c_str());
     });
+  }
+}
+
+//------------------------------------------------------------------------
+// AppContext::undoLastAction
+//------------------------------------------------------------------------
+void AppContext::undoLastAction()
+{
+  auto const undoAction = fUndoManager->getLastUndoAction();
+  if(undoAction)
+  {
+    fUndoManager->undoLastAction();
+    if(fCurrentPanelState->getType() != undoAction->fPanelType)
+    {
+      computeErrors(undoAction->fPanelType);
+    }
+  }
+
+}
+
+//------------------------------------------------------------------------
+// AppContext::redoLastAction
+//------------------------------------------------------------------------
+void AppContext::redoLastAction()
+{
+  auto const redoAction = fUndoManager->getLastRedoAction();
+  if(redoAction)
+  {
+    fUndoManager->redoLastAction();
+    if(fCurrentPanelState->getType() != redoAction->fUndoAction->fPanelType)
+    {
+      computeErrors(redoAction->fUndoAction->fPanelType);
+    }
   }
 }
 
