@@ -151,6 +151,7 @@ public: // Clipboard
   template<typename T>
   inline T const *getClipboardData() const { return dynamic_cast<T const *>(fClipboard.getData()); }
   void copyToClipboard(std::shared_ptr<Widget> const &iWidget, int iAttributeId = -1);
+  void copyToClipboard(widget::Attribute const *iAttribute);
   void copyToClipboard(std::vector<std::shared_ptr<Widget>> const &iWidgets);
   bool pasteFromClipboard(std::shared_ptr<Widget> const &oWidget);
   bool pasteFromClipboard(std::vector<std::shared_ptr<Widget>> const &oWidgets);

@@ -222,6 +222,9 @@ void Value::editView(AppContext &iCtx)
                             iCtx.addUndoAttributeReset(&fValueSwitch);
                             reset();
                             },
+                          [this, &iCtx] {
+                            iCtx.copyToClipboard(this);
+                          }, // onCopy
                           [this, &iCtx](const Property *p) {
                             iCtx.addUndoAttributeChange(&fValueSwitch);
                             fValueSwitch.fValue = p->path();
@@ -267,6 +270,9 @@ void Value::editView(AppContext &iCtx)
                       iCtx.addUndoAttributeReset(&fValue);
                       reset();
                     },
+                    [this, &iCtx] {
+                      iCtx.copyToClipboard(this);
+                    }, // onCopy
                     [this, &iCtx](const Property *p) {
                       iCtx.addUndoAttributeChange(&fValue);
                       fValue.fValue = p->path();
@@ -508,6 +514,9 @@ void Visibility::editView(AppContext &iCtx)
                      iCtx.addUndoAttributeReset(&fSwitch);
                      reset();
                    }, // onReset
+                   [this, &iCtx] {
+                     iCtx.copyToClipboard(this);
+                   }, // onCopy
                    [this, &iCtx] (const Property *p) { // onSelect
                      iCtx.addUndoAttributeChange(&fSwitch);
                      fSwitch.fValue = p->path();
@@ -682,7 +691,7 @@ bool Visibility::copyFrom(Attribute const *iAttribute)
 //------------------------------------------------------------------------
 void String::editView(AppContext &iCtx)
 {
-  resetView(iCtx);
+  menuView(iCtx);
   ImGui::SameLine();
 
   auto editedValue = fValue;
@@ -701,7 +710,7 @@ void String::editView(AppContext &iCtx)
 //------------------------------------------------------------------------
 void Bool::editView(AppContext &iCtx)
 {
-  resetView(iCtx);
+  menuView(iCtx);
   ImGui::SameLine();
   bool editedValue = fValue;
   if(ImGui::Checkbox(fName, &editedValue))
@@ -718,7 +727,7 @@ void Bool::editView(AppContext &iCtx)
 //------------------------------------------------------------------------
 void Integer::editView(AppContext &iCtx)
 {
-  resetView(iCtx);
+  menuView(iCtx);
   ImGui::SameLine();
 
   auto editedValue = fValue;
@@ -742,6 +751,9 @@ void PropertyPath::editView(AppContext &iCtx)
              iCtx.addUndoAttributeReset(this);
              reset();
            },
+           [this, &iCtx] {
+             iCtx.copyToClipboard(this);
+           },
            [this, &iCtx](const Property *p) {
              iCtx.addUndoAttributeChange(this);
              fValue = p->path();
@@ -757,12 +769,13 @@ void PropertyPath::editView(AppContext &iCtx)
 //------------------------------------------------------------------------
 void PropertyPath::editView(AppContext &iCtx,
                             std::function<void()> const &iOnReset,
+                            std::function<void()> const &iOnCopy,
                             std::function<void(const Property *)> const &iOnSelect,
                             std::function<void(AppContext &iCtx)> const &iEditPropertyView,
                             std::function<void(AppContext &iCtx)> const &iTooltipPropertyView,
                             ImVec2 *oComboPosition)
 {
-  menuView(iCtx, iOnReset, iEditPropertyView);
+  menuView(iCtx, iOnReset, iOnCopy, iEditPropertyView);
 
   ImGui::SameLine();
 
@@ -800,6 +813,7 @@ void PropertyPath::editView(AppContext &iCtx,
 void PropertyPath::menuView(AppContext &iCtx,
                             std::string const &iPropertyPath,
                             std::function<void()> const &iOnReset,
+                            std::function<void()> const &iOnCopy,
                             std::function<void(AppContext &iCtx)> const &iEditPropertyView)
 {
   if(ReGui::MenuButton())
@@ -811,6 +825,10 @@ void PropertyPath::menuView(AppContext &iCtx,
   {
     if(ImGui::MenuItem(ReGui_Prefix(ReGui_Icon_Reset, "Reset")))
       iOnReset();
+
+    // Copy
+    if(ImGui::MenuItem(ReGui_Prefix(ReGui_Icon_Copy, "Copy")))
+      iOnCopy();
 
     ImGui::BeginDisabled(iPropertyPath.empty());
     if(ImGui::MenuItem(ReGui_Prefix(ReGui_Icon_Watch, "Watch")))
@@ -856,9 +874,10 @@ void PropertyPath::tooltipPropertyView(AppContext &iCtx, std::string const &iPro
 //------------------------------------------------------------------------
 void PropertyPath::menuView(AppContext &iCtx,
                             std::function<void()> const &iOnReset,
+                            std::function<void()> const &iOnCopy,
                             std::function<void(AppContext &iCtx)> const &iEditPropertyView)
 {
-  menuView(iCtx, fValue, iOnReset, iEditPropertyView);
+  menuView(iCtx, fValue, iOnReset, iOnCopy, iEditPropertyView);
 }
 
 //------------------------------------------------------------------------
@@ -911,7 +930,7 @@ bool PropertyPath::copyFrom(Attribute const *iFromAttribute)
 //------------------------------------------------------------------------
 void ObjectPath::editView(AppContext &iCtx)
 {
-  resetView(iCtx);
+  menuView(iCtx);
 
   ImGui::SameLine();
 
@@ -1037,7 +1056,7 @@ void PropertyPathList::editStaticListView(AppContext &iCtx,
 //------------------------------------------------------------------------
 void PropertyPathList::editView(AppContext &iCtx)
 {
-  resetView(iCtx);
+  menuView(iCtx);
 
   ImGui::SameLine();
 
@@ -1131,7 +1150,7 @@ void PropertyPathList::findErrors(AppContext &iCtx, UserError &oErrors) const
 //------------------------------------------------------------------------
 void StaticStringList::editView(AppContext &iCtx)
 {
-  resetView(iCtx);
+  menuView(iCtx);
   ImGui::SameLine();
   if(ImGui::BeginCombo(fName, fValue.c_str()))
   {
@@ -1162,7 +1181,7 @@ void Index::editView(AppContext &iCtx)
   auto property = iCtx.findProperty(valueAtt->fValue);
   if(property)
   {
-    resetView(iCtx);
+    menuView(iCtx);
     ImGui::SameLine();
     auto editedValue = fValue;
     if(ImGui::SliderInt(fName, &editedValue, 0, property->stepCount() - 1))
@@ -1207,7 +1226,7 @@ void UserSampleIndex::editView(AppContext &iCtx)
   }
   else
   {
-    resetView(iCtx);
+    menuView(iCtx);
     ImGui::SameLine();
     auto editedValue = fValue;
     if(ImGui::SliderInt(fName, &editedValue, 0, count - 1))
@@ -1264,7 +1283,7 @@ std::string ValueTemplates::getValueAsLua() const
 //------------------------------------------------------------------------
 void ValueTemplates::editView(AppContext &iCtx)
 {
-  resetView(iCtx);
+  menuView(iCtx);
 
   ImGui::SameLine();
 

@@ -101,6 +101,14 @@ protected:
   template<typename T>
   static std::unique_ptr<Attribute> clone(T const &iAttribute);
 
+  inline void copyToClipboardMenuItem(AppContext &iCtx)
+  {
+    if(ImGui::MenuItem(ReGui_Prefix(ReGui_Icon_Copy, "Copy")))
+    {
+      iCtx.copyToClipboard(this);
+    }
+  }
+
 //  template<typename T, typename Eq>
 //  static bool eq(T const *iLeftAttribute, Attribute const *iRightAttribute, Eq &&eq);
 
@@ -123,7 +131,7 @@ public:
 public:
   explicit SingleAttribute(char const *iName) : Attribute{iName} {}
   void hdgui2D(attribute_list_t &oAttributes) const override;
-  void resetView(AppContext &iCtx);
+  void menuView(AppContext &iCtx);
   virtual std::string getValueAsLua() const = 0;
   std::string toValueString() const override { return fmt::printf("%s = %s", fName, getValueAsLua()); }
   void reset() override;
@@ -211,6 +219,7 @@ public:
 
   void editView(AppContext &iCtx,
                 std::function<void()> const &iOnReset,
+                std::function<void()> const &iOnCopy,
                 std::function<void(const Property *)> const &iOnSelect,
                 std::function<void(AppContext &iCtx)> const &iEditPropertyView,
                 std::function<void(AppContext &iCtx)> const &iTooltipPropertyView,
@@ -221,11 +230,13 @@ public:
 
   void menuView(AppContext &iCtx,
                 std::function<void()> const &iOnReset,
+                std::function<void()> const &iOnCopy,
                 std::function<void(AppContext &iCtx)> const &iEditPropertyView = {});
 
   void menuView(AppContext &iCtx,
                 std::string const &iPropertyPath,
                 std::function<void()> const &iOnReset,
+                std::function<void()> const &iOnCopy,
                 std::function<void(AppContext &iCtx)> const &iEditPropertyView = {});
 
   inline void updateFilter(Property::Filter iFilter) { fFilter = std::move(iFilter); fEdited = true; }
@@ -588,12 +599,21 @@ void SingleAttribute<T>::reset()
 // SingleAttribute<T>::resetView
 //------------------------------------------------------------------------
 template<typename T>
-void SingleAttribute<T>::resetView(AppContext &iCtx)
+void SingleAttribute<T>::menuView(AppContext &iCtx)
 {
-  if(ReGui::ResetButton())
+  if(ReGui::MenuButton())
+    ImGui::OpenPopup("Menu");
+
+  if(ImGui::BeginPopup("Menu"))
   {
-    iCtx.addUndoAttributeReset(this);
-    reset();
+    if(ImGui::MenuItem(ReGui_Prefix(ReGui_Icon_Reset, "Reset")))
+    {
+      iCtx.addUndoAttributeReset(this);
+      reset();
+    }
+
+    copyToClipboardMenuItem(iCtx);
+    ImGui::EndPopup();
   }
 }
 

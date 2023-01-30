@@ -35,7 +35,7 @@ std::string Color3::getValueAsLua() const
 //------------------------------------------------------------------------
 void Color3::editView(AppContext &iCtx)
 {
-  resetView(iCtx);
+  menuView(iCtx);
   ImGui::SameLine();
 
   auto editedValue = fValue;

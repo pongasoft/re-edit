@@ -263,6 +263,9 @@ void Graphics::editView(AppContext &iCtx,
       reset();
     }
 
+    // Copy
+    copyToClipboardMenuItem(iCtx);
+
     ImGui::BeginDisabled(hasSize());
     if(ImGui::MenuItem(ReGui_Prefix(ReGui_Icon_Frames, "Change number of frames")))
       ImGui::OpenPopup(numFramesPopup);
@@ -726,8 +729,7 @@ void Background::editView(AppContext &iCtx)
 {
   static const FilmStrip::Filter kBackgroundFilter{[](FilmStrip const &f) { return f.numFrames() == 1; }, "Must have exactly 1 frame"};
 
-  if(ReGui::ResetButton())
-    reset();
+  menuView(iCtx);
   ImGui::SameLine();
 
   if(ImGui::BeginCombo(fName, fValue.c_str()))

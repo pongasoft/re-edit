@@ -1201,7 +1201,7 @@ widget::Attribute const *WidgetAttributeData::getAttribute() const
 //------------------------------------------------------------------------
 // WidgetAttributeData::copyFrom
 //------------------------------------------------------------------------
-std::unique_ptr<WidgetAttributeData> WidgetAttributeData::copyFrom(std::shared_ptr<Widget> const &iWidget, int iAttributeId)
+std::unique_ptr<WidgetAttributeData> WidgetAttributeData::copyFrom(Widget const *iWidget, int iAttributeId)
 {
   RE_EDIT_INTERNAL_ASSERT(iWidget != nullptr && iAttributeId >= 0);
   return std::make_unique<WidgetAttributeData>(iWidget->clone(), iAttributeId);

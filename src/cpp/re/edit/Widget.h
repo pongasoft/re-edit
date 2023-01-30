@@ -231,7 +231,8 @@ public:
   DataType getType() const override { return DataType::kWidgetAttribute; }
   widget::Attribute const *getAttribute() const;
 
-  static std::unique_ptr<WidgetAttributeData> copyFrom(std::shared_ptr<Widget> const &iWidget, int iAttributeId);
+  static std::unique_ptr<WidgetAttributeData> copyFrom(Widget const *iWidget, int iAttributeId);
+  inline static std::unique_ptr<WidgetAttributeData> copyFrom(std::shared_ptr<Widget> const &iWidget, int iAttributeId) { return copyFrom(iWidget.get(), iAttributeId); }
 
 private:
   std::unique_ptr<Widget> fWidget;

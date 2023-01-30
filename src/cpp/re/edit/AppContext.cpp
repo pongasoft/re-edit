@@ -1452,6 +1452,15 @@ void AppContext::copyToClipboard(std::shared_ptr<Widget> const &iWidget, int iAt
 //------------------------------------------------------------------------
 // AppContext::copyToClipboard
 //------------------------------------------------------------------------
+void AppContext::copyToClipboard(widget::Attribute const *iAttribute)
+{
+  if(iAttribute)
+    fClipboard.setData(clipboard::WidgetAttributeData::copyFrom(getCurrentWidget(), iAttribute->fId));
+}
+
+//------------------------------------------------------------------------
+// AppContext::copyToClipboard
+//------------------------------------------------------------------------
 void AppContext::copyToClipboard(std::vector<std::shared_ptr<Widget>> const &iWidgets)
 {
   fClipboard.setData(clipboard::WidgetListData::copyFrom(iWidgets));
