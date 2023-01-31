@@ -1879,9 +1879,9 @@ void Panel::selectWidgets(AppContext &iCtx, ImVec2 const &iPosition1, ImVec2 con
 
   for(auto &[id, w]: fWidgets)
   {
-    if(!w->isSelected() && w->overlaps(topLeft, bottomRight))
+    if(!w->isSelected() && !w->isHidden() && w->overlaps(topLeft, bottomRight))
     {
-      w->fSelected = true;
+      w->select();
     }
   }
 }
