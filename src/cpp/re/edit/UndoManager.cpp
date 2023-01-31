@@ -193,9 +193,9 @@ void CompositeRedoAction::execute()
 //------------------------------------------------------------------------
 std::shared_ptr<RedoAction> WidgetUndoAction::execute()
 {
-  auto w = AppContext::GetCurrent().getPanel(fPanelType)->replaceWidget(fWidgetId, fWidget);
+  std::shared_ptr<Widget> w = AppContext::GetCurrent().getPanel(fPanelType)->replaceWidgetNoUndo(fWidgetId, fWidget)->clone();
   return RedoAction::createFromLambda([widgetId = this->fWidgetId, w2 = std::move(w)](RedoAction *iAction) {
-    AppContext::GetCurrent().getPanel(iAction->fUndoAction->fPanelType)->replaceWidget(widgetId, w2);
+    AppContext::GetCurrent().getPanel(iAction->fUndoAction->fPanelType)->replaceWidgetNoUndo(widgetId, w2);
   });
 }
 

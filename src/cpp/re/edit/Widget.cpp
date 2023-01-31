@@ -1014,6 +1014,17 @@ std::unique_ptr<Widget> Widget::clone() const
 }
 
 //------------------------------------------------------------------------
+// Widget::fullClone
+//------------------------------------------------------------------------
+std::unique_ptr<Widget> Widget::fullClone() const
+{
+  auto w = std::unique_ptr<Widget>(new Widget(*this));
+  w->fId = fId;
+  w->fSelected = fSelected;
+  return w;
+}
+
+//------------------------------------------------------------------------
 // Widget::copyFrom
 //------------------------------------------------------------------------
 bool Widget::copyFrom(Widget const &iWidget)

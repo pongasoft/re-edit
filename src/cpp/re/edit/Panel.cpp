@@ -551,7 +551,7 @@ bool Panel::renderWidgetMenu(AppContext &iCtx, std::shared_ptr<Widget> const &iW
 
   if(ImGui::MenuItem("Delete"))
   {
-    deleteWidget(iCtx, iWidget->getId());
+    deleteWidgets(iCtx, {iWidget});
     res |= true;
   }
 
@@ -770,13 +770,13 @@ std::shared_ptr<Widget> Panel::transmuteWidget(AppContext &iCtx, std::shared_ptr
   auto newWidget = iNewDef.fFactory(iWidget->getName());
   newWidget->copyFrom(*iWidget);
   newWidget->setPosition(iWidget->getPosition());
-  return replaceWidget(iWidget->getId(), std::move(newWidget));
+  return replaceWidgetNoUndo(iWidget->getId(), std::move(newWidget));
 }
 
 //------------------------------------------------------------------------
 // Panel::replaceWidget
 //------------------------------------------------------------------------
-std::shared_ptr<Widget> Panel::replaceWidget(int iWidgetId, std::shared_ptr<Widget> iWidget)
+std::shared_ptr<Widget> Panel::replaceWidgetNoUndo(int iWidgetId, std::shared_ptr<Widget> iWidget)
 {
   RE_EDIT_INTERNAL_ASSERT(iWidget != nullptr);
   RE_EDIT_INTERNAL_ASSERT(fWidgets.find(iWidgetId) != fWidgets.end());
@@ -807,11 +807,8 @@ std::shared_ptr<Widget> Panel::replaceWidget(int iWidgetId, std::shared_ptr<Widg
 //------------------------------------------------------------------------
 // Panel::deleteWidget
 //------------------------------------------------------------------------
-std::pair<std::shared_ptr<Widget>, int> Panel::deleteWidget(AppContext &iCtx, int id)
+void Panel::deleteWidgetNoUndo(AppContext &iCtx, int id)
 {
-  if(iCtx.isUndoEnabled())
-    iCtx.addUndoAction(createWidgetsUndoAction(fmt::printf("Delete %s", getWidget(id)->getName())));
-
   std::shared_ptr<Widget> widget{};
   unselectWidget(id);
   // we need to extract the widget from the map before removing it so that we can return it!
@@ -824,7 +821,6 @@ std::pair<std::shared_ptr<Widget>, int> Panel::deleteWidget(AppContext &iCtx, in
     RE_EDIT_INTERNAL_ASSERT(iter != fDecalsOrder.end());
     auto order = iter - fDecalsOrder.begin();
     fDecalsOrder.erase(iter);
-    return {std::move(widget), static_cast<int>(order)};
   }
   else
   {
@@ -832,7 +828,6 @@ std::pair<std::shared_ptr<Widget>, int> Panel::deleteWidget(AppContext &iCtx, in
     RE_EDIT_INTERNAL_ASSERT(iter != fWidgetsOrder.end());
     auto order = iter - fWidgetsOrder.begin();
     fWidgetsOrder.erase(iter);
-    return {std::move(widget), static_cast<int>(order)};
   }
 }
 
@@ -841,13 +836,19 @@ std::pair<std::shared_ptr<Widget>, int> Panel::deleteWidget(AppContext &iCtx, in
 //------------------------------------------------------------------------
 void Panel::deleteWidgets(AppContext &iCtx, std::vector<std::shared_ptr<Widget>> const &iWidgets)
 {
-  if(iCtx.isUndoEnabled())
-    iCtx.addUndoAction(createWidgetsUndoAction(fmt::printf("Delete %d widgets", iWidgets.size())));
+  if(iWidgets.empty())
+    return;
 
-  iCtx.withUndoDisabled([this, &iCtx, &iWidgets](){
-    for(auto const &w: iWidgets)
-      deleteWidget(iCtx, w->getId());
-  });
+  if(iCtx.isUndoEnabled())
+  {
+    if(iWidgets.size() == 1)
+      iCtx.addUndoAction(createWidgetsUndoAction(fmt::printf("Delete %s", iWidgets[0]->getName())));
+    else
+      iCtx.addUndoAction(createWidgetsUndoAction(fmt::printf("Delete %d widgets", iWidgets.size())));
+  }
+
+  for(auto const &w: iWidgets)
+    deleteWidgetNoUndo(iCtx, w->getId());
 }
 
 
@@ -1819,40 +1820,29 @@ void Panel::setOptions(std::vector<std::string> const &iOptions)
 //------------------------------------------------------------------------
 // Panel::freezeWidgets
 //------------------------------------------------------------------------
-std::shared_ptr<Panel::PanelWidgets> Panel::freezeWidgets() const
+std::unique_ptr<Panel::PanelWidgets> Panel::freezeWidgets() const
 {
   std::unique_ptr<Panel::PanelWidgets> ws{new Panel::PanelWidgets()};
-  ws->fWidgets = fWidgets;
+  for(auto &[id, w]: fWidgets)
+    ws->fWidgets[id] = w->fullClone();
   ws->fWidgetsOrder = fWidgetsOrder;
   ws->fDecalsOrder = fDecalsOrder;
-  for(auto &[id, w]: fWidgets)
-  {
-    if(w->isSelected())
-      ws->fSelectedWidgets.emplace_back(id);
-  }
   return ws;
 }
 
 //------------------------------------------------------------------------
 // Panel::thawWidgets
 //------------------------------------------------------------------------
-std::shared_ptr<Panel::PanelWidgets> Panel::thawWidgets(std::shared_ptr<PanelWidgets> const &iPanelWidgets)
+std::unique_ptr<Panel::PanelWidgets> Panel::thawWidgets(std::shared_ptr<PanelWidgets> const &iPanelWidgets)
 {
   std::unique_ptr<Panel::PanelWidgets> ws{new Panel::PanelWidgets()};
-  ws->fWidgets = std::move(fWidgets);
+  for(auto &[id, w]: fWidgets)
+    ws->fWidgets[id] = w->fullClone();
   ws->fWidgetsOrder = std::move(fWidgetsOrder);
   ws->fDecalsOrder = std::move(fDecalsOrder);
-  for(auto &[id, w]: ws->fWidgets)
-  {
-    if(w->isSelected())
-      ws->fSelectedWidgets.emplace_back(id);
-  }
   fWidgets = iPanelWidgets->fWidgets;
   fWidgetsOrder = iPanelWidgets->fWidgetsOrder;
   fDecalsOrder = iPanelWidgets->fDecalsOrder;
-  clearSelection();
-  for(auto id: iPanelWidgets->fSelectedWidgets)
-    fWidgets[id]->select();
   markEdited();
   return ws;
 }
@@ -1862,9 +1852,9 @@ std::shared_ptr<Panel::PanelWidgets> Panel::thawWidgets(std::shared_ptr<PanelWid
 //------------------------------------------------------------------------
 std::shared_ptr<UndoAction> Panel::createWidgetsUndoAction(std::string const &iDescription) const
 {
-  auto pw = freezeWidgets();
+  std::shared_ptr<Panel::PanelWidgets> pw = freezeWidgets();
   auto action = UndoAction::createFromLambda([pw = std::move(pw)](UndoAction *iAction) {
-    auto w = AppContext::GetCurrent().getPanel(iAction->fPanelType)->thawWidgets(pw);
+    std::shared_ptr<Panel::PanelWidgets> w = AppContext::GetCurrent().getPanel(iAction->fPanelType)->thawWidgets(pw);
     return RedoAction::createFromLambda([w2 = std::move(w)](RedoAction *iAction) {
       AppContext::GetCurrent().getPanel(iAction->fUndoAction->fPanelType)->thawWidgets(w2);
     });

@@ -120,7 +120,7 @@ public:
   bool pasteWidget(AppContext &iCtx, Widget const *iWidget, ImVec2 const &iPosition);
   bool pasteWidgets(AppContext &iCtx, std::vector<std::unique_ptr<Widget>> const &iWidgets, ImVec2 const &iPosition);
   std::shared_ptr<Widget> transmuteWidget(AppContext &iCtx, const std::shared_ptr<Widget>& iWidget, WidgetDef const &iNewDef);
-  std::shared_ptr<Widget> replaceWidget(int iWidgetId, std::shared_ptr<Widget> iWidget);
+  std::shared_ptr<Widget> replaceWidgetNoUndo(int iWidgetId, std::shared_ptr<Widget> iWidget);
   std::shared_ptr<Widget> getWidget(int id) const;
   std::shared_ptr<Widget> findWidget(int id) const;
 
@@ -132,9 +132,6 @@ public:
   void selectByType(WidgetType iType, bool iIncludeHiddenWidgets = false);
   void clearSelection();
 
-  /**
-   * @return the deleted widget and its order */
-  std::pair<std::shared_ptr<Widget>, int> deleteWidget(AppContext &iCtx, int id);
   void deleteWidgets(AppContext &iCtx, std::vector<std::shared_ptr<Widget>> const &iWidgets);
 
   std::string hdgui2D() const;
@@ -150,7 +147,6 @@ private:
     std::map<int, std::shared_ptr<Widget>> fWidgets{};
     std::vector<int> fWidgetsOrder{};
     std::vector<int> fDecalsOrder{};
-    std::vector<int> fSelectedWidgets{};
   };
 
 protected:
@@ -158,8 +154,8 @@ protected:
   void editSingleSelectionView(AppContext &iCtx, std::shared_ptr<Widget> const &iWidget);
   void editMultiSelectionView(AppContext &iCtx);
 
-  std::shared_ptr<PanelWidgets> freezeWidgets() const;
-  std::shared_ptr<PanelWidgets> thawWidgets(std::shared_ptr<PanelWidgets> const &iPanelWidgets);
+  std::unique_ptr<PanelWidgets> freezeWidgets() const;
+  std::unique_ptr<PanelWidgets> thawWidgets(std::shared_ptr<PanelWidgets> const &iPanelWidgets);
 
   std::shared_ptr<UndoAction> createWidgetsUndoAction(std::string const &iDescription) const;
 
@@ -170,6 +166,7 @@ private:
   std::shared_ptr<Widget> findWidgetOnTopAt(ImVec2 const &iPosition) const;
   void moveWidgets(AppContext &iCtx, ImVec2 const &iPosition, ImVec2 const &iGrid);
   void endMoveWidgets(AppContext &iCtx, ImVec2 const &iPosition);
+  void deleteWidgetNoUndo(AppContext &iCtx, int id);
   void computeEachFrame(AppContext &iCtx);
   bool renderPanelWidgetMenu(AppContext &iCtx, ImVec2 const &iPosition = {});
   bool renderPanelMenus(AppContext &iCtx, std::optional<ImVec2> iPosition = std::nullopt);
