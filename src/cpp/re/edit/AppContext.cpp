@@ -184,7 +184,8 @@ void AppContext::renderTabs()
       ImGui::TextUnformatted(iName);
       if(hasErrors)
       {
-        ImGui::SameLine();
+        // ImGui::SameLine(); does not work: see https://github.com/ocornut/imgui/issues/6127
+        ImGui::SetCursorScreenPos({ImGui::GetItemRectMax().x + ImGui::GetStyle().ItemSpacing.x, ImGui::GetItemRectMin().y});
         ReGui::ErrorIcon();
       }
     });
