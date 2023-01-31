@@ -93,6 +93,34 @@ pongasoft produces a variety of high quality and free/open source software. If y
 
 Release Notes
 -------------
+ 
+* #### 1.3.0 - 2023/01/31
+
+- Implemented Copy/Paste for bulk editing/changes
+  * You can copy a single widget (copies all attributes), and it can be pasted into:
+    * any panel where the type of the widget is allowed => duplicates the widget
+    * another widget => copy all (possible) attributes to the widget
+    * selected widgets => copy all (possible) attributes to all selected widgets
+  * You can copy a single widget attribute value, and it can be pasted into:
+      * another widget => copy this attribute to the widget (if possible)
+      * selected widgets => copy this attribute to the selected widgets (if possible)
+  * You can copy the selected widgets, and it can be pasted into:
+      * any panel where the type of the widgets is allowed => duplicates the widgets
+- Removed "Duplicate Widget(s)" menu entry since it is redundant with copy/paste (duplicate only allowed duplication on the same panel, copy/paste does not have this restriction)  
+- Added Select All/Select By Type menu entries
+- Simplified popup menu on Panel (added Widgets submenu instead of multiple menu entries)
+- Added "A" keyboard shortcut to toggle between Select All/Select None
+- Added "Q" keyboard shortcut to show a Quick View (while the key is being held). Essentially a tooltip on demand:
+  * When hovering above a widget on the Panel
+  * When hovering above a widget name in the "Widgets" window
+  * When hovering above a property path
+  * When hovering above a graphics attribute
+  * When hovering above an entry in the "Open Recent" submenu
+- Shift + click now also selects the widget under the mouse pointer (no need to move)
+- Added more visible error icon in the tab bar
+- Moved the notification section up to be sure it is always visible
+- Various UI tweaks
+- Fixed some issue with Undo/Redo
 
 * #### 1.2.1 - 2023/01/22
 

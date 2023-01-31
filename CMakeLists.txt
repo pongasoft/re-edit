@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.24)
 
 set(re-edit_VERSION_MAJOR 1)
-set(re-edit_VERSION_MINOR 2)
-set(re-edit_VERSION_PATCH 1)
+set(re-edit_VERSION_MINOR 3)
+set(re-edit_VERSION_PATCH 0)
 set(re-edit_VERSION "${re-edit_VERSION_MAJOR}.${re-edit_VERSION_MINOR}.${re-edit_VERSION_PATCH}")
 
 execute_process(COMMAND git describe --long --dirty --abbrev=10 --tags
