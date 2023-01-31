@@ -66,7 +66,6 @@ class Clipboard
 {
 public:
   inline clipboard::DataType getType() const { return fData->getType(); }
-  constexpr bool isEmpty() const { return getType() == clipboard::DataType::kNone; }
   inline bool matchesType(clipboard::DataType iType) const { return (fData->getType() & iType) != clipboard::DataType::kNone; }
   clipboard::Data const *getData() const { return fData.get(); }
   void setData(std::unique_ptr<clipboard::Data> iData) { RE_EDIT_INTERNAL_ASSERT(iData != nullptr); fData = std::move(iData); }
