@@ -107,7 +107,7 @@ Release Notes
   * You can copy the selected widgets, and it can be pasted into:
       * any panel where the type of the widgets is allowed => duplicates the widgets
 - Removed "Duplicate Widget(s)" menu entry since it is redundant with copy/paste (duplicate only allowed duplication on the same panel, copy/paste does not have this restriction)  
-- Added Select All/Select By Type menu entries
+- Added Select All/Select By Type menu entries (use `Alt` for adding hidden widgets)
 - Simplified popup menu on Panel (added Widgets submenu instead of multiple menu entries)
 - Added "A" keyboard shortcut to toggle between Select All/Select None
 - Added "Q" keyboard shortcut to show a Quick View (while the key is being held). Essentially a tooltip on demand:
