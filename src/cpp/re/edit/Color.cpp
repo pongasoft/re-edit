@@ -19,6 +19,7 @@
 #include "Color.h"
 #include "WidgetAttribute.h"
 #include "ReGui.h"
+#include "AppContext.hpp"
 
 namespace re::edit::widget::attribute {
 

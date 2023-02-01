@@ -20,6 +20,7 @@
 #include "Widget.h"
 #include "Errors.h"
 #include "Panel.h"
+#include "AppContext.hpp"
 
 namespace re::edit {
 

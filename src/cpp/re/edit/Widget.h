@@ -219,7 +219,7 @@ namespace clipboard {
     DataType getType() const override { return DataType::kWidget; }
     Widget const *getWidget() const { return fWidget.get(); }
 
-    static std::unique_ptr<WidgetData> copyFrom(std::shared_ptr<Widget> const &iWidget);
+    static std::unique_ptr<WidgetData> copyFrom(Widget const *iWidget);
 
   private:
     std::unique_ptr<Widget> fWidget{};
@@ -233,7 +233,6 @@ public:
   widget::Attribute const *getAttribute() const;
 
   static std::unique_ptr<WidgetAttributeData> copyFrom(Widget const *iWidget, int iAttributeId);
-  inline static std::unique_ptr<WidgetAttributeData> copyFrom(std::shared_ptr<Widget> const &iWidget, int iAttributeId) { return copyFrom(iWidget.get(), iAttributeId); }
 
 private:
   std::unique_ptr<Widget> fWidget;
@@ -249,7 +248,7 @@ public:
   auto size() const { return fWidgets.size(); }
   std::vector<std::unique_ptr<Widget>> const &getWidgets() const { return fWidgets; }
 
-  static std::unique_ptr<WidgetListData> copyFrom(std::vector<std::shared_ptr<Widget>> const &iWidgets);
+  static std::unique_ptr<WidgetListData> copyFrom(std::vector<Widget *> const &iWidgets);
 
 private:
   std::vector<std::unique_ptr<Widget>> fWidgets{};

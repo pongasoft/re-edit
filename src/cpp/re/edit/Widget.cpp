@@ -17,6 +17,7 @@
  */
 
 #include "Widget.h"
+#include "AppContext.hpp"
 #include "ReGui.h"
 #include <re/mock/fmt.h>
 #include <imgui.h>
@@ -1184,7 +1185,7 @@ WidgetData::WidgetData(std::unique_ptr<Widget> iWidget) :
 //------------------------------------------------------------------------
 // WidgetData::copyFrom
 //------------------------------------------------------------------------
-std::unique_ptr<WidgetData> WidgetData::copyFrom(std::shared_ptr<Widget> const &iWidget)
+std::unique_ptr<WidgetData> WidgetData::copyFrom(Widget const *iWidget)
 {
   RE_EDIT_INTERNAL_ASSERT(iWidget != nullptr);
   return std::make_unique<WidgetData>(iWidget->clone());
@@ -1231,7 +1232,7 @@ WidgetListData::WidgetListData(std::vector<std::unique_ptr<Widget>> iWidgets) :
 //------------------------------------------------------------------------
 // WidgetListData::copyFrom
 //------------------------------------------------------------------------
-std::unique_ptr<WidgetListData> WidgetListData::copyFrom(std::vector<std::shared_ptr<Widget>> const &iWidgets)
+std::unique_ptr<WidgetListData> WidgetListData::copyFrom(std::vector<Widget *> const &iWidgets)
 {
   std::vector<std::unique_ptr<Widget>> list{};
   list.reserve(iWidgets.size());

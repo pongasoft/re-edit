@@ -18,6 +18,7 @@
 
 #include "WidgetAttribute.h"
 #include "Widget.h"
+#include "AppContext.hpp"
 #include "Errors.h"
 #include <re/mock/fmt.h>
 #include <imgui.h>

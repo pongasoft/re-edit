@@ -150,11 +150,11 @@ public: // Clipboard
   bool isClipboardWidgetAllowedForPanel(PanelType iType) const;
   template<typename T>
   inline T const *getClipboardData() const { return dynamic_cast<T const *>(fClipboard.getData()); }
-  void copyToClipboard(std::shared_ptr<Widget> const &iWidget, int iAttributeId = -1);
+  void copyToClipboard(Widget const *iWidget, int iAttributeId = -1);
   void copyToClipboard(widget::Attribute const *iAttribute);
-  void copyToClipboard(std::vector<std::shared_ptr<Widget>> const &iWidgets);
-  bool pasteFromClipboard(std::shared_ptr<Widget> const &oWidget);
-  bool pasteFromClipboard(std::vector<std::shared_ptr<Widget>> const &oWidgets);
+  void copyToClipboard(std::vector<Widget *> const &iWidgets);
+  bool pasteFromClipboard(Widget *oWidget);
+  bool pasteFromClipboard(std::vector<Widget *> const &oWidgets);
   bool pasteFromClipboard(Panel &oPanel, ImVec2 const &iPosition);
 
 public: // Texture
@@ -212,14 +212,7 @@ public: // Undo
   inline void addUndoCurrentWidgetChange(std::string iDescription) { addUndoWidgetChange(fCurrentWidget, std::move(iDescription)); }
 
   template<typename T>
-  void addOrMergeUndoWidgetChange(Widget const *iWidget, void *iMergeKey, T const &iOldValue, T const &iNewValue, std::string const &iDescription)
-  {
-    addOrMergeUndoAction(iMergeKey, iOldValue, iNewValue, iDescription, [this, iWidget]() {
-      auto action = std::make_unique<MergeableWidgetUndoAction<T>>();
-      populateWidgetUndoAction(action.get(), iWidget);
-      return action;
-    });
-  }
+  void addOrMergeUndoWidgetChange(Widget const *iWidget, void *iMergeKey, T const &iOldValue, T const &iNewValue, std::string const &iDescription);
 
   template<typename T>
   inline void addOrMergeUndoCurrentWidgetChange(void *iMergeKey, T const &iOldValue, T const &iNewValue, std::string const &iDescription)

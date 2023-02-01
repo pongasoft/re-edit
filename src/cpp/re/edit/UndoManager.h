@@ -98,11 +98,12 @@ public:
 class WidgetUndoAction : public UndoAction
 {
 public:
+  ~WidgetUndoAction();
   std::shared_ptr<RedoAction> execute() override;
 
 public:
   int fWidgetId{-1};
-  std::shared_ptr<Widget> fWidget{};
+  std::unique_ptr<Widget> fWidget{};
 };
 
 template<typename T>

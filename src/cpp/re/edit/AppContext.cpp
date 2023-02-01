@@ -1456,7 +1456,7 @@ std::shared_ptr<Texture> AppContext::getBuiltInTexture(FilmStrip::key_t const &i
 //------------------------------------------------------------------------
 // AppContext::copyToClipboard
 //------------------------------------------------------------------------
-void AppContext::copyToClipboard(std::shared_ptr<Widget> const &iWidget, int iAttributeId)
+void AppContext::copyToClipboard(Widget const *iWidget, int iAttributeId)
 {
   if(iAttributeId < 0)
     fClipboard.setData(clipboard::WidgetData::copyFrom(iWidget));
@@ -1476,7 +1476,7 @@ void AppContext::copyToClipboard(widget::Attribute const *iAttribute)
 //------------------------------------------------------------------------
 // AppContext::copyToClipboard
 //------------------------------------------------------------------------
-void AppContext::copyToClipboard(std::vector<std::shared_ptr<Widget>> const &iWidgets)
+void AppContext::copyToClipboard(std::vector<Widget *> const &iWidgets)
 {
   fClipboard.setData(clipboard::WidgetListData::copyFrom(iWidgets));
 }
@@ -1484,12 +1484,12 @@ void AppContext::copyToClipboard(std::vector<std::shared_ptr<Widget>> const &iWi
 //------------------------------------------------------------------------
 // AppContext::pasteFromClipboard
 //------------------------------------------------------------------------
-bool AppContext::pasteFromClipboard(std::shared_ptr<Widget> const &oWidget)
+bool AppContext::pasteFromClipboard(Widget *oWidget)
 {
   if(auto data = getClipboardData<clipboard::WidgetData>())
   {
     if(isUndoEnabled())
-      addUndoWidgetChange(oWidget.get(), fmt::printf("Paste all widget attributes from [%s] to [%s]", data->getWidget()->getName(), oWidget->getName()));
+      addUndoWidgetChange(oWidget, fmt::printf("Paste all widget attributes from [%s] to [%s]", data->getWidget()->getName(), oWidget->getName()));
 
     if(!oWidget->copyFrom(*data->getWidget()))
     {
@@ -1504,7 +1504,7 @@ bool AppContext::pasteFromClipboard(std::shared_ptr<Widget> const &oWidget)
   if(auto data = getClipboardData<clipboard::WidgetAttributeData>())
   {
     if(isUndoEnabled())
-      addUndoWidgetChange(oWidget.get(), fmt::printf("Paste attribute [%s] to widget [%s]", data->getAttribute()->fName, oWidget->getName()));
+      addUndoWidgetChange(oWidget, fmt::printf("Paste attribute [%s] to widget [%s]", data->getAttribute()->fName, oWidget->getName()));
 
     if(!oWidget->copyFrom(data->getAttribute()))
     {
@@ -1522,7 +1522,7 @@ bool AppContext::pasteFromClipboard(std::shared_ptr<Widget> const &oWidget)
 //------------------------------------------------------------------------
 // AppContext::pasteFromClipboard
 //------------------------------------------------------------------------
-bool AppContext::pasteFromClipboard(std::vector<std::shared_ptr<Widget>> const &oWidgets)
+bool AppContext::pasteFromClipboard(std::vector<Widget *> const &oWidgets)
 {
   if(!isClipboardMatchesType(clipboard::DataType::kWidget | clipboard::DataType::kWidgetAttribute) || oWidgets.empty())
     return false;
@@ -1628,6 +1628,7 @@ void AppContext::redoLastAction()
     }
   }
 }
+
 
 ////------------------------------------------------------------------------
 //// AppContext::onNativeWindowPositionChange
