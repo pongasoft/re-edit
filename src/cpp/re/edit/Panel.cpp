@@ -1833,7 +1833,7 @@ std::unique_ptr<Panel::PanelWidgets> Panel::freezeWidgets() const
 //------------------------------------------------------------------------
 // Panel::thawWidgets
 //------------------------------------------------------------------------
-std::unique_ptr<Panel::PanelWidgets> Panel::thawWidgets(std::shared_ptr<PanelWidgets> const &iPanelWidgets)
+std::unique_ptr<Panel::PanelWidgets> Panel::thawWidgets(std::unique_ptr<PanelWidgets> const &iPanelWidgets)
 {
   std::unique_ptr<Panel::PanelWidgets> ws{new Panel::PanelWidgets()};
   for(auto &[id, w]: fWidgets)
@@ -1852,9 +1852,9 @@ std::unique_ptr<Panel::PanelWidgets> Panel::thawWidgets(std::shared_ptr<PanelWid
 //------------------------------------------------------------------------
 std::shared_ptr<UndoAction> Panel::createWidgetsUndoAction(std::string const &iDescription) const
 {
-  std::shared_ptr<Panel::PanelWidgets> pw = freezeWidgets();
+  auto pw = freezeWidgets();
   auto action = UndoAction::createFromLambda([pw = std::move(pw)](UndoAction *iAction) {
-    std::shared_ptr<Panel::PanelWidgets> w = AppContext::GetCurrent().getPanel(iAction->fPanelType)->thawWidgets(pw);
+    auto w = AppContext::GetCurrent().getPanel(iAction->fPanelType)->thawWidgets(pw);
     return RedoAction::createFromLambda([w2 = std::move(w)](RedoAction *iAction) {
       AppContext::GetCurrent().getPanel(iAction->fUndoAction->fPanelType)->thawWidgets(w2);
     });

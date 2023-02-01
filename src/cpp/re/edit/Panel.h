@@ -155,7 +155,7 @@ protected:
   void editMultiSelectionView(AppContext &iCtx);
 
   std::unique_ptr<PanelWidgets> freezeWidgets() const;
-  std::unique_ptr<PanelWidgets> thawWidgets(std::shared_ptr<PanelWidgets> const &iPanelWidgets);
+  std::unique_ptr<PanelWidgets> thawWidgets(std::unique_ptr<PanelWidgets> const &iPanelWidgets);
 
   std::shared_ptr<UndoAction> createWidgetsUndoAction(std::string const &iDescription) const;
 
