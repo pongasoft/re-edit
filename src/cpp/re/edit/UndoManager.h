@@ -28,6 +28,44 @@ namespace re::edit {
 
 class Widget;
 class RedoAction;
+class Panel;
+
+class Action
+{
+public:
+  virtual ~Action() = default;
+  virtual bool execute() = 0;
+  virtual void undo() = 0;
+  virtual void redo() { execute(); }
+
+  inline PanelType getPanelType() const { return fPanelType; }
+  inline void setPanelType(PanelType iType) { fPanelType = iType; }
+  inline void *getMergeKey() const { return fMergeKey; }
+  Panel *getPanel() const;
+  virtual std::string const &getDescription() const { return fDescription; }
+
+protected:
+  PanelType fPanelType{PanelType::kUnknown};
+  std::string fDescription{};
+  void *fMergeKey{};
+};
+
+template<typename BaseActionClass = Action, typename ActionClass = BaseActionClass>
+class CompositeAction : public BaseActionClass
+{
+public:
+  bool execute() override;
+  void undo() override;
+  void redo() override;
+
+  inline bool isEmpty() const { return fActions.empty(); }
+  inline auto getSize() const { return fActions.size(); }
+  std::string const &getDescription() const override;
+
+
+protected:
+  std::vector<std::unique_ptr<ActionClass>> fActions{};
+};
 
 template<typename T>
 class MergeableUndoValue
@@ -213,6 +251,53 @@ std::shared_ptr<RedoAction> LambdaMergeableUndoAction<T, UndoLambda, RedoLambda>
   return RedoAction::createFromLambda([newValue = MergeableUndoValue<T>::fNewValue, redoLambda = fRedoLambda](RedoAction *iAction) {
     redoLambda(iAction, newValue);
   });
+}
+
+//------------------------------------------------------------------------
+// CompositeAction::execute
+//------------------------------------------------------------------------
+template<typename BaseActionClass, typename ActionClass>
+bool CompositeAction<BaseActionClass, ActionClass>::execute()
+{
+  auto res = false;
+  for(auto &action: fActions)
+    res |= action->execute();
+  return res;
+}
+
+//------------------------------------------------------------------------
+// CompositeAction::undo
+//------------------------------------------------------------------------
+template<typename BaseActionClass, typename ActionClass>
+void CompositeAction<BaseActionClass, ActionClass>::undo()
+{
+  // reverse order!
+  for(auto i = fActions.rbegin(); i != fActions.rend(); i++)
+  {
+    (*i)->undo();
+  }
+}
+
+//------------------------------------------------------------------------
+// CompositeAction::redo
+//------------------------------------------------------------------------
+template<typename BaseActionClass, typename ActionClass>
+void CompositeAction<BaseActionClass, ActionClass>::redo()
+{
+  for(auto &action: fActions)
+    action->redo();
+}
+
+//------------------------------------------------------------------------
+// CompositeAction::undo
+//------------------------------------------------------------------------
+template<typename BaseActionClass, typename ActionClass>
+std::string const &CompositeAction<BaseActionClass, ActionClass>::getDescription() const
+{
+  if(getSize() == 1)
+    return fActions[0]->getDescription();
+  else
+    return this->fDescription;
 }
 
 

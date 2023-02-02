@@ -500,7 +500,7 @@ bool Panel::renderPanelWidgetMenu(AppContext &iCtx, ImVec2 const &iPosition)
   {
     auto widget = Widget::panel_decal();
     widget->setPositionFromCenter(iPosition);
-    addWidget(iCtx, std::move(widget));
+    addWidget(iCtx, std::move(widget), true);
     res |= true;
   }
 
@@ -656,204 +656,6 @@ bool Panel::renderSelectedWidgetsMenu(AppContext &iCtx)
 }
 
 //------------------------------------------------------------------------
-// Panel::addWidget
-//------------------------------------------------------------------------
-int Panel::addWidget(AppContext &iCtx, std::unique_ptr<Widget> iWidget, char const *iUndoActionName, bool iMakeSingleSelected)
-{
-  RE_EDIT_INTERNAL_ASSERT(iWidget != nullptr);
-
-  if(iCtx.isUndoEnabled())
-    iCtx.addUndoAction(createWidgetsUndoAction(fmt::printf("%s %s", iUndoActionName, re::edit::toString(iWidget->fType))));
-
-  auto const id = fWidgetCounter++;
-
-  iWidget->init(id);
-
-  if(iWidget->isPanelDecal())
-    fDecalsOrder.emplace_back(id);
-  else
-    fWidgetsOrder.emplace_back(id);
-
-  iWidget->markEdited();
-  fEdited = true;
-
-  if(iMakeSingleSelected)
-  {
-    clearSelection();
-    iWidget->select();
-  }
-
-  fWidgets[id] = std::move(iWidget);
-
-  return id;
-}
-
-//------------------------------------------------------------------------
-// Panel::addWidget
-//------------------------------------------------------------------------
-int Panel::addWidget(AppContext &iCtx, WidgetDef const &iDef, ImVec2 const &iPosition)
-{
-  auto widget = iDef.fFactory(std::nullopt);
-  widget->setPositionFromCenter(iPosition);
-  return addWidget(iCtx, std::move(widget));
-}
-
-//------------------------------------------------------------------------
-// Panel::pasteWidget
-//------------------------------------------------------------------------
-bool Panel::pasteWidget(AppContext &iCtx, Widget const *iWidget, ImVec2 const &iPosition)
-{
-  if(iCtx.isWidgetAllowed(fType, iWidget->getType()))
-  {
-    auto widget = copy(iWidget);
-    widget->setPositionFromCenter(iPosition);
-    addWidget(iCtx, std::move(widget), "Paste");
-    return true;
-  }
-  return false;
-}
-
-//------------------------------------------------------------------------
-// Panel::pasteWidgets
-//------------------------------------------------------------------------
-bool Panel::pasteWidgets(AppContext &iCtx, std::vector<std::unique_ptr<Widget>> const &iWidgets, ImVec2 const &iPosition)
-{
-  if(iWidgets.empty())
-    return false;
-
-  auto count = std::count_if(iWidgets.begin(), iWidgets.end(), [&iCtx, type = fType](auto &w) { return iCtx.isWidgetAllowed(type, w->getType()); });
-  if(count == 1)
-  {
-    return pasteWidget(iCtx, iWidgets[0].get(), iPosition);
-  }
-  else
-  {
-    ImVec2 min{std::numeric_limits<float>::max(), std::numeric_limits<float>::max()};
-    for(auto &w: iWidgets)
-    {
-      auto tl = w->getTopLeft();
-      min.x = std::min(min.x, tl.x);
-      min.y = std::min(min.y, tl.y);
-    }
-
-    if(iCtx.isUndoEnabled())
-      iCtx.addUndoAction(createWidgetsUndoAction(fmt::printf("Paste %d widgets", iWidgets.size())));
-
-    clearSelection();
-
-    iCtx.withUndoDisabled([this, &iCtx, &iWidgets, &iPosition, &min](){
-      for(auto &w: iWidgets)
-      {
-        if(iCtx.isWidgetAllowed(fType, w->getType()))
-        {
-          auto widget = copy(w.get());
-          widget->setPosition(iPosition + w->getPosition() - min);
-          widget->select();
-          addWidget(iCtx, std::move(widget), "Paste", false);
-        }
-      }
-    });
-
-    return true;
-  }
-
-}
-
-//------------------------------------------------------------------------
-// Panel::transmuteWidget
-//------------------------------------------------------------------------
-std::unique_ptr<Widget> Panel::transmuteWidget(AppContext &iCtx, Widget const *iWidget, WidgetDef const &iNewDef)
-{
-  if(iCtx.isUndoEnabled())
-    iCtx.addUndoAction(createWidgetsUndoAction(fmt::printf("Change %s type", iWidget->getName())));
-
-  auto newWidget = iNewDef.fFactory(iWidget->getName());
-  newWidget->copyFrom(*iWidget);
-  newWidget->setPosition(iWidget->getPosition());
-  return replaceWidgetNoUndo(iWidget->getId(), std::move(newWidget));
-}
-
-//------------------------------------------------------------------------
-// Panel::replaceWidget
-//------------------------------------------------------------------------
-std::unique_ptr<Widget> Panel::replaceWidgetNoUndo(int iWidgetId, std::unique_ptr<Widget> iWidget)
-{
-  RE_EDIT_INTERNAL_ASSERT(iWidget != nullptr);
-  RE_EDIT_INTERNAL_ASSERT(fWidgets.find(iWidgetId) != fWidgets.end());
-
-  iWidget->init(iWidgetId);
-  iWidget->fSelected = fWidgets[iWidgetId]->isSelected();
-  iWidget->markEdited();
-  fEdited = true;
-  if(iWidget->isPanelDecal() != fWidgets[iWidgetId]->isPanelDecal())
-  {
-    if(iWidget->isPanelDecal())
-    {
-      auto iter = std::find(fWidgetsOrder.begin(), fWidgetsOrder.end(), iWidgetId);
-      fWidgetsOrder.erase(iter);
-      fDecalsOrder.emplace_back(iWidgetId);
-    }
-    else
-    {
-      auto iter = std::find(fDecalsOrder.begin(), fDecalsOrder.end(), iWidgetId);
-      fDecalsOrder.erase(iter);
-      fWidgetsOrder.emplace_back(iWidgetId);
-    }
-  }
-  std::swap(fWidgets[iWidgetId], iWidget);
-  return iWidget;
-}
-
-//------------------------------------------------------------------------
-// Panel::deleteWidget
-//------------------------------------------------------------------------
-void Panel::deleteWidgetNoUndo(AppContext &iCtx, int id)
-{
-  auto widget = findWidget(id);
-  if(widget)
-  {
-    if(widget->isPanelDecal())
-    {
-      auto iter = std::find(fDecalsOrder.begin(), fDecalsOrder.end(), id);
-      RE_EDIT_INTERNAL_ASSERT(iter != fDecalsOrder.end());
-      auto order = iter - fDecalsOrder.begin();
-      fDecalsOrder.erase(iter);
-    }
-    else
-    {
-      auto iter = std::find(fWidgetsOrder.begin(), fWidgetsOrder.end(), id);
-      RE_EDIT_INTERNAL_ASSERT(iter != fWidgetsOrder.end());
-      auto order = iter - fWidgetsOrder.begin();
-      fWidgetsOrder.erase(iter);
-    }
-
-    fWidgets.erase(id);
-    fEdited = true;
-  }
-}
-
-//------------------------------------------------------------------------
-// Panel::deleteWidgets
-//------------------------------------------------------------------------
-void Panel::deleteWidgets(AppContext &iCtx, std::vector<Widget *> const &iWidgets)
-{
-  if(iWidgets.empty())
-    return;
-
-  if(iCtx.isUndoEnabled())
-  {
-    if(iWidgets.size() == 1)
-      iCtx.addUndoAction(createWidgetsUndoAction(fmt::printf("Delete %s", iWidgets[0]->getName())));
-    else
-      iCtx.addUndoAction(createWidgetsUndoAction(fmt::printf("Delete %d widgets", iWidgets.size())));
-  }
-
-  for(auto const &w: iWidgets)
-    deleteWidgetNoUndo(iCtx, w->getId());
-}
-
-
-//------------------------------------------------------------------------
 // Panel::findWidgetOnTopAt
 //------------------------------------------------------------------------
 Widget *Panel::findWidgetOnTopAt(std::vector<int> const &iOrder, ImVec2 const &iPosition) const
@@ -926,6 +728,21 @@ void Panel::selectWidget(int id, bool iMultiple)
 }
 
 //------------------------------------------------------------------------
+// Panel::selectWidgets
+//------------------------------------------------------------------------
+void Panel::selectWidgets(std::set<int> const &iWidgetIds, bool iAddToSelection)
+{
+  if(!iAddToSelection)
+    clearSelection();
+
+  for(auto id: iWidgetIds)
+  {
+    if(auto w = findWidget(id))
+      w->select();
+  }
+}
+
+//------------------------------------------------------------------------
 // Panel::toggleWidgetSelection
 //------------------------------------------------------------------------
 void Panel::toggleWidgetSelection(int id, bool iMultiple)
@@ -987,6 +804,7 @@ void Panel::clearSelection()
 {
   for(auto &p: fWidgets)
     p.second->unselect();
+  fComputedSelectedWidgets.clear();
 }
 
 namespace impl {
@@ -1444,22 +1262,6 @@ void Panel::editMultiSelectionView(AppContext &iCtx)
 }
 
 //------------------------------------------------------------------------
-// Panel::MultiSelectionList::getSelectedWidgets
-//------------------------------------------------------------------------
-std::vector<std::shared_ptr<Widget>> Panel::MultiSelectionList::getSelectedWidgets() const
-{
-  std::vector<std::shared_ptr<Widget>> sublist{};
-  sublist.reserve(fList.size());
-  for(auto id: fList)
-  {
-    auto widget = fPanel.getWidget(id);
-    if(widget->isSelected())
-      sublist.emplace_back(widget);
-  }
-  return sublist;
-}
-
-//------------------------------------------------------------------------
 // Panel::MultiSelectionList::editView
 //------------------------------------------------------------------------
 void Panel::MultiSelectionList::handleClick(Widget *iWidget, bool iRangeSelectKey, bool iMultiSelectKey)
@@ -1482,11 +1284,13 @@ void Panel::MultiSelectionList::handleClick(Widget *iWidget, bool iRangeSelectKe
     return;
   }
 
+  auto &list = getList();
+
   // when iRangeSelectKey is held => add all properties between fLastSelected and this one
-  if(iRangeSelectKey && fLastSelected && std::find(fList.begin(), fList.end(), *fLastSelected) != fList.end())
+  if(iRangeSelectKey && fLastSelected && std::find(list.begin(), list.end(), *fLastSelected) != list.end())
   {
     bool copy = false;
-    for(auto elt: fList)
+    for(auto elt: list)
     {
       if(id != *fLastSelected && (elt == id || elt == *fLastSelected))
       {
@@ -1541,16 +1345,16 @@ void Panel::MultiSelectionList::editView(AppContext &iCtx)
 
   ImGui::SameLine();
   if(ImGui::Button("Up  "))
-    moveSelectionUp();
+    fPanel.changeSelectedWidgetsOrder(iCtx, fWidgetOrDecal, Direction::kUp);
   ImGui::SameLine();
   if(ImGui::Button("Down"))
-    moveSelectionDown();
+    fPanel.changeSelectedWidgetsOrder(iCtx, fWidgetOrDecal, Direction::kDown);
 
   ImGui::Separator();
 
   if(ImGui::BeginChild("List", ImVec2{}, false, ImGuiWindowFlags_HorizontalScrollbar))
   {
-    for(auto id: fList)
+    for(auto id: getList())
     {
       auto widget = fPanel.getWidget(id);
       if(ImGui::Selectable(widget->getName().c_str(), widget->isSelected(), ImGuiSelectableFlags_AllowDoubleClick))
@@ -1580,71 +1384,6 @@ void Panel::MultiSelectionList::editView(AppContext &iCtx)
     }
   }
   ImGui::EndChild();
-}
-
-//------------------------------------------------------------------------
-// Panel::MultiSelectionList::moveSelectionUp
-//------------------------------------------------------------------------
-void Panel::MultiSelectionList::moveSelectionUp()
-{
-  auto selectedWidgets = getSelectedWidgets();
-  std::vector<int> list{fList.begin(), fList.end()};
-  int changesCount = 0;
-
-  for(auto &w: selectedWidgets)
-  {
-    auto iter = std::find(list.begin(), list.end(), w->getId());
-
-    // already at the top
-    if(iter == list.begin())
-      break; // abort loop
-
-    std::swap(*(iter - 1), *iter);
-    changesCount++;
-  }
-
-  if(changesCount > 0)
-  {
-    auto &ctx = AppContext::GetCurrent();
-    if(ctx.isUndoEnabled())
-      ctx.addUndoAction(fPanel.createWidgetsUndoAction(fmt::printf("Move %d %s%s up", changesCount, fType, changesCount > 1 ? "s" : "")));
-    fList = std::move(list);
-  }
-
-}
-
-//------------------------------------------------------------------------
-// Panel::MultiSelectionList::moveSelectionDown
-//------------------------------------------------------------------------
-void Panel::MultiSelectionList::moveSelectionDown()
-{
-  auto selectedWidgets = getSelectedWidgets();
-  std::vector<int> list{fList.begin(), fList.end()};
-  int changesCount = 0;
-
-  // we need to iterate backward
-  for(auto i = selectedWidgets.rbegin(); i != selectedWidgets.rend(); i++)
-  {
-    auto widget = *i;
-
-    auto iter = std::find(list.begin(), list.end(), widget->getId());
-
-    // already at the bottom
-    if(iter + 1 == list.end())
-      break; // abort loop
-
-    std::swap(*(iter + 1), *iter);
-    changesCount++;
-  }
-
-  if(changesCount > 0)
-  {
-    auto &ctx = AppContext::GetCurrent();
-    if(ctx.isUndoEnabled())
-      ctx.addUndoAction(fPanel.createWidgetsUndoAction(fmt::printf("Move %d %s%s down", changesCount, fType, changesCount > 1 ? "s" : "")));
-    fList = std::move(list);
-  }
-
 }
 
 //------------------------------------------------------------------------
@@ -1819,56 +1558,6 @@ void Panel::setOptions(std::vector<std::string> const &iOptions)
 }
 
 //------------------------------------------------------------------------
-// Panel::freezeWidgets
-//------------------------------------------------------------------------
-std::unique_ptr<Panel::PanelWidgets> Panel::freezeWidgets() const
-{
-  std::unique_ptr<Panel::PanelWidgets> ws{new Panel::PanelWidgets()};
-  for(auto &[id, w]: fWidgets)
-    ws->fWidgets[id] = w->fullClone();
-  ws->fWidgetsOrder = fWidgetsOrder;
-  ws->fDecalsOrder = fDecalsOrder;
-  return ws;
-}
-
-//------------------------------------------------------------------------
-// Panel::thawWidgets
-//------------------------------------------------------------------------
-std::unique_ptr<Panel::PanelWidgets> Panel::thawWidgets(std::unique_ptr<PanelWidgets> const &iPanelWidgets)
-{
-  std::unique_ptr<Panel::PanelWidgets> ws{new Panel::PanelWidgets()};
-  for(auto &[id, w]: fWidgets)
-    ws->fWidgets[id] = w->fullClone();
-  ws->fWidgetsOrder = std::move(fWidgetsOrder);
-  ws->fDecalsOrder = std::move(fDecalsOrder);
-  fWidgets.clear();
-  for(auto &[id, w]: iPanelWidgets->fWidgets)
-    fWidgets[id] = w->fullClone();
-  fWidgetsOrder = iPanelWidgets->fWidgetsOrder;
-  fDecalsOrder = iPanelWidgets->fDecalsOrder;
-  markEdited();
-  return ws;
-}
-
-//------------------------------------------------------------------------
-// Panel::createWidgetsUndoAction
-//------------------------------------------------------------------------
-std::shared_ptr<UndoAction> Panel::createWidgetsUndoAction(std::string const &iDescription) const
-{
-  auto pw = freezeWidgets();
-  auto action = UndoAction::createFromLambda([pw = std::move(pw)](UndoAction *iAction) {
-    auto w = AppContext::GetCurrent().getPanel(iAction->fPanelType)->thawWidgets(pw);
-    return RedoAction::createFromLambda([w2 = std::move(w)](RedoAction *iAction) {
-      AppContext::GetCurrent().getPanel(iAction->fUndoAction->fPanelType)->thawWidgets(w2);
-    });
-  });
-  action->fDescription = iDescription;
-  action->fPanelType = fType;
-  return action;
-
-}
-
-//------------------------------------------------------------------------
 // Panel::selectWidgets
 //------------------------------------------------------------------------
 void Panel::selectWidgets(AppContext &iCtx, ImVec2 const &iPosition1, ImVec2 const &iPosition2)
@@ -1890,9 +1579,9 @@ void Panel::selectWidgets(AppContext &iCtx, ImVec2 const &iPosition1, ImVec2 con
 }
 
 //------------------------------------------------------------------------
-// Panel::computeEachFrame
+// Panel::beforeEachFrame
 //------------------------------------------------------------------------
-void Panel::computeEachFrame(AppContext &iCtx)
+void Panel::beforeEachFrame(AppContext &iCtx)
 {
   fComputedSelectedWidgets.clear();
   fComputedSelectedRect = std::nullopt;

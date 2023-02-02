@@ -554,6 +554,39 @@ void AppContext::addUndoAction(std::shared_ptr<UndoAction> iAction)
 }
 
 //------------------------------------------------------------------------
+// UndoActionAdapter: wraps an Action into an UndoAction
+//------------------------------------------------------------------------
+class UndoActionAdapter : public UndoAction
+{
+public:
+  explicit UndoActionAdapter(std::unique_ptr<Action> iAction) : fAction{std::move(iAction) }
+  {
+    fPanelType = fAction->getPanelType();
+    fMergeKey = fAction->getMergeKey();
+    fDescription = fAction->getDescription();
+  }
+
+  std::shared_ptr<RedoAction> execute() override
+  {
+    fAction->undo();
+    return RedoAction::createFromLambda([](RedoAction *iAction) {
+      std::dynamic_pointer_cast<UndoActionAdapter>(iAction->fUndoAction)->fAction->redo();
+    });
+  }
+
+private:
+  std::unique_ptr<Action> fAction;
+};
+
+//------------------------------------------------------------------------
+// AppContext::addUndo
+//------------------------------------------------------------------------
+void AppContext::addUndo(std::unique_ptr<Action> iAction)
+{
+  addUndoAction(std::make_shared<UndoActionAdapter>(std::move(iAction)));
+}
+
+//------------------------------------------------------------------------
 // AppContext::rollbackUndoAction
 //------------------------------------------------------------------------
 void AppContext::rollbackUndoAction()

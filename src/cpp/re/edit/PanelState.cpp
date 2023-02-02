@@ -117,7 +117,7 @@ std::map<std::string, int> PanelState::initPanel(AppContext &iCtx,
     }
 
 
-    fPanel.addWidget(iCtx, std::move(widget), "Add", false);
+    fPanel.addWidget(iCtx, std::move(widget), false);
   }
 
   // handle decals: decals are all the nodes that have not been assigned to a widget
@@ -136,7 +136,7 @@ std::map<std::string, int> PanelState::initPanel(AppContext &iCtx,
       else
         RE_EDIT_LOG_WARNING("Empty node path for decal %s", name);
 
-      fPanel.addWidget(iCtx, std::move(widget), "Add", false);
+      fPanel.addWidget(iCtx, std::move(widget), false);
     }
   }
 
@@ -152,7 +152,7 @@ std::map<std::string, int> PanelState::initPanel(AppContext &iCtx,
 //------------------------------------------------------------------------
 void PanelState::beforeRender(AppContext &iCtx)
 {
-  fPanel.computeEachFrame(iCtx);
+  fPanel.beforeEachFrame(iCtx);
   fPanel.checkForErrors(iCtx);
 }
 

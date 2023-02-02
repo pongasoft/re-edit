@@ -149,6 +149,7 @@ set(re-edit_BUILD_SOURCES
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/NetworkManager.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/Panel.h"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/Panel.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/PanelActions.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/PanelState.h"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/PanelState.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/PreferencesManager.h"

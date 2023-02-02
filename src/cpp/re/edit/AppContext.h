@@ -186,6 +186,7 @@ public: // Undo
   }
 
   void addUndoAction(std::shared_ptr<UndoAction> iAction);
+  void addUndo(std::unique_ptr<Action> iAction);
   void rollbackUndoAction();
 
   template<typename T, typename UndoLambda, typename RedoLambda>
