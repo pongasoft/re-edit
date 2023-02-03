@@ -37,6 +37,7 @@ public:
   virtual bool execute() = 0;
   virtual void undo() = 0;
   virtual void redo() { execute(); }
+  std::unique_ptr<Action> merge(std::unique_ptr<Action> iAction);
 
   inline PanelType getPanelType() const { return fPanelType; }
   inline void setPanelType(PanelType iType) { fPanelType = iType; }
@@ -45,9 +46,27 @@ public:
   virtual std::string const &getDescription() const { return fDescription; }
 
 protected:
+  virtual bool canMergeWith(Action const *iAction) { return false; }
+
+  /**
+   * Actually processes the merge. Should return:
+   * - if no merge possible then `std::move(iAction)`
+   * - if merge successful then `nullptr` (iAction is consumed)
+   * - if merge leads to a no op, then `NoOpAction::create()` */
+  virtual std::unique_ptr<Action> doMerge(std::unique_ptr<Action> iAction) { return std::move(iAction); }
+
+protected:
   PanelType fPanelType{PanelType::kUnknown};
   std::string fDescription{};
   void *fMergeKey{};
+};
+
+class NoOpAction : public Action
+{
+public:
+  bool execute() override { return false; }
+  void undo() override {}
+  static std::unique_ptr<NoOpAction> create() { return std::make_unique<NoOpAction>(); }
 };
 
 template<typename BaseActionClass = Action, typename ActionClass = BaseActionClass>

@@ -590,4 +590,137 @@ int Panel::changeWidgetsOrderAction(std::set<int> const &iWidgetIds, WidgetOrDec
   return changesCount;
 }
 
+//------------------------------------------------------------------------
+// class MoveWidgetsAction
+//------------------------------------------------------------------------
+class MoveWidgetsAction : public PanelAction
+{
+public:
+  MoveWidgetsAction(std::set<int> iWidgetsIds, ImVec2 const &iMoveDelta, void *iMergeKey) :
+    fWidgetsIds{std::move(iWidgetsIds)},
+    fMoveDelta{iMoveDelta}
+  {
+    fDescription = fmt::printf("Move %d widgets", fWidgetsIds.size());
+    fMergeKey = iMergeKey;
+  }
+
+public:
+
+  bool execute() override
+  {
+    if(fMoveDelta.x == 0 && fMoveDelta.y == 0)
+      return false;
+
+    getPanel()->moveWidgetsAction(fWidgetsIds, fMoveDelta);
+    return true;
+  }
+
+  void undo() override
+  {
+    auto panel = getPanel();
+    panel->moveWidgetsAction(fWidgetsIds, {-fMoveDelta.x, -fMoveDelta.y});
+    undoSelection(panel);
+  }
+
+protected:
+  bool canMergeWith(Action const *iAction) override
+  {
+    auto action = dynamic_cast<MoveWidgetsAction const *>(iAction);
+    return action && fWidgetsIds == action->fWidgetsIds;
+  }
+
+  std::unique_ptr<Action> doMerge(std::unique_ptr<Action> iAction) override
+  {
+    auto action = dynamic_cast<MoveWidgetsAction const *>(iAction.get());
+    fMoveDelta += action->fMoveDelta;
+    if(fMoveDelta.x == 0 && fMoveDelta.y == 0)
+      return NoOpAction::create();
+    else
+      return nullptr;
+  }
+
+private:
+  std::set<int> fWidgetsIds;
+  ImVec2 fMoveDelta;
+};
+
+namespace impl {
+
+//------------------------------------------------------------------------
+// impl::clampToGrid
+//------------------------------------------------------------------------
+constexpr float clampToGrid(float v, float g)
+{
+  RE_EDIT_INTERNAL_ASSERT(g > 0);
+
+  if(v == 0)
+    return 0;
+
+  if(v < 0)
+    return -clampToGrid(-v, g);
+
+  // This is clearly not the best implementation but can't figure out using
+  // fmod (which would not be constexpr)
+  float res = 0;
+  while(v >= g)
+  {
+    res += g;
+    v -= g;
+  }
+  return res;
+}
+
+//------------------------------------------------------------------------
+// impl::clampToGrid
+//------------------------------------------------------------------------
+constexpr ImVec2 clampToGrid(ImVec2 v, ImVec2 g)
+{
+  return { clampToGrid(v.x, g.x), clampToGrid(v.y, g.y) };
+}
+
+}
+
+//------------------------------------------------------------------------
+// Panel::moveWidgets
+//------------------------------------------------------------------------
+void Panel::moveWidgets(AppContext &iCtx, ImVec2 const &iPosition, ImVec2 const &iGrid)
+{
+  if(fWidgetMove)
+  {
+    auto totalDelta = impl::clampToGrid(iPosition - fWidgetMove->fInitialPosition, iGrid);
+    auto delta = totalDelta - fWidgetMove->fDelta;
+    if(delta.x != 0 || delta.y != 0)
+    {
+      executeAction<MoveWidgetsAction>(iCtx, getSelectedWidgetIds(), delta, &fWidgetMove);
+      fWidgetMove->fDelta = totalDelta;
+    }
+  }
+}
+
+//------------------------------------------------------------------------
+// Panel::endMoveWidgets
+//------------------------------------------------------------------------
+void Panel::endMoveWidgets(AppContext &iCtx)
+{
+  iCtx.resetUndoMergeKey();
+  fWidgetMove = std::nullopt;
+}
+
+//------------------------------------------------------------------------
+// Panel::moveWidgetsAction
+//------------------------------------------------------------------------
+void Panel::moveWidgetsAction(std::set<int> const &iWidgetsIds, ImVec2 const &iMoveDelta)
+{
+  for(auto id: iWidgetsIds)
+  {
+    auto w = findWidget(id);
+    if(w)
+    {
+      w->move(iMoveDelta);
+      if(w->isEdited())
+        fEdited = true;
+    }
+  }
+}
+
 }

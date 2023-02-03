@@ -165,6 +165,7 @@ public:
   void toggleSelectAll(bool iIncludeHiddenWidgets = false);
   void selectByType(WidgetType iType, bool iIncludeHiddenWidgets = false);
   void clearSelection();
+  std::set<int> getSelectedWidgetIds() const;
 
   void deleteWidgets(AppContext &iCtx, std::vector<Widget *> const &iWidgets);
 
@@ -180,6 +181,7 @@ public:
   std::pair<std::unique_ptr<Widget>, int> deleteWidgetAction(int id);
   std::unique_ptr<Widget> replaceWidgetAction(int iWidgetId, std::unique_ptr<Widget> iWidget);
   int changeWidgetsOrderAction(std::set<int> const &iWidgetIds, WidgetOrDecal iWidgetOrDecal, Direction iDirection);
+  void moveWidgetsAction(std::set<int> const &iWidgetsIds, ImVec2 const &iMoveDelta);
 
 protected:
   void editNoSelectionView(AppContext &iCtx);
@@ -192,7 +194,7 @@ private:
   Widget *findWidgetOnTopAt(std::vector<int> const &iOrder, ImVec2 const &iPosition) const;
   Widget *findWidgetOnTopAt(ImVec2 const &iPosition) const;
   void moveWidgets(AppContext &iCtx, ImVec2 const &iPosition, ImVec2 const &iGrid);
-  void endMoveWidgets(AppContext &iCtx, ImVec2 const &iPosition);
+  void endMoveWidgets(AppContext &iCtx);
   void beforeEachFrame(AppContext &iCtx);
   bool renderPanelWidgetMenu(AppContext &iCtx, ImVec2 const &iPosition = {});
   bool renderPanelMenus(AppContext &iCtx, std::optional<ImVec2> iPosition = std::nullopt);

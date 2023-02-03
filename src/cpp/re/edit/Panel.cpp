@@ -339,7 +339,7 @@ void Panel::handleMoveWidgetsAction(AppContext &iCtx, ReGui::Canvas::canvas_pos_
   if(ImGui::IsMouseReleased(ImGuiMouseButton_Left))
   {
     fMoveWidgetsAction = std::nullopt;
-    endMoveWidgets(iCtx, iMousePos);
+    endMoveWidgets(iCtx);
   }
   else
   {
@@ -807,88 +807,16 @@ void Panel::clearSelection()
   fComputedSelectedWidgets.clear();
 }
 
-namespace impl {
 
 //------------------------------------------------------------------------
-// impl::clampToGrid
+// Panel::getSelectedWidgetIds
 //------------------------------------------------------------------------
-constexpr float clampToGrid(float v, float g)
+std::set<int> Panel::getSelectedWidgetIds() const
 {
-  RE_EDIT_INTERNAL_ASSERT(g > 0);
-
-  if(v == 0)
-    return 0;
-
-  if(v < 0)
-    return -clampToGrid(-v, g);
-
-  // This is clearly not the best implementation but can't figure out using
-  // fmod (which would not be constexpr)
-  float res = 0;
-  while(v >= g)
-  {
-    res += g;
-    v -= g;
-  }
-  return res;
-}
-
-//------------------------------------------------------------------------
-// impl::clampToGrid
-//------------------------------------------------------------------------
-constexpr ImVec2 clampToGrid(ImVec2 v, ImVec2 g)
-{
-  return { clampToGrid(v.x, g.x), clampToGrid(v.y, g.y) };
-}
-
-}
-
-
-//------------------------------------------------------------------------
-// Panel::moveWidgets
-//------------------------------------------------------------------------
-void Panel::moveWidgets(AppContext &iCtx, ImVec2 const &iPosition, ImVec2 const &iGrid)
-{
-  if(fWidgetMove)
-  {
-    auto totalDelta = impl::clampToGrid(iPosition - fWidgetMove->fInitialPosition, iGrid);
-    auto delta = totalDelta - fWidgetMove->fDelta;
-    if(delta.x != 0 || delta.y != 0)
-    {
-      if(iCtx.beginUndoTx(fmt::printf("Move %d widgets", fComputedSelectedWidgets.size()), &fWidgetMove))
-      {
-        for(auto &widget: fComputedSelectedWidgets)
-          iCtx.addUndoWidgetChange(widget, fmt::printf("Move %s", widget->getName()));
-        iCtx.commitUndoTx();
-      }
-
-      for(auto &widget: fComputedSelectedWidgets)
-      {
-        widget->move(delta);
-        if(widget->isEdited())
-          fEdited = true;
-      }
-      fWidgetMove->fDelta = totalDelta;
-    }
-  }
-}
-
-//------------------------------------------------------------------------
-// Panel::endMoveWidgets
-//------------------------------------------------------------------------
-void Panel::endMoveWidgets(AppContext &iCtx, ImVec2 const &iPosition)
-{
-  for(auto &widget: fComputedSelectedWidgets)
-  {
-    auto position = widget->getPosition();
-    position.x = std::round(position.x);
-    position.y = std::round(position.y);
-    widget->setPosition(position);
-  }
-
-  iCtx.resetUndoMergeKey();
-
-  fWidgetMove = std::nullopt;
+  std::set<int> ids{};
+  for(auto &w: fComputedSelectedWidgets)
+    ids.emplace(w->getId());
+  return ids;
 }
 
 //------------------------------------------------------------------------

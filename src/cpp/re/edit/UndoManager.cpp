@@ -212,5 +212,21 @@ Panel *Action::getPanel() const
   return AppContext::GetCurrent().getPanel(fPanelType);
 }
 
+//------------------------------------------------------------------------
+// Action::merge
+//------------------------------------------------------------------------
+std::unique_ptr<Action> Action::merge(std::unique_ptr<Action> iAction)
+{
+  if(fMergeKey == nullptr ||
+     iAction->getMergeKey() == nullptr ||
+     fMergeKey != iAction->getMergeKey() ||
+     !canMergeWith(iAction.get()))
+  {
+    return std::move(iAction);
+  }
+
+  return doMerge(std::move(iAction));
+}
+
 
 }

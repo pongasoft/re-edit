@@ -574,6 +574,8 @@ public:
     });
   }
 
+  std::unique_ptr<Action> merge(std::unique_ptr<Action> iAction) { return fAction->merge(std::move(iAction)); }
+
 private:
   std::unique_ptr<Action> fAction;
 };
@@ -583,7 +585,38 @@ private:
 //------------------------------------------------------------------------
 void AppContext::addUndo(std::unique_ptr<Action> iAction)
 {
-  addUndoAction(std::make_shared<UndoActionAdapter>(std::move(iAction)));
+  bool newUndo = true;
+
+  if(iAction->getMergeKey())
+  {
+    auto last = fUndoManager->getLastUndoAction();
+    auto adapter = std::dynamic_pointer_cast<UndoActionAdapter>(last);
+    if(adapter && adapter->fMergeKey == iAction->getMergeKey())
+    {
+      iAction = adapter->merge(std::move(iAction));
+      if(iAction)
+      {
+        if(dynamic_cast<NoOpAction *>(iAction.get()))
+        {
+          // merge resulted in a noop => discard last
+          fUndoManager->popLastUndoAction();
+          newUndo = false;
+        }
+        else
+        {
+          // merge did not happen => new undo
+        }
+      }
+      else
+      {
+        // merge was successful => last was updated so no need to do anything
+        newUndo = false;
+      }
+    }
+  }
+
+  if(newUndo)
+    addUndoAction(std::make_shared<UndoActionAdapter>(std::move(iAction)));
 }
 
 //------------------------------------------------------------------------
