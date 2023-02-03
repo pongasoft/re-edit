@@ -21,6 +21,41 @@
 namespace re::edit {
 
 //------------------------------------------------------------------------
+// class PanelValueAction<T>
+//------------------------------------------------------------------------
+template<typename T>
+class PanelValueAction : public PanelAction
+{
+public:
+  explicit PanelValueAction(T iValue, void *iMergeKey) : fValue{std::move(iValue)}
+  {
+    fMergeKey = iMergeKey;
+  }
+
+protected:
+  bool canMergeWith(Action const *iAction) const override
+  {
+    if(typeid(*this) != typeid(*iAction))
+      return false;
+    auto action = dynamic_cast<PanelValueAction const *>(iAction);
+    return action && action->fPreviousValue == fValue;
+  }
+
+  std::unique_ptr<Action> doMerge(std::unique_ptr<Action> iAction) override
+  {
+    auto action = dynamic_cast<PanelValueAction const *>(iAction.get());
+    fValue = action->fValue;
+    if(fValue == fPreviousValue)
+      return NoOpAction::create();
+    else
+      return nullptr;
+  }
+
+protected:
+  T fValue;
+  T fPreviousValue{};
+};
+//------------------------------------------------------------------------
 // Panel::initSelected
 //------------------------------------------------------------------------
 void PanelAction::initSelected(std::vector<Widget *> const &iSelectedWidgets)
@@ -783,6 +818,20 @@ ImVec2 Panel::setWidgetPositionAction(int iWidgetId, ImVec2 const &iPosition)
 }
 
 //------------------------------------------------------------------------
+// Panel::setCableOriginPositionAction
+//------------------------------------------------------------------------
+ImVec2 Panel::setCableOriginPositionAction(ImVec2 const &iPosition)
+{
+  RE_EDIT_INTERNAL_ASSERT(fCableOrigin != std::nullopt);
+
+  auto res = *fCableOrigin;
+  fCableOrigin = iPosition;
+  if(res != iPosition)
+    fEdited = true;
+  return res;
+}
+
+//------------------------------------------------------------------------
 // Panel::alignWidgets
 //------------------------------------------------------------------------
 void Panel::alignWidgets(AppContext &iCtx, Panel::WidgetAlignment iAlignment)
@@ -839,6 +888,40 @@ void Panel::alignWidgets(AppContext &iCtx, Panel::WidgetAlignment iAlignment)
   }
 
   commitTx(iCtx);
+}
+
+//------------------------------------------------------------------------
+// class SetCableOriginPosition
+//------------------------------------------------------------------------
+class SetCableOriginPosition : public PanelValueAction<ImVec2>
+{
+public:
+  SetCableOriginPosition(ImVec2 const &iPosition, void *iMergeKey) : PanelValueAction(iPosition, iMergeKey)
+  {
+    fDescription = "Update cable_origin";
+  }
+
+  bool execute() override
+  {
+    fPreviousValue = getPanel()->setCableOriginPositionAction(fValue);
+    return fPreviousValue != fValue;
+  }
+
+  void undo() override
+  {
+    getPanel()->setCableOriginPositionAction(fPreviousValue);
+  }
+};
+
+//------------------------------------------------------------------------
+// Panel::setCableOrigin
+//------------------------------------------------------------------------
+void Panel::setCableOrigin(AppContext &iCtx, ImVec2 const &iPosition)
+{
+  RE_EDIT_INTERNAL_ASSERT(fCableOrigin != std::nullopt);
+
+  executeAction<SetCableOriginPosition>(iCtx, iPosition, &fCableOrigin);
+
 }
 
 }

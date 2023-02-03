@@ -977,15 +977,7 @@ void Panel::editNoSelectionView(AppContext &iCtx)
       ReGui::InputInt("y", &cableOrigin.y, 1, 5);
       if(*fCableOrigin != cableOrigin)
       {
-        iCtx.addOrMergeUndoLambda(&fCableOrigin, *fCableOrigin, cableOrigin,
-                                  fmt::printf("Update cable_origin"),
-                                  [panelType = fType](UndoAction *iAction, auto const &iValue)
-                                  {
-                                    auto panel = AppContext::GetCurrent().getPanel(panelType);
-                                    panel->setCableOrigin(iValue);
-                                  });
-        fCableOrigin = cableOrigin;
-        fEdited = true;
+        setCableOrigin(iCtx, cableOrigin);
       }
       ImGui::TreePop();
     }

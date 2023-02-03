@@ -589,8 +589,6 @@ private:
 //------------------------------------------------------------------------
 void AppContext::addUndo(std::unique_ptr<Action> iAction)
 {
-  bool newUndo = true;
-
   if(iAction->getMergeKey())
   {
     auto last = fUndoManager->getLastUndoAction();
@@ -604,23 +602,24 @@ void AppContext::addUndo(std::unique_ptr<Action> iAction)
         {
           // merge resulted in a noop => discard last
           fUndoManager->popLastUndoAction();
-          newUndo = false;
+          return;
         }
         else
         {
           // merge did not happen => new undo
+          addUndoAction(std::make_shared<UndoActionAdapter>(std::move(iAction)));
+          return;
         }
       }
       else
       {
         // merge was successful => last was updated so no need to do anything
-        newUndo = false;
+        return;
       }
     }
   }
 
-  if(newUndo)
-    addUndoAction(std::make_shared<UndoActionAdapter>(std::move(iAction)));
+  addUndoAction(std::make_shared<UndoActionAdapter>(std::move(iAction)));
 }
 
 //------------------------------------------------------------------------

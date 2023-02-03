@@ -183,6 +183,7 @@ public:
   int changeWidgetsOrderAction(std::set<int> const &iWidgetIds, WidgetOrDecal iWidgetOrDecal, Direction iDirection);
   void moveWidgetsAction(std::set<int> const &iWidgetsIds, ImVec2 const &iMoveDelta);
   ImVec2 setWidgetPositionAction(int iWidgetId, ImVec2 const &iPosition);
+  ImVec2 setCableOriginPositionAction(ImVec2 const &iPosition);
 
 protected:
   void editNoSelectionView(AppContext &iCtx);
@@ -199,6 +200,7 @@ private:
   bool moveWidgets(AppContext &iCtx, ImVec2 const &iDelta);
   enum class WidgetAlignment { kTop, kBottom, kLeft, kRight};
   void alignWidgets(AppContext &iCtx, WidgetAlignment iAlignment);
+  void setCableOrigin(AppContext &iCtx, ImVec2 const &iPosition);
   void beforeEachFrame(AppContext &iCtx);
   bool renderPanelWidgetMenu(AppContext &iCtx, ImVec2 const &iPosition = {});
   bool renderPanelMenus(AppContext &iCtx, std::optional<ImVec2> iPosition = std::nullopt);

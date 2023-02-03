@@ -220,6 +220,7 @@ std::unique_ptr<Action> Action::merge(std::unique_ptr<Action> iAction)
   if(fMergeKey == nullptr ||
      iAction->getMergeKey() == nullptr ||
      fMergeKey != iAction->getMergeKey() ||
+     fPanelType != iAction->getPanelType() ||
      !canMergeWith(iAction.get()))
   {
     return std::move(iAction);
