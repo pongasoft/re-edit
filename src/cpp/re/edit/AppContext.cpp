@@ -574,7 +574,11 @@ public:
     });
   }
 
-  std::unique_ptr<Action> merge(std::unique_ptr<Action> iAction) { return fAction->merge(std::move(iAction)); }
+  std::unique_ptr<Action> merge(std::unique_ptr<Action> iAction) {
+    iAction = fAction->merge(std::move(iAction));
+    fDescription = fAction->getDescription();
+    return iAction;
+  }
 
 private:
   std::unique_ptr<Action> fAction;

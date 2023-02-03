@@ -390,7 +390,9 @@ void Panel::deleteWidgets(AppContext &iCtx, std::vector<Widget *> const &iWidget
   if(iWidgets.empty())
     return;
 
-  beginTx(fmt::printf("Delete %d widgets", iWidgets.size()));
+  beginTx(iWidgets.size() == 1 ?
+          fmt::printf("Delete %s widget", iWidgets[0]->getName()) :
+          fmt::printf("Delete %d widgets", iWidgets.size()));
   for(auto const &w: iWidgets)
     executeAction<DeleteWidgetAction>(iCtx, w);
   commitTx(iCtx);
@@ -623,7 +625,7 @@ public:
   }
 
 protected:
-  bool canMergeWith(Action const *iAction) override
+  bool canMergeWith(Action const *iAction) const override
   {
     auto action = dynamic_cast<MoveWidgetsAction const *>(iAction);
     return action && fWidgetsIds == action->fWidgetsIds;
@@ -688,12 +690,8 @@ void Panel::moveWidgets(AppContext &iCtx, ImVec2 const &iPosition, ImVec2 const 
   if(fWidgetMove)
   {
     auto totalDelta = impl::clampToGrid(iPosition - fWidgetMove->fInitialPosition, iGrid);
-    auto delta = totalDelta - fWidgetMove->fDelta;
-    if(delta.x != 0 || delta.y != 0)
-    {
-      executeAction<MoveWidgetsAction>(iCtx, getSelectedWidgetIds(), delta, &fWidgetMove);
+    if(moveWidgets(iCtx, totalDelta - fWidgetMove->fDelta))
       fWidgetMove->fDelta = totalDelta;
-    }
   }
 }
 
@@ -707,6 +705,20 @@ void Panel::endMoveWidgets(AppContext &iCtx)
 }
 
 //------------------------------------------------------------------------
+// Panel::moveWidgets
+//------------------------------------------------------------------------
+bool Panel::moveWidgets(AppContext &iCtx, ImVec2 const &iDelta)
+{
+  if(iDelta.x != 0 || iDelta.y != 0)
+  {
+    executeAction<MoveWidgetsAction>(iCtx, getSelectedWidgetIds(), iDelta, &fWidgetMove);
+    return true;
+  }
+
+  return false;
+}
+
+//------------------------------------------------------------------------
 // Panel::moveWidgetsAction
 //------------------------------------------------------------------------
 void Panel::moveWidgetsAction(std::set<int> const &iWidgetsIds, ImVec2 const &iMoveDelta)
@@ -716,11 +728,117 @@ void Panel::moveWidgetsAction(std::set<int> const &iWidgetsIds, ImVec2 const &iM
     auto w = findWidget(id);
     if(w)
     {
-      w->move(iMoveDelta);
+      w->moveAction(iMoveDelta);
       if(w->isEdited())
         fEdited = true;
     }
   }
+}
+
+//------------------------------------------------------------------------
+// class SetWidgetPositionAction
+//------------------------------------------------------------------------
+class SetWidgetPositionAction : public PanelAction
+{
+public:
+  SetWidgetPositionAction(int iWidgetId, ImVec2 const &iPosition) :
+    fId{iWidgetId},
+    fPosition{iPosition}
+  {
+  }
+
+  bool execute() override
+  {
+    fPreviousPosition = getPanel()->setWidgetPositionAction(fId, fPosition);
+    return fPreviousPosition != fPosition;
+  }
+
+  void undo() override
+  {
+    auto panel = getPanel();
+    getPanel()->setWidgetPositionAction(fId, fPreviousPosition);
+    undoSelection(panel);
+  }
+
+private:
+  int fId;
+  ImVec2 fPosition;
+  ImVec2 fPreviousPosition{};
+};
+
+
+//------------------------------------------------------------------------
+// Panel::setWidgetPositionAction
+//------------------------------------------------------------------------
+ImVec2 Panel::setWidgetPositionAction(int iWidgetId, ImVec2 const &iPosition)
+{
+  auto w = findWidget(iWidgetId);
+  if(!w)
+    return iPosition;
+  auto previousPosition = w->getPosition();
+  w->setPosition(iPosition);
+  if(w->isEdited())
+    fEdited = true;
+  return previousPosition;
+}
+
+//------------------------------------------------------------------------
+// Panel::alignWidgets
+//------------------------------------------------------------------------
+void Panel::alignWidgets(AppContext &iCtx, Panel::WidgetAlignment iAlignment)
+{
+  // can only align multiple widgets!
+  if(fComputedSelectedWidgets.size() < 2)
+    return;
+
+  char const *alignment = "";
+
+  switch(iAlignment)
+  {
+    case WidgetAlignment::kTop:
+      alignment = "Top";
+      break;
+    case WidgetAlignment::kBottom:
+      alignment = "Bottom";
+      break;
+    case WidgetAlignment::kLeft:
+      alignment = "Left";
+      break;
+    case WidgetAlignment::kRight:
+      alignment = "Right";
+      break;
+  }
+
+  auto const min = fComputedSelectedRect->Min;
+  auto const max = fComputedSelectedRect->Max;
+
+  beginTx(fmt::printf("Align %ld Widgets %s", fComputedSelectedWidgets.size(), alignment));
+
+  for(auto w: fComputedSelectedWidgets)
+  {
+    auto position = w->getPosition();
+    ImVec2 alignedPosition{};
+    switch(iAlignment)
+    {
+      case WidgetAlignment::kTop:
+        alignedPosition = {position.x, min.y};
+        break;
+      case WidgetAlignment::kBottom:
+        alignedPosition = {position.x, max.y - w->getSize().y};
+        break;
+      case WidgetAlignment::kLeft:
+        alignedPosition = {min.x, position.y};
+        break;
+      case WidgetAlignment::kRight:
+        alignedPosition = {max.x - w->getSize().x, position.y};
+        break;
+    }
+
+    if(alignedPosition != position)
+      executeAction<SetWidgetPositionAction>(iCtx, w->getId(), alignedPosition);
+  }
+
+  commitTx(iCtx);
 }
 
 }

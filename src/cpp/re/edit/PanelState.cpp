@@ -113,7 +113,7 @@ std::map<std::string, int> PanelState::initPanel(AppContext &iCtx,
         widget->setHitBoundaries(*w->fGraphics.fHitBoundaries);
 
       widget->setPosition(node->fPosition);
-      widget->setName(node->fName);
+      widget->setNameAction(node->fName);
     }
 
 

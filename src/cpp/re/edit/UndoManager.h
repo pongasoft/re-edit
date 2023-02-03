@@ -43,10 +43,10 @@ public:
   inline void setPanelType(PanelType iType) { fPanelType = iType; }
   inline void *getMergeKey() const { return fMergeKey; }
   Panel *getPanel() const;
-  virtual std::string const &getDescription() const { return fDescription; }
+  std::string const &getDescription() const { return fDescription; }
 
 protected:
-  virtual bool canMergeWith(Action const *iAction) { return false; }
+  virtual bool canMergeWith(Action const *iAction) const { return false; }
 
   /**
    * Actually processes the merge. Should return:
@@ -79,8 +79,6 @@ public:
 
   inline bool isEmpty() const { return fActions.empty(); }
   inline auto getSize() const { return fActions.size(); }
-  std::string const &getDescription() const override;
-
 
 protected:
   std::vector<std::unique_ptr<ActionClass>> fActions{};
@@ -306,20 +304,6 @@ void CompositeAction<BaseActionClass, ActionClass>::redo()
   for(auto &action: fActions)
     action->redo();
 }
-
-//------------------------------------------------------------------------
-// CompositeAction::undo
-//------------------------------------------------------------------------
-template<typename BaseActionClass, typename ActionClass>
-std::string const &CompositeAction<BaseActionClass, ActionClass>::getDescription() const
-{
-  if(getSize() == 1)
-    return fActions[0]->getDescription();
-  else
-    return this->fDescription;
-}
-
-
 
 }
 

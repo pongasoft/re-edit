@@ -168,6 +168,7 @@ set(re-edit_BUILD_SOURCES
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/Views.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/Widget.h"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/Widget.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/WidgetActions.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/WidgetAttribute.h"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/WidgetAttribute.cpp")
 

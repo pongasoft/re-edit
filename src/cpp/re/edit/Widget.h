@@ -37,6 +37,18 @@ namespace re::edit {
 
 class Panel;
 
+class WidgetAction : public Action
+{
+public:
+  friend class Widget;
+
+protected:
+  Widget *getWidget() const;
+
+protected:
+  int fId;
+};
+
 class Widget : public Editable
 {
 public:
@@ -67,7 +79,7 @@ public:
   constexpr void setHitBoundaries(HitBoundaries const &iHitBoundaries) { fGraphics->setHitBoundaries(iHitBoundaries); fEdited |= fGraphics->isEdited(); }
   constexpr void disableHitBoundaries() { fGraphics->fHitBoundariesEnabled = false; }
 
-  constexpr void move(ImVec2 const &iDelta) { fGraphics->move(iDelta); fEdited |= fGraphics->isEdited(); }
+  constexpr void moveAction(ImVec2 const &iDelta) { fGraphics->move(iDelta); fEdited |= fGraphics->isEdited(); }
 
   inline void setTextureKey(Texture::key_t const &iTextureKey) { fGraphics->setTextureKey(iTextureKey); fEdited |= fGraphics->isEdited(); }
   inline void setSize(ImVec2 const &iSize) { fGraphics->setSize(iSize); fEdited |= fGraphics->isEdited(); }
@@ -98,6 +110,9 @@ public:
   bool copyFrom(Widget const &iWidget);
   bool copyFrom(widget::Attribute const *iAttribute);
 //  bool eq(Widget *iWidget) const;
+
+  // action implementations (no undo)
+  void setNameAction(std::string iName);
 
   static std::unique_ptr<Widget> panel_decal(std::optional<std::string> const &iName = std::nullopt);
   static std::unique_ptr<Widget> analog_knob(std::optional<std::string> const &iName = std::nullopt);
@@ -153,6 +168,14 @@ protected:
   void showIfHidden(AppContext &iCtx);
   void renderVisibilityMenu(AppContext &iCtx);
   bool isPanelDecal() const { return fType == WidgetType::kPanelDecal; }
+
+protected:
+  template<class T, class... Args >
+  inline void executeAction(Args&&... args)
+  {
+    executeWidgetAction(std::make_unique<T>(std::forward<Args>(args)...));
+  }
+  void executeWidgetAction(std::unique_ptr<WidgetAction> iAction);
 
 protected:
   Widget *addAttribute(std::unique_ptr<widget::Attribute> iAttribute);

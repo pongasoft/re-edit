@@ -1100,34 +1100,13 @@ void Panel::editMultiSelectionView(AppContext &iCtx)
 
   auto editedMin = min;
 
-  if(ReGui::InputInt("x", &editedMin.x, 1, 5))
-  {
-    fEdited = true;
-    if(iCtx.beginUndoTx("Move Widgets", this))
-    {
-      for(auto &widget: fComputedSelectedWidgets)
-        iCtx.addUndoWidgetChange(widget, fmt::printf("Move %s", widget->getName()));
-      iCtx.commitUndoTx();
-    }
-  }
-
-  if(ReGui::InputInt("y", &editedMin.y, 1, 5))
-  {
-    fEdited = true;
-    if(iCtx.beginUndoTx("Move Widgets", this))
-    {
-      for(auto &widget: fComputedSelectedWidgets)
-        iCtx.addUndoWidgetChange(widget, fmt::printf("Move %s", widget->getName()));
-      iCtx.commitUndoTx();
-    }
-  }
+  ReGui::InputInt("x", &editedMin.x, 1, 5);
+  ReGui::InputInt("y", &editedMin.y, 1, 5);
 
   auto delta = editedMin - min;
   if(delta.x != 0 || delta.y != 0)
   {
-    fEdited = true;
-    for(auto &w: fComputedSelectedWidgets)
-      w->move(delta);
+    moveWidgets(iCtx, delta);
   }
 
   ReGui::TextSeparator("Alignment");
@@ -1136,56 +1115,24 @@ void Panel::editMultiSelectionView(AppContext &iCtx)
 
   if(ImGui::Button("Top", bigButtonSize))
   {
-    fEdited = true;
-    iCtx.beginUndoTx("Align Widgets Top");
-    for(auto &w: fComputedSelectedWidgets)
-    {
-      iCtx.addUndoWidgetChange(w, fmt::printf("Align %s Top", w->getName()));
-      auto position = w->getPosition();
-      w->setPosition({position.x, min.y});
-    }
-    iCtx.commitUndoTx();
+    alignWidgets(iCtx, WidgetAlignment::kTop);
   }
 
   if(ImGui::Button("Left", smallButtonSize))
   {
-    fEdited = true;
-    iCtx.beginUndoTx("Align Widgets Left");
-    for(auto &w: fComputedSelectedWidgets)
-    {
-      iCtx.addUndoWidgetChange(w, fmt::printf("Align %s Left", w->getName()));
-      auto position = w->getPosition();
-      w->setPosition({min.x, position.y});
-    }
-    iCtx.commitUndoTx();
+    alignWidgets(iCtx, WidgetAlignment::kLeft);
   }
 
   ImGui::SameLine();
 
   if(ImGui::Button("Right", smallButtonSize))
   {
-    fEdited = true;
-    iCtx.beginUndoTx("Align Widgets Right");
-    for(auto &w: fComputedSelectedWidgets)
-    {
-      iCtx.addUndoWidgetChange(w, fmt::printf("Align %s Right", w->getName()));
-      auto position = w->getPosition();
-      w->setPosition({max.x - w->getSize().x, position.y});
-    }
-    iCtx.commitUndoTx();
+    alignWidgets(iCtx, WidgetAlignment::kRight);
   }
 
   if(ImGui::Button("Bottom", bigButtonSize))
   {
-    fEdited = true;
-    iCtx.beginUndoTx("Align Widgets Bottom");
-    for(auto &w: fComputedSelectedWidgets)
-    {
-      iCtx.addUndoWidgetChange(w, fmt::printf("Align %s Bottom", w->getName()));
-      auto position = w->getPosition();
-      w->setPosition({position.x, max.y - w->getSize().y});
-    }
-    iCtx.commitUndoTx();
+    alignWidgets(iCtx, WidgetAlignment::kBottom);
   }
 }
 

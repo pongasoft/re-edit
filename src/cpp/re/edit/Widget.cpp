@@ -17,7 +17,6 @@
  */
 
 #include "Widget.h"
-#include "AppContext.hpp"
 #include "ReGui.h"
 #include <re/mock/fmt.h>
 #include <imgui.h>
@@ -35,7 +34,7 @@ using namespace widget::attribute;
 //------------------------------------------------------------------------
 Widget::Widget(WidgetType iType, std::optional<std::string> const &iName) : fType{iType}
 {
-  setName(iName ? *iName : computeDefaultWidgetName());
+  setNameAction(iName ? *iName : computeDefaultWidgetName());
   auto graphics = std::make_unique<Graphics>();
   fGraphics = graphics.get();
   addAttribute(std::move(graphics));
@@ -45,6 +44,7 @@ Widget::Widget(WidgetType iType, std::optional<std::string> const &iName) : fTyp
 // Widget::Widget
 //------------------------------------------------------------------------
 Widget::Widget(Widget const &iOther) :
+  Editable(iOther),
   fType(iOther.fType),
   fName(iOther.fName)
 {
@@ -246,8 +246,6 @@ void Widget::editView(AppContext &iCtx)
   ImGui::PushID("ResetName");
   if(ReGui::ResetButton())
   {
-    iCtx.addOrMergeUndoWidgetChange(this, &fName, fName.value(), editedName,
-                                    fmt::printf("Rename %s %s widget", fName.c_str(), toString(fType)));
     setName(computeDefaultWidgetName());
   }
   ImGui::PopID();
@@ -256,8 +254,6 @@ void Widget::editView(AppContext &iCtx)
 
   if(ImGui::InputText("name", &editedName))
   {
-    iCtx.addOrMergeUndoWidgetChange(this, &fName, fName.value(), editedName,
-                                    fmt::printf("Rename %s %s widget", fName.c_str(), toString(fType)));
     setName(editedName);
   }
 
@@ -1159,15 +1155,6 @@ Widget *Widget::addAttribute(std::unique_ptr<widget::Attribute> iAttribute)
   auto id = static_cast<int>(fAttributes.size());
   iAttribute->init(id);
   fAttributes.emplace_back(std::move(iAttribute)); return this;
-}
-
-//------------------------------------------------------------------------
-// Widget::setName
-//------------------------------------------------------------------------
-void Widget::setName(std::string iName)
-{
-  fName = StringWithHash(std::move(iName));
-  fEdited = true;
 }
 
 namespace clipboard {
