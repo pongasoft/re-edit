@@ -230,4 +230,37 @@ std::unique_ptr<Action> Action::merge(std::unique_ptr<Action> iAction)
 }
 
 
+//------------------------------------------------------------------------
+// UndoTx::UndoTx
+//------------------------------------------------------------------------
+UndoTx::UndoTx(PanelType iPanelType, std::string iDescription, void *iMergeKey)
+{
+  fPanelType = iPanelType;
+  fDescription = std::move(iDescription);
+  fMergeKey = iMergeKey;
+}
+
+//------------------------------------------------------------------------
+// UndoTx::single
+//------------------------------------------------------------------------
+std::unique_ptr<Action> UndoTx::single()
+{
+  if(fActions.size() != 1)
+    return nullptr;
+
+  auto res = std::move(fActions[0]);
+  fActions.clear();
+  return res;
+}
+
+//------------------------------------------------------------------------
+// UndoTx::addAction
+//------------------------------------------------------------------------
+void UndoTx::addAction(std::unique_ptr<Action> iAction)
+{
+  RE_EDIT_INTERNAL_ASSERT(fPanelType == iAction->getPanelType()); // no support for tx across panels
+  fActions.emplace_back(std::move(iAction));
+}
+
+
 }

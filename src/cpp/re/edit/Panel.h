@@ -220,10 +220,10 @@ private:
   std::string computeUniqueWidgetNameForCopy(std::string const &iOriginalName) const;
   inline std::unique_ptr<Widget> copy(Widget const *iWidget) const { return iWidget->copy(computeUniqueWidgetNameForCopy(iWidget->getName())); }
 
-  template<class T, class... Args > void executeAction(AppContext &iCtx, Args&&... args);
-  void executePanelAction(AppContext &iCtx, std::unique_ptr<PanelAction> iPanelAction);
+  template<class T, class... Args > void executeAction(Args&&... args);
+  void executePanelAction(std::unique_ptr<PanelAction> iPanelAction);
   void beginTx(std::string iDescription);
-  void commitTx(AppContext &iCtx);
+  void commitTx();
 
 private:
   class MultiSelectionList

@@ -92,14 +92,18 @@ public:
   static std::unique_ptr<T> build(char const *iName, bool iRequired, typename T::value_t const &iDefaultValue, ConstructorArgs&& ...iArgs);
 
   virtual std::unique_ptr<Attribute> clone() const = 0;
+  bool copyFrom(Attribute const *iFromAttribute, std::optional<std::string> const &iDescription = std::nullopt);
   virtual bool copyFromAction(Attribute const *iFromAttribute) = 0;
-//  virtual bool eq(Attribute const *iAttribute) const = 0;
+  virtual bool eq(Attribute const *iAttribute) const = 0;
 
   friend class re::edit::Widget;
 
 protected:
   template<typename T>
   static std::unique_ptr<Attribute> clone(T const &iAttribute);
+
+  template<typename F>
+  bool update(F &&f, void *iMergeKey = nullptr, std::optional<std::string> const &iDescription = std::nullopt);
 
   inline void copyToClipboardMenuItem(AppContext &iCtx)
   {
@@ -109,8 +113,8 @@ protected:
     }
   }
 
-//  template<typename T, typename Eq>
-//  static bool eq(T const *iLeftAttribute, Attribute const *iRightAttribute, Eq &&eq);
+  template<typename T, typename Eq>
+  static bool eq(T const *iLeftAttribute, Attribute const *iRightAttribute, Eq &&eq);
 
   void init(int id) { fId = id; }
 
@@ -163,10 +167,10 @@ public:
 
   std::unique_ptr<Attribute> clone() const override { return Attribute::clone<Bool>(*this); }
 
-//  bool eq(Attribute const *iAttribute) const override
-//  {
-//    return Attribute::eq(this, iAttribute, [](auto *l, auto *r) { return l->fValue == r->fValue;});
-//  }
+  bool eq(Attribute const *iAttribute) const override
+  {
+    return Attribute::eq(this, iAttribute, [](auto *l, auto *r) { return l->fValue == r->fValue;});
+  }
 };
 
 class Integer : public SingleAttribute<int>
@@ -178,10 +182,10 @@ public:
 
   std::unique_ptr<Attribute> clone() const override { return Attribute::clone<Integer>(*this); }
 
-//  bool eq(Attribute const *iAttribute) const override
-//  {
-//    return Attribute::eq(this, iAttribute, [](auto *l, auto *r) { return l->fValue == r->fValue;});
-//  }
+  bool eq(Attribute const *iAttribute) const override
+  {
+    return Attribute::eq(this, iAttribute, [](auto *l, auto *r) { return l->fValue == r->fValue;});
+  }
 };
 
 class String : public SingleAttribute<std::string>
@@ -194,10 +198,10 @@ public:
 
   std::unique_ptr<Attribute> clone() const override { return Attribute::clone<String>(*this); }
 
-//  bool eq(Attribute const *iAttribute) const override
-//  {
-//    return Attribute::eq(this, iAttribute, [](auto *l, auto *r) { return l->fValue == r->fValue;});
-//  }
+  bool eq(Attribute const *iAttribute) const override
+  {
+    return Attribute::eq(this, iAttribute, [](auto *l, auto *r) { return l->fValue == r->fValue;});
+  }
 };
 
 class PropertyPath : public String
@@ -212,10 +216,10 @@ public:
 
   void findErrors(AppContext &iCtx, UserError &oErrors) const override;
 
-//  bool eq(Attribute const *iAttribute) const override
-//  {
-//    return Attribute::eq(this, iAttribute, [](auto *l, auto *r) { return l->fValue == r->fValue;});
-//  }
+  bool eq(Attribute const *iAttribute) const override
+  {
+    return Attribute::eq(this, iAttribute, [](auto *l, auto *r) { return l->fValue == r->fValue;});
+  }
 
   void editView(AppContext &iCtx,
                 std::function<void()> const &iOnReset,
@@ -258,10 +262,10 @@ public:
 
   std::unique_ptr<Attribute> clone() const override { return Attribute::clone<UIText>(*this); }
 
-//  bool eq(Attribute const *iAttribute) const override
-//  {
-//    return Attribute::eq(this, iAttribute, [](auto *l, auto *r) { return l->fValue == r->fValue;});
-//  }
+  bool eq(Attribute const *iAttribute) const override
+  {
+    return Attribute::eq(this, iAttribute, [](auto *l, auto *r) { return l->fValue == r->fValue;});
+  }
 };
 
 class PropertyPathList : public SingleAttribute<std::vector<std::string>>
@@ -285,10 +289,10 @@ public:
 
   std::unique_ptr<Attribute> clone() const override { return Attribute::clone<PropertyPathList>(*this); }
 
-//  bool eq(Attribute const *iAttribute) const override
-//  {
-//    return Attribute::eq(this, iAttribute, [](auto *l, auto *r) { return l->fValue == r->fValue;});
-//  }
+  bool eq(Attribute const *iAttribute) const override
+  {
+    return Attribute::eq(this, iAttribute, [](auto *l, auto *r) { return l->fValue == r->fValue;});
+  }
 
 public:
   Property::Filter fFilter;
@@ -314,10 +318,10 @@ public:
 
   std::unique_ptr<Attribute> clone() const override { return Attribute::clone<DiscretePropertyValueList>(*this); }
 
-//  bool eq(Attribute const *iAttribute) const override
-//  {
-//    return Attribute::eq(this, iAttribute, [](auto *l, auto *r) { return l->fValue == r->fValue;});
-//  }
+  bool eq(Attribute const *iAttribute) const override
+  {
+    return Attribute::eq(this, iAttribute, [](auto *l, auto *r) { return l->fValue == r->fValue;});
+  }
 };
 
 class Value : public CompositeAttribute
@@ -350,15 +354,15 @@ public:
 
   std::unique_ptr<Attribute> clone() const override { return Attribute::clone<Value>(*this); }
 
-//  bool eq(Attribute const *iAttribute) const override
-//  {
-//    return Attribute::eq(this, iAttribute, [](auto *l, auto *r) {
-//      return l->fUseSwitch == r->fUseSwitch &&
-//             l->fValue.eq(&r->fValue) &&
-//             l->fValueSwitch.eq(&r->fValueSwitch) &&
-//             l->fValues.eq(&r->fValues);
-//    });
-//  }
+  bool eq(Attribute const *iAttribute) const override
+  {
+    return Attribute::eq(this, iAttribute, [](auto *l, auto *r) {
+      return l->fUseSwitch == r->fUseSwitch &&
+             l->fValue.eq(&r->fValue) &&
+             l->fValueSwitch.eq(&r->fValueSwitch) &&
+             l->fValues.eq(&r->fValues);
+    });
+  }
 
   bool copyFromAction(Attribute const *iAttribute) override;
 
@@ -395,12 +399,12 @@ public:
 
   std::unique_ptr<Attribute> clone() const override { return Attribute::clone<Visibility>(*this); }
 
-//  bool eq(Attribute const *iAttribute) const override
-//  {
-//    return Attribute::eq(this, iAttribute, [](auto *l, auto *r) {
-//      return l->fSwitch.eq(&r->fSwitch) && l->fValues.eq(&r->fValues);
-//    });
-//  }
+  bool eq(Attribute const *iAttribute) const override
+  {
+    return Attribute::eq(this, iAttribute, [](auto *l, auto *r) {
+      return l->fSwitch.eq(&r->fSwitch) && l->fValues.eq(&r->fValues);
+    });
+  }
 
   bool copyFromAction(Attribute const *iAttribute) override;
 
@@ -418,10 +422,10 @@ public:
 
   std::unique_ptr<Attribute> clone() const override { return Attribute::clone<StaticStringList>(*this); }
 
-//  bool eq(Attribute const *iAttribute) const override
-//  {
-//    return Attribute::eq(this, iAttribute, [](auto *l, auto *r) { return l->fValue == r->fValue;});
-//  }
+  bool eq(Attribute const *iAttribute) const override
+  {
+    return Attribute::eq(this, iAttribute, [](auto *l, auto *r) { return l->fValue == r->fValue;});
+  }
 
 public:
   std::vector<std::string> const &fSelectionList;
@@ -439,10 +443,10 @@ public:
 
   std::unique_ptr<Attribute> clone() const override { return Attribute::clone<ObjectPath>(*this); }
 
-//  bool eq(Attribute const *iAttribute) const override
-//  {
-//    return Attribute::eq(this, iAttribute, [](auto *l, auto *r) { return l->fValue == r->fValue;});
-//  }
+  bool eq(Attribute const *iAttribute) const override
+  {
+    return Attribute::eq(this, iAttribute, [](auto *l, auto *r) { return l->fValue == r->fValue;});
+  }
 
 public:
   re::mock::JboxObjectType fObjectType;
@@ -457,10 +461,10 @@ public:
 
   std::unique_ptr<Attribute> clone() const override { return Attribute::clone<Socket>(*this); }
 
-//  bool eq(Attribute const *iAttribute) const override
-//  {
-//    return Attribute::eq(this, iAttribute, [](auto *l, auto *r) { return l->fValue == r->fValue;});
-//  }
+  bool eq(Attribute const *iAttribute) const override
+  {
+    return Attribute::eq(this, iAttribute, [](auto *l, auto *r) { return l->fValue == r->fValue;});
+  }
 };
 
 class Color3 : public SingleAttribute<JboxColor3>
@@ -472,10 +476,10 @@ public:
 
   std::unique_ptr<Attribute> clone() const override { return Attribute::clone<Color3>(*this); }
 
-//  bool eq(Attribute const *iAttribute) const override
-//  {
-//    return Attribute::eq(this, iAttribute, [](auto *l, auto *r) { return l->fValue == r->fValue;});
-//  }
+  bool eq(Attribute const *iAttribute) const override
+  {
+    return Attribute::eq(this, iAttribute, [](auto *l, auto *r) { return l->fValue == r->fValue;});
+  }
 };
 
 class Values : public PropertyPathList
@@ -489,10 +493,10 @@ public:
 
   std::unique_ptr<Attribute> clone() const override { return Attribute::clone<Values>(*this); }
 
-//  bool eq(Attribute const *iAttribute) const override
-//  {
-//    return Attribute::eq(this, iAttribute, [](auto *l, auto *r) { return l->fValue == r->fValue;});
-//  }
+  bool eq(Attribute const *iAttribute) const override
+  {
+    return Attribute::eq(this, iAttribute, [](auto *l, auto *r) { return l->fValue == r->fValue;});
+  }
 };
 
 class ValueTemplates : public SingleAttribute<std::vector<std::string>>
@@ -509,10 +513,10 @@ public:
 
   std::unique_ptr<Attribute> clone() const override { return Attribute::clone<ValueTemplates>(*this); }
 
-//  bool eq(Attribute const *iAttribute) const override
-//  {
-//    return Attribute::eq(this, iAttribute, [](auto *l, auto *r) { return l->fValue == r->fValue;});
-//  }
+  bool eq(Attribute const *iAttribute) const override
+  {
+    return Attribute::eq(this, iAttribute, [](auto *l, auto *r) { return l->fValue == r->fValue;});
+  }
 
 protected:
   int fValueAttributeId;
@@ -529,10 +533,10 @@ public:
 
   std::unique_ptr<Attribute> clone() const override { return Attribute::clone<ReadOnly>(*this); }
 
-//  bool eq(Attribute const *iAttribute) const override
-//  {
-//    return Attribute::eq(this, iAttribute, [](auto *l, auto *r) { return l->fValue == r->fValue;});
-//  }
+  bool eq(Attribute const *iAttribute) const override
+  {
+    return Attribute::eq(this, iAttribute, [](auto *l, auto *r) { return l->fValue == r->fValue;});
+  }
 
   static inline const Property::Filter kReadWriteValueFilter{ [](const Property &p) {
     return isOneOf(p.type(),  Property::Type::kBoolean | Property::Type::kNumber | Property::Type::kString) && kDocGuiOwnerFilter(p);
@@ -558,10 +562,10 @@ public:
 
   std::unique_ptr<Attribute> clone() const override { return Attribute::clone<Index>(*this); }
 
-//  bool eq(Attribute const *iAttribute) const override
-//  {
-//    return Attribute::eq(this, iAttribute, [](auto *l, auto *r) { return l->fValue == r->fValue;});
-//  }
+  bool eq(Attribute const *iAttribute) const override
+  {
+    return Attribute::eq(this, iAttribute, [](auto *l, auto *r) { return l->fValue == r->fValue;});
+  }
 
 protected:
   int fValueAttributeId;
@@ -578,10 +582,10 @@ public:
 
   std::unique_ptr<Attribute> clone() const override { return Attribute::clone<UserSampleIndex>(*this); }
 
-//  bool eq(Attribute const *iAttribute) const override
-//  {
-//    return Attribute::eq(this, iAttribute, [](auto *l, auto *r) { return l->fValue == r->fValue;});
-//  }
+  bool eq(Attribute const *iAttribute) const override
+  {
+    return Attribute::eq(this, iAttribute, [](auto *l, auto *r) { return l->fValue == r->fValue;});
+  }
 };
 
 //------------------------------------------------------------------------
@@ -679,15 +683,15 @@ std::unique_ptr<Attribute> Attribute::clone(T const &iAttribute)
   return std::make_unique<T>(iAttribute);
 }
 
-////------------------------------------------------------------------------
-//// Attribute::eq
-////------------------------------------------------------------------------
-//template<typename T, typename Eq>
-//bool Attribute::eq(T const *iLeftAttribute, Attribute const *iRightAttribute, Eq &&eq)
-//{
-//  auto r = dynamic_cast<T const *>(iRightAttribute);
-//  return r && eq(iLeftAttribute, r);
-//}
+//------------------------------------------------------------------------
+// Attribute::eq
+//------------------------------------------------------------------------
+template<typename T, typename Eq>
+bool Attribute::eq(T const *iLeftAttribute, Attribute const *iRightAttribute, Eq &&eq)
+{
+  auto r = dynamic_cast<T const *>(iRightAttribute);
+  return r && eq(iLeftAttribute, r);
+}
 
 
 } // namespace widget

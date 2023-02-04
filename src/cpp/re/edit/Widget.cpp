@@ -1022,6 +1022,30 @@ std::unique_ptr<Widget> Widget::fullClone() const
 }
 
 //------------------------------------------------------------------------
+// Widget::copyFrom
+//------------------------------------------------------------------------
+bool Widget::copyFrom(Widget const &iWidget, std::string iDescription)
+{
+  auto &ctx = AppContext::GetCurrent();
+
+  ctx.beginUndoTx(std::move(iDescription), nullptr);
+  bool res = false;
+  for(auto &att: fAttributes)
+  {
+    auto otherAtt = iWidget.findAttributeByName(att->fName);
+    if(otherAtt)
+      res |= att->copyFrom(otherAtt);
+  }
+
+  if(res)
+    fEdited = true;
+  ctx.commitUndoTx();
+
+  return res;
+}
+
+
+//------------------------------------------------------------------------
 // Widget::copyFromAction
 //------------------------------------------------------------------------
 bool Widget::copyFromAction(Widget const &iWidget)
@@ -1038,6 +1062,23 @@ bool Widget::copyFromAction(Widget const &iWidget)
     fEdited = true;
 
   return res;
+}
+
+//------------------------------------------------------------------------
+// Widget::copyFrom
+//------------------------------------------------------------------------
+bool Widget::copyFrom(widget::Attribute const *iAttribute, std::string iDescription)
+{
+  auto att = findAttributeByName(iAttribute->fName);
+  if(att)
+  {
+    auto res = att->copyFrom(iAttribute, std::move(iDescription));
+    if(res)
+      fEdited = true;
+    return res;
+  }
+  else
+    return false;
 }
 
 //------------------------------------------------------------------------

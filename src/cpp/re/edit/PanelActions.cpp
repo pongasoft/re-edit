@@ -81,15 +81,15 @@ void PanelAction::undoSelection(Panel *iPanel)
 // Panel::executeAction
 //------------------------------------------------------------------------
 template<class T, class... Args>
-void Panel::executeAction(AppContext &iCtx, Args &&... args)
+void Panel::executeAction(Args &&... args)
 {
-  executePanelAction(iCtx, std::make_unique<T>(std::forward<Args>(args)...));
+  executePanelAction(std::make_unique<T>(std::forward<Args>(args)...));
 }
 
 //------------------------------------------------------------------------
 // Panel::executePanelAction
 //------------------------------------------------------------------------
-void Panel::executePanelAction(AppContext &iCtx, std::unique_ptr<PanelAction> iAction)
+void Panel::executePanelAction(std::unique_ptr<PanelAction> iAction)
 {
   iAction->setPanelType(getType());
   if(fPanelTx)
@@ -98,12 +98,13 @@ void Panel::executePanelAction(AppContext &iCtx, std::unique_ptr<PanelAction> iA
   }
   else
   {
+    auto &ctx = AppContext::GetCurrent();
     // selected widgets are only relevant in the case of an undo!
-    if(iCtx.isUndoEnabled())
+    if(ctx.isUndoEnabled())
       iAction->initSelected(fComputedSelectedWidgets);
 
-    if(iAction->execute() && iCtx.isUndoEnabled())
-      iCtx.addUndo(std::move(iAction));
+    if(iAction->execute() && ctx.isUndoEnabled())
+      ctx.addUndo(std::move(iAction));
   }
 
 }
@@ -162,7 +163,7 @@ void Panel::beginTx(std::string iDescription)
 //------------------------------------------------------------------------
 // Panel::commitTx
 //------------------------------------------------------------------------
-void Panel::commitTx(AppContext &iCtx)
+void Panel::commitTx()
 {
   RE_EDIT_INTERNAL_ASSERT(fPanelTx != nullptr); // does not make sense to commit otherwise!
 
@@ -171,7 +172,7 @@ void Panel::commitTx(AppContext &iCtx)
   if(action->isEmpty())
     return;
 
-  executePanelAction(iCtx, std::move(action));
+  executePanelAction(std::move(action));
 }
 
 //------------------------------------------------------------------------
@@ -265,14 +266,14 @@ void Panel::addWidget(AppContext &iCtx, std::unique_ptr<Widget> iWidget, bool iM
   if(iMakeSingleSelected)
   {
     beginTx(fmt::printf(fmt::printf("%s %s", iUndoActionName, re::edit::toString(iWidget->getType()))));
-    executeAction<ClearSelectionAction>(iCtx);
+    executeAction<ClearSelectionAction>();
     iWidget->select();
-    executeAction<AddWidgetAction>(iCtx, std::move(iWidget), iUndoActionName);
-    commitTx(iCtx);
+    executeAction<AddWidgetAction>(std::move(iWidget), iUndoActionName);
+    commitTx();
   }
   else
   {
-    executeAction<AddWidgetAction>(iCtx, std::move(iWidget), iUndoActionName);
+    executeAction<AddWidgetAction>(std::move(iWidget), iUndoActionName);
   }
 }
 
@@ -294,12 +295,12 @@ bool Panel::pasteWidget(AppContext &iCtx, Widget const *iWidget, ImVec2 const &i
   if(iCtx.isWidgetAllowed(fType, iWidget->getType()))
   {
     beginTx(fmt::printf("Paste %s [%s]", iWidget->getName(), re::edit::toString(iWidget->getType())));
-    executeAction<ClearSelectionAction>(iCtx);
+    executeAction<ClearSelectionAction>();
     auto widget = copy(iWidget);
     widget->setPositionFromCenter(iPosition);
     widget->select();
     addWidget(iCtx, std::move(widget), false, "Paste");
-    commitTx(iCtx);
+    commitTx();
     return true;
   }
   return false;
@@ -329,7 +330,7 @@ bool Panel::pasteWidgets(AppContext &iCtx, std::vector<std::unique_ptr<Widget>> 
 
   beginTx(fmt::printf("Paste %d widgets", iWidgets.size()));
 
-  executeAction<ClearSelectionAction>(iCtx);
+  executeAction<ClearSelectionAction>();
 
   auto res = false;
 
@@ -345,7 +346,7 @@ bool Panel::pasteWidgets(AppContext &iCtx, std::vector<std::unique_ptr<Widget>> 
     }
   }
 
-  commitTx(iCtx);
+  commitTx();
 
   return res;
 
@@ -429,8 +430,8 @@ void Panel::deleteWidgets(AppContext &iCtx, std::vector<Widget *> const &iWidget
           fmt::printf("Delete %s widget", iWidgets[0]->getName()) :
           fmt::printf("Delete %d widgets", iWidgets.size()));
   for(auto const &w: iWidgets)
-    executeAction<DeleteWidgetAction>(iCtx, w);
-  commitTx(iCtx);
+    executeAction<DeleteWidgetAction>(w);
+  commitTx();
 }
 
 //------------------------------------------------------------------------
@@ -470,7 +471,7 @@ void Panel::transmuteWidget(AppContext &iCtx, Widget const *iWidget, WidgetDef c
   auto newWidget = iNewDef.fFactory(iWidget->getName());
   newWidget->copyFromAction(*iWidget);
   newWidget->setPosition(iWidget->getPosition());
-  executeAction<ReplaceWidgetAction>(iCtx, iWidget->getId(), std::move(newWidget), fmt::printf("Change %s type", iWidget->getName()));
+  executeAction<ReplaceWidgetAction>(iWidget->getId(), std::move(newWidget), fmt::printf("Change %s type", iWidget->getName()));
 }
 
 //------------------------------------------------------------------------
@@ -567,7 +568,7 @@ void Panel::changeSelectedWidgetsOrder(AppContext &iCtx, WidgetOrDecal iWidgetOr
               fmt::printf("Move %s %s", getWidget(*selectedWidgets.begin())->getName(), iDirection == Panel::Direction::kUp ? "Up" : "Down") :
               fmt::printf("Move %ld widgets %s", selectedWidgets.size(), iDirection == Panel::Direction::kUp ? "Up" : "Down");
 
-  executeAction<ChangeWidgetsOrderAction>(iCtx, std::move(desc), std::move(selectedWidgets), iWidgetOrDecal, iDirection);
+  executeAction<ChangeWidgetsOrderAction>(std::move(desc), std::move(selectedWidgets), iWidgetOrDecal, iDirection);
 }
 
 //------------------------------------------------------------------------
@@ -633,11 +634,11 @@ int Panel::changeWidgetsOrderAction(std::set<int> const &iWidgetIds, WidgetOrDec
 class MoveWidgetsAction : public PanelAction
 {
 public:
-  MoveWidgetsAction(std::set<int> iWidgetsIds, ImVec2 const &iMoveDelta, void *iMergeKey) :
+  MoveWidgetsAction(std::set<int> iWidgetsIds, ImVec2 const &iMoveDelta, std::string iDescription, void *iMergeKey) :
     fWidgetsIds{std::move(iWidgetsIds)},
     fMoveDelta{iMoveDelta}
   {
-    fDescription = fmt::printf("Move %d widgets", fWidgetsIds.size());
+    fDescription = std::move(iDescription);
     fMergeKey = iMergeKey;
   }
 
@@ -746,7 +747,13 @@ bool Panel::moveWidgets(AppContext &iCtx, ImVec2 const &iDelta)
 {
   if(iDelta.x != 0 || iDelta.y != 0)
   {
-    executeAction<MoveWidgetsAction>(iCtx, getSelectedWidgetIds(), iDelta, &fWidgetMove);
+    auto selectedWidgets = getSelectedWidgetIds();
+
+    auto desc = selectedWidgets.size() == 1 ?
+                fmt::printf("Move %s", getWidget(*selectedWidgets.begin())->getName()) :
+                fmt::printf("Move %ld widgets", selectedWidgets.size());
+
+    executeAction<MoveWidgetsAction>(std::move(selectedWidgets), iDelta, std::move(desc), &fWidgetMove);
     return true;
   }
 
@@ -884,10 +891,10 @@ void Panel::alignWidgets(AppContext &iCtx, Panel::WidgetAlignment iAlignment)
     }
 
     if(alignedPosition != position)
-      executeAction<SetWidgetPositionAction>(iCtx, w->getId(), alignedPosition);
+      executeAction<SetWidgetPositionAction>(w->getId(), alignedPosition);
   }
 
-  commitTx(iCtx);
+  commitTx();
 }
 
 //------------------------------------------------------------------------
@@ -920,7 +927,7 @@ void Panel::setCableOrigin(AppContext &iCtx, ImVec2 const &iPosition)
 {
   RE_EDIT_INTERNAL_ASSERT(fCableOrigin != std::nullopt);
 
-  executeAction<SetCableOriginPosition>(iCtx, iPosition, &fCableOrigin);
+  executeAction<SetCableOriginPosition>(iPosition, &fCableOrigin);
 
 }
 

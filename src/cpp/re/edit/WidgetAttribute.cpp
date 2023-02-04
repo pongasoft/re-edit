@@ -17,6 +17,7 @@
  */
 
 #include "WidgetAttribute.h"
+#include "WidgetAttribute.hpp"
 #include "Widget.h"
 #include "AppContext.hpp"
 #include "Errors.h"
@@ -77,6 +78,14 @@ namespace re::edit::widget {
 std::string Attribute::toString() const
 {
   return re::mock::fmt::printf(R"(name="%s")", fName);
+}
+
+//------------------------------------------------------------------------
+// Attribute::copyFrom
+//------------------------------------------------------------------------
+bool Attribute::copyFrom(Attribute const *iFromAttribute, std::optional<std::string> const &iDescription)
+{
+  return update([this, iFromAttribute]{ this->copyFromAction(iFromAttribute); }, this, iDescription);
 }
 
 //------------------------------------------------------------------------

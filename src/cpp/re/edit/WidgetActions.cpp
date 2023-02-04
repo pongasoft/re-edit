@@ -65,7 +65,7 @@ protected:
 
   std::unique_ptr<Action> doMerge(std::unique_ptr<Action> iAction) override
   {
-    auto action = dynamic_cast<WidgetValueAction const *>(iAction.get());
+    auto action = dynamic_cast<WidgetValueAction *>(iAction.get());
     fValue = action->fValue;
     if(fValue == fPreviousValue)
       return NoOpAction::create();
@@ -131,6 +131,5 @@ void Widget::setNameAction(std::string iName)
   fName = StringWithHash(std::move(iName));
   fEdited = true;
 }
-
 
 }

@@ -146,15 +146,14 @@ public:
 
   std::unique_ptr<Attribute> clone() const override { return Attribute::clone<Graphics>(*this); }
 
-//  bool eq(Attribute const *iAttribute) const override
-//  {
-//    return Attribute::eq(this, iAttribute, [](auto *l, auto *r) {
-//      return l->fPosition == r->fPosition &&
-//             l->fHitBoundaries == r->fHitBoundaries &&
-//             l->fTexture == r->fTexture &&
-//             l->fSize == r->fSize;
-//    });
-//  }
+  bool eq(Attribute const *iAttribute) const override
+  {
+    return Attribute::eq(this, iAttribute, [](auto *l, auto *r) {
+      return l->fPosition == r->fPosition &&
+             l->fHitBoundaries == r->fHitBoundaries &&
+             l->fTexture == r->fTexture;
+    });
+  }
 
   bool copyFromAction(Attribute const *iFromAttribute) override;
 
@@ -185,10 +184,10 @@ public:
 
   std::unique_ptr<Attribute> clone() const override { return Attribute::clone<Background>(*this); }
 
-//  bool eq(Attribute const *iAttribute) const override
-//  {
-//    return Attribute::eq(this, iAttribute, [](auto *l, auto *r) { return l->fValue == r->fValue;});
-//  }
+  bool eq(Attribute const *iAttribute) const override
+  {
+    return Attribute::eq(this, iAttribute, [](auto *l, auto *r) { return l->fValue == r->fValue;});
+  }
 
 };
 

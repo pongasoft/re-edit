@@ -84,6 +84,14 @@ protected:
   std::vector<std::unique_ptr<ActionClass>> fActions{};
 };
 
+class UndoTx : public CompositeAction<>
+{
+public:
+  UndoTx(PanelType iPanelType, std::string iDescription, void *iMergeKey);
+  std::unique_ptr<Action> single();
+  void addAction(std::unique_ptr<Action> iAction);
+};
+
 template<typename T>
 class MergeableUndoValue
 {

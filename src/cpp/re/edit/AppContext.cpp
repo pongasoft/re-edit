@@ -425,7 +425,7 @@ void AppContext::render()
 
   fCurrentPanelState->render(*this);
   fPreviousPanelState = fCurrentPanelState;
-
+  renderUndoHistory();
 }
 
 //------------------------------------------------------------------------
@@ -540,17 +540,11 @@ void AppContext::toggleRails()
 //------------------------------------------------------------------------
 void AppContext::addUndoAction(std::shared_ptr<UndoAction> iAction)
 {
+  RE_EDIT_INTERNAL_ASSERT(fUndoTx == nullptr, "cannot mix and match old/new");
   iAction->fFrame = fCurrentFrame;
   if(fCurrentPanelState)
     iAction->fPanelType = fCurrentPanelState->getType();
-  if(fUndoTransaction)
-  {
-    if(!iAction->fMergeKey)
-      iAction->fMergeKey = fUndoTransaction->fMergeKey;
-    fUndoTransaction->add(std::move(iAction));
-  }
-  else
-    fUndoManager->addUndoAction(std::move(iAction));
+  fUndoManager->addUndoAction(std::move(iAction));
 }
 
 //------------------------------------------------------------------------
@@ -589,8 +583,28 @@ private:
 //------------------------------------------------------------------------
 void AppContext::addUndo(std::unique_ptr<Action> iAction)
 {
+  if(!isUndoEnabled())
+    return;
+
   if(iAction->getMergeKey())
   {
+    if(fUndoTx)
+    {
+      fUndoTx->addAction(std::move(iAction));
+      return;
+      // iAction = fUndoTx->merge(std::move(iAction)); // TODO handle merge
+//      if(iAction)
+//      {
+//        // merge did not happen => new undo
+//        addUndoAction(std::make_shared<UndoActionAdapter>(std::move(iAction)));
+//        return;
+//      }
+//      else
+//      {
+//        // merge was successful => last was updated so no need to do anything
+//        return;
+//      }
+    }
     auto last = fUndoManager->getLastUndoAction();
     auto adapter = std::dynamic_pointer_cast<UndoActionAdapter>(last);
     if(adapter && adapter->fMergeKey == iAction->getMergeKey())
@@ -619,18 +633,10 @@ void AppContext::addUndo(std::unique_ptr<Action> iAction)
     }
   }
 
-  addUndoAction(std::make_shared<UndoActionAdapter>(std::move(iAction)));
-}
-
-//------------------------------------------------------------------------
-// AppContext::rollbackUndoAction
-//------------------------------------------------------------------------
-void AppContext::rollbackUndoAction()
-{
-  if(fUndoTransaction)
-    fUndoTransaction->popLastUndoAction();
+  if(fUndoTx)
+    fUndoTx->addAction(std::move(iAction));
   else
-    fUndoManager->popLastUndoAction();
+    addUndoAction(std::make_shared<UndoActionAdapter>(std::move(iAction)));
 }
 
 //------------------------------------------------------------------------
@@ -686,26 +692,12 @@ void AppContext::addUndoWidgetChange(Widget const *iWidget, std::string iDescrip
 //------------------------------------------------------------------------
 // AppContext::beginUndoTx
 //------------------------------------------------------------------------
-bool AppContext::beginUndoTx(std::string const &iDescription, void *iMergeKey)
+void AppContext::beginUndoTx(std::string iDescription, void *iMergeKey)
 {
-  RE_EDIT_INTERNAL_ASSERT(fUndoTransaction == nullptr); // no support for nested transactions
+  if(fUndoTx)
+    fNestedUndoTxs.emplace_back(std::move(fUndoTx));
 
-  auto last = fUndoManager->getLastUndoAction();
-
-  if(iMergeKey != nullptr && last && last->getMergeKey() == iMergeKey)
-  {
-    return false;
-  }
-  else
-  {
-    fUndoTransaction = std::make_unique<CompositeUndoAction>();
-    fUndoTransaction->fFrame = fCurrentFrame;
-    if(fCurrentPanelState)
-      fUndoTransaction->fPanelType = fCurrentPanelState->getType();
-    fUndoTransaction->fDescription = iDescription;
-    fUndoTransaction->fMergeKey = iMergeKey;
-    return true;
-  }
+  fUndoTx = std::make_unique<UndoTx>(getCurrentPanel()->getType(), std::move(iDescription), iMergeKey);
 }
 
 //------------------------------------------------------------------------
@@ -713,8 +705,28 @@ bool AppContext::beginUndoTx(std::string const &iDescription, void *iMergeKey)
 //------------------------------------------------------------------------
 void AppContext::commitUndoTx()
 {
-  RE_EDIT_INTERNAL_ASSERT(fUndoTransaction != nullptr);
-  fUndoManager->addUndoAction(std::move(fUndoTransaction));
+  RE_EDIT_INTERNAL_ASSERT(fUndoTx != nullptr, "no current transaction");
+
+  auto action = std::move(fUndoTx);
+
+  if(!fNestedUndoTxs.empty())
+  {
+    auto iter = fNestedUndoTxs.end() - 1;
+    fUndoTx = std::move(*iter);
+    fNestedUndoTxs.erase(iter);
+  }
+
+  if(isUndoEnabled())
+  {
+    if(action->isEmpty())
+      return;
+
+    if(auto singleAction = action->single())
+      addUndo(std::move(singleAction));
+    else
+      addUndo(std::move(action));
+  }
+
 }
 
 //------------------------------------------------------------------------
@@ -1557,32 +1569,20 @@ bool AppContext::pasteFromClipboard(Widget *oWidget)
 {
   if(auto data = getClipboardData<clipboard::WidgetData>())
   {
-    if(isUndoEnabled())
-      addUndoWidgetChange(oWidget, fmt::printf("Paste all widget attributes from [%s] to [%s]", data->getWidget()->getName(), oWidget->getName()));
-
-    if(!oWidget->copyFromAction(*data->getWidget()))
-    {
-      if(isUndoEnabled())
-        rollbackUndoAction();
-      return false;
-    }
-    else
-      return true;
+    auto currentWidget = fCurrentWidget;
+    fCurrentWidget = oWidget;
+    auto res = oWidget->copyFrom(*data->getWidget(), fmt::printf("Paste all widget attributes from [%s] to [%s]", data->getWidget()->getName(), oWidget->getName()));
+    fCurrentWidget = currentWidget;
+    return res;
   }
 
   if(auto data = getClipboardData<clipboard::WidgetAttributeData>())
   {
-    if(isUndoEnabled())
-      addUndoWidgetChange(oWidget, fmt::printf("Paste attribute [%s] to widget [%s]", data->getAttribute()->fName, oWidget->getName()));
-
-    if(!oWidget->copyFromAction(data->getAttribute()))
-    {
-      if(isUndoEnabled())
-        rollbackUndoAction();
-      return false;
-    }
-    else
-      return true;
+    auto currentWidget = fCurrentWidget;
+    fCurrentWidget = oWidget;
+    auto res = oWidget->copyFrom(data->getAttribute(), fmt::printf("Paste attribute [%s] to widget [%s]", data->getAttribute()->fName, oWidget->getName()));
+    fCurrentWidget = currentWidget;
+    return res;
   }
 
   return false;
@@ -1598,16 +1598,14 @@ bool AppContext::pasteFromClipboard(std::vector<Widget *> const &oWidgets)
 
   bool res = false;
 
-  if(isUndoEnabled())
-    beginUndoTx(fmt::printf("Paste %s to [%ld] widgets", fClipboard.getData()->getDescription(), oWidgets.size()));
+  beginUndoTx(fmt::printf("Paste %s to [%ld] widgets", fClipboard.getData()->getDescription(), oWidgets.size()));
 
   for(auto &w: oWidgets)
   {
     res |= pasteFromClipboard(w);
   }
 
-  if(isUndoEnabled())
-    commitUndoTx();
+  commitUndoTx();
 
   return res;
 }
@@ -1696,6 +1694,38 @@ void AppContext::redoLastAction()
       computeErrors(redoAction->fUndoAction->fPanelType);
     }
   }
+}
+
+//------------------------------------------------------------------------
+// AppContext::renderUndoHistory
+//------------------------------------------------------------------------
+void AppContext::renderUndoHistory()
+{
+  if(auto l = fUndoHistoryWindow.begin())
+  {
+    auto redoHistory = fUndoManager->getRedoHistory();
+    if(!redoHistory.empty())
+    {
+      ReGui::TextSeparator("Redo");
+      for(auto i = redoHistory.rbegin(); i != redoHistory.rend(); i++)
+      {
+        ImGui::Text("%s", (*i)->fUndoAction->fDescription.c_str());
+      }
+    }
+
+    ReGui::TextSeparator("Undo");
+    auto undoHistory = fUndoManager->getUndoHistory();
+    if(undoHistory.empty())
+      ImGui::TextUnformatted("<emtpy>");
+    else
+    {
+      for(auto i = undoHistory.rbegin(); i != undoHistory.rend(); i++)
+      {
+        ImGui::Text("%s", (*i)->fDescription.c_str());
+      }
+    }
+  }
+
 }
 
 

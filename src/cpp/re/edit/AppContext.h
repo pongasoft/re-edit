@@ -187,7 +187,6 @@ public: // Undo
 
   void addUndoAction(std::shared_ptr<UndoAction> iAction);
   void addUndo(std::unique_ptr<Action> iAction);
-  void rollbackUndoAction();
 
   template<typename T, typename UndoLambda, typename RedoLambda>
   inline void addOrMergeUndoLambdas(void *iMergeKey, T const &iOldValue, T const &iNewValue, std::string const &iDescription, UndoLambda u, RedoLambda r)
@@ -245,7 +244,7 @@ public: // Undo
                                       computeUpdateDescription(fCurrentWidget, iAttribute));
   }
 
-  bool beginUndoTx(std::string const &iDescription, void *iMergeKey = nullptr);
+  void beginUndoTx(std::string iDescription, void *iMergeKey = nullptr);
   void commitUndoTx();
 
   void resetUndoMergeKey();
@@ -253,7 +252,7 @@ public: // Undo
   void undoLastAction();
   void redoLastAction();
 
-  inline Widget const *getCurrentWidget() const { return fCurrentWidget; }
+  inline Widget const *getCurrentWidget() const { RE_EDIT_INTERNAL_ASSERT(fCurrentWidget != nullptr); return fCurrentWidget; }
 
   friend class PanelState;
   friend class Widget;
@@ -297,6 +296,7 @@ protected:
   bool computeErrors(PanelType iType);
   void renderErrors();
   void renderErrors(Panel const &iPanel);
+  void renderUndoHistory();
   void initDevice();
   void initGUI2D(Utils::CancellableSPtr const &iCancellable);
   void reloadDevice();
@@ -347,7 +347,8 @@ protected:
   std::shared_ptr<UserPreferences> fUserPreferences{};
   std::shared_ptr<PropertyManager> fPropertyManager{};
   std::shared_ptr<UndoManager> fUndoManager{};
-  std::shared_ptr<CompositeUndoAction> fUndoTransaction{};
+  std::unique_ptr<UndoTx> fUndoTx{};
+  std::vector<std::unique_ptr<UndoTx>> fNestedUndoTxs{};
   std::unique_ptr<PanelState> fFrontPanel;
   std::unique_ptr<PanelState> fFoldedFrontPanel;
   std::unique_ptr<PanelState> fBackPanel;
@@ -361,6 +362,7 @@ protected:
   ReGui::Window fPanelWidgetsWindow{"Panel Widgets", true, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoCollapse};
   ReGui::Window fWidgetsWindow{"Widgets", true, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoCollapse};
   ReGui::Window fPropertiesWindow{"Properties", true, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoCollapse};
+  ReGui::Window fUndoHistoryWindow{"Undo History", true, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoCollapse};
   long fCurrentFrame{};
   PanelState *fCurrentPanelState{};
   PanelState *fPreviousPanelState{};
