@@ -1022,16 +1022,16 @@ std::unique_ptr<Widget> Widget::fullClone() const
 }
 
 //------------------------------------------------------------------------
-// Widget::copyFrom
+// Widget::copyFromAction
 //------------------------------------------------------------------------
-bool Widget::copyFrom(Widget const &iWidget)
+bool Widget::copyFromAction(Widget const &iWidget)
 {
   bool res = false;
   for(auto &att: fAttributes)
   {
     auto otherAtt = iWidget.findAttributeByName(att->fName);
     if(otherAtt)
-      res |= att->copyFrom(otherAtt);
+      res |= att->copyFromAction(otherAtt);
   }
 
   if(res)
@@ -1041,14 +1041,14 @@ bool Widget::copyFrom(Widget const &iWidget)
 }
 
 //------------------------------------------------------------------------
-// Widget::copyFrom
+// Widget::copyFromAction
 //------------------------------------------------------------------------
-bool Widget::copyFrom(widget::Attribute const *iAttribute)
+bool Widget::copyFromAction(widget::Attribute const *iAttribute)
 {
   auto att = findAttributeByName(iAttribute->fName);
   if(att)
   {
-    auto res = att->copyFrom(iAttribute);
+    auto res = att->copyFromAction(iAttribute);
     if(res)
       fEdited = true;
     return res;

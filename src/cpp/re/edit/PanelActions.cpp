@@ -468,7 +468,7 @@ private:
 void Panel::transmuteWidget(AppContext &iCtx, Widget const *iWidget, WidgetDef const &iNewDef)
 {
   auto newWidget = iNewDef.fFactory(iWidget->getName());
-  newWidget->copyFrom(*iWidget);
+  newWidget->copyFromAction(*iWidget);
   newWidget->setPosition(iWidget->getPosition());
   executeAction<ReplaceWidgetAction>(iCtx, iWidget->getId(), std::move(newWidget), fmt::printf("Change %s type", iWidget->getName()));
 }

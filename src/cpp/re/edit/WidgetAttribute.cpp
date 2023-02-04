@@ -454,17 +454,17 @@ void Value::resetEdited()
 }
 
 //------------------------------------------------------------------------
-// Value::copyFrom
+// Value::copyFromAction
 //------------------------------------------------------------------------
-bool Value::copyFrom(Attribute const *iAttribute)
+bool Value::copyFromAction(Attribute const *iAttribute)
 {
   auto fromAttribute = dynamic_cast<Value const *>(iAttribute);
   if(fromAttribute)
   {
     fUseSwitch = fromAttribute->fUseSwitch;
-    fValue.copyFrom(&fromAttribute->fValue);
-    fValueSwitch.copyFrom(&fromAttribute->fValueSwitch);
-    fValues.copyFrom(&fromAttribute->fValues);
+    fValue.copyFromAction(&fromAttribute->fValue);
+    fValueSwitch.copyFromAction(&fromAttribute->fValueSwitch);
+    fValues.copyFromAction(&fromAttribute->fValues);
     fEdited = true;
     return true;
   }
@@ -671,15 +671,15 @@ static const Property::Filter kIsDiscreteFilter{[](const Property &p) { return p
 Visibility::Visibility() : CompositeAttribute("visibility"), fSwitch{"visibility_switch", kIsDiscreteFilter} {}
 
 //------------------------------------------------------------------------
-// Visibility::copyFrom
+// Visibility::copyFromAction
 //------------------------------------------------------------------------
-bool Visibility::copyFrom(Attribute const *iAttribute)
+bool Visibility::copyFromAction(Attribute const *iAttribute)
 {
   auto fromAttribute = dynamic_cast<Visibility const *>(iAttribute);
   if(fromAttribute)
   {
-    fSwitch.copyFrom(&fromAttribute->fSwitch);
-    fValues.copyFrom(&fromAttribute->fValues);
+    fSwitch.copyFromAction(&fromAttribute->fSwitch);
+    fValues.copyFromAction(&fromAttribute->fValues);
     fEdited = true;
     return true;
   }
@@ -909,18 +909,18 @@ void PropertyPath::findErrors(AppContext &iCtx, UserError &oErrors) const
 }
 
 //------------------------------------------------------------------------
-// PropertyPath::copyFrom
+// PropertyPath::copyFromAction
 //------------------------------------------------------------------------
-bool PropertyPath::copyFrom(Attribute const *iFromAttribute)
+bool PropertyPath::copyFromAction(Attribute const *iFromAttribute)
 {
-  if(SingleAttribute::copyFrom(iFromAttribute))
+  if(SingleAttribute::copyFromAction(iFromAttribute))
     return true;
 
   auto valueAttribute = dynamic_cast<Value const *>(iFromAttribute);
   if(valueAttribute)
   {
     if(!valueAttribute->fUseSwitch)
-      return copyFrom(&valueAttribute->fValue);
+      return copyFromAction(&valueAttribute->fValue);
   }
 
   return false;

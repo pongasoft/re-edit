@@ -156,7 +156,7 @@ public:
 //    });
 //  }
 
-  bool copyFrom(Attribute const *iFromAttribute) override;
+  bool copyFromAction(Attribute const *iFromAttribute) override;
 
 public:
   ImVec2 fPosition{};

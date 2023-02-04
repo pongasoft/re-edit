@@ -92,7 +92,7 @@ public:
   static std::unique_ptr<T> build(char const *iName, bool iRequired, typename T::value_t const &iDefaultValue, ConstructorArgs&& ...iArgs);
 
   virtual std::unique_ptr<Attribute> clone() const = 0;
-  virtual bool copyFrom(Attribute const *iFromAttribute) = 0;
+  virtual bool copyFromAction(Attribute const *iFromAttribute) = 0;
 //  virtual bool eq(Attribute const *iAttribute) const = 0;
 
   friend class re::edit::Widget;
@@ -136,7 +136,7 @@ public:
   std::string toValueString() const override { return fmt::printf("%s = %s", fName, getValueAsLua()); }
   void reset() override;
 
-  bool copyFrom(Attribute const *iFromAttribute) override;
+  bool copyFromAction(Attribute const *iFromAttribute) override;
 
   std::string toString() const override;
 
@@ -208,7 +208,7 @@ public:
 
   std::unique_ptr<Attribute> clone() const override { return Attribute::clone<PropertyPath>(*this); }
 
-  bool copyFrom(Attribute const *iFromAttribute) override;
+  bool copyFromAction(Attribute const *iFromAttribute) override;
 
   void findErrors(AppContext &iCtx, UserError &oErrors) const override;
 
@@ -360,7 +360,7 @@ public:
 //    });
 //  }
 
-  bool copyFrom(Attribute const *iAttribute) override;
+  bool copyFromAction(Attribute const *iAttribute) override;
 
   void updateFilters(Property::Filter iValueFilter, Property::Filter iValueSwitchFilter);
 
@@ -402,7 +402,7 @@ public:
 //    });
 //  }
 
-  bool copyFrom(Attribute const *iAttribute) override;
+  bool copyFromAction(Attribute const *iAttribute) override;
 
 public:
   PropertyPath fSwitch;
@@ -637,10 +637,10 @@ std::string SingleAttribute<T>::toString() const
 }
 
 //------------------------------------------------------------------------
-// SingleAttribute<T>::copyFrom
+// SingleAttribute<T>::copyFromAction
 //------------------------------------------------------------------------
 template<typename T>
-bool SingleAttribute<T>::copyFrom(Attribute const *iFromAttribute)
+bool SingleAttribute<T>::copyFromAction(Attribute const *iFromAttribute)
 {
   auto fromAttribute = dynamic_cast<SingleAttribute<T> const *>(iFromAttribute);
   if(fromAttribute && strcmp(fName, iFromAttribute->fName) == 0)

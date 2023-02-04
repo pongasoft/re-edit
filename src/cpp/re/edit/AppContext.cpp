@@ -1560,7 +1560,7 @@ bool AppContext::pasteFromClipboard(Widget *oWidget)
     if(isUndoEnabled())
       addUndoWidgetChange(oWidget, fmt::printf("Paste all widget attributes from [%s] to [%s]", data->getWidget()->getName(), oWidget->getName()));
 
-    if(!oWidget->copyFrom(*data->getWidget()))
+    if(!oWidget->copyFromAction(*data->getWidget()))
     {
       if(isUndoEnabled())
         rollbackUndoAction();
@@ -1575,7 +1575,7 @@ bool AppContext::pasteFromClipboard(Widget *oWidget)
     if(isUndoEnabled())
       addUndoWidgetChange(oWidget, fmt::printf("Paste attribute [%s] to widget [%s]", data->getAttribute()->fName, oWidget->getName()));
 
-    if(!oWidget->copyFrom(data->getAttribute()))
+    if(!oWidget->copyFromAction(data->getAttribute()))
     {
       if(isUndoEnabled())
         rollbackUndoAction();

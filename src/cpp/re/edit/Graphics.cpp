@@ -633,9 +633,9 @@ std::string Graphics::toValueString() const
 }
 
 //------------------------------------------------------------------------
-// Graphics::copyFrom
+// Graphics::copyFromAction
 //------------------------------------------------------------------------
-bool Graphics::copyFrom(Attribute const *iFromAttribute)
+bool Graphics::copyFromAction(Attribute const *iFromAttribute)
 {
   auto fromAttribute = dynamic_cast<Graphics const *>(iFromAttribute);
   if(fromAttribute)

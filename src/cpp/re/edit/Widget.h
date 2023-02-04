@@ -107,12 +107,12 @@ public:
   std::unique_ptr<Widget> copy(std::string iName) const;
   std::unique_ptr<Widget> clone() const;
   std::unique_ptr<Widget> fullClone() const; // includes id/selected
-  bool copyFrom(Widget const &iWidget);
-  bool copyFrom(widget::Attribute const *iAttribute);
 //  bool eq(Widget *iWidget) const;
 
   // action implementations (no undo)
   void setNameAction(std::string iName);
+  bool copyFromAction(Widget const &iWidget);
+  bool copyFromAction(widget::Attribute const *iAttribute);
 
   static std::unique_ptr<Widget> panel_decal(std::optional<std::string> const &iName = std::nullopt);
   static std::unique_ptr<Widget> analog_knob(std::optional<std::string> const &iName = std::nullopt);
