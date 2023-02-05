@@ -229,6 +229,26 @@ std::unique_ptr<Action> Action::merge(std::unique_ptr<Action> iAction)
   return doMerge(std::move(iAction));
 }
 
+//------------------------------------------------------------------------
+// CompositeAction::undo
+//------------------------------------------------------------------------
+void CompositeAction::undo()
+{
+  // reverse order!
+  for(auto i = fActions.rbegin(); i != fActions.rend(); i++)
+  {
+    (*i)->undo();
+  }
+}
+
+//------------------------------------------------------------------------
+// CompositeAction::redo
+//------------------------------------------------------------------------
+void CompositeAction::redo()
+{
+  for(auto &action: fActions)
+    action->redo();
+}
 
 //------------------------------------------------------------------------
 // UndoTx::UndoTx

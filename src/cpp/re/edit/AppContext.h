@@ -246,6 +246,10 @@ public: // Undo
 
   void beginUndoTx(std::string iDescription, void *iMergeKey = nullptr);
   void commitUndoTx();
+  void rollbackUndoTx();
+
+  template<typename R>
+  R execute(std::unique_ptr<ExecutableAction<R>> iAction);
 
   void resetUndoMergeKey();
 
@@ -421,6 +425,26 @@ void AppContext::addOrMergeUndoAction(void *iMergeKey,
     addUndoAction(std::move(action));
   }
 }
+
+//------------------------------------------------------------------------
+// AppContext::execute
+//------------------------------------------------------------------------
+template<typename R>
+R AppContext::execute(std::unique_ptr<ExecutableAction<R>> iAction)
+{
+  auto result = iAction->execute();
+  if(isUndoEnabled() && iAction->isUndoEnabled())
+  {
+    addUndo(std::move(iAction));
+  }
+  return result;
+}
+
+//------------------------------------------------------------------------
+// AppContext::execute
+//------------------------------------------------------------------------
+template<>
+void AppContext::execute<void>(std::unique_ptr<ExecutableAction<void>> iAction);
 
 }
 #endif //RE_EDIT_APP_CONTEXT_H

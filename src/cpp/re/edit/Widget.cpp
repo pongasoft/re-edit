@@ -1204,7 +1204,7 @@ namespace clipboard {
 // WidgetData::WidgetData
 //------------------------------------------------------------------------
 WidgetData::WidgetData(std::unique_ptr<Widget> iWidget) :
-  Data(fmt::printf("Widget: %s", iWidget->getName())),
+  Data(fmt::printf("Widget: [%s]", iWidget->getName())),
   fWidget{std::move(iWidget)}
 {
   // empty

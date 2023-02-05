@@ -37,7 +37,8 @@ namespace re::edit {
 
 class Panel;
 
-class WidgetAction : public Action
+template<typename R>
+class WidgetAction : public ExecutableAction<R>
 {
 public:
   friend class Widget;
@@ -48,6 +49,8 @@ protected:
 protected:
   int fId;
 };
+
+using WidgetActionVoid = WidgetAction<void>;
 
 class Widget : public Editable
 {
@@ -174,11 +177,7 @@ protected:
 
 protected:
   template<class T, class... Args >
-  inline void executeAction(Args&&... args)
-  {
-    executeWidgetAction(std::make_unique<T>(std::forward<Args>(args)...));
-  }
-  void executeWidgetAction(std::unique_ptr<WidgetAction> iAction);
+  void executeAction(Args&&... args);
 
 protected:
   Widget *addAttribute(std::unique_ptr<widget::Attribute> iAttribute);

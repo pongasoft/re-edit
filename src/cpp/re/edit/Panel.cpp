@@ -749,7 +749,7 @@ void Panel::toggleWidgetSelection(int id, bool iMultiple)
 {
   auto widget = getWidget(id);
   if(widget->isSelected())
-    unselectWidget(id);
+    unselectWidgetAction(id);
   else
     selectWidget(id, iMultiple);
 }
@@ -789,15 +789,6 @@ void Panel::selectByType(WidgetType iType, bool iIncludeHiddenWidgets)
 }
 
 //------------------------------------------------------------------------
-// Panel::unselectWidget
-//------------------------------------------------------------------------
-void Panel::unselectWidget(int id)
-{
-  auto widget = getWidget(id);
-  widget->unselect();
-}
-
-//------------------------------------------------------------------------
 // Panel::clearSelection
 //------------------------------------------------------------------------
 void Panel::clearSelection()
@@ -814,8 +805,11 @@ void Panel::clearSelection()
 std::set<int> Panel::getSelectedWidgetIds() const
 {
   std::set<int> ids{};
-  for(auto &w: fComputedSelectedWidgets)
-    ids.emplace(w->getId());
+  for(auto &[id, w]: fWidgets)
+  {
+    if(w->isSelected())
+      ids.emplace(w->getId());
+  }
   return ids;
 }
 

@@ -19,11 +19,11 @@
 #ifndef RE_EDIT_WIDGET_ATTRIBUTE_HPP
 #define RE_EDIT_WIDGET_ATTRIBUTE_HPP
 
-#include "Widget.h"
+#include "Widget.hpp"
 
 namespace re::edit::widget {
 
-class AttributeUpdateAction : public WidgetAction
+class AttributeUpdateAction : public WidgetAction<void>
 {
 public:
   AttributeUpdateAction(std::unique_ptr<widget::Attribute> iValue,
@@ -37,10 +37,9 @@ public:
     fMergeKey = iMergeKey;
   }
 
-  bool execute() override
+  void execute() override
   {
     // action has already taken place
-    return true;
   }
 
   void undo() override

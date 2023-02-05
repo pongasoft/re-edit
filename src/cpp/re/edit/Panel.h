@@ -82,33 +82,6 @@ static constexpr WidgetDef kAllWidgetDefs[] {
   { WidgetType::kPanelDecal,        "panel_decal",         Widget::panel_decal,         kPanelTypeAny },
 };
 
-class PanelAction : public Action
-{
-public:
-  friend class Panel;
-
-protected:
-  void initSelected(std::vector<Widget *> const &iSelectedWidgets);
-  void undoSelection(Panel *iPanel);
-
-protected:
-  std::optional<std::set<int>> fSelectedWidgets{};
-};
-
-class PanelTx : public CompositeAction<PanelAction>
-{
-public:
-  explicit PanelTx(std::string iDescription);
-
-  void undo() override;
-
-  friend class Panel;
-
-protected:
-  void addAction(std::unique_ptr<PanelAction> iAction);
-  std::unique_ptr<PanelAction> first();
-};
-
 class Panel : public Editable
 {
 public:
@@ -142,7 +115,7 @@ public:
   inline void setBackgroundKey(Texture::key_t const &iTextureKey) { fGraphics.setTextureKey(iTextureKey); fEdited = true; }
   inline void setCableOrigin(ImVec2 const &iPosition) { fCableOrigin = iPosition; fEdited = true; }
   void setOptions(std::vector<std::string> const &iOptions);
-  void addWidget(AppContext &iCtx, std::unique_ptr<Widget> iWidget, bool iMakeSingleSelected, char const *iUndoActionName = "Add");
+  int addWidget(AppContext &iCtx, std::unique_ptr<Widget> iWidget, bool iMakeSingleSelected, char const *iUndoActionName = "Add");
   void addWidget(AppContext &iCtx, WidgetDef const &iDef, ImVec2 const &iPosition);
   bool pasteWidget(AppContext &iCtx, Widget const *iWidget, ImVec2 const &iPosition);
   bool pasteWidgets(AppContext &iCtx, std::vector<std::unique_ptr<Widget>> const &iWidgets, ImVec2 const &iPosition);
@@ -160,7 +133,6 @@ public:
   void selectWidget(int id, bool iMultiple);
   void selectWidgets(std::set<int> const &iWidgetIds, bool iAddToSelection);
   void toggleWidgetSelection(int id, bool iMultiple);
-  void unselectWidget(int id);
   void selectAll(bool iIncludeHiddenWidgets = false);
   void toggleSelectAll(bool iIncludeHiddenWidgets = false);
   void selectByType(WidgetType iType, bool iIncludeHiddenWidgets = false);
@@ -178,12 +150,17 @@ public:
 
   // action implementations (no undo)
   int addWidgetAction(int iWidgetId, std::unique_ptr<Widget> iWidget, int order);
+  inline int addWidgetAction(std::unique_ptr<Widget> iWidget) { return addWidgetAction(-1, std::move(iWidget), -1); }
   std::pair<std::unique_ptr<Widget>, int> deleteWidgetAction(int id);
   std::unique_ptr<Widget> replaceWidgetAction(int iWidgetId, std::unique_ptr<Widget> iWidget);
   int changeWidgetsOrderAction(std::set<int> const &iWidgetIds, WidgetOrDecal iWidgetOrDecal, Direction iDirection);
   void moveWidgetsAction(std::set<int> const &iWidgetsIds, ImVec2 const &iMoveDelta);
   ImVec2 setWidgetPositionAction(int iWidgetId, ImVec2 const &iPosition);
   ImVec2 setCableOriginPositionAction(ImVec2 const &iPosition);
+  bool selectWidgetAction(int id) const;
+  bool unselectWidgetAction(int id) const;
+  bool selectWidgetsAction(std::set<int> const &iWidgetIds);
+  bool unselectWidgetsAction(std::set<int> const &iWidgetIds);
 
 protected:
   void editNoSelectionView(AppContext &iCtx);
@@ -220,10 +197,11 @@ private:
   std::string computeUniqueWidgetNameForCopy(std::string const &iOriginalName) const;
   inline std::unique_ptr<Widget> copy(Widget const *iWidget) const { return iWidget->copy(computeUniqueWidgetNameForCopy(iWidget->getName())); }
 
-  template<class T, class... Args > void executeAction(Args&&... args);
-  void executePanelAction(std::unique_ptr<PanelAction> iPanelAction);
-  void beginTx(std::string iDescription);
-  void commitTx();
+  template<class T, class... Args >
+  void executeAction(Args&&... args);
+
+  template<class T, class... Args >
+  typename T::result_t executeActionWithResult(Args&&... args);
 
 private:
   class MultiSelectionList
@@ -262,7 +240,6 @@ private:
   std::optional<MouseDrag> fMoveCanvasAction{};
   std::optional<ImVec2> fPopupLocation{};
   int fWidgetCounter{1}; // used for unique id
-  std::unique_ptr<PanelTx> fPanelTx{};
   MultiSelectionList fWidgetsSelectionList{*this, Panel::WidgetOrDecal::kWidget};
   MultiSelectionList fDecalsSelectionList{*this, Panel::WidgetOrDecal::kDecal};
   std::vector<Widget *> fComputedSelectedWidgets{};

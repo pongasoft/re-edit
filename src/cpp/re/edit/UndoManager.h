@@ -34,18 +34,23 @@ class Action
 {
 public:
   virtual ~Action() = default;
-  virtual bool execute() = 0;
   virtual void undo() = 0;
-  virtual void redo() { execute(); }
-  std::unique_ptr<Action> merge(std::unique_ptr<Action> iAction);
+  virtual void redo() = 0;
+  virtual std::unique_ptr<Action> merge(std::unique_ptr<Action> iAction);
 
   inline PanelType getPanelType() const { return fPanelType; }
   inline void setPanelType(PanelType iType) { fPanelType = iType; }
+
   inline void *getMergeKey() const { return fMergeKey; }
-  Panel *getPanel() const;
+  inline void setMergeKey(void *iMergeKey) { fMergeKey = iMergeKey; }
+  inline void resetMergeKey() { fMergeKey = nullptr; }
+
   std::string const &getDescription() const { return fDescription; }
+  void setDescription(std::string iDescription) { fDescription = std::move(iDescription); }
 
 protected:
+  Panel *getPanel() const;
+
   virtual bool canMergeWith(Action const *iAction) const { return false; }
 
   /**
@@ -55,7 +60,7 @@ protected:
    * - if merge leads to a no op, then `NoOpAction::create()` */
   virtual std::unique_ptr<Action> doMerge(std::unique_ptr<Action> iAction) { return std::move(iAction); }
 
-protected:
+public:
   PanelType fPanelType{PanelType::kUnknown};
   std::string fDescription{};
   void *fMergeKey{};
@@ -64,32 +69,51 @@ protected:
 class NoOpAction : public Action
 {
 public:
-  bool execute() override { return false; }
   void undo() override {}
+  void redo() override {}
   static std::unique_ptr<NoOpAction> create() { return std::make_unique<NoOpAction>(); }
 };
 
-template<typename BaseActionClass = Action, typename ActionClass = BaseActionClass>
-class CompositeAction : public BaseActionClass
+class CompositeAction : public Action
 {
 public:
-  bool execute() override;
   void undo() override;
   void redo() override;
 
   inline bool isEmpty() const { return fActions.empty(); }
   inline auto getSize() const { return fActions.size(); }
 
+  std::vector<std::unique_ptr<Action>> const &getActions() const { return fActions; }
+
 protected:
-  std::vector<std::unique_ptr<ActionClass>> fActions{};
+  std::vector<std::unique_ptr<Action>> fActions{};
 };
 
-class UndoTx : public CompositeAction<>
+class UndoTx : public CompositeAction
 {
 public:
   UndoTx(PanelType iPanelType, std::string iDescription, void *iMergeKey);
   std::unique_ptr<Action> single();
   void addAction(std::unique_ptr<Action> iAction);
+};
+
+template<typename R>
+class ExecutableAction : public Action
+{
+public:
+  using result_t = R;
+
+  virtual result_t execute() = 0;
+
+  inline bool isUndoEnabled() const { return fUndoEnabled; }
+
+  void redo() override
+  {
+    execute();
+  }
+
+protected:
+  bool fUndoEnabled{true};
 };
 
 template<typename T>
@@ -278,40 +302,6 @@ std::shared_ptr<RedoAction> LambdaMergeableUndoAction<T, UndoLambda, RedoLambda>
   });
 }
 
-//------------------------------------------------------------------------
-// CompositeAction::execute
-//------------------------------------------------------------------------
-template<typename BaseActionClass, typename ActionClass>
-bool CompositeAction<BaseActionClass, ActionClass>::execute()
-{
-  auto res = false;
-  for(auto &action: fActions)
-    res |= action->execute();
-  return res;
-}
-
-//------------------------------------------------------------------------
-// CompositeAction::undo
-//------------------------------------------------------------------------
-template<typename BaseActionClass, typename ActionClass>
-void CompositeAction<BaseActionClass, ActionClass>::undo()
-{
-  // reverse order!
-  for(auto i = fActions.rbegin(); i != fActions.rend(); i++)
-  {
-    (*i)->undo();
-  }
-}
-
-//------------------------------------------------------------------------
-// CompositeAction::redo
-//------------------------------------------------------------------------
-template<typename BaseActionClass, typename ActionClass>
-void CompositeAction<BaseActionClass, ActionClass>::redo()
-{
-  for(auto &action: fActions)
-    action->redo();
-}
 
 }
 

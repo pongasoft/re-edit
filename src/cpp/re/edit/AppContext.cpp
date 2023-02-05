@@ -548,6 +548,19 @@ void AppContext::addUndoAction(std::shared_ptr<UndoAction> iAction)
 }
 
 //------------------------------------------------------------------------
+// AppContext::execute
+//------------------------------------------------------------------------
+template<>
+void AppContext::execute<void>(std::unique_ptr<ExecutableAction<void>> iAction)
+{
+  iAction->execute();
+  if(isUndoEnabled() && iAction->isUndoEnabled())
+  {
+    addUndo(std::move(iAction));
+  }
+}
+
+//------------------------------------------------------------------------
 // UndoActionAdapter: wraps an Action into an UndoAction
 //------------------------------------------------------------------------
 class UndoActionAdapter : public UndoAction
@@ -573,6 +586,8 @@ public:
     fDescription = fAction->getDescription();
     return iAction;
   }
+
+  Action const *getAction() const { return fAction.get(); }
 
 private:
   std::unique_ptr<Action> fAction;
@@ -727,6 +742,23 @@ void AppContext::commitUndoTx()
       addUndo(std::move(action));
   }
 
+}
+
+//------------------------------------------------------------------------
+// AppContext::rollbackUndoTx
+//------------------------------------------------------------------------
+void AppContext::rollbackUndoTx()
+{
+  RE_EDIT_INTERNAL_ASSERT(fUndoTx != nullptr, "no current transaction");
+
+  fUndoTx = nullptr;
+
+  if(!fNestedUndoTxs.empty())
+  {
+    auto iter = fNestedUndoTxs.end() - 1;
+    fUndoTx = std::move(*iter);
+    fNestedUndoTxs.erase(iter);
+  }
 }
 
 //------------------------------------------------------------------------
@@ -1696,6 +1728,39 @@ void AppContext::redoLastAction()
   }
 }
 
+namespace impl {
+
+//------------------------------------------------------------------------
+// impl::RenderUndoAction
+//------------------------------------------------------------------------
+void RenderUndoAction(Action const *iAction)
+{
+  ImGui::Text("%s", iAction->fDescription.c_str());
+
+  if(auto c = dynamic_cast<const CompositeAction *>(iAction))
+  {
+    ImGui::Indent();
+    for(auto &a: c->getActions())
+      RenderUndoAction(a.get());
+    ImGui::Unindent();
+  }
+}
+
+//------------------------------------------------------------------------
+// impl::RenderUndoAction
+//------------------------------------------------------------------------
+void RenderUndoAction(UndoAction const *iAction)
+{
+  if(auto adapter = dynamic_cast<const UndoActionAdapter *>(iAction))
+  {
+    RenderUndoAction(adapter->getAction());
+  }
+  else
+    ImGui::Text("%s", iAction->fDescription.c_str());
+}
+
+}
+
 //------------------------------------------------------------------------
 // AppContext::renderUndoHistory
 //------------------------------------------------------------------------
@@ -1707,9 +1772,9 @@ void AppContext::renderUndoHistory()
     if(!redoHistory.empty())
     {
       ReGui::TextSeparator("Redo");
-      for(auto i = redoHistory.rbegin(); i != redoHistory.rend(); i++)
+      for(auto &w : redoHistory)
       {
-        ImGui::Text("%s", (*i)->fUndoAction->fDescription.c_str());
+        impl::RenderUndoAction(w->fUndoAction.get());
       }
     }
 
@@ -1721,7 +1786,7 @@ void AppContext::renderUndoHistory()
     {
       for(auto i = undoHistory.rbegin(); i != undoHistory.rend(); i++)
       {
-        ImGui::Text("%s", (*i)->fDescription.c_str());
+        impl::RenderUndoAction((*i).get());
       }
     }
   }

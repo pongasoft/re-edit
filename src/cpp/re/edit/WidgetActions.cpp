@@ -16,7 +16,7 @@
  * @author Yan Pujante
  */
 
-#include "Widget.h"
+#include "Widget.hpp"
 #include "Panel.h"
 
 namespace re::edit {
@@ -24,29 +24,17 @@ namespace re::edit {
 //------------------------------------------------------------------------
 // WidgetAction::getWidget
 //------------------------------------------------------------------------
-Widget *WidgetAction::getWidget() const
+template<typename R>
+Widget *WidgetAction<R>::getWidget() const
 {
-  return getPanel()->findWidget(fId);
-}
-
-//------------------------------------------------------------------------
-// WidgetAction::executeWidgetAction
-//------------------------------------------------------------------------
-void Widget::executeWidgetAction(std::unique_ptr<WidgetAction> iAction)
-{
-  auto &ctx = AppContext::GetCurrent();
-
-  iAction->setPanelType(ctx.getCurrentPanel()->getType());
-  iAction->fId = fId;
-  if(iAction->execute() && ctx.isUndoEnabled())
-    ctx.addUndo(std::move(iAction));
+  return this->getPanel()->findWidget(fId);
 }
 
 //------------------------------------------------------------------------
 // class WidgetValueAction<T>
 //------------------------------------------------------------------------
 template<typename T>
-class WidgetValueAction : public WidgetAction
+class WidgetValueAction : public WidgetActionVoid
 {
 public:
   explicit WidgetValueAction(T iValue, void *iMergeKey) : fValue{std::move(iValue)}
@@ -90,15 +78,14 @@ public:
     fDescription = fmt::printf("Rename widget %s -> %s", iWidget->getName(), fValue);
   }
 
-  bool execute() override
+  void execute() override
   {
     fPreviousValue = getWidget()->getName();
 
-    if(fPreviousValue == fValue)
-      return false;
+    fUndoEnabled = fPreviousValue != fValue;
 
-    getWidget()->setNameAction(fValue);
-    return true;
+    if(fUndoEnabled)
+      getWidget()->setNameAction(fValue);
   }
 
   void undo() override

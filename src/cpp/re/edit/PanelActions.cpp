@@ -20,11 +20,13 @@
 
 namespace re::edit {
 
+using PanelActionVoid = ExecutableAction<void>;
+
 //------------------------------------------------------------------------
 // class PanelValueAction<T>
 //------------------------------------------------------------------------
 template<typename T>
-class PanelValueAction : public PanelAction
+class PanelValueAction : public PanelActionVoid
 {
 public:
   explicit PanelValueAction(T iValue, void *iMergeKey) : fValue{std::move(iValue)}
@@ -55,27 +57,6 @@ protected:
   T fValue;
   T fPreviousValue{};
 };
-//------------------------------------------------------------------------
-// Panel::initSelected
-//------------------------------------------------------------------------
-void PanelAction::initSelected(std::vector<Widget *> const &iSelectedWidgets)
-{
-  if(fSelectedWidgets)
-    return;
-  
-  fSelectedWidgets = std::set<int>{};
-  for(auto const w: iSelectedWidgets)
-    fSelectedWidgets->emplace(w->getId());
-}
-
-//------------------------------------------------------------------------
-// Panel::undoSelection
-//------------------------------------------------------------------------
-void PanelAction::undoSelection(Panel *iPanel)
-{
-  if(fSelectedWidgets)
-    iPanel->selectWidgets(*fSelectedWidgets, false);
-}
 
 //------------------------------------------------------------------------
 // Panel::executeAction
@@ -83,96 +64,20 @@ void PanelAction::undoSelection(Panel *iPanel)
 template<class T, class... Args>
 void Panel::executeAction(Args &&... args)
 {
-  executePanelAction(std::make_unique<T>(std::forward<Args>(args)...));
+  auto action = std::make_unique<T>(std::forward<Args>(args)...);
+  action->setPanelType(getType());
+  AppContext::GetCurrent().execute<void>(std::move(action));
 }
 
 //------------------------------------------------------------------------
-// Panel::executePanelAction
+// Panel::executeAction
 //------------------------------------------------------------------------
-void Panel::executePanelAction(std::unique_ptr<PanelAction> iAction)
+template<class T, class... Args>
+typename T::result_t Panel::executeActionWithResult(Args &&... args)
 {
-  iAction->setPanelType(getType());
-  if(fPanelTx)
-  {
-    fPanelTx->addAction(std::move(iAction));
-  }
-  else
-  {
-    auto &ctx = AppContext::GetCurrent();
-    // selected widgets are only relevant in the case of an undo!
-    if(ctx.isUndoEnabled())
-      iAction->initSelected(fComputedSelectedWidgets);
-
-    if(iAction->execute() && ctx.isUndoEnabled())
-      ctx.addUndo(std::move(iAction));
-  }
-
-}
-
-//------------------------------------------------------------------------
-// PanelTx::PanelTx
-//------------------------------------------------------------------------
-PanelTx::PanelTx(std::string iDescription)
-{
-  fDescription = std::move(iDescription);
-}
-
-//------------------------------------------------------------------------
-// PanelTx::PanelTx
-//------------------------------------------------------------------------
-void PanelTx::undo()
-{
-  CompositeAction::undo();
-  undoSelection(getPanel());
-}
-
-//------------------------------------------------------------------------
-// PanelTx::addAction
-//------------------------------------------------------------------------
-void PanelTx::addAction(std::unique_ptr<PanelAction> iAction)
-{
-  fActions.emplace_back(std::move(iAction));
-}
-
-//------------------------------------------------------------------------
-// PanelTx::first
-//------------------------------------------------------------------------
-std::unique_ptr<PanelAction> PanelTx::first()
-{
-  if(getSize() == 1)
-  {
-    auto singleAction = std::move(fActions[0]);
-    fActions.clear();
-    return singleAction;
-  }
-  else
-    return nullptr;
-}
-
-//------------------------------------------------------------------------
-// Panel::beginTx
-//------------------------------------------------------------------------
-void Panel::beginTx(std::string iDescription)
-{
-  RE_EDIT_INTERNAL_ASSERT(fPanelTx == nullptr); // no nested transaction
-  fPanelTx = std::make_unique<PanelTx>(std::move(iDescription));
-  fPanelTx->setPanelType(getType());
-  fPanelTx->initSelected(fComputedSelectedWidgets);
-}
-
-//------------------------------------------------------------------------
-// Panel::commitTx
-//------------------------------------------------------------------------
-void Panel::commitTx()
-{
-  RE_EDIT_INTERNAL_ASSERT(fPanelTx != nullptr); // does not make sense to commit otherwise!
-
-  auto action = std::move(fPanelTx);
-
-  if(action->isEmpty())
-    return;
-
-  executePanelAction(std::move(action));
+  auto action = std::make_unique<T>(std::forward<Args>(args)...);
+  action->setPanelType(getType());
+  return AppContext::GetCurrent().execute<typename T::result_t>(std::move(action));
 }
 
 //------------------------------------------------------------------------
@@ -203,34 +108,167 @@ int Panel::addWidgetAction(int iWidgetId, std::unique_ptr<Widget> iWidget, int o
 }
 
 //------------------------------------------------------------------------
-// class ClearSelectionAction
+// class WidgetSelection
 //------------------------------------------------------------------------
-class ClearSelectionAction : public PanelAction
+class WidgetSelection
 {
 public:
-  explicit ClearSelectionAction()
+  void save(Panel *iPanel)
   {
-    fDescription = "Clear Selection";
+    fSelectedWidgetIds = iPanel->getSelectedWidgetIds();
   }
 
-  bool execute() override
+  void restore(Panel *iPanel)
   {
-    getPanel()->clearSelection();
-    return true;
+    iPanel->selectWidgets(fSelectedWidgetIds, false);
   }
 
-  void undo() override
-  {
-    auto panel = getPanel();
-    undoSelection(panel);
-  }
+  inline bool empty() const { return fSelectedWidgetIds.empty(); }
+
+private:
+  std::set<int> fSelectedWidgetIds{};
 };
 
 
 //------------------------------------------------------------------------
+// class ClearSelectionAction
+//------------------------------------------------------------------------
+class ClearSelectionAction : public PanelActionVoid
+{
+public:
+  ClearSelectionAction()
+  {
+    fDescription = "Clear Selection";
+  }
+
+  void execute() override
+  {
+    auto panel = getPanel();
+    fWidgetSelection.save(panel);
+    panel->clearSelection();
+  }
+
+  void undo() override
+  {
+    fWidgetSelection.restore(getPanel());
+  }
+
+private:
+  WidgetSelection fWidgetSelection{};
+};
+
+//------------------------------------------------------------------------
+// class SelectWidgetAction
+//------------------------------------------------------------------------
+class SelectWidgetAction : public PanelActionVoid
+{
+public:
+  explicit SelectWidgetAction(int iWidgetId) : fWidgetId{iWidgetId}
+  {
+    fDescription = fmt::printf("Select Widget [#%d]", iWidgetId);
+  }
+
+  void execute() override
+  {
+    fPreviouslySelected = !getPanel()->selectWidgetAction(fWidgetId);
+  }
+
+  void undo() override
+  {
+    if(fPreviouslySelected)
+      getPanel()->selectWidgetAction(fWidgetId);
+    else
+      getPanel()->unselectWidgetAction(fWidgetId);
+  }
+
+private:
+  int fWidgetId{};
+  bool fPreviouslySelected{};
+};
+
+//------------------------------------------------------------------------
+// class SelectWidgetsAction
+//------------------------------------------------------------------------
+class SelectWidgetsAction : public PanelActionVoid
+{
+public:
+  explicit SelectWidgetsAction(std::set<int> iWidgetIds) : fWidgetIds{std::move(iWidgetIds)}
+  {
+    fDescription = fmt::printf("Select Widgets [%d]", fWidgetIds.size());
+  }
+
+  void execute() override
+  {
+    auto panel = getPanel();
+    fWidgetSelection.save(panel);
+    panel->selectWidgetsAction(fWidgetIds);
+  }
+
+  void undo() override
+  {
+    fWidgetSelection.restore(getPanel());
+  }
+
+private:
+  std::set<int> fWidgetIds{};
+  WidgetSelection fWidgetSelection{};
+};
+
+
+//------------------------------------------------------------------------
+// Panel::selectWidgetAction
+//------------------------------------------------------------------------
+bool Panel::selectWidgetAction(int id) const
+{
+  auto widget = findWidget(id);
+  if(widget && !widget->isSelected())
+  {
+    widget->select();
+    return true;
+  }
+  return false;
+}
+
+//------------------------------------------------------------------------
+// Panel::selectWidgetsAction
+//------------------------------------------------------------------------
+bool Panel::selectWidgetsAction(std::set<int> const &iWidgetIds)
+{
+  auto res = false;
+  for(auto id: iWidgetIds)
+    res |= selectWidgetAction(id);
+  return res;
+}
+
+//------------------------------------------------------------------------
+// Panel::unselectWidget
+//------------------------------------------------------------------------
+bool Panel::unselectWidgetAction(int id) const
+{
+  auto widget = findWidget(id);
+  if(widget && widget->isSelected())
+  {
+    widget->unselect();
+    return true;
+  }
+  return false;
+}
+
+//------------------------------------------------------------------------
+// Panel::unselectWidgetsAction
+//------------------------------------------------------------------------
+bool Panel::unselectWidgetsAction(std::set<int> const &iWidgetIds)
+{
+  auto res = false;
+  for(auto id: iWidgetIds)
+    res |= unselectWidgetAction(id);
+  return res;
+}
+
+//------------------------------------------------------------------------
 // class AddWidgetAction
 //------------------------------------------------------------------------
-class AddWidgetAction : public PanelAction
+class AddWidgetAction : public ExecutableAction<int>
 {
 public:
   explicit AddWidgetAction(std::unique_ptr<Widget> iWidget, char const *iUndoActionName = "Add") :
@@ -239,17 +277,15 @@ public:
     fDescription = fmt::printf("%s %s", iUndoActionName, re::edit::toString(fWidget->getType()));
   }
 
-  bool execute() override
+  int execute() override
   {
     fId = getPanel()->addWidgetAction(fId, fWidget->fullClone(), -1);
-    return true;
+    return fId;
   }
 
   void undo() override
   {
-    auto panel = getPanel();
-    panel->deleteWidgetAction(fId);
-    undoSelection(panel);
+    getPanel()->deleteWidgetAction(fId);
   }
 
 private:
@@ -260,20 +296,21 @@ private:
 //------------------------------------------------------------------------
 // Panel::addWidget
 //------------------------------------------------------------------------
-void Panel::addWidget(AppContext &iCtx, std::unique_ptr<Widget> iWidget, bool iMakeSingleSelected, char const *iUndoActionName)
+int Panel::addWidget(AppContext &iCtx, std::unique_ptr<Widget> iWidget, bool iMakeSingleSelected, char const *iUndoActionName)
 {
   RE_EDIT_INTERNAL_ASSERT(iWidget != nullptr);
   if(iMakeSingleSelected)
   {
-    beginTx(fmt::printf(fmt::printf("%s %s", iUndoActionName, re::edit::toString(iWidget->getType()))));
+    iCtx.beginUndoTx(fmt::printf(fmt::printf("%s %s", iUndoActionName, re::edit::toString(iWidget->getType()))));
     executeAction<ClearSelectionAction>();
-    iWidget->select();
-    executeAction<AddWidgetAction>(std::move(iWidget), iUndoActionName);
-    commitTx();
+    auto id = executeActionWithResult<AddWidgetAction>(std::move(iWidget), iUndoActionName);
+    executeAction<SelectWidgetAction>(id);
+    iCtx.commitUndoTx();
+    return id;
   }
   else
   {
-    executeAction<AddWidgetAction>(std::move(iWidget), iUndoActionName);
+    return executeActionWithResult<AddWidgetAction>(std::move(iWidget), iUndoActionName);
   }
 }
 
@@ -294,13 +331,9 @@ bool Panel::pasteWidget(AppContext &iCtx, Widget const *iWidget, ImVec2 const &i
 {
   if(iCtx.isWidgetAllowed(fType, iWidget->getType()))
   {
-    beginTx(fmt::printf("Paste %s [%s]", iWidget->getName(), re::edit::toString(iWidget->getType())));
-    executeAction<ClearSelectionAction>();
     auto widget = copy(iWidget);
     widget->setPositionFromCenter(iPosition);
-    widget->select();
-    addWidget(iCtx, std::move(widget), false, "Paste");
-    commitTx();
+    addWidget(iCtx, std::move(widget), true, "Paste");
     return true;
   }
   return false;
@@ -328,11 +361,13 @@ bool Panel::pasteWidgets(AppContext &iCtx, std::vector<std::unique_ptr<Widget>> 
     }
   }
 
-  beginTx(fmt::printf("Paste %d widgets", iWidgets.size()));
+  iCtx.beginUndoTx(fmt::printf("Paste [%d] widgets", iWidgets.size()));
 
   executeAction<ClearSelectionAction>();
 
   auto res = false;
+
+  std::set<int> ids{};
 
   for(auto &w: iWidgets)
   {
@@ -340,13 +375,15 @@ bool Panel::pasteWidgets(AppContext &iCtx, std::vector<std::unique_ptr<Widget>> 
     {
       auto widget = copy(w.get());
       widget->setPosition(iPosition + w->getPosition() - min);
-      widget->select();
-      addWidget(iCtx, std::move(widget), false, "Paste");
+      ids.emplace(addWidget(iCtx, std::move(widget), false, "Paste"));
       res = true;
     }
   }
 
-  commitTx();
+  if(!ids.empty())
+    executeAction<SelectWidgetsAction>(std::move(ids));
+
+  iCtx.commitUndoTx();
 
   return res;
 
@@ -392,7 +429,7 @@ std::pair<std::unique_ptr<Widget>, int> Panel::deleteWidgetAction(int id)
 //------------------------------------------------------------------------
 // class DeleteWidgetAction
 //------------------------------------------------------------------------
-class DeleteWidgetAction : public PanelAction
+class DeleteWidgetAction : public PanelActionVoid
 {
 public:
   explicit DeleteWidgetAction(Widget *iWidget) : fId{iWidget->getId()}
@@ -400,17 +437,15 @@ public:
     fDescription = fmt::printf("Delete %s", iWidget->getName());
   }
 
-  bool execute() override
+  void execute() override
   {
     fWidgetAndOrder = std::move(getPanel()->deleteWidgetAction(fId));
-    return true;
+    fUndoEnabled = fWidgetAndOrder.first != nullptr;
   }
 
   void undo() override
   {
-    auto panel = getPanel();
-    fId = panel->addWidgetAction(fId, std::move(fWidgetAndOrder.first), fWidgetAndOrder.second);
-    undoSelection(panel);
+    fId = getPanel()->addWidgetAction(fId, std::move(fWidgetAndOrder.first), fWidgetAndOrder.second);
   }
 
 private:
@@ -426,18 +461,18 @@ void Panel::deleteWidgets(AppContext &iCtx, std::vector<Widget *> const &iWidget
   if(iWidgets.empty())
     return;
 
-  beginTx(iWidgets.size() == 1 ?
-          fmt::printf("Delete %s widget", iWidgets[0]->getName()) :
-          fmt::printf("Delete %d widgets", iWidgets.size()));
+  iCtx.beginUndoTx(iWidgets.size() == 1 ?
+                   fmt::printf("Delete %s widget", iWidgets[0]->getName()) :
+                   fmt::printf("Delete %d widgets", iWidgets.size()));
   for(auto const &w: iWidgets)
     executeAction<DeleteWidgetAction>(w);
-  commitTx();
+  iCtx.commitUndoTx();
 }
 
 //------------------------------------------------------------------------
 // class ReplaceWidgetAction
 //------------------------------------------------------------------------
-class ReplaceWidgetAction : public PanelAction
+class ReplaceWidgetAction : public PanelActionVoid
 {
 public:
   ReplaceWidgetAction(int iWidgetId, std::unique_ptr<Widget> iWidget, std::string iDescription) :
@@ -447,10 +482,9 @@ public:
     fDescription = std::move(iDescription);
   }
 
-  bool execute() override
+  void execute() override
   {
     fWidget = std::move(getPanel()->replaceWidgetAction(fId, std::move(fWidget)));
-    return true;
   }
 
   void undo() override
@@ -512,7 +546,7 @@ std::unique_ptr<Widget> Panel::replaceWidgetAction(int iWidgetId, std::unique_pt
 //------------------------------------------------------------------------
 // class ChangeWidgetsOrderAction
 //------------------------------------------------------------------------
-class ChangeWidgetsOrderAction : public PanelAction
+class ChangeWidgetsOrderAction : public PanelActionVoid
 {
 public:
   ChangeWidgetsOrderAction(std::string iDescription,
@@ -526,18 +560,16 @@ public:
     fDescription = std::move(iDescription);
   }
 
-  bool execute() override
+  void execute() override
   {
-    return getPanel()->changeWidgetsOrderAction(fSelectedWidgets, fWidgetOrDecal, fDirection) > 0;
+    fUndoEnabled = getPanel()->changeWidgetsOrderAction(fSelectedWidgets, fWidgetOrDecal, fDirection) > 0;
   }
 
   void undo() override
   {
-    auto panel = getPanel();
     getPanel()->changeWidgetsOrderAction(fSelectedWidgets,
                                          fWidgetOrDecal,
                                          fDirection == Panel::Direction::kUp ? Panel::Direction::kDown : Panel::Direction::kUp);
-    undoSelection(panel);
   }
 
 private:
@@ -565,8 +597,8 @@ void Panel::changeSelectedWidgetsOrder(AppContext &iCtx, WidgetOrDecal iWidgetOr
     return;
 
   auto desc = selectedWidgets.size() == 1 ?
-              fmt::printf("Move %s %s", getWidget(*selectedWidgets.begin())->getName(), iDirection == Panel::Direction::kUp ? "Up" : "Down") :
-              fmt::printf("Move %ld widgets %s", selectedWidgets.size(), iDirection == Panel::Direction::kUp ? "Up" : "Down");
+              fmt::printf("Move [%s] %s", getWidget(*selectedWidgets.begin())->getName(), iDirection == Panel::Direction::kUp ? "Up" : "Down") :
+              fmt::printf("Move [%ld] widgets %s", selectedWidgets.size(), iDirection == Panel::Direction::kUp ? "Up" : "Down");
 
   executeAction<ChangeWidgetsOrderAction>(std::move(desc), std::move(selectedWidgets), iWidgetOrDecal, iDirection);
 }
@@ -631,7 +663,7 @@ int Panel::changeWidgetsOrderAction(std::set<int> const &iWidgetIds, WidgetOrDec
 //------------------------------------------------------------------------
 // class MoveWidgetsAction
 //------------------------------------------------------------------------
-class MoveWidgetsAction : public PanelAction
+class MoveWidgetsAction : public PanelActionVoid
 {
 public:
   MoveWidgetsAction(std::set<int> iWidgetsIds, ImVec2 const &iMoveDelta, std::string iDescription, void *iMergeKey) :
@@ -644,20 +676,22 @@ public:
 
 public:
 
-  bool execute() override
+  void execute() override
   {
-    if(fMoveDelta.x == 0 && fMoveDelta.y == 0)
-      return false;
-
-    getPanel()->moveWidgetsAction(fWidgetsIds, fMoveDelta);
-    return true;
+    fUndoEnabled = fMoveDelta.x != 0 || fMoveDelta.y != 0;
+    if(fUndoEnabled)
+    {
+      auto panel = getPanel();
+      fWidgetSelection.save(panel);
+      panel->moveWidgetsAction(fWidgetsIds, fMoveDelta);
+    }
   }
 
   void undo() override
   {
     auto panel = getPanel();
     panel->moveWidgetsAction(fWidgetsIds, {-fMoveDelta.x, -fMoveDelta.y});
-    undoSelection(panel);
+    fWidgetSelection.restore(panel);
   }
 
 protected:
@@ -680,6 +714,7 @@ protected:
 private:
   std::set<int> fWidgetsIds;
   ImVec2 fMoveDelta;
+  WidgetSelection fWidgetSelection{};
 };
 
 namespace impl {
@@ -750,8 +785,8 @@ bool Panel::moveWidgets(AppContext &iCtx, ImVec2 const &iDelta)
     auto selectedWidgets = getSelectedWidgetIds();
 
     auto desc = selectedWidgets.size() == 1 ?
-                fmt::printf("Move %s", getWidget(*selectedWidgets.begin())->getName()) :
-                fmt::printf("Move %ld widgets", selectedWidgets.size());
+                fmt::printf("Move [%s]", getWidget(*selectedWidgets.begin())->getName()) :
+                fmt::printf("Move [%ld] widgets", selectedWidgets.size());
 
     executeAction<MoveWidgetsAction>(std::move(selectedWidgets), iDelta, std::move(desc), &fWidgetMove);
     return true;
@@ -780,26 +815,26 @@ void Panel::moveWidgetsAction(std::set<int> const &iWidgetsIds, ImVec2 const &iM
 //------------------------------------------------------------------------
 // class SetWidgetPositionAction
 //------------------------------------------------------------------------
-class SetWidgetPositionAction : public PanelAction
+class SetWidgetPositionAction : public PanelActionVoid
 {
 public:
-  SetWidgetPositionAction(int iWidgetId, ImVec2 const &iPosition) :
+  SetWidgetPositionAction(int iWidgetId, ImVec2 const &iPosition, std::string iDescription) :
     fId{iWidgetId},
     fPosition{iPosition}
   {
+    // fDescription = fmt::printf("Set widget [#%d] position to %.0fx%.0f", fId, fPosition.x, fPosition.y);
+    fDescription = std::move(iDescription);
   }
 
-  bool execute() override
+  void execute() override
   {
     fPreviousPosition = getPanel()->setWidgetPositionAction(fId, fPosition);
-    return fPreviousPosition != fPosition;
+    fUndoEnabled = fPreviousPosition != fPosition;
   }
 
   void undo() override
   {
-    auto panel = getPanel();
     getPanel()->setWidgetPositionAction(fId, fPreviousPosition);
-    undoSelection(panel);
   }
 
 private:
@@ -868,7 +903,7 @@ void Panel::alignWidgets(AppContext &iCtx, Panel::WidgetAlignment iAlignment)
   auto const min = fComputedSelectedRect->Min;
   auto const max = fComputedSelectedRect->Max;
 
-  beginTx(fmt::printf("Align %ld Widgets %s", fComputedSelectedWidgets.size(), alignment));
+  iCtx.beginUndoTx(fmt::printf("Align [%ld] Widgets %s", fComputedSelectedWidgets.size(), alignment));
 
   for(auto w: fComputedSelectedWidgets)
   {
@@ -891,10 +926,10 @@ void Panel::alignWidgets(AppContext &iCtx, Panel::WidgetAlignment iAlignment)
     }
 
     if(alignedPosition != position)
-      executeAction<SetWidgetPositionAction>(w->getId(), alignedPosition);
+      executeAction<SetWidgetPositionAction>(w->getId(), alignedPosition, fmt::printf("Align [%s] widget %s", w->getName(), alignment));
   }
 
-  commitTx();
+  iCtx.commitUndoTx();
 }
 
 //------------------------------------------------------------------------
@@ -908,10 +943,10 @@ public:
     fDescription = "Update cable_origin";
   }
 
-  bool execute() override
+  void execute() override
   {
     fPreviousValue = getPanel()->setCableOriginPositionAction(fValue);
-    return fPreviousValue != fValue;
+    fUndoEnabled = fPreviousValue != fValue;
   }
 
   void undo() override
