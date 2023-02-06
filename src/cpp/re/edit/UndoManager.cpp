@@ -217,8 +217,8 @@ Panel *Action::getPanel() const
 //------------------------------------------------------------------------
 std::unique_ptr<Action> Action::merge(std::unique_ptr<Action> iAction)
 {
-  if(fMergeKey == nullptr ||
-     iAction->getMergeKey() == nullptr ||
+  if(fMergeKey.empty() ||
+     iAction->getMergeKey().empty() ||
      fMergeKey != iAction->getMergeKey() ||
      fPanelType != iAction->getPanelType() ||
      !canMergeWith(iAction.get()))
@@ -253,7 +253,7 @@ void CompositeAction::redo()
 //------------------------------------------------------------------------
 // UndoTx::UndoTx
 //------------------------------------------------------------------------
-UndoTx::UndoTx(PanelType iPanelType, std::string iDescription, void *iMergeKey)
+UndoTx::UndoTx(PanelType iPanelType, std::string iDescription, MergeKey const &iMergeKey)
 {
   fPanelType = iPanelType;
   fDescription = std::move(iDescription);

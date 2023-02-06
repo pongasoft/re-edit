@@ -85,7 +85,21 @@ std::string Attribute::toString() const
 //------------------------------------------------------------------------
 bool Attribute::copyFrom(Attribute const *iFromAttribute, std::optional<std::string> const &iDescription)
 {
-  return update([this, iFromAttribute]{ this->copyFromAction(iFromAttribute); }, this, iDescription);
+  return update([this, iFromAttribute]{ this->copyFromAction(iFromAttribute); },
+                iDescription ? *iDescription : computeUpdateAttributeDescription());
+}
+
+//------------------------------------------------------------------------
+// Attribute::computeAttributeChangeDescription
+//------------------------------------------------------------------------
+std::string Attribute::computeAttributeChangeDescription(char const *iChangeAction, Attribute *iAttribute, std::optional<int> iIndex) const
+{
+  auto &ctx = AppContext::GetCurrent();
+  auto w = ctx.getCurrentWidget(); // TODO hack for now
+  if(iIndex)
+    return fmt::printf("%s %s.%s[%d]", iChangeAction, w->getName(), iAttribute ? iAttribute->fName : fName, *iIndex);
+  else
+    return fmt::printf("%s %s.%s", iChangeAction, w->getName(), iAttribute ? iAttribute->fName : fName);
 }
 
 //------------------------------------------------------------------------
@@ -228,21 +242,23 @@ void Value::editView(AppContext &iCtx)
   {
     ImVec2 p;
     fValueSwitch.editView(iCtx,
-                          [this, &iCtx] {
-                            iCtx.addUndoAttributeReset(&fValueSwitch);
-                            reset();
+                          [this] {
+                            resetAttribute(&fValueSwitch);
                             },
                           [this, &iCtx] {
                             iCtx.copyToClipboard(this);
                           }, // onCopy
-                          [this, &iCtx](const Property *p) {
-                            iCtx.addUndoAttributeChange(&fValueSwitch);
-                            fValueSwitch.fValue = p->path();
-                            fValueSwitch.fProvided = true;
-                            fValueSwitch.markEdited();
-                            fValues.fValue.clear();
-                            fValues.fValue.resize(p->stepCount());
-                            fValues.markEdited();
+                          [this](const Property *p) {
+                            if(updateAttribute([this, p] {
+                              fValueSwitch.fValue = p->path();
+                              fValueSwitch.fProvided = true;
+                              fValues.fValue.clear();
+                              fValues.fValue.resize(p->stepCount());
+                            }, &fValueSwitch))
+                            {
+                              fValueSwitch.markEdited();
+                              fValues.markEdited();
+                            }
                           },
                           [this](auto &iCtx) { editValueView(iCtx); },
                           [this](auto &iCtx) { tooltipView(iCtx); },
@@ -252,9 +268,9 @@ void Value::editView(AppContext &iCtx)
       ImGui::Separator();
       if(ImGui::MenuItem("Use value"))
       {
-        iCtx.addUndoAttributeChange(this);
-        fUseSwitch = false;
-        fEdited = true;
+        updateAttribute([this]{
+          fUseSwitch = false;
+        });
       }
       ImGui::EndPopup();
     }
@@ -264,11 +280,15 @@ void Value::editView(AppContext &iCtx)
       ImGui::BeginGroup();
       fValues.editStaticListView(iCtx,
                                  fValue.fFilter,
-                                 [this, &iCtx](int iIndex, const Property *p) { // onSelect
-                                   iCtx.addUndoAttributeChange(&fValues);
-                                   fValues.fValue[iIndex] = p->path();
-                                   fValues.fProvided = true;
-                                   fValues.markEdited();
+                                 [this](int iIndex, const Property *p) { // onSelect
+                                   if(update([this, iIndex, p] {
+                                               fValues.fValue[iIndex] = p->path();
+                                               fValues.fProvided = true;
+                                             },
+                                             computeUpdateAttributeDescription(&fValues, iIndex)))
+                                   {
+                                     fValues.markEdited();
+                                   }
                                  });
       ImGui::EndGroup();
     }
@@ -276,18 +296,17 @@ void Value::editView(AppContext &iCtx)
   else
   {
     fValue.editView(iCtx,
-                    [this, &iCtx] {
-                      iCtx.addUndoAttributeReset(&fValue);
-                      reset();
+                    [this] {
+                      resetAttribute(&fValue);
                     },
                     [this, &iCtx] {
                       iCtx.copyToClipboard(this);
                     }, // onCopy
-                    [this, &iCtx](const Property *p) {
-                      iCtx.addUndoAttributeChange(&fValue);
-                      fValue.fValue = p->path();
-                      fValue.fProvided = true;
-                      fValue.markEdited();
+                    [this](const Property *p) {
+                      updateAttribute([this, p]{
+                        fValue.fValue = p->path();
+                        fValue.fProvided = true;
+                      }, &fValue);
                     },
                     [this](auto &iCtx) { fValue.editPropertyView(iCtx); },
                     [this](auto &iCtx) { fValue.tooltipPropertyView(iCtx); });
@@ -296,9 +315,9 @@ void Value::editView(AppContext &iCtx)
       ImGui::Separator();
       if(ImGui::MenuItem("Use value_switch"))
       {
-        iCtx.addUndoAttributeChange(this);
-        fUseSwitch = true;
-        fEdited = true;
+        updateAttribute([this]{
+          fUseSwitch = true;
+        });
       }
       ImGui::EndPopup();
     }
@@ -520,21 +539,25 @@ void Visibility::editView(AppContext &iCtx)
 
   ImVec2 p;
   fSwitch.editView(iCtx,
-                   [this, &iCtx] () {
-                     iCtx.addUndoAttributeReset(&fSwitch);
-                     reset();
+                   [this] () {
+                     resetAttribute(&fSwitch);
                    }, // onReset
                    [this, &iCtx] {
                      iCtx.copyToClipboard(this);
                    }, // onCopy
-                   [this, &iCtx] (const Property *p) { // onSelect
-                     iCtx.addUndoAttributeChange(&fSwitch);
-                     fSwitch.fValue = p->path();
-                     fSwitch.fProvided = true;
-                     fSwitch.markEdited();
-                     fValues.fValue = {0};
-                     fValues.fProvided = true;
-                     fValues.markEdited();
+                   [this] (const Property *p) { // onSelect
+                     if(updateAttribute([this, p] {
+                                          fSwitch.fValue = p->path();
+                                          fSwitch.fProvided = true;
+                                          fValues.fValue = {0};
+                                          fValues.fProvided = true;
+                                        },
+                                        &fSwitch
+                     ))
+                     {
+                       fSwitch.markEdited();
+                       fValues.markEdited();
+                     }
                    },
                    [this](auto &iCtx) { fSwitch.editPropertyView(iCtx); },
                    [this](auto &iCtx) { fSwitch.tooltipPropertyView(iCtx); },
@@ -549,25 +572,36 @@ void Visibility::editView(AppContext &iCtx)
       ImGui::SetCursorPosX(p.x);
       ImGui::BeginGroup();
       fValues.editView(0, stepCount - 1,
-                       [this, &iCtx]() { // onAdd
-                         iCtx.addUndoAttributeChange(&fValues);
-                         fValues.fValue.emplace_back(0);
-                         fValues.fProvided = true;
-                         fValues.markEdited();
+                       [this]() { // onAdd
+                         if(updateAttribute([this] {
+                                              fValues.fValue.emplace_back(0);
+                                              fValues.fProvided = true;
+                                            },
+                                            &fValues))
+                         {
+                           fValues.markEdited();
+                         }
                        },
-                       [this, &iCtx](int iIndex, int iValue) { // onUpdate
-                         iCtx.addOrMergeUndoCurrentWidgetChange(&fValues.fValue[iIndex],
-                                                                fValues.fValue[iIndex],
-                                                                iValue,
-                                                                fmt::printf("Update %s.%s[%d]", iCtx.getCurrentWidget()->getName(), fValues.fName, iIndex));
-                         fValues.fValue[iIndex] = iValue;
-                         fValues.markEdited();
+                       [this](int iIndex, int iValue) { // onUpdate
+                         if(update([this, iIndex, iValue] {
+                                     fValues.fValue[iIndex] = iValue;
+                                     fValues.fProvided = true;
+                                   },
+                                   computeUpdateAttributeDescription(&fValues, iIndex),
+                                   MergeKey::from(&fValues.fValue[iIndex])))
+                         {
+                           fValues.markEdited();
+                         }
                        },
-                       [this, &iCtx](int iIndex) { // onDelete
-                         iCtx.addUndoAttributeChange(&fValues);
-                         fValues.fValue.erase(fValues.fValue.begin() + iIndex);
-                         fValues.fProvided = false;
-                         fValues.markEdited();
+                       [this](int iIndex) { // onDelete
+                         if(updateAttribute([this, iIndex] {
+                                              fValues.fValue.erase(fValues.fValue.begin() + iIndex);
+                                              fValues.fProvided = true;
+                                            },
+                                            &fValues))
+                         {
+                           fValues.markEdited();
+                         }
                        }
       );
       ImGui::EndGroup();
@@ -646,7 +680,7 @@ void Visibility::reset()
 bool Visibility::isHidden(AppContext const &iCtx) const
 {
   auto switchPropertyPath = fSwitch.fValue;
-  if(switchPropertyPath.empty())
+  if(switchPropertyPath.empty() || fValues.empty())
     return false;
   else
     return !fValues.contains(iCtx.getPropertyValueAsInt(switchPropertyPath));
@@ -708,10 +742,7 @@ void String::editView(AppContext &iCtx)
 
   if(ImGui::InputText(fName, &editedValue))
   {
-    iCtx.addOrMergeUndoAttributeChange(this, fValue, editedValue);
-    fValue = editedValue;
-    fProvided = true;
-    fEdited = true;
+    mergeUpdate(editedValue);
   }
 }
 
@@ -725,10 +756,7 @@ void Bool::editView(AppContext &iCtx)
   bool editedValue = fValue;
   if(ImGui::Checkbox(fName, &editedValue))
   {
-    iCtx.addUndoAttributeChange(this);
-    fValue = editedValue;
-    fProvided = true;
-    fEdited = true;
+    update(editedValue);
   }
 }
 
@@ -744,10 +772,7 @@ void Integer::editView(AppContext &iCtx)
 
   if(ImGui::InputInt(fName, &editedValue))
   {
-    iCtx.addOrMergeUndoAttributeChange(this, fValue, editedValue);
-    fValue = editedValue;
-    fProvided = true;
-    fEdited = true;
+    mergeUpdate(editedValue);
   }
 }
 
@@ -757,18 +782,14 @@ void Integer::editView(AppContext &iCtx)
 void PropertyPath::editView(AppContext &iCtx)
 {
   editView(iCtx,
-           [this, &iCtx] {
-             iCtx.addUndoAttributeReset(this);
-             reset();
+           [this] {
+             resetAttribute();
            },
            [this, &iCtx] {
              iCtx.copyToClipboard(this);
            },
-           [this, &iCtx](const Property *p) {
-             iCtx.addUndoAttributeChange(this);
-             fValue = p->path();
-             fProvided = true;
-             fEdited = true;
+           [this](const Property *p) {
+             update(p->path());
            },
            [this](auto &iCtx) { this->editPropertyView(iCtx); },
            [this](auto &iCtx) { this->tooltipPropertyView(iCtx); });
@@ -952,10 +973,7 @@ void ObjectPath::editView(AppContext &iCtx)
       auto const isSelected = o->path() == fValue;
       if(ImGui::Selectable(o->path().c_str(), isSelected))
       {
-        iCtx.addUndoAttributeChange(this);
-        fValue = o->path();
-        fProvided = true;
-        fEdited = true;
+        update(o->path());
       }
       if(isSelected)
         ImGui::SetItemDefaultFocus();
@@ -1104,11 +1122,11 @@ void PropertyPathList::editView(AppContext &iCtx)
 
       if(ImGui::Button("OK", ImVec2(120, 0)))
       {
-        iCtx.addUndoAttributeChange(this);
-        fValue = std::move(fStringListEditView->destination());
-        fStringListEditView = std::nullopt;
-        fProvided = true;
-        fEdited = true;
+        updateAttribute([this] {
+          fValue = std::move(fStringListEditView->destination());
+          fStringListEditView = std::nullopt;
+          fProvided = true;
+        });
         ImGui::CloseCurrentPopup();
       }
       ImGui::SetItemDefaultFocus();
@@ -1169,10 +1187,7 @@ void StaticStringList::editView(AppContext &iCtx)
       auto const isSelected = p == fValue;
       if(ImGui::Selectable(p.c_str(), isSelected))
       {
-        iCtx.addUndoAttributeChange(this);
-        fValue = p;
-        fProvided = true;
-        fEdited = true;
+        update(p);
       }
       if(isSelected)
         ImGui::SetItemDefaultFocus();
@@ -1196,10 +1211,7 @@ void Index::editView(AppContext &iCtx)
     auto editedValue = fValue;
     if(ImGui::SliderInt(fName, &editedValue, 0, property->stepCount() - 1))
     {
-      iCtx.addOrMergeUndoAttributeChange(this, fValue, editedValue);
-      fValue = editedValue;
-      fProvided = true;
-      fEdited = true;
+      mergeUpdate(editedValue);
     }
   }
   else
@@ -1241,10 +1253,7 @@ void UserSampleIndex::editView(AppContext &iCtx)
     auto editedValue = fValue;
     if(ImGui::SliderInt(fName, &editedValue, 0, count - 1))
     {
-      iCtx.addOrMergeUndoAttributeChange(this, fValue, editedValue);
-      fValue = editedValue;
-      fProvided = true;
-      fEdited = true;
+      mergeUpdate(editedValue);
     }
   }
 }
@@ -1314,13 +1323,12 @@ void ValueTemplates::editView(AppContext &iCtx)
     auto editedValue = fValue[i];
     if(ImGui::InputText(re::mock::fmt::printf("%s [%d]", fName, i).c_str(), &editedValue))
     {
-      iCtx.addOrMergeUndoCurrentWidgetChange(&fValue[i],
-                                             fValue[i],
-                                             editedValue,
-                                             fmt::printf("Update %s.%s[%d]", iCtx.getCurrentWidget()->getName(), fName, i));
-      fValue[i] = editedValue;
-      fProvided = true;
-      fEdited = true;
+      update([this, i, &editedValue] {
+               fValue[i] = editedValue;
+               fProvided = true;
+             },
+             computeUpdateAttributeDescription(this, i),
+             MergeKey::from(&fValue[i]));
     }
 
     ImGui::PopItemWidth();
@@ -1330,18 +1338,18 @@ void ValueTemplates::editView(AppContext &iCtx)
 
   if(deleteItemIdx >= 0)
   {
-    iCtx.addUndoAttributeChange(this);
-    fValue.erase(fValue.begin() + deleteItemIdx);
-    fEdited = true;
+    updateAttribute([this, deleteItemIdx] {
+      fValue.erase(fValue.begin() + deleteItemIdx);
+    });
   }
 
   ImGui::PushID(static_cast<int>(fValue.size()));
 
   if(ImGui::Button("+"))
   {
-    iCtx.addUndoAttributeChange(this);
-    fValue.resize(fValue.size() + 1);
-    fEdited = true;
+    updateAttribute([this] {
+      fValue.resize(fValue.size() + 1);
+    });
   }
 
   ImGui::SameLine();

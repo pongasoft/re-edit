@@ -98,14 +98,26 @@ public:
 
   friend class re::edit::Widget;
 
+  template<typename F>
+  bool update(F &&f, std::string const &iDescription, MergeKey const &iMergeKey = MergeKey::none());
+
+  template<typename F>
+  bool updateAttribute(F &&f, Attribute *iAttributeForDescription = nullptr, MergeKey const &iMergeKey = MergeKey::none());
+
+  bool resetAttribute(Attribute *iAttributeForDescription = nullptr);
+
+  std::string computeAttributeChangeDescription(char const *iChangeAction, Attribute *iAttribute = nullptr, std::optional<int> iIndex = std::nullopt) const;
+
+  inline std::string computeUpdateAttributeDescription(Attribute *iAttribute = nullptr, std::optional<int> iIndex = std::nullopt) const {
+    return computeAttributeChangeDescription("Update", iAttribute, iIndex);
+  }
+
 protected:
   template<typename T>
   static std::unique_ptr<Attribute> clone(T const &iAttribute);
 
-  template<typename F>
-  bool update(F &&f, void *iMergeKey = nullptr, std::optional<std::string> const &iDescription = std::nullopt);
 
-  inline void copyToClipboardMenuItem(AppContext &iCtx)
+  inline void copyToClipboardMenuItem(AppContext &iCtx) const
   {
     if(ImGui::MenuItem(ReGui_Prefix(ReGui_Icon_Copy, "Copy")))
     {
@@ -143,6 +155,10 @@ public:
   bool copyFromAction(Attribute const *iFromAttribute) override;
 
   std::string toString() const override;
+
+  using Attribute::update;
+  bool update(T const &iNewValue);
+  bool mergeUpdate(T const &iNewValue);
 
 public:
   value_t fDefaultValue{};
@@ -307,6 +323,7 @@ public:
   std::string getValueAsLua() const override;
 
   bool contains(int iValue) const;
+  bool empty() const { return fValue.empty(); }
 
   using Attribute::editView;
 
@@ -612,8 +629,7 @@ void SingleAttribute<T>::menuView(AppContext &iCtx)
   {
     if(ImGui::MenuItem(ReGui_Prefix(ReGui_Icon_Reset, "Reset")))
     {
-      iCtx.addUndoAttributeReset(this);
-      reset();
+      resetAttribute();
     }
 
     copyToClipboardMenuItem(iCtx);

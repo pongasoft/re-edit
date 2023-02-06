@@ -569,7 +569,7 @@ public:
   explicit UndoActionAdapter(std::unique_ptr<Action> iAction) : fAction{std::move(iAction) }
   {
     fPanelType = fAction->getPanelType();
-    fMergeKey = fAction->getMergeKey();
+    fMergeKey = fAction->getMergeKey().fKey;
     fDescription = fAction->getDescription();
   }
 
@@ -601,7 +601,7 @@ void AppContext::addUndo(std::unique_ptr<Action> iAction)
   if(!isUndoEnabled())
     return;
 
-  if(iAction->getMergeKey())
+  if(!iAction->getMergeKey().empty())
   {
     if(fUndoTx)
     {
@@ -622,7 +622,7 @@ void AppContext::addUndo(std::unique_ptr<Action> iAction)
     }
     auto last = fUndoManager->getLastUndoAction();
     auto adapter = std::dynamic_pointer_cast<UndoActionAdapter>(last);
-    if(adapter && adapter->fMergeKey == iAction->getMergeKey())
+    if(adapter && adapter->fMergeKey == iAction->getMergeKey().fKey)
     {
       iAction = adapter->merge(std::move(iAction));
       if(iAction)
@@ -707,7 +707,7 @@ void AppContext::addUndoWidgetChange(Widget const *iWidget, std::string iDescrip
 //------------------------------------------------------------------------
 // AppContext::beginUndoTx
 //------------------------------------------------------------------------
-void AppContext::beginUndoTx(std::string iDescription, void *iMergeKey)
+void AppContext::beginUndoTx(std::string iDescription, MergeKey const &iMergeKey)
 {
   if(fUndoTx)
     fNestedUndoTxs.emplace_back(std::move(fUndoTx));

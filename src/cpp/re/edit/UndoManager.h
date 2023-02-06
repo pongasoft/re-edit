@@ -30,6 +30,19 @@ class Widget;
 class RedoAction;
 class Panel;
 
+struct MergeKey {
+  void *fKey{};
+
+  constexpr void reset() { fKey = nullptr; }
+  constexpr bool empty() const { return fKey == nullptr; }
+
+  constexpr bool operator==(MergeKey const &rhs) const { return fKey == rhs.fKey; }
+  constexpr bool operator!=(MergeKey const &rhs) const { return !(rhs == *this); }
+
+  constexpr static MergeKey none() { return {}; }
+  constexpr static MergeKey from(void *iKey) { return { iKey }; }
+};
+
 class Action
 {
 public:
@@ -41,9 +54,9 @@ public:
   inline PanelType getPanelType() const { return fPanelType; }
   inline void setPanelType(PanelType iType) { fPanelType = iType; }
 
-  inline void *getMergeKey() const { return fMergeKey; }
-  inline void setMergeKey(void *iMergeKey) { fMergeKey = iMergeKey; }
-  inline void resetMergeKey() { fMergeKey = nullptr; }
+  inline MergeKey getMergeKey() const { return fMergeKey; }
+  inline void setMergeKey(MergeKey iMergeKey) { fMergeKey = iMergeKey; }
+  inline void resetMergeKey() { fMergeKey.reset(); }
 
   std::string const &getDescription() const { return fDescription; }
   void setDescription(std::string iDescription) { fDescription = std::move(iDescription); }
@@ -63,7 +76,7 @@ protected:
 public:
   PanelType fPanelType{PanelType::kUnknown};
   std::string fDescription{};
-  void *fMergeKey{};
+  MergeKey fMergeKey{};
 };
 
 class NoOpAction : public Action
@@ -92,7 +105,7 @@ protected:
 class UndoTx : public CompositeAction
 {
 public:
-  UndoTx(PanelType iPanelType, std::string iDescription, void *iMergeKey);
+  UndoTx(PanelType iPanelType, std::string iDescription, MergeKey const &iMergeKey);
   std::unique_ptr<Action> single();
   void addAction(std::unique_ptr<Action> iAction);
 };

@@ -174,7 +174,7 @@ private:
   Widget *findWidgetOnTopAt(ImVec2 const &iPosition) const;
   void moveWidgets(AppContext &iCtx, ImVec2 const &iPosition, ImVec2 const &iGrid);
   void endMoveWidgets(AppContext &iCtx);
-  bool moveWidgets(AppContext &iCtx, ImVec2 const &iDelta);
+  bool moveWidgets(ImVec2 const &iDelta);
   enum class WidgetAlignment { kTop, kBottom, kLeft, kRight};
   void alignWidgets(AppContext &iCtx, WidgetAlignment iAlignment);
   void setCableOrigin(ImVec2 const &iPosition);

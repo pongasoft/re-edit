@@ -1028,7 +1028,7 @@ bool Widget::copyFrom(Widget const &iWidget, std::string iDescription)
 {
   auto &ctx = AppContext::GetCurrent();
 
-  ctx.beginUndoTx(std::move(iDescription), nullptr);
+  ctx.beginUndoTx(std::move(iDescription));
   bool res = false;
   for(auto &att: fAttributes)
   {

@@ -37,7 +37,7 @@ template<typename T>
 class WidgetValueAction : public WidgetActionVoid
 {
 public:
-  explicit WidgetValueAction(T iValue, void *iMergeKey) : fValue{std::move(iValue)}
+  explicit WidgetValueAction(T iValue, MergeKey const &iMergeKey) : fValue{std::move(iValue)}
   {
     fMergeKey = iMergeKey;
   }
@@ -72,7 +72,7 @@ protected:
 class RenameWidgetAction : public WidgetValueAction<std::string>
 {
 public:
-  explicit RenameWidgetAction(Widget *iWidget, std::string iName, void *iMergeKey) :
+  explicit RenameWidgetAction(Widget *iWidget, std::string iName, MergeKey const &iMergeKey) :
     WidgetValueAction(std::move(iName), iMergeKey)
   {
     fDescription = fmt::printf("Rename widget %s -> %s", iWidget->getName(), fValue);
@@ -107,7 +107,7 @@ protected:
 //------------------------------------------------------------------------
 void Widget::setName(std::string iName)
 {
-  executeAction<RenameWidgetAction>(this, std::move(iName), &fName);
+  executeAction<RenameWidgetAction>(this, std::move(iName), MergeKey::from(&fName));
 }
 
 //------------------------------------------------------------------------

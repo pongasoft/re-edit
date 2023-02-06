@@ -244,7 +244,7 @@ public: // Undo
                                       computeUpdateDescription(fCurrentWidget, iAttribute));
   }
 
-  void beginUndoTx(std::string iDescription, void *iMergeKey = nullptr);
+  void beginUndoTx(std::string iDescription, MergeKey const &iMergeKey = MergeKey::none());
   void commitUndoTx();
   void rollbackUndoTx();
 

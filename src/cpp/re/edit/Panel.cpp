@@ -1083,7 +1083,7 @@ void Panel::editMultiSelectionView(AppContext &iCtx)
   auto delta = editedMin - min;
   if(delta.x != 0 || delta.y != 0)
   {
-    moveWidgets(iCtx, delta);
+    moveWidgets(delta);
   }
 
   ReGui::TextSeparator("Alignment");

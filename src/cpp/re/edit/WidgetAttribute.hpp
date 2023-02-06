@@ -28,8 +28,8 @@ class AttributeUpdateAction : public WidgetAction<void>
 public:
   AttributeUpdateAction(std::unique_ptr<widget::Attribute> iValue,
                         std::unique_ptr<widget::Attribute> iPreviousValue,
-                        void *iMergeKey,
-                        std::string iDescription) :
+                        std::string iDescription,
+                        MergeKey const &iMergeKey) :
     fValue{std::move(iValue)},
     fPreviousValue{std::move(iPreviousValue)}
   {
@@ -80,12 +80,13 @@ private:
 // Attribute::update
 //------------------------------------------------------------------------
 template<typename F>
-bool Attribute::update(F &&f, void *iMergeKey, std::optional<std::string> const &iDescription)
+bool Attribute::update(F &&f, std::string const &iDescription, MergeKey const &iMergeKey)
 {
   auto &ctx = AppContext::GetCurrent();
   if(!ctx.isUndoEnabled())
   {
     f();
+    markEdited();
     return true;
   }
   else
@@ -95,15 +96,64 @@ bool Attribute::update(F &&f, void *iMergeKey, std::optional<std::string> const 
     auto currentValue = clone();
     if(!currentValue->eq(previousValue.get()))
     {
+      markEdited();
       auto w = const_cast<Widget *>(ctx.getCurrentWidget()); // TODO hack for now
-      auto desc = iDescription ? *iDescription : fmt::printf("Update %s.%s", w->getName(), currentValue->fName);
-      w->executeAction<AttributeUpdateAction>(std::move(currentValue), std::move(previousValue), iMergeKey, std::move(desc));
+      w->executeAction<AttributeUpdateAction>(std::move(currentValue), std::move(previousValue), iDescription, iMergeKey);
       return true;
     }
     else
       return false;
   }
 }
+
+//------------------------------------------------------------------------
+// Attribute::resetAttribute
+//------------------------------------------------------------------------
+template<typename F>
+bool Attribute::updateAttribute(F &&f, Attribute *iAttributeForDescription, MergeKey const &iMergeKey)
+{
+  return update(std::forward<F>(f), computeUpdateAttributeDescription(iAttributeForDescription), iMergeKey);
+}
+
+//------------------------------------------------------------------------
+// Attribute::resetAttribute
+//------------------------------------------------------------------------
+bool Attribute::resetAttribute(Attribute *iAttributeForDescription)
+{
+  auto &ctx = AppContext::GetCurrent();
+  auto w = const_cast<Widget *>(ctx.getCurrentWidget()); // TODO hack for now
+  return update([this] { reset(); },
+                fmt::printf("Reset %s.%s", w->getName(), iAttributeForDescription ? iAttributeForDescription->fName : fName));
+}
+
+namespace attribute {
+
+//------------------------------------------------------------------------
+// Attribute::update
+//------------------------------------------------------------------------
+template<typename T>
+bool SingleAttribute<T>::update(T const &iNewValue)
+{
+  return updateAttribute([this, &iNewValue] {
+    fValue = iNewValue;
+    fProvided = true;
+  });
+}
+
+//------------------------------------------------------------------------
+// Attribute::mergeUpdate
+//------------------------------------------------------------------------
+template<typename T>
+bool SingleAttribute<T>::mergeUpdate(T const &iNewValue)
+{
+  return updateAttribute([this, &iNewValue]{
+    fValue = iNewValue;
+    fProvided = true;
+  }, this, MergeKey::from(this));
+}
+
+}
+
 
 }
 

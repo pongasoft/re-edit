@@ -29,7 +29,7 @@ template<typename T>
 class PanelValueAction : public PanelActionVoid
 {
 public:
-  explicit PanelValueAction(T iValue, void *iMergeKey) : fValue{std::move(iValue)}
+  explicit PanelValueAction(T iValue, MergeKey const &iMergeKey) : fValue{std::move(iValue)}
   {
     fMergeKey = iMergeKey;
   }
@@ -669,7 +669,7 @@ int Panel::changeWidgetsOrderAction(std::set<int> const &iWidgetIds, WidgetOrDec
 class MoveWidgetsAction : public PanelActionVoid
 {
 public:
-  MoveWidgetsAction(std::set<int> iWidgetsIds, ImVec2 const &iMoveDelta, std::string iDescription, void *iMergeKey) :
+  MoveWidgetsAction(std::set<int> iWidgetsIds, ImVec2 const &iMoveDelta, std::string iDescription, MergeKey iMergeKey) :
     fWidgetsIds{std::move(iWidgetsIds)},
     fMoveDelta{iMoveDelta}
   {
@@ -764,7 +764,7 @@ void Panel::moveWidgets(AppContext &iCtx, ImVec2 const &iPosition, ImVec2 const 
   if(fWidgetMove)
   {
     auto totalDelta = impl::clampToGrid(iPosition - fWidgetMove->fInitialPosition, iGrid);
-    if(moveWidgets(iCtx, totalDelta - fWidgetMove->fDelta))
+    if(moveWidgets(totalDelta - fWidgetMove->fDelta))
       fWidgetMove->fDelta = totalDelta;
   }
 }
@@ -781,7 +781,7 @@ void Panel::endMoveWidgets(AppContext &iCtx)
 //------------------------------------------------------------------------
 // Panel::moveWidgets
 //------------------------------------------------------------------------
-bool Panel::moveWidgets(AppContext &iCtx, ImVec2 const &iDelta)
+bool Panel::moveWidgets(ImVec2 const &iDelta)
 {
   if(iDelta.x != 0 || iDelta.y != 0)
   {
@@ -791,7 +791,7 @@ bool Panel::moveWidgets(AppContext &iCtx, ImVec2 const &iDelta)
                 fmt::printf("Move [%s]", getWidget(*selectedWidgets.begin())->getName()) :
                 fmt::printf("Move [%ld] widgets", selectedWidgets.size());
 
-    executeAction<MoveWidgetsAction>(std::move(selectedWidgets), iDelta, std::move(desc), &fWidgetMove);
+    executeAction<MoveWidgetsAction>(std::move(selectedWidgets), iDelta, std::move(desc), MergeKey::from(&fWidgetMove));
     return true;
   }
 
@@ -941,7 +941,7 @@ void Panel::alignWidgets(AppContext &iCtx, Panel::WidgetAlignment iAlignment)
 class SetCableOriginPosition : public PanelValueAction<ImVec2>
 {
 public:
-  SetCableOriginPosition(ImVec2 const &iPosition, void *iMergeKey) : PanelValueAction(iPosition, iMergeKey)
+  SetCableOriginPosition(ImVec2 const &iPosition, MergeKey const &iMergeKey) : PanelValueAction(iPosition, iMergeKey)
   {
     fDescription = "Update cable_origin";
   }
@@ -965,7 +965,7 @@ void Panel::setCableOrigin(ImVec2 const &iPosition)
 {
   RE_EDIT_INTERNAL_ASSERT(fCableOrigin != std::nullopt);
 
-  executeAction<SetCableOriginPosition>(iPosition, &fCableOrigin);
+  executeAction<SetCableOriginPosition>(iPosition, MergeKey::from(&fCableOrigin));
 
 }
 
@@ -975,7 +975,7 @@ void Panel::setCableOrigin(ImVec2 const &iPosition)
 class SetPanelOptions : public PanelValueAction<bool>
 {
 public:
-  SetPanelOptions(bool iDisableSampleDropOnPanel, void *iMergeKey) : PanelValueAction(iDisableSampleDropOnPanel, iMergeKey)
+  SetPanelOptions(bool iDisableSampleDropOnPanel, MergeKey const &iMergeKey) : PanelValueAction(iDisableSampleDropOnPanel, iMergeKey)
   {
     fDescription = "Update disable_sample_drop_on_panel";
   }
@@ -1014,7 +1014,7 @@ void Panel::setPanelOptions(bool iDisableSampleDropOnPanel)
 {
   RE_EDIT_INTERNAL_ASSERT(fDisableSampleDropOnPanel != std::nullopt);
 
-  executeAction<SetPanelOptions>(iDisableSampleDropOnPanel, &fDisableSampleDropOnPanel);
+  executeAction<SetPanelOptions>(iDisableSampleDropOnPanel, MergeKey::from(&fDisableSampleDropOnPanel));
 
 }
 
