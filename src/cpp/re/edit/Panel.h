@@ -113,7 +113,6 @@ public:
   bool checkForErrors(AppContext &iCtx) override;
 
   inline void setBackgroundKey(Texture::key_t const &iTextureKey) { fGraphics.setTextureKey(iTextureKey); fEdited = true; }
-  inline void setCableOrigin(ImVec2 const &iPosition) { fCableOrigin = iPosition; fEdited = true; }
   void setOptions(std::vector<std::string> const &iOptions);
   int addWidget(AppContext &iCtx, std::unique_ptr<Widget> iWidget, bool iMakeSingleSelected, char const *iUndoActionName = "Add");
   void addWidget(AppContext &iCtx, WidgetDef const &iDef, ImVec2 const &iPosition);
@@ -161,6 +160,7 @@ public:
   bool unselectWidgetAction(int id) const;
   bool selectWidgetsAction(std::set<int> const &iWidgetIds) const;
   bool unselectWidgetsAction(std::set<int> const &iWidgetIds);
+  bool setPanelOptionsAction(bool iDisableSampleDropOnPanel);
 
 protected:
   void editNoSelectionView(AppContext &iCtx);
@@ -177,7 +177,8 @@ private:
   bool moveWidgets(AppContext &iCtx, ImVec2 const &iDelta);
   enum class WidgetAlignment { kTop, kBottom, kLeft, kRight};
   void alignWidgets(AppContext &iCtx, WidgetAlignment iAlignment);
-  void setCableOrigin(AppContext &iCtx, ImVec2 const &iPosition);
+  void setCableOrigin(ImVec2 const &iPosition);
+  void setPanelOptions(bool iDisableSampleDropOnPanel);
   void beforeEachFrame(AppContext &iCtx);
   bool renderPanelWidgetMenu(AppContext &iCtx, ImVec2 const &iPosition = {});
   bool renderPanelMenus(AppContext &iCtx, std::optional<ImVec2> iPosition = std::nullopt);

@@ -961,11 +961,60 @@ public:
 //------------------------------------------------------------------------
 // Panel::setCableOrigin
 //------------------------------------------------------------------------
-void Panel::setCableOrigin(AppContext &iCtx, ImVec2 const &iPosition)
+void Panel::setCableOrigin(ImVec2 const &iPosition)
 {
   RE_EDIT_INTERNAL_ASSERT(fCableOrigin != std::nullopt);
 
   executeAction<SetCableOriginPosition>(iPosition, &fCableOrigin);
+
+}
+
+//------------------------------------------------------------------------
+// class SetPanelOptions
+//------------------------------------------------------------------------
+class SetPanelOptions : public PanelValueAction<bool>
+{
+public:
+  SetPanelOptions(bool iDisableSampleDropOnPanel, void *iMergeKey) : PanelValueAction(iDisableSampleDropOnPanel, iMergeKey)
+  {
+    fDescription = "Update disable_sample_drop_on_panel";
+  }
+
+  void execute() override
+  {
+    fPreviousValue = getPanel()->setPanelOptionsAction(fValue);
+    fUndoEnabled = fPreviousValue != fValue;
+  }
+
+  void undo() override
+  {
+    getPanel()->setPanelOptionsAction(fPreviousValue);
+  }
+};
+
+
+//------------------------------------------------------------------------
+// Panel::setPanelOptionsAction
+//------------------------------------------------------------------------
+bool Panel::setPanelOptionsAction(bool iDisableSampleDropOnPanel)
+{
+  RE_EDIT_INTERNAL_ASSERT(fDisableSampleDropOnPanel != std::nullopt);
+
+  auto res = *fDisableSampleDropOnPanel;
+  fDisableSampleDropOnPanel = iDisableSampleDropOnPanel;
+  if(res != iDisableSampleDropOnPanel)
+    fEdited = true;
+  return res;
+}
+
+//------------------------------------------------------------------------
+// Panel::setPanelOptions
+//------------------------------------------------------------------------
+void Panel::setPanelOptions(bool iDisableSampleDropOnPanel)
+{
+  RE_EDIT_INTERNAL_ASSERT(fDisableSampleDropOnPanel != std::nullopt);
+
+  executeAction<SetPanelOptions>(iDisableSampleDropOnPanel, &fDisableSampleDropOnPanel);
 
 }
 
