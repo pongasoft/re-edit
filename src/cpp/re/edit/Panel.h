@@ -159,7 +159,7 @@ public:
   ImVec2 setCableOriginPositionAction(ImVec2 const &iPosition);
   bool selectWidgetAction(int id) const;
   bool unselectWidgetAction(int id) const;
-  bool selectWidgetsAction(std::set<int> const &iWidgetIds);
+  bool selectWidgetsAction(std::set<int> const &iWidgetIds) const;
   bool unselectWidgetsAction(std::set<int> const &iWidgetIds);
 
 protected:

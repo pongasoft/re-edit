@@ -751,7 +751,9 @@ void AppContext::rollbackUndoTx()
 {
   RE_EDIT_INTERNAL_ASSERT(fUndoTx != nullptr, "no current transaction");
 
-  fUndoTx = nullptr;
+  auto action = std::move(fUndoTx);
+
+  action->undo();
 
   if(!fNestedUndoTxs.empty())
   {

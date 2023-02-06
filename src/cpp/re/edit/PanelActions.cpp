@@ -143,6 +143,7 @@ public:
 
   void execute() override
   {
+    // implementation note: not setting fUndoEnabled on purpose ("selection" is not fully under undo/redo)
     auto panel = getPanel();
     fWidgetSelection.save(panel);
     panel->clearSelection();
@@ -170,6 +171,7 @@ public:
 
   void execute() override
   {
+    // implementation note: not setting fUndoEnabled on purpose ("selection" is not fully under undo/redo)
     fPreviouslySelected = !getPanel()->selectWidgetAction(fWidgetId);
   }
 
@@ -199,6 +201,7 @@ public:
 
   void execute() override
   {
+    // implementation note: not setting fUndoEnabled on purpose ("selection" is not fully under undo/redo)
     auto panel = getPanel();
     fWidgetSelection.save(panel);
     panel->selectWidgetsAction(fWidgetIds);
@@ -232,7 +235,7 @@ bool Panel::selectWidgetAction(int id) const
 //------------------------------------------------------------------------
 // Panel::selectWidgetsAction
 //------------------------------------------------------------------------
-bool Panel::selectWidgetsAction(std::set<int> const &iWidgetIds)
+bool Panel::selectWidgetsAction(std::set<int> const &iWidgetIds) const
 {
   auto res = false;
   for(auto id: iWidgetIds)
