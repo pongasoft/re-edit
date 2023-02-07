@@ -115,17 +115,6 @@ bool Attribute::updateAttribute(F &&f, Attribute *iAttributeForDescription, Merg
   return update(std::forward<F>(f), computeUpdateAttributeDescription(iAttributeForDescription), iMergeKey);
 }
 
-//------------------------------------------------------------------------
-// Attribute::resetAttribute
-//------------------------------------------------------------------------
-bool Attribute::resetAttribute(Attribute *iAttributeForDescription)
-{
-  auto &ctx = AppContext::GetCurrent();
-  auto w = const_cast<Widget *>(ctx.getCurrentWidget()); // TODO hack for now
-  return update([this] { reset(); },
-                fmt::printf("Reset %s.%s", w->getName(), iAttributeForDescription ? iAttributeForDescription->fName : fName));
-}
-
 namespace attribute {
 
 //------------------------------------------------------------------------

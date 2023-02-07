@@ -166,7 +166,7 @@ public:
 
   constexpr data_t const *data() const { return fData->data(); }
 
-  void overrideNumFrames(int iNumFrames);
+  int overrideNumFrames(int iNumFrames);
 
   static std::unique_ptr<FilmStrip> load(std::shared_ptr<Source> const &iSource);
 

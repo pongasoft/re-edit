@@ -21,7 +21,7 @@
 
 #include "AppContext.h"
 #include "Widget.h"
-
+#include "Panel.h"
 
 namespace re::edit {
 
@@ -40,6 +40,33 @@ void AppContext::addOrMergeUndoWidgetChange(Widget const *iWidget,
     populateWidgetUndoAction(action.get(), iWidget);
     return action;
   });
+}
+
+//------------------------------------------------------------------------
+// AppContext::execute
+//------------------------------------------------------------------------
+template<typename R>
+R AppContext::execute(std::unique_ptr<ExecutableAction<R>> iAction)
+{
+  auto result = iAction->execute();
+  if(isUndoEnabled() && iAction->isUndoEnabled())
+  {
+    addUndo(std::move(iAction));
+  }
+  return result;
+}
+
+
+//------------------------------------------------------------------------
+// AppContext::executeAction
+//------------------------------------------------------------------------
+template<class T, class... Args>
+typename T::result_t AppContext::executeAction(Args &&... args)
+{
+  auto action = std::make_unique<T>();
+  action->setPanelType(getCurrentPanel()->getType());
+  action->init(std::forward<Args>(args)...);
+  return execute<typename T::result_t>(std::move(action));
 }
 
 }

@@ -165,7 +165,8 @@ public: // Texture
   std::shared_ptr<Texture> getBuiltInTexture(FilmStrip::key_t const &iKey) const;
   inline std::shared_ptr<Texture> findTexture(FilmStrip::key_t const &iKey) const { return fTextureManager->findTexture(iKey); };
   inline std::shared_ptr<Texture> findHDTexture(FilmStrip::key_t const &iKey) const { return fTextureManager->findHDTexture(iKey); }
-  void overrideTextureNumFrames(FilmStrip::key_t const &iKey, int iNumFrames) { fTextureManager->overrideNumFrames(iKey, iNumFrames); markEdited(); }
+  int overrideTextureNumFramesAction(FilmStrip::key_t const &iKey, int iNumFrames);
+  void overrideTextureNumFrames(FilmStrip::key_t const &iKey, int iNumFrames);
   std::optional<FilmStrip::key_t> importTextureBlocking();
   std::size_t importTexturesBlocking();
 
@@ -250,6 +251,9 @@ public: // Undo
 
   template<typename R>
   R execute(std::unique_ptr<ExecutableAction<R>> iAction);
+
+  template<class T, class... Args >
+  typename T::result_t executeAction(Args&&... args);
 
   void resetUndoMergeKey();
 
@@ -424,20 +428,6 @@ void AppContext::addOrMergeUndoAction(void *iMergeKey,
     action->fNewValue = iNewValue;
     addUndoAction(std::move(action));
   }
-}
-
-//------------------------------------------------------------------------
-// AppContext::execute
-//------------------------------------------------------------------------
-template<typename R>
-R AppContext::execute(std::unique_ptr<ExecutableAction<R>> iAction)
-{
-  auto result = iAction->execute();
-  if(isUndoEnabled() && iAction->isUndoEnabled())
-  {
-    addUndo(std::move(iAction));
-  }
-  return result;
 }
 
 //------------------------------------------------------------------------

@@ -199,10 +199,7 @@ private:
   inline std::unique_ptr<Widget> copy(Widget const *iWidget) const { return iWidget->copy(computeUniqueWidgetNameForCopy(iWidget->getName())); }
 
   template<class T, class... Args >
-  void executeAction(Args&&... args);
-
-  template<class T, class... Args >
-  typename T::result_t executeActionWithResult(Args&&... args);
+  typename T::result_t executeAction(Args&&... args);
 
 private:
   class MultiSelectionList

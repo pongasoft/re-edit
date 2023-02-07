@@ -129,6 +129,64 @@ protected:
   bool fUndoEnabled{true};
 };
 
+
+//------------------------------------------------------------------------
+// class ValueAction<T>
+//------------------------------------------------------------------------
+template<typename Target, typename T, typename R = T>
+class ValueAction : public ExecutableAction<R>
+{
+public:
+  using update_function_t = std::function<T(Target *, T const &)>;
+
+public:
+  void init(update_function_t iUpdateFunction, T iValue, std::string iDescription, MergeKey const &iMergeKey)
+  {
+    fUpdateFunction = std::move(iUpdateFunction);
+    fValue = std::move(iValue);
+    this->fDescription = std::move(iDescription);
+    this->fMergeKey = iMergeKey;
+  }
+
+  virtual Target *getTarget() const = 0;
+
+  R execute() override
+  {
+    fPreviousValue = fUpdateFunction(getTarget(), fValue);
+    this->fUndoEnabled = fPreviousValue != fValue;
+    return fValue;
+  }
+
+  void undo() override
+  {
+    fUpdateFunction(getTarget(), fPreviousValue);
+  }
+
+protected:
+  bool canMergeWith(Action const *iAction) const override
+  {
+    if(typeid(*this) != typeid(*iAction))
+      return false;
+    auto action = dynamic_cast<ValueAction const *>(iAction);
+    return action && action->fPreviousValue == fValue;
+  }
+
+  std::unique_ptr<Action> doMerge(std::unique_ptr<Action> iAction) override
+  {
+    auto action = dynamic_cast<ValueAction const *>(iAction.get());
+    fValue = action->fValue;
+    if(fValue == fPreviousValue)
+      return NoOpAction::create();
+    else
+      return nullptr;
+  }
+
+protected:
+  update_function_t fUpdateFunction;
+  T fValue;
+  T fPreviousValue{};
+};
+
 template<typename T>
 class MergeableUndoValue
 {

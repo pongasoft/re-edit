@@ -90,6 +90,17 @@ bool Attribute::copyFrom(Attribute const *iFromAttribute, std::optional<std::str
 }
 
 //------------------------------------------------------------------------
+// Attribute::resetAttribute
+//------------------------------------------------------------------------
+bool Attribute::resetAttribute(Attribute *iAttributeForDescription)
+{
+  auto &ctx = AppContext::GetCurrent();
+  auto w = const_cast<Widget *>(ctx.getCurrentWidget()); // TODO hack for now
+  return update([this] { reset(); },
+                fmt::printf("Reset %s.%s", w->getName(), iAttributeForDescription ? iAttributeForDescription->fName : fName));
+}
+
+//------------------------------------------------------------------------
 // Attribute::computeAttributeChangeDescription
 //------------------------------------------------------------------------
 std::string Attribute::computeAttributeChangeDescription(char const *iChangeAction, Attribute *iAttribute, std::optional<int> iIndex) const

@@ -16,7 +16,7 @@
  * @author Yan Pujante
  */
 
-#include "AppContext.h"
+#include "AppContext.hpp"
 #include "Widget.h"
 #include "PanelState.h"
 #include "imgui_internal.h"
@@ -1793,6 +1793,41 @@ void AppContext::renderUndoHistory()
     }
   }
 
+}
+
+//------------------------------------------------------------------------
+// class AppContextValueAction
+//------------------------------------------------------------------------
+template<typename T>
+class AppContextValueAction : public ValueAction<AppContext, T>
+{
+protected:
+  AppContext *getTarget() const override
+  {
+    return &AppContext::GetCurrent();
+  }
+};
+
+//------------------------------------------------------------------------
+// AppContext::overrideTextureNumFrames
+//------------------------------------------------------------------------
+int AppContext::overrideTextureNumFramesAction(FilmStrip::key_t const &iKey, int iNumFrames)
+{
+  auto res = fTextureManager->overrideNumFrames(iKey, iNumFrames);
+  markEdited();
+  return res;
+}
+
+//------------------------------------------------------------------------
+// AppContext::overrideTextureNumFrames
+//------------------------------------------------------------------------
+void AppContext::overrideTextureNumFrames(FilmStrip::key_t const &iKey, int iNumFrames)
+{
+  auto fn = [key = iKey](AppContext *iCtx, auto iNumFrames) { return iCtx->overrideTextureNumFramesAction(key, iNumFrames); };
+  executeAction<AppContextValueAction<int>>(fn,
+                                            iNumFrames,
+                                            fmt::printf("Change number of frames (%s)", iKey),
+                                            MergeKey::from(this));
 }
 
 

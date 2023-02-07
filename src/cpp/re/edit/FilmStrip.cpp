@@ -157,12 +157,14 @@ FilmStripMgr::FilmStripMgr(std::vector<BuiltIns::Def> const &iBuiltIns,
 //------------------------------------------------------------------------
 // FilmStripMgr::overrideNumFrames
 //------------------------------------------------------------------------
-void FilmStrip::overrideNumFrames(int iNumFrames)
+int FilmStrip::overrideNumFrames(int iNumFrames)
 {
   if(iNumFrames < 1)
     iNumFrames = 1;
 
+  auto res = fNumFrames;
   fNumFrames = iNumFrames;
+  return res;
 }
 
 //------------------------------------------------------------------------

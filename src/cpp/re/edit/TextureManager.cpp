@@ -151,9 +151,9 @@ void TextureManager::overrideNumFrames(std::map<std::string, int> const &iNumFra
 //------------------------------------------------------------------------
 // TextureManager::overrideNumFrames
 //------------------------------------------------------------------------
-void TextureManager::overrideNumFrames(std::string const &iKey, int iNumFrames) const
+int TextureManager::overrideNumFrames(std::string const &iKey, int iNumFrames) const
 {
-  getTexture(iKey)->fFilmStrip->overrideNumFrames(iNumFrames);
+  return getTexture(iKey)->fFilmStrip->overrideNumFrames(iNumFrames);
 }
 
 //------------------------------------------------------------------------

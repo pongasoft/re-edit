@@ -45,7 +45,7 @@ public:
   inline std::vector<std::string> findTextureKeys(FilmStrip::Filter const &iFilter) const { return fFilmStripMgr->findKeys(iFilter); }
   inline bool checkTextureKeyMatchesFilter(FilmStrip::key_t const &iKey, FilmStrip::Filter const &iFilter) const { return fFilmStripMgr->checkKeyMatchesFilter(iKey, iFilter); }
   void overrideNumFrames(std::map<std::string, int> const &iNumFrames) const;
-  void overrideNumFrames(std::string const &iKey, int iNumFrames) const;
+  int overrideNumFrames(std::string const &iKey, int iNumFrames) const;
   std::optional<FilmStrip::key_t> importTexture(fs::path const &iTexturePath);
   void importBuiltIns(std::set<FilmStrip::key_t> const &iKeys, UserError *oErrors = nullptr);
 

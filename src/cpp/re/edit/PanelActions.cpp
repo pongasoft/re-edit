@@ -17,6 +17,7 @@
  */
 
 #include "Panel.h"
+#include "AppContext.hpp"
 
 namespace re::edit {
 
@@ -26,58 +27,22 @@ using PanelActionVoid = ExecutableAction<void>;
 // class PanelValueAction<T>
 //------------------------------------------------------------------------
 template<typename T>
-class PanelValueAction : public PanelActionVoid
+class PanelValueAction : public ValueAction<Panel, T>
 {
 public:
-  explicit PanelValueAction(T iValue, MergeKey const &iMergeKey) : fValue{std::move(iValue)}
+  Panel *getTarget() const override
   {
-    fMergeKey = iMergeKey;
+    return AppContext::GetCurrent().getPanel(this->getPanelType());
   }
-
-protected:
-  bool canMergeWith(Action const *iAction) const override
-  {
-    if(typeid(*this) != typeid(*iAction))
-      return false;
-    auto action = dynamic_cast<PanelValueAction const *>(iAction);
-    return action && action->fPreviousValue == fValue;
-  }
-
-  std::unique_ptr<Action> doMerge(std::unique_ptr<Action> iAction) override
-  {
-    auto action = dynamic_cast<PanelValueAction const *>(iAction.get());
-    fValue = action->fValue;
-    if(fValue == fPreviousValue)
-      return NoOpAction::create();
-    else
-      return nullptr;
-  }
-
-protected:
-  T fValue;
-  T fPreviousValue{};
 };
 
 //------------------------------------------------------------------------
 // Panel::executeAction
 //------------------------------------------------------------------------
 template<class T, class... Args>
-void Panel::executeAction(Args &&... args)
+typename T::result_t Panel::executeAction(Args &&... args)
 {
-  auto action = std::make_unique<T>(std::forward<Args>(args)...);
-  action->setPanelType(getType());
-  AppContext::GetCurrent().execute<void>(std::move(action));
-}
-
-//------------------------------------------------------------------------
-// Panel::executeAction
-//------------------------------------------------------------------------
-template<class T, class... Args>
-typename T::result_t Panel::executeActionWithResult(Args &&... args)
-{
-  auto action = std::make_unique<T>(std::forward<Args>(args)...);
-  action->setPanelType(getType());
-  return AppContext::GetCurrent().execute<typename T::result_t>(std::move(action));
+  return AppContext::GetCurrent().executeAction<T>(std::forward<Args>(args)...);
 }
 
 //------------------------------------------------------------------------
@@ -136,7 +101,7 @@ private:
 class ClearSelectionAction : public PanelActionVoid
 {
 public:
-  ClearSelectionAction()
+  void init()
   {
     fDescription = "Clear Selection";
   }
@@ -164,8 +129,9 @@ private:
 class SelectWidgetAction : public PanelActionVoid
 {
 public:
-  explicit SelectWidgetAction(int iWidgetId) : fWidgetId{iWidgetId}
+  void init(int iWidgetId)
   {
+    fWidgetId = iWidgetId;
     fDescription = fmt::printf("Select Widget [#%d]", iWidgetId);
   }
 
@@ -194,9 +160,10 @@ private:
 class SelectWidgetsAction : public PanelActionVoid
 {
 public:
-  explicit SelectWidgetsAction(std::set<int> iWidgetIds) : fWidgetIds{std::move(iWidgetIds)}
+  void init(std::set<int> iWidgetIds)
   {
-    fDescription = fmt::printf("Select Widgets [%d]", fWidgetIds.size());
+    fDescription = fmt::printf("Select Widgets [%d]", iWidgetIds.size());
+    fWidgetIds = std::move(iWidgetIds);
   }
 
   void execute() override
@@ -274,10 +241,10 @@ bool Panel::unselectWidgetsAction(std::set<int> const &iWidgetIds)
 class AddWidgetAction : public ExecutableAction<int>
 {
 public:
-  explicit AddWidgetAction(std::unique_ptr<Widget> iWidget, char const *iUndoActionName = "Add") :
-    fWidget{std::move(iWidget)}
+  void init(std::unique_ptr<Widget> iWidget, char const *iUndoActionName = "Add")
   {
-    fDescription = fmt::printf("%s %s", iUndoActionName, re::edit::toString(fWidget->getType()));
+    fDescription = fmt::printf("%s %s", iUndoActionName, re::edit::toString(iWidget->getType()));
+    fWidget = std::move(iWidget);
   }
 
   int execute() override
@@ -306,14 +273,14 @@ int Panel::addWidget(AppContext &iCtx, std::unique_ptr<Widget> iWidget, bool iMa
   {
     iCtx.beginUndoTx(fmt::printf(fmt::printf("%s %s", iUndoActionName, re::edit::toString(iWidget->getType()))));
     executeAction<ClearSelectionAction>();
-    auto id = executeActionWithResult<AddWidgetAction>(std::move(iWidget), iUndoActionName);
+    auto id = executeAction<AddWidgetAction>(std::move(iWidget), iUndoActionName);
     executeAction<SelectWidgetAction>(id);
     iCtx.commitUndoTx();
     return id;
   }
   else
   {
-    return executeActionWithResult<AddWidgetAction>(std::move(iWidget), iUndoActionName);
+    return executeAction<AddWidgetAction>(std::move(iWidget), iUndoActionName);
   }
 }
 
@@ -435,9 +402,10 @@ std::pair<std::unique_ptr<Widget>, int> Panel::deleteWidgetAction(int id)
 class DeleteWidgetAction : public PanelActionVoid
 {
 public:
-  explicit DeleteWidgetAction(Widget *iWidget) : fId{iWidget->getId()}
+  void init(Widget *iWidget)
   {
     fDescription = fmt::printf("Delete %s", iWidget->getName());
+    fId = iWidget->getId();
   }
 
   void execute() override
@@ -452,7 +420,7 @@ public:
   }
 
 private:
-  int fId;
+  int fId{};
   std::pair<std::unique_ptr<Widget>, int> fWidgetAndOrder{};
 };
 
@@ -478,11 +446,11 @@ void Panel::deleteWidgets(AppContext &iCtx, std::vector<Widget *> const &iWidget
 class ReplaceWidgetAction : public PanelActionVoid
 {
 public:
-  ReplaceWidgetAction(int iWidgetId, std::unique_ptr<Widget> iWidget, std::string iDescription) :
-    fId{iWidgetId},
-    fWidget{std::move(iWidget)}
+  void init(int iWidgetId, std::unique_ptr<Widget> iWidget, std::string iDescription)
   {
     fDescription = std::move(iDescription);
+    fId = iWidgetId;
+    fWidget = std::move(iWidget);
   }
 
   void execute() override
@@ -496,8 +464,8 @@ public:
   }
 
 private:
-  int fId;
-  std::unique_ptr<Widget> fWidget;
+  int fId{};
+  std::unique_ptr<Widget> fWidget{};
 };
 
 //------------------------------------------------------------------------
@@ -552,15 +520,15 @@ std::unique_ptr<Widget> Panel::replaceWidgetAction(int iWidgetId, std::unique_pt
 class ChangeWidgetsOrderAction : public PanelActionVoid
 {
 public:
-  ChangeWidgetsOrderAction(std::string iDescription,
-                           std::set<int> iSelectedWidgets,
-                           Panel::WidgetOrDecal iWidgetOrDecal,
-                           Panel::Direction iDirection) :
-    fSelectedWidgets{std::move(iSelectedWidgets)},
-    fWidgetOrDecal{iWidgetOrDecal},
-    fDirection{iDirection}
+  void init(std::string iDescription,
+            std::set<int> iSelectedWidgets,
+            Panel::WidgetOrDecal iWidgetOrDecal,
+            Panel::Direction iDirection)
   {
     fDescription = std::move(iDescription);
+    fSelectedWidgets = std::move(iSelectedWidgets);
+    fWidgetOrDecal = iWidgetOrDecal;
+    fDirection = iDirection;
   }
 
   void execute() override
@@ -576,9 +544,9 @@ public:
   }
 
 private:
-  std::set<int> fSelectedWidgets;
-  Panel::WidgetOrDecal fWidgetOrDecal;
-  Panel::Direction fDirection;
+  std::set<int> fSelectedWidgets{};
+  Panel::WidgetOrDecal fWidgetOrDecal{};
+  Panel::Direction fDirection{};
 };
 
 //------------------------------------------------------------------------
@@ -669,11 +637,11 @@ int Panel::changeWidgetsOrderAction(std::set<int> const &iWidgetIds, WidgetOrDec
 class MoveWidgetsAction : public PanelActionVoid
 {
 public:
-  MoveWidgetsAction(std::set<int> iWidgetsIds, ImVec2 const &iMoveDelta, std::string iDescription, MergeKey iMergeKey) :
-    fWidgetsIds{std::move(iWidgetsIds)},
-    fMoveDelta{iMoveDelta}
+  void init(std::set<int> iWidgetsIds, ImVec2 const &iMoveDelta, std::string iDescription, MergeKey iMergeKey)
   {
     fDescription = std::move(iDescription);
+    fWidgetsIds = std::move(iWidgetsIds);
+    fMoveDelta = iMoveDelta;
     fMergeKey = iMergeKey;
   }
 
@@ -821,12 +789,12 @@ void Panel::moveWidgetsAction(std::set<int> const &iWidgetsIds, ImVec2 const &iM
 class SetWidgetPositionAction : public PanelActionVoid
 {
 public:
-  SetWidgetPositionAction(int iWidgetId, ImVec2 const &iPosition, std::string iDescription) :
-    fId{iWidgetId},
-    fPosition{iPosition}
+  void init(int iWidgetId, ImVec2 const &iPosition, std::string iDescription)
   {
     // fDescription = fmt::printf("Set widget [#%d] position to %.0fx%.0f", fId, fPosition.x, fPosition.y);
     fDescription = std::move(iDescription);
+    fId = iWidgetId;
+    fPosition = iPosition;
   }
 
   void execute() override
@@ -936,62 +904,19 @@ void Panel::alignWidgets(AppContext &iCtx, Panel::WidgetAlignment iAlignment)
 }
 
 //------------------------------------------------------------------------
-// class SetCableOriginPosition
-//------------------------------------------------------------------------
-class SetCableOriginPosition : public PanelValueAction<ImVec2>
-{
-public:
-  SetCableOriginPosition(ImVec2 const &iPosition, MergeKey const &iMergeKey) : PanelValueAction(iPosition, iMergeKey)
-  {
-    fDescription = "Update cable_origin";
-  }
-
-  void execute() override
-  {
-    fPreviousValue = getPanel()->setCableOriginPositionAction(fValue);
-    fUndoEnabled = fPreviousValue != fValue;
-  }
-
-  void undo() override
-  {
-    getPanel()->setCableOriginPositionAction(fPreviousValue);
-  }
-};
-
-//------------------------------------------------------------------------
 // Panel::setCableOrigin
 //------------------------------------------------------------------------
 void Panel::setCableOrigin(ImVec2 const &iPosition)
 {
   RE_EDIT_INTERNAL_ASSERT(fCableOrigin != std::nullopt);
 
-  executeAction<SetCableOriginPosition>(iPosition, MergeKey::from(&fCableOrigin));
-
+  executeAction<PanelValueAction<ImVec2>>([](Panel *iPanel, auto iValue) {
+                                            return iPanel->setCableOriginPositionAction(iValue);
+                                          },
+                                          iPosition,
+                                          "Update cable_origin",
+                                          MergeKey::from(&fCableOrigin));
 }
-
-//------------------------------------------------------------------------
-// class SetPanelOptions
-//------------------------------------------------------------------------
-class SetPanelOptions : public PanelValueAction<bool>
-{
-public:
-  SetPanelOptions(bool iDisableSampleDropOnPanel, MergeKey const &iMergeKey) : PanelValueAction(iDisableSampleDropOnPanel, iMergeKey)
-  {
-    fDescription = "Update disable_sample_drop_on_panel";
-  }
-
-  void execute() override
-  {
-    fPreviousValue = getPanel()->setPanelOptionsAction(fValue);
-    fUndoEnabled = fPreviousValue != fValue;
-  }
-
-  void undo() override
-  {
-    getPanel()->setPanelOptionsAction(fPreviousValue);
-  }
-};
-
 
 //------------------------------------------------------------------------
 // Panel::setPanelOptionsAction
@@ -1014,8 +939,12 @@ void Panel::setPanelOptions(bool iDisableSampleDropOnPanel)
 {
   RE_EDIT_INTERNAL_ASSERT(fDisableSampleDropOnPanel != std::nullopt);
 
-  executeAction<SetPanelOptions>(iDisableSampleDropOnPanel, MergeKey::from(&fDisableSampleDropOnPanel));
-
+  executeAction<PanelValueAction<bool>>([](Panel *iPanel, auto iValue) {
+                                          return iPanel->setPanelOptionsAction(iValue);
+                                        },
+                                        iDisableSampleDropOnPanel,
+                                        "Update disable_sample_drop_on_panel",
+                                        MergeKey::from(&fDisableSampleDropOnPanel));
 }
 
 }
