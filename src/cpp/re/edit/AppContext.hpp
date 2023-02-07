@@ -48,7 +48,7 @@ void AppContext::addOrMergeUndoWidgetChange(Widget const *iWidget,
 template<typename R>
 R AppContext::execute(std::unique_ptr<ExecutableAction<R>> iAction)
 {
-  auto result = iAction->execute();
+  auto &&result = iAction->execute();
   if(isUndoEnabled() && iAction->isUndoEnabled())
   {
     addUndo(std::move(iAction));

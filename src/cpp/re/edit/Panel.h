@@ -112,7 +112,7 @@ public:
 
   bool checkForErrors(AppContext &iCtx) override;
 
-  inline void setBackgroundKey(Texture::key_t const &iTextureKey) { fGraphics.setTextureKey(iTextureKey); fEdited = true; }
+  void setBackgroundKey(Texture::key_t const &iTextureKey);
   void setOptions(std::vector<std::string> const &iOptions);
   int addWidget(AppContext &iCtx, std::unique_ptr<Widget> iWidget, bool iMakeSingleSelected, char const *iUndoActionName = "Add");
   void addWidget(AppContext &iCtx, WidgetDef const &iDef, ImVec2 const &iPosition);
@@ -161,6 +161,7 @@ public:
   bool selectWidgetsAction(std::set<int> const &iWidgetIds) const;
   bool unselectWidgetsAction(std::set<int> const &iWidgetIds);
   bool setPanelOptionsAction(bool iDisableSampleDropOnPanel);
+  Texture::key_t setBackgroundKeyAction(Texture::key_t const &iTextureKey);
 
 protected:
   void editNoSelectionView(AppContext &iCtx);

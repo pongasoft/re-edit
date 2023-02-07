@@ -282,5 +282,4 @@ void UndoTx::addAction(std::unique_ptr<Action> iAction)
   fActions.emplace_back(std::move(iAction));
 }
 
-
 }

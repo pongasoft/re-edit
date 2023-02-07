@@ -17,7 +17,7 @@
  */
 
 #include "Graphics.h"
-#include "Widget.h"
+#include "WidgetAttribute.hpp"
 #include "Errors.h"
 #include "Panel.h"
 #include "AppContext.hpp"
@@ -77,30 +77,14 @@ void Graphics::editView(AppContext &iCtx)
   {
     if(ImGui::MenuItem(ReGui_Prefix(ReGui_Icon_Reset, "Reset")))
     {
-      iCtx.addUndoLambda(fTextureKey, std::string{},
-                         "Reset background graphics",
-                         [](UndoAction *iAction, auto const &iValue) {
-                           auto panel = AppContext::GetCurrent().getPanel(iAction->fPanelType);
-                           panel->setBackgroundKey(iValue);
-                         });
-      reset();
+      iCtx.getCurrentPanel()->setBackgroundKey("");
     }
 
     if(ImGui::MenuItem(ReGui_Prefix(ReGui_Icon_ImportImages, "Import")))
     {
       auto textureKey = iCtx.importTextureBlocking();
       if(textureKey)
-      {
-        iCtx.addUndoLambda(fTextureKey, *textureKey,
-                           "Change background graphics",
-                           [](UndoAction *iAction, auto const &iValue) {
-                             auto panel = AppContext::GetCurrent().getPanel(iAction->fPanelType);
-                             panel->setBackgroundKey(iValue);
-                           });
-        fTextureKey = *textureKey;
-        fDNZTexture = iCtx.getTexture(*textureKey);
-        fEdited = true;
-      }
+        iCtx.getCurrentPanel()->setBackgroundKey(*textureKey);
     }
 
     ImGui::EndPopup();
@@ -116,17 +100,7 @@ void Graphics::editView(AppContext &iCtx)
     {
       auto const isSelected = p == key;
       if(ImGui::Selectable(p.c_str(), isSelected))
-      {
-        iCtx.addUndoLambda(fTextureKey, p,
-                           "Change background graphics",
-                           [](UndoAction *iAction, auto const &iValue) {
-                             auto panel = AppContext::GetCurrent().getPanel(iAction->fPanelType);
-                             panel->setBackgroundKey(iValue);
-                           });
-        fTextureKey = p;
-        fDNZTexture = iCtx.getTexture(p);
-        fEdited = true;
-      }
+        iCtx.getCurrentPanel()->setBackgroundKey(p);
       if(isSelected)
         ImGui::SetItemDefaultFocus();
     }
@@ -260,8 +234,7 @@ void Graphics::editView(AppContext &iCtx,
   {
     if(ImGui::MenuItem(ReGui_Prefix(ReGui_Icon_Reset, "Reset")))
     {
-      iCtx.addUndoAttributeReset(this);
-      reset();
+      resetAttribute();
     }
 
     // Copy
@@ -288,11 +261,6 @@ void Graphics::editView(AppContext &iCtx,
     auto numFrames = texture->numFrames();
     if(ImGui::InputInt("frames", &numFrames, 1, 10))
     {
-      iCtx.addOrMergeUndoLambda(&fTexture, texture->numFrames(), numFrames,
-                                fmt::printf("Change number of frames (%s)", texture->key()),
-                                [key = texture->key()](UndoAction *iAction, auto const &iValue) {
-                                  AppContext::GetCurrent().overrideTextureNumFrames(key, iValue);
-                                });
       iCtx.overrideTextureNumFrames(texture->key(), numFrames);
       fEdited = true;
     }
@@ -365,10 +333,7 @@ void Graphics::editPositionView(AppContext &iCtx)
   if(ReGui::ResetButton())
   {
     editedPosition.x = 0;
-    iCtx.addOrMergeUndoCurrentWidgetChange(nullptr, fPosition, editedPosition,
-                                           fmt::printf("Move %s", iCtx.getCurrentWidget()->getName()));
-    fPosition = editedPosition;
-    fEdited = true;
+    iCtx.getCurrentWidget()->setPosition(editedPosition);
   }
   ImGui::PopID();
 
@@ -376,20 +341,14 @@ void Graphics::editPositionView(AppContext &iCtx)
 
   if(ReGui::InputInt("x", &editedPosition.x, 1, 5))
   {
-    iCtx.addOrMergeUndoCurrentWidgetChange(&fPosition, fPosition, editedPosition,
-                                           fmt::printf("Move %s", iCtx.getCurrentWidget()->getName()));
-    fPosition = editedPosition;
-    fEdited = true;
+    iCtx.getCurrentWidget()->setPosition(editedPosition);
   }
 
   ImGui::PushID("ResetY");
   if(ReGui::ResetButton())
   {
     editedPosition.y = 0;
-    iCtx.addOrMergeUndoCurrentWidgetChange(nullptr, fPosition, editedPosition,
-                                           fmt::printf("Move %s", iCtx.getCurrentWidget()->getName()));
-    fPosition = editedPosition;
-    fEdited = true;
+    iCtx.getCurrentWidget()->setPosition(editedPosition);
   }
   ImGui::PopID();
 
@@ -397,10 +356,7 @@ void Graphics::editPositionView(AppContext &iCtx)
 
   if(ReGui::InputInt("y", &editedPosition.y, 1, 5))
   {
-    iCtx.addOrMergeUndoCurrentWidgetChange(&fPosition, fPosition, editedPosition,
-                                           fmt::printf("Move %s", iCtx.getCurrentWidget()->getName()));
-    fPosition = editedPosition;
-    fEdited = true;
+    iCtx.getCurrentWidget()->setPosition(editedPosition);
   }
 
   if(hasTexture())
@@ -428,15 +384,19 @@ void Graphics::editView(AppContext &iCtx)
   editView(iCtx,
            fFilter,
            [this, &iCtx](auto &k) {
-             iCtx.addUndoCurrentWidgetChange(fmt::printf("Change %s graphics", iCtx.getCurrentWidget()->getName()));
-             setTextureKey(k);
-             fFrameNumber = 0;
+             update([this, &k] {
+                      setTextureKey(k);
+                      fFrameNumber = 0;
+                    },
+                    fmt::printf(fmt::printf("Change %s graphics", iCtx.getCurrentWidget()->getName())));
            },
            [this, &iCtx](auto &s) {
-             iCtx.addOrMergeUndoCurrentWidgetChange(&fTexture, getSize(), s,
-                                                    fmt::printf("Change %s size", iCtx.getCurrentWidget()->getName()));
-             setSize(s);
-             fFrameNumber = 0;
+             update([this, &s] {
+                      setSize(s);
+                      fFrameNumber = 0;
+                    },
+                    fmt::printf(fmt::printf("Change %s size", iCtx.getCurrentWidget()->getName())),
+                    MergeKey::from(&fTexture));
            }
   );
   ImGui::Indent();
@@ -456,19 +416,21 @@ void Graphics::editHitBoundariesView(AppContext &iCtx)
     float *tb[] = { &editedHB.fTopInset, &editedHB.fBottomInset };
     if(ReGui::SliderInt2("hit_boundaries - Top | Bottom", tb, 0, static_cast<int>(getSize().y), "inset: %d", ImGuiSliderFlags_AlwaysClamp))
     {
-      iCtx.addOrMergeUndoCurrentWidgetChange(&fHitBoundaries.fTopInset, fHitBoundaries, editedHB,
-                                             fmt::printf("Change %s Hit Boundaries", iCtx.getCurrentWidget()->getName()));
-      fHitBoundaries = editedHB;
-      fEdited = true;
+      update([this, &editedHB] {
+               fHitBoundaries = editedHB;
+             },
+             fmt::printf("Change %s Hit Boundaries", iCtx.getCurrentWidget()->getName()),
+             MergeKey::from(&fHitBoundaries.fTopInset));
     }
 
     float *lr[] = { &editedHB.fLeftInset, &editedHB.fRightInset };
     if(ReGui::SliderInt2("hit_boundaries - Left | Right", lr, 0, static_cast<int>(getSize().x), "inset: %d", ImGuiSliderFlags_AlwaysClamp))
     {
-      iCtx.addOrMergeUndoCurrentWidgetChange(&fHitBoundaries.fLeftInset, fHitBoundaries, editedHB,
-                                             fmt::printf("Change %s Hit Boundaries", iCtx.getCurrentWidget()->getName()));
-      fHitBoundaries = editedHB;
-      fEdited = true;
+      update([this, &editedHB] {
+               fHitBoundaries = editedHB;
+             },
+             fmt::printf("Change %s Hit Boundaries", iCtx.getCurrentWidget()->getName()),
+             MergeKey::from(&fHitBoundaries.fLeftInset));
     }
   }
 }
@@ -750,10 +712,10 @@ void Background::editView(AppContext &iCtx)
       auto const isSelected = key == fValue;
       if(ImGui::Selectable(path.c_str(), isSelected))
       {
-        iCtx.addUndoAttributeChange(this);
-        fValue = key;
-        fProvided = true;
-        fEdited = true;
+        updateAttribute([this, &key] {
+          fValue = key;
+          fProvided = true;
+        });
       }
       if(isSelected)
         ImGui::SetItemDefaultFocus();

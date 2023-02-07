@@ -19,17 +19,20 @@
 #ifndef RE_EDIT_WIDGET_ATTRIBUTE_HPP
 #define RE_EDIT_WIDGET_ATTRIBUTE_HPP
 
-#include "Widget.hpp"
+#include "Widget.h"
+#include "Panel.h"
 
 namespace re::edit::widget {
 
-class AttributeUpdateAction : public WidgetAction<void>
+class AttributeUpdateAction : public ExecutableAction<void>
 {
 public:
-  AttributeUpdateAction(std::unique_ptr<widget::Attribute> iValue,
+  AttributeUpdateAction(int iWidgetId,
+                        std::unique_ptr<widget::Attribute> iValue,
                         std::unique_ptr<widget::Attribute> iPreviousValue,
                         std::string iDescription,
                         MergeKey const &iMergeKey) :
+    fId{iWidgetId},
     fValue{std::move(iValue)},
     fPreviousValue{std::move(iPreviousValue)}
   {
@@ -53,6 +56,11 @@ public:
   }
 
 protected:
+  Widget *getWidget() const
+  {
+    return getPanel()->findWidget(fId);
+  }
+
   bool canMergeWith(Action const *iAction) const override
   {
     if(typeid(*this) != typeid(*iAction))
@@ -72,6 +80,7 @@ protected:
   }
 
 private:
+  int fId;
   std::unique_ptr<widget::Attribute> fValue;
   std::unique_ptr<widget::Attribute> fPreviousValue;
 };
@@ -98,7 +107,9 @@ bool Attribute::update(F &&f, std::string const &iDescription, MergeKey const &i
     {
       markEdited();
       auto w = const_cast<Widget *>(ctx.getCurrentWidget()); // TODO hack for now
-      w->executeAction<AttributeUpdateAction>(std::move(currentValue), std::move(previousValue), iDescription, iMergeKey);
+      auto action = std::make_unique<AttributeUpdateAction>(w->getId(), std::move(currentValue), std::move(previousValue), iDescription, iMergeKey);
+      action->setPanelType(ctx.getCurrentPanel()->getType());
+      ctx.execute<void>(std::move(action));
       return true;
     }
     else

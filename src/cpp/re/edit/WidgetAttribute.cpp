@@ -326,7 +326,7 @@ void Value::editView(AppContext &iCtx)
       ImGui::Separator();
       if(ImGui::MenuItem("Use value_switch"))
       {
-        updateAttribute([this]{
+        updateAttribute([this] {
           fUseSwitch = true;
         });
       }

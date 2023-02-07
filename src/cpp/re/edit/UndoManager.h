@@ -163,6 +163,9 @@ public:
   }
 
 protected:
+
+  virtual void updateDescriptionOnSuccessfulMerge() {}
+
   bool canMergeWith(Action const *iAction) const override
   {
     if(typeid(*this) != typeid(*iAction))
@@ -175,10 +178,14 @@ protected:
   {
     auto action = dynamic_cast<ValueAction const *>(iAction.get());
     fValue = action->fValue;
+    this->fDescription = action->getDescription();
     if(fValue == fPreviousValue)
       return NoOpAction::create();
     else
+    {
+      updateDescriptionOnSuccessfulMerge();
       return nullptr;
+    }
   }
 
 protected:

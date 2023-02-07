@@ -17,7 +17,7 @@
  */
 
 #include "Color.h"
-#include "WidgetAttribute.h"
+#include "WidgetAttribute.hpp"
 #include "ReGui.h"
 #include "AppContext.hpp"
 
@@ -43,10 +43,10 @@ void Color3::editView(AppContext &iCtx)
 
   if(ReGui::ColorEdit(fName, &editedValue))
   {
-    iCtx.addOrMergeUndoAttributeChange(this, fValue, editedValue);
-    fValue = editedValue;
-    fProvided = true;
-    fEdited = true;
+    updateAttribute([this, &editedValue] {
+      fValue = editedValue;
+      fProvided = true;
+    });
   }
 }
 

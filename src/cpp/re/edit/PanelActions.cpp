@@ -32,7 +32,7 @@ class PanelValueAction : public ValueAction<Panel, T>
 public:
   Panel *getTarget() const override
   {
-    return AppContext::GetCurrent().getPanel(this->getPanelType());
+    return this->getPanel();
   }
 };
 
@@ -344,7 +344,7 @@ bool Panel::pasteWidgets(AppContext &iCtx, std::vector<std::unique_ptr<Widget>> 
     if(iCtx.isWidgetAllowed(fType, w->getType()))
     {
       auto widget = copy(w.get());
-      widget->setPosition(iPosition + w->getPosition() - min);
+      widget->setPositionAction(iPosition + w->getPosition() - min);
       ids.emplace(addWidget(iCtx, std::move(widget), false, "Paste"));
       res = true;
     }
@@ -475,7 +475,7 @@ void Panel::transmuteWidget(AppContext &iCtx, Widget const *iWidget, WidgetDef c
 {
   auto newWidget = iNewDef.fFactory(iWidget->getName());
   newWidget->copyFromAction(*iWidget);
-  newWidget->setPosition(iWidget->getPosition());
+  newWidget->setPositionAction(iWidget->getPosition());
   executeAction<ReplaceWidgetAction>(iWidget->getId(), std::move(newWidget), fmt::printf("Change %s type", iWidget->getName()));
 }
 
@@ -824,7 +824,7 @@ ImVec2 Panel::setWidgetPositionAction(int iWidgetId, ImVec2 const &iPosition)
   if(!w)
     return iPosition;
   auto previousPosition = w->getPosition();
-  w->setPosition(iPosition);
+  w->setPositionAction(iPosition);
   if(w->isEdited())
     fEdited = true;
   return previousPosition;
@@ -946,5 +946,30 @@ void Panel::setPanelOptions(bool iDisableSampleDropOnPanel)
                                         "Update disable_sample_drop_on_panel",
                                         MergeKey::from(&fDisableSampleDropOnPanel));
 }
+
+//------------------------------------------------------------------------
+// Panel::setBackgroundKeyAction
+//------------------------------------------------------------------------
+Texture::key_t Panel::setBackgroundKeyAction(Texture::key_t const &iTextureKey)
+{
+  auto res = fGraphics.getTextureKey();
+  fGraphics.setTextureKey(iTextureKey);
+  fEdited = true;
+  return res;
+}
+
+//------------------------------------------------------------------------
+// Panel::setBackgroundKey
+//------------------------------------------------------------------------
+void Panel::setBackgroundKey(Texture::key_t const &iTextureKey)
+{
+  executeAction<PanelValueAction<Texture::key_t>>([](Panel *iPanel, auto iValue) {
+                                                    return iPanel->setBackgroundKeyAction(iValue);
+                                                  },
+                                                  iTextureKey,
+                                                  "Change background graphics",
+                                                  MergeKey::from(&fGraphics.fTextureKey));
+}
+
 
 }

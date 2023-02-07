@@ -60,7 +60,7 @@ std::map<std::string, int> PanelState::initPanel(AppContext &iCtx,
     {
       widgetNames.emplace(node->fName);
       if(node->hasKey())
-        fPanel.setBackgroundKey(node->getKey());
+        fPanel.setBackgroundKeyAction(node->getKey());
     }
   }
 
@@ -112,7 +112,7 @@ std::map<std::string, int> PanelState::initPanel(AppContext &iCtx,
       if(w->fGraphics.fHitBoundaries)
         widget->setHitBoundaries(*w->fGraphics.fHitBoundaries);
 
-      widget->setPosition(node->fPosition);
+      widget->setPositionAction(node->fPosition);
       widget->setNameAction(node->fName);
     }
 
@@ -128,7 +128,7 @@ std::map<std::string, int> PanelState::initPanel(AppContext &iCtx,
     if(node.hasKey())
     {
       auto widget = Widget::panel_decal(name);
-      widget->setPosition(node.fPosition);
+      widget->setPositionAction(node.fPosition);
 
       auto key = node.getKey();
       if(!key.empty())

@@ -37,21 +37,6 @@ namespace re::edit {
 
 class Panel;
 
-template<typename R>
-class WidgetAction : public ExecutableAction<R>
-{
-public:
-  friend class Widget;
-
-protected:
-  Widget *getWidget() const;
-
-protected:
-  int fId;
-};
-
-using WidgetActionVoid = WidgetAction<void>;
-
 class Widget : public Editable
 {
 public:
@@ -59,7 +44,7 @@ public:
 
   inline std::string const &getName() const { return fName.value(); }
   inline StringWithHash::hash_t getNameHash() const { return fName.hash(); }
-  void setName(std::string iName);
+  void setName(const std::string& iName);
   constexpr int getId() const { return fId; }
   constexpr WidgetType getType() const { return fType; }
 
@@ -67,8 +52,9 @@ public:
   constexpr ImVec2 getTopLeft() const { return fGraphics->getTopLeft(); }
   constexpr ImVec2 getBottomRight() const { return fGraphics->getBottomRight(); }
   inline ImVec2 getSize() const { return fGraphics->getSize(); }
-  constexpr void setPosition(ImVec2 const &iPosition) { fGraphics->setPosition(iPosition); fEdited |= fGraphics->isEdited(); }
-  constexpr void setPositionFromCenter(ImVec2 const &iCenterPosition) { setPosition(iCenterPosition - getSize() / 2.0f); }
+  void setPosition(ImVec2 const &iPosition);
+  constexpr void setPositionFromCenter(ImVec2 const &iCenterPosition) {
+    setPositionAction(iCenterPosition - getSize() / 2.0f); }
 
   constexpr bool isSelected() const { return fSelected; }
   constexpr void select() { fSelected = true; }
@@ -81,8 +67,6 @@ public:
 
   constexpr void setHitBoundaries(HitBoundaries const &iHitBoundaries) { fGraphics->setHitBoundaries(iHitBoundaries); fEdited |= fGraphics->isEdited(); }
   constexpr void disableHitBoundaries() { fGraphics->fHitBoundariesEnabled = false; }
-
-  constexpr void moveAction(ImVec2 const &iDelta) { fGraphics->move(iDelta); fEdited |= fGraphics->isEdited(); }
 
   inline void setTextureKey(Texture::key_t const &iTextureKey) { fGraphics->setTextureKey(iTextureKey); fEdited |= fGraphics->isEdited(); }
   inline void setSize(ImVec2 const &iSize) { fGraphics->setSize(iSize); fEdited |= fGraphics->isEdited(); }
@@ -115,9 +99,11 @@ public:
   bool copyFrom(widget::Attribute const *iAttribute, std::string iDescription);
 
   // action implementations (no undo)
-  void setNameAction(std::string iName);
+  std::string setNameAction(std::string iName);
   bool copyFromAction(Widget const &iWidget);
   bool copyFromAction(widget::Attribute const *iAttribute);
+  ImVec2 setPositionAction(ImVec2 const &iPosition);
+  constexpr void moveAction(ImVec2 const &iDelta) { fGraphics->move(iDelta); fEdited |= fGraphics->isEdited(); }
 
   static std::unique_ptr<Widget> panel_decal(std::optional<std::string> const &iName = std::nullopt);
   static std::unique_ptr<Widget> analog_knob(std::optional<std::string> const &iName = std::nullopt);
@@ -177,7 +163,7 @@ protected:
 
 protected:
   template<class T, class... Args >
-  void executeAction(Args&&... args);
+  typename T::result_t executeAction(Args&&... args);
 
 protected:
   Widget *addAttribute(std::unique_ptr<widget::Attribute> iAttribute);

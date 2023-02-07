@@ -16,54 +16,56 @@
  * @author Yan Pujante
  */
 
-#include "Widget.hpp"
 #include "Panel.h"
+#include "AppContext.hpp"
 
 namespace re::edit {
 
 //------------------------------------------------------------------------
-// WidgetAction::getWidget
+// Widget::executeAction
 //------------------------------------------------------------------------
-template<typename R>
-Widget *WidgetAction<R>::getWidget() const
+template<class T, class... Args>
+typename T::result_t Widget::executeAction(Args &&... args)
 {
-  return this->getPanel()->findWidget(fId);
+  auto &ctx = AppContext::GetCurrent();
+  return ctx.executeAction<T>(fId, std::forward<Args>(args)...);
 }
 
 //------------------------------------------------------------------------
 // class WidgetValueAction<T>
 //------------------------------------------------------------------------
-template<typename T>
-class WidgetValueAction : public WidgetActionVoid
+template<typename T, typename R = T>
+class WidgetValueAction : public ValueAction<Widget, T, R>
 {
 public:
-  explicit WidgetValueAction(T iValue, MergeKey const &iMergeKey) : fValue{std::move(iValue)}
+  Widget *getTarget() const override
   {
-    fMergeKey = iMergeKey;
+    return this->getPanel()->findWidget(fId);
+  }
+
+  void init(int iWidgetId,
+            typename ValueAction<Widget, T, R>::update_function_t iUpdateFunction,
+            T iValue,
+            std::string iDescription,
+            MergeKey const &iMergeKey)
+  {
+    fId = iWidgetId;
+    ValueAction<Widget, T, R>::init(std::move(iUpdateFunction), std::move(iValue), std::move(iDescription), iMergeKey);
   }
 
 protected:
   bool canMergeWith(Action const *iAction) const override
   {
-    if(typeid(*this) != typeid(*iAction))
-      return false;
-    auto action = dynamic_cast<WidgetValueAction const *>(iAction);
-    return action && action->fId == fId && action->fPreviousValue == fValue;
-  }
-
-  std::unique_ptr<Action> doMerge(std::unique_ptr<Action> iAction) override
-  {
-    auto action = dynamic_cast<WidgetValueAction *>(iAction.get());
-    fValue = action->fValue;
-    if(fValue == fPreviousValue)
-      return NoOpAction::create();
-    else
-      return nullptr;
+    if(ValueAction<Widget, T, R>::canMergeWith(iAction))
+    {
+      auto action = dynamic_cast<WidgetValueAction const *>(iAction);
+      return action->fId == fId;
+    }
+    return false;
   }
 
 protected:
-  T fValue;
-  T fPreviousValue{};
+  int fId{-1};
 };
 
 //------------------------------------------------------------------------
@@ -71,52 +73,73 @@ protected:
 //------------------------------------------------------------------------
 class RenameWidgetAction : public WidgetValueAction<std::string>
 {
-public:
-  explicit RenameWidgetAction(Widget *iWidget, std::string iName, MergeKey const &iMergeKey) :
-    WidgetValueAction(std::move(iName), iMergeKey)
-  {
-    fDescription = fmt::printf("Rename widget %s -> %s", iWidget->getName(), fValue);
-  }
-
-  void execute() override
-  {
-    fPreviousValue = getWidget()->getName();
-
-    fUndoEnabled = fPreviousValue != fValue;
-
-    if(fUndoEnabled)
-      getWidget()->setNameAction(fValue);
-  }
-
-  void undo() override
-  {
-    getWidget()->setNameAction(fPreviousValue);
-  }
-
 protected:
-  std::unique_ptr<Action> doMerge(std::unique_ptr<Action> iAction) override
+  void updateDescriptionOnSuccessfulMerge() override
   {
-    iAction = WidgetValueAction::doMerge(std::move(iAction));
     fDescription = fmt::printf("Rename widget %s -> %s", fPreviousValue, fValue);
-    return std::move(iAction);
   }
 };
 
 //------------------------------------------------------------------------
 // Widget::setName
 //------------------------------------------------------------------------
-void Widget::setName(std::string iName)
+void Widget::setName(const std::string& iName)
 {
-  executeAction<RenameWidgetAction>(this, std::move(iName), MergeKey::from(&fName));
+  executeAction<RenameWidgetAction>([iName](Widget *w, auto value) {
+                                      return w->setNameAction(value);
+                                    },
+                                    iName,
+                                    fmt::printf("Rename widget %s -> %s", getName(), iName),
+                                    MergeKey::from(&fName));
 }
+
+//------------------------------------------------------------------------
+// class SetWidgetPositionAction
+//------------------------------------------------------------------------
+class SetWidgetPositionAction : public WidgetValueAction<ImVec2>
+{
+protected:
+  void updateDescriptionOnSuccessfulMerge() override
+  {
+    fDescription = fmt::printf("Rename widget %s -> %s", fPreviousValue, fValue);
+  }
+};
+
+
+//------------------------------------------------------------------------
+// Widget::setPositionAction
+//------------------------------------------------------------------------
+ImVec2 Widget::setPositionAction(ImVec2 const &iPosition)
+{
+  auto res = getPosition();
+  fGraphics->setPosition(iPosition);
+  fEdited |= fGraphics->isEdited();
+  return res;
+}
+
+//------------------------------------------------------------------------
+// Widget::setPosition
+//------------------------------------------------------------------------
+void Widget::setPosition(ImVec2 const &iPosition)
+{
+  executeAction<WidgetValueAction<ImVec2>>([](Widget *w, auto value) {
+                                             return w->setPositionAction(value);
+                                           },
+                                           iPosition,
+                                           fmt::printf("Move [%s] to %.0fx%0.f", getName(), iPosition.x, iPosition.y),
+                                           MergeKey::from(&fName));
+}
+
 
 //------------------------------------------------------------------------
 // Widget::setNameAction
 //------------------------------------------------------------------------
-void Widget::setNameAction(std::string iName)
+std::string Widget::setNameAction(std::string iName)
 {
+  auto res = fName.value();
   fName = StringWithHash(std::move(iName));
   fEdited = true;
+  return res;
 }
 
 }

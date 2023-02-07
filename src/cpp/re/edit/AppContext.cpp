@@ -1823,11 +1823,15 @@ int AppContext::overrideTextureNumFramesAction(FilmStrip::key_t const &iKey, int
 //------------------------------------------------------------------------
 void AppContext::overrideTextureNumFrames(FilmStrip::key_t const &iKey, int iNumFrames)
 {
-  auto fn = [key = iKey](AppContext *iCtx, auto iNumFrames) { return iCtx->overrideTextureNumFramesAction(key, iNumFrames); };
-  executeAction<AppContextValueAction<int>>(fn,
-                                            iNumFrames,
-                                            fmt::printf("Change number of frames (%s)", iKey),
-                                            MergeKey::from(this));
+  auto texture = findTexture(iKey);
+  if(texture)
+  {
+    auto fn = [key = iKey](AppContext *iCtx, auto iNumFrames) { return iCtx->overrideTextureNumFramesAction(key, iNumFrames); };
+    executeAction<AppContextValueAction<int>>(fn,
+                                              iNumFrames,
+                                              fmt::printf("Change number of frames (%s)", iKey),
+                                              MergeKey::from(texture.get()));
+  }
 }
 
 

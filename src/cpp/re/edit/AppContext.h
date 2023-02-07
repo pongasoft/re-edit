@@ -261,6 +261,7 @@ public: // Undo
   void redoLastAction();
 
   inline Widget const *getCurrentWidget() const { RE_EDIT_INTERNAL_ASSERT(fCurrentWidget != nullptr); return fCurrentWidget; }
+  inline Widget *getCurrentWidget() { RE_EDIT_INTERNAL_ASSERT(fCurrentWidget != nullptr); return const_cast<Widget *>(fCurrentWidget); }
 
   friend class PanelState;
   friend class Widget;
