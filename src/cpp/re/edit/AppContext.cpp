@@ -560,7 +560,7 @@ void AppContext::addUndo(std::unique_ptr<Action> iAction)
   {
     if(fUndoTx)
     {
-      RE_EDIT_LOG_WARNING("Undo action [%s] cannot be merged (not implemented yet)", iAction->getDescription());
+//      RE_EDIT_LOG_WARNING("Undo action [%s] cannot be merged (not implemented yet)", iAction->getDescription());
       fUndoTx->addAction(std::move(iAction));
       return;
     }

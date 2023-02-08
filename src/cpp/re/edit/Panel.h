@@ -154,7 +154,6 @@ public:
   std::unique_ptr<Widget> replaceWidgetAction(int iWidgetId, std::unique_ptr<Widget> iWidget);
   int changeWidgetsOrderAction(std::set<int> const &iWidgetIds, WidgetOrDecal iWidgetOrDecal, Direction iDirection);
   void moveWidgetsAction(std::set<int> const &iWidgetsIds, ImVec2 const &iMoveDelta);
-  ImVec2 setWidgetPositionAction(int iWidgetId, ImVec2 const &iPosition);
   ImVec2 setCableOriginPositionAction(ImVec2 const &iPosition);
   bool selectWidgetAction(int id) const;
   bool unselectWidgetAction(int id) const;

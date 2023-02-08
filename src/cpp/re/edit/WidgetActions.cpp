@@ -34,8 +34,8 @@ typename T::result_t Widget::executeAction(Args &&... args)
 //------------------------------------------------------------------------
 // class WidgetValueAction<T>
 //------------------------------------------------------------------------
-template<typename T, typename R = T>
-class WidgetValueAction : public ValueAction<Widget, T, R>
+template<typename T>
+class WidgetValueAction : public ValueAction<Widget, T>
 {
 public:
   Widget *getTarget() const override
@@ -44,19 +44,19 @@ public:
   }
 
   void init(int iWidgetId,
-            typename ValueAction<Widget, T, R>::update_function_t iUpdateFunction,
+            typename ValueAction<Widget, T>::update_function_t iUpdateFunction,
             T iValue,
             std::string iDescription,
             MergeKey const &iMergeKey)
   {
     fId = iWidgetId;
-    ValueAction<Widget, T, R>::init(std::move(iUpdateFunction), std::move(iValue), std::move(iDescription), iMergeKey);
+    ValueAction<Widget, T>::init(std::move(iUpdateFunction), std::move(iValue), std::move(iDescription), iMergeKey);
   }
 
 protected:
   bool canMergeWith(Action const *iAction) const override
   {
-    if(ValueAction<Widget, T, R>::canMergeWith(iAction))
+    if(ValueAction<Widget, T>::canMergeWith(iAction))
     {
       auto action = dynamic_cast<WidgetValueAction const *>(iAction);
       return action->fId == fId;
@@ -92,19 +92,6 @@ void Widget::setName(const std::string& iName)
                                     fmt::printf("Rename widget %s -> %s", getName(), iName),
                                     MergeKey::from(&fName));
 }
-
-//------------------------------------------------------------------------
-// class SetWidgetPositionAction
-//------------------------------------------------------------------------
-class SetWidgetPositionAction : public WidgetValueAction<ImVec2>
-{
-protected:
-  void updateDescriptionOnSuccessfulMerge() override
-  {
-    fDescription = fmt::printf("Rename widget %s -> %s", fPreviousValue, fValue);
-  }
-};
-
 
 //------------------------------------------------------------------------
 // Widget::setPositionAction

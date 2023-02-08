@@ -133,8 +133,8 @@ protected:
 //------------------------------------------------------------------------
 // class ValueAction<T>
 //------------------------------------------------------------------------
-template<typename Target, typename T, typename R = T>
-class ValueAction : public ExecutableAction<R>
+template<typename Target, typename T>
+class ValueAction : public ExecutableAction<void>
 {
 public:
   using update_function_t = std::function<T(Target *, T const &)>;
@@ -150,17 +150,19 @@ public:
 
   virtual Target *getTarget() const = 0;
 
-  R execute() override
+  void execute() override
   {
     fPreviousValue = fUpdateFunction(getTarget(), fValue);
     this->fUndoEnabled = fPreviousValue != fValue;
-    return fValue;
   }
 
   void undo() override
   {
     fUpdateFunction(getTarget(), fPreviousValue);
   }
+
+  T const &getValue() const { return fValue; }
+  T const &getPreviousValue() const { return fValue; }
 
 protected:
 
@@ -192,14 +194,6 @@ protected:
   update_function_t fUpdateFunction;
   T fValue;
   T fPreviousValue{};
-};
-
-template<typename T>
-class MergeableUndoValue
-{
-public:
-  T fOldValue{};
-  T fNewValue{};
 };
 
 class UndoManager

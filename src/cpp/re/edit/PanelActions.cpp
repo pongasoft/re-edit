@@ -784,53 +784,6 @@ void Panel::moveWidgetsAction(std::set<int> const &iWidgetsIds, ImVec2 const &iM
 }
 
 //------------------------------------------------------------------------
-// class SetWidgetPositionAction
-//------------------------------------------------------------------------
-class SetWidgetPositionAction : public PanelActionVoid
-{
-public:
-  void init(int iWidgetId, ImVec2 const &iPosition, std::string iDescription)
-  {
-    // fDescription = fmt::printf("Set widget [#%d] position to %.0fx%.0f", fId, fPosition.x, fPosition.y);
-    fDescription = std::move(iDescription);
-    fId = iWidgetId;
-    fPosition = iPosition;
-  }
-
-  void execute() override
-  {
-    fPreviousPosition = getPanel()->setWidgetPositionAction(fId, fPosition);
-    fUndoEnabled = fPreviousPosition != fPosition;
-  }
-
-  void undo() override
-  {
-    getPanel()->setWidgetPositionAction(fId, fPreviousPosition);
-  }
-
-private:
-  int fId;
-  ImVec2 fPosition;
-  ImVec2 fPreviousPosition{};
-};
-
-
-//------------------------------------------------------------------------
-// Panel::setWidgetPositionAction
-//------------------------------------------------------------------------
-ImVec2 Panel::setWidgetPositionAction(int iWidgetId, ImVec2 const &iPosition)
-{
-  auto w = findWidget(iWidgetId);
-  if(!w)
-    return iPosition;
-  auto previousPosition = w->getPosition();
-  w->setPositionAction(iPosition);
-  if(w->isEdited())
-    fEdited = true;
-  return previousPosition;
-}
-
-//------------------------------------------------------------------------
 // Panel::setCableOriginPositionAction
 //------------------------------------------------------------------------
 ImVec2 Panel::setCableOriginPositionAction(ImVec2 const &iPosition)
@@ -897,7 +850,11 @@ void Panel::alignWidgets(AppContext &iCtx, Panel::WidgetAlignment iAlignment)
     }
 
     if(alignedPosition != position)
-      executeAction<SetWidgetPositionAction>(w->getId(), alignedPosition, fmt::printf("Align [%s] widget %s", w->getName(), alignment));
+    {
+      w->setPosition(alignedPosition);
+      if(w->isEdited())
+        fEdited = true;
+    }
   }
 
   iCtx.commitUndoTx();
