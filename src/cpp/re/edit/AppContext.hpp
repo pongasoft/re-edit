@@ -26,23 +26,6 @@
 namespace re::edit {
 
 //------------------------------------------------------------------------
-// AppContext::addOrMergeUndoWidgetChange
-//------------------------------------------------------------------------
-template<typename T>
-void AppContext::addOrMergeUndoWidgetChange(Widget const *iWidget,
-                                            void *iMergeKey,
-                                            T const &iOldValue,
-                                            T const &iNewValue,
-                                            std::string const &iDescription)
-{
-  addOrMergeUndoAction(iMergeKey, iOldValue, iNewValue, iDescription, [this, iWidget]() {
-    auto action = std::make_unique<MergeableWidgetUndoAction<T>>();
-    populateWidgetUndoAction(action.get(), iWidget);
-    return action;
-  });
-}
-
-//------------------------------------------------------------------------
 // AppContext::execute
 //------------------------------------------------------------------------
 template<typename R>

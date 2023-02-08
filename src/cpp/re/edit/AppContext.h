@@ -186,64 +186,7 @@ public: // Undo
       enableUndo();
   }
 
-  void addUndoAction(std::shared_ptr<UndoAction> iAction);
   void addUndo(std::unique_ptr<Action> iAction);
-
-  template<typename T, typename UndoLambda, typename RedoLambda>
-  inline void addOrMergeUndoLambdas(void *iMergeKey, T const &iOldValue, T const &iNewValue, std::string const &iDescription, UndoLambda u, RedoLambda r)
-  {
-    addOrMergeUndoAction(iMergeKey, iOldValue, iNewValue, iDescription, [&iOldValue, &iNewValue, u = std::move(u), r = std::move(r)] {
-      return std::make_shared<LambdaMergeableUndoAction<T, UndoLambda, RedoLambda>>(iOldValue, iNewValue, std::move(u), std::move(r));
-    });
-  }
-
-  template<typename T, typename UndoRedoLambda>
-  inline void addOrMergeUndoLambda(void *iMergeKey, T const &iOldValue, T const &iNewValue, std::string const &iDescription, UndoRedoLambda u)
-  {
-    addOrMergeUndoLambdas(iMergeKey, iOldValue, iNewValue, iDescription, u, [u](RedoAction *iAction, T const &iValue) { u(iAction->fUndoAction.get(), iValue); });
-  }
-
-  template<typename T, typename UndoRedoLambda>
-  inline void addUndoLambda(T const &iOldValue, T const &iNewValue, std::string const &iDescription, UndoRedoLambda u)
-  {
-    addOrMergeUndoLambda(nullptr, iOldValue, iNewValue, iDescription, std::move(u));
-  }
-
-  void addUndoWidgetChange(Widget const *iWidget, std::string iDescription);
-  inline void addUndoCurrentWidgetChange(std::string iDescription) { addUndoWidgetChange(fCurrentWidget, std::move(iDescription)); }
-
-  template<typename T>
-  void addOrMergeUndoWidgetChange(Widget const *iWidget, void *iMergeKey, T const &iOldValue, T const &iNewValue, std::string const &iDescription);
-
-  template<typename T>
-  inline void addOrMergeUndoCurrentWidgetChange(void *iMergeKey, T const &iOldValue, T const &iNewValue, std::string const &iDescription)
-  {
-    addOrMergeUndoWidgetChange(fCurrentWidget, iMergeKey, iOldValue, iNewValue, iDescription);
-  }
-
-  inline void addUndoAttributeChange(widget::Attribute const *iAttribute)
-  {
-    RE_EDIT_INTERNAL_ASSERT(fCurrentWidget != nullptr);
-    return addUndoCurrentWidgetChange(computeUpdateDescription(fCurrentWidget, iAttribute));
-  }
-
-  inline void addUndoAttributeReset(widget::Attribute const *iAttribute)
-  {
-    RE_EDIT_INTERNAL_ASSERT(fCurrentWidget != nullptr);
-    return addUndoCurrentWidgetChange(computeResetDescription(fCurrentWidget, iAttribute));
-  }
-
-  template<typename T>
-  inline void addOrMergeUndoAttributeChange(widget::Attribute const *iAttribute,
-                                            T const &iOldValue,
-                                            T const &iNewValue)
-  {
-    RE_EDIT_INTERNAL_ASSERT(fCurrentWidget != nullptr);
-    addOrMergeUndoCurrentWidgetChange(const_cast<widget::Attribute *>(iAttribute),
-                                      iOldValue,
-                                      iNewValue,
-                                      computeUpdateDescription(fCurrentWidget, iAttribute));
-  }
 
   void beginUndoTx(std::string iDescription, MergeKey const &iMergeKey = MergeKey::none());
   void commitUndoTx();
@@ -333,21 +276,10 @@ protected:
   void requestZoomToFit() { fZoomFitContent = true; }
   void incrementZoom();
   void decrementZoom();
-  void populateWidgetUndoAction(WidgetUndoAction *iAction, Widget const *iWidget);
   constexpr bool needsSaving() const { return fNeedsSaving; }
 
   void enableFileWatcher();
   void disableFileWatcher();
-
-  template<typename T, typename F>
-  void addOrMergeUndoAction(void *iMergeKey,
-                            T const &iOldValue,
-                            T const &iNewValue,
-                            std::string const &iDescription,
-                            F iUndoActionFactory);
-
-  static std::string computeUpdateDescription(Widget const *iWidget, widget::Attribute const *iAttribute);
-  static std::string computeResetDescription(Widget const *iWidget, widget::Attribute const *iAttribute);
 
 protected:
   fs::path fRoot;
@@ -379,7 +311,7 @@ protected:
   ReGui::Canvas fPanelCanvas{};
   Clipboard fClipboard{};
   bool fNeedsSaving{};
-  std::shared_ptr<UndoAction> fLastSavedUndoAction{};
+  void *fLastSavedUndoAction{};
   bool fRecomputeDimensionsRequested{true};
   bool fReloadTexturesRequested{};
   std::atomic<bool> fMaybeReloadTextures{};
@@ -392,44 +324,6 @@ protected:
   std::shared_ptr<efsw::FileWatchListener> fRootListener{};
   std::optional<long> fRootWatchID{};
 };
-
-//------------------------------------------------------------------------
-// AppContext::addOrMergeUndoAction
-//------------------------------------------------------------------------
-template<typename T, typename F>
-void AppContext::addOrMergeUndoAction(void *iMergeKey,
-                                      T const &iOldValue,
-                                      T const &iNewValue,
-                                      std::string const &iDescription,
-                                      F iUndoActionFactory)
-{
-  auto lastUndoAction = fUndoManager->getLastUndoAction();
-
-  if(iMergeKey != nullptr && lastUndoAction && lastUndoAction->getMergeKey() == iMergeKey)
-  {
-    // at the minimum it is a merge => we won't add a new action
-    auto mua = dynamic_cast<MergeableUndoValue<T> *>(lastUndoAction.get());
-
-    if(mua)
-    {
-      if(mua->fOldValue == iNewValue)
-        // it's a cancel since the old value matches the new value
-        fUndoManager->popLastUndoAction();
-      else
-        // new value needs to be updated
-        mua->fNewValue = iNewValue;
-    }
-  }
-  else
-  {
-    auto action = iUndoActionFactory();
-    action->fDescription = iDescription;
-    action->fMergeKey = iMergeKey;
-    action->fOldValue = iOldValue;
-    action->fNewValue = iNewValue;
-    addUndoAction(std::move(action));
-  }
-}
 
 //------------------------------------------------------------------------
 // AppContext::execute

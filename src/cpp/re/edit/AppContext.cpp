@@ -536,18 +536,6 @@ void AppContext::toggleRails()
 }
 
 //------------------------------------------------------------------------
-// AppContext::addUndoAction
-//------------------------------------------------------------------------
-void AppContext::addUndoAction(std::shared_ptr<UndoAction> iAction)
-{
-  RE_EDIT_INTERNAL_ASSERT(fUndoTx == nullptr, "cannot mix and match old/new");
-  iAction->fFrame = fCurrentFrame;
-  if(fCurrentPanelState)
-    iAction->fPanelType = fCurrentPanelState->getType();
-  fUndoManager->addUndoAction(std::move(iAction));
-}
-
-//------------------------------------------------------------------------
 // AppContext::execute
 //------------------------------------------------------------------------
 template<>
@@ -561,39 +549,6 @@ void AppContext::execute<void>(std::unique_ptr<ExecutableAction<void>> iAction)
 }
 
 //------------------------------------------------------------------------
-// UndoActionAdapter: wraps an Action into an UndoAction
-//------------------------------------------------------------------------
-class UndoActionAdapter : public UndoAction
-{
-public:
-  explicit UndoActionAdapter(std::unique_ptr<Action> iAction) : fAction{std::move(iAction) }
-  {
-    fPanelType = fAction->getPanelType();
-    fMergeKey = fAction->getMergeKey().fKey;
-    fDescription = fAction->getDescription();
-  }
-
-  std::shared_ptr<RedoAction> execute() override
-  {
-    fAction->undo();
-    return RedoAction::createFromLambda([](RedoAction *iAction) {
-      std::dynamic_pointer_cast<UndoActionAdapter>(iAction->fUndoAction)->fAction->redo();
-    });
-  }
-
-  std::unique_ptr<Action> merge(std::unique_ptr<Action> iAction) {
-    iAction = fAction->merge(std::move(iAction));
-    fDescription = fAction->getDescription();
-    return iAction;
-  }
-
-  Action const *getAction() const { return fAction.get(); }
-
-private:
-  std::unique_ptr<Action> fAction;
-};
-
-//------------------------------------------------------------------------
 // AppContext::addUndo
 //------------------------------------------------------------------------
 void AppContext::addUndo(std::unique_ptr<Action> iAction)
@@ -605,26 +560,14 @@ void AppContext::addUndo(std::unique_ptr<Action> iAction)
   {
     if(fUndoTx)
     {
+      RE_EDIT_LOG_WARNING("Undo action [%s] cannot be merged (not implemented yet)", iAction->getDescription());
       fUndoTx->addAction(std::move(iAction));
       return;
-      // iAction = fUndoTx->merge(std::move(iAction)); // TODO handle merge
-//      if(iAction)
-//      {
-//        // merge did not happen => new undo
-//        addUndoAction(std::make_shared<UndoActionAdapter>(std::move(iAction)));
-//        return;
-//      }
-//      else
-//      {
-//        // merge was successful => last was updated so no need to do anything
-//        return;
-//      }
     }
     auto last = fUndoManager->getLastUndoAction();
-    auto adapter = std::dynamic_pointer_cast<UndoActionAdapter>(last);
-    if(adapter && adapter->fMergeKey == iAction->getMergeKey().fKey)
+    if(last && last->fMergeKey == iAction->getMergeKey())
     {
-      iAction = adapter->merge(std::move(iAction));
+      iAction = last->merge(std::move(iAction));
       if(iAction)
       {
         if(dynamic_cast<NoOpAction *>(iAction.get()))
@@ -636,7 +579,7 @@ void AppContext::addUndo(std::unique_ptr<Action> iAction)
         else
         {
           // merge did not happen => new undo
-          addUndoAction(std::make_shared<UndoActionAdapter>(std::move(iAction)));
+          fUndoManager->addUndoAction(std::move(iAction));
           return;
         }
       }
@@ -651,57 +594,7 @@ void AppContext::addUndo(std::unique_ptr<Action> iAction)
   if(fUndoTx)
     fUndoTx->addAction(std::move(iAction));
   else
-    addUndoAction(std::make_shared<UndoActionAdapter>(std::move(iAction)));
-}
-
-//------------------------------------------------------------------------
-// AppContext::populateLambdaUndoAction
-//------------------------------------------------------------------------
-void AppContext::populateWidgetUndoAction(WidgetUndoAction *iAction, Widget const *iWidget)
-{
-  RE_EDIT_INTERNAL_ASSERT(fCurrentPanelState != nullptr);
-  RE_EDIT_INTERNAL_ASSERT(iWidget != nullptr);
-
-  iAction->fWidget = iWidget->clone();
-  iAction->fWidgetId = iWidget->getId();
-}
-
-//------------------------------------------------------------------------
-// AppContext::computeUpdateDescription
-//------------------------------------------------------------------------
-std::string AppContext::computeUpdateDescription(Widget const *iWidget, widget::Attribute const *iAttribute)
-{
-  RE_EDIT_INTERNAL_ASSERT(iWidget != nullptr);
-
-  if(iAttribute)
-    return fmt::printf("Update %s.%s", iWidget->getName(), iAttribute->fName);
-  else
-    return fmt::printf("Update %s", iWidget->getName());
-}
-
-//------------------------------------------------------------------------
-// AppContext::computeResetDescription
-//------------------------------------------------------------------------
-std::string AppContext::computeResetDescription(Widget const *iWidget, widget::Attribute const *iAttribute)
-{
-  RE_EDIT_INTERNAL_ASSERT(iWidget != nullptr);
-
-  if(iAttribute)
-    return fmt::printf("Reset %s.%s", iWidget->getName(), iAttribute->fName);
-  else
-    return fmt::printf("Reset %s", iWidget->getName());
-}
-
-//------------------------------------------------------------------------
-// AppContext::addUndoWidgetChange
-//------------------------------------------------------------------------
-void AppContext::addUndoWidgetChange(Widget const *iWidget, std::string iDescription)
-{
-  auto action = std::make_unique<WidgetUndoAction>();
-  action->fWidgetId = iWidget->getId();
-  action->fDescription = std::move(iDescription);
-  populateWidgetUndoAction(action.get(), iWidget);
-  addUndoAction(std::move(action));
+    fUndoManager->addUndoAction(std::move(iAction));
 }
 
 //------------------------------------------------------------------------
@@ -1021,14 +914,13 @@ void AppContext::renderMainMenu()
         auto const redoAction = fUndoManager->getLastRedoAction();
         if(redoAction)
         {
-          auto const undoAction = redoAction->fUndoAction;
-          auto desc = re::mock::fmt::printf(ReGui_Prefix(ReGui_Icon_Redo, "Redo %s"), undoAction->fDescription);
-          if(fCurrentPanelState && fCurrentPanelState->getType() != undoAction->fPanelType)
+          auto desc = re::mock::fmt::printf(ReGui_Prefix(ReGui_Icon_Redo, "Redo %s"), redoAction->fDescription);
+          if(fCurrentPanelState && fCurrentPanelState->getType() != redoAction->fPanelType)
           {
-            if(undoAction->fPanelType == PanelType::kUnknown)
-              RE_EDIT_LOG_WARNING("unknown panel type for %s", undoAction->fDescription);
+            if(redoAction->fPanelType == PanelType::kUnknown)
+              RE_EDIT_LOG_WARNING("unknown panel type for %s", redoAction->fDescription);
             else
-              desc = re::mock::fmt::printf("%s (%s)", desc, Panel::toString(undoAction->fPanelType));
+              desc = re::mock::fmt::printf("%s (%s)", desc, Panel::toString(redoAction->fPanelType));
           }
           if(ImGui::MenuItem(desc.c_str(), kKeyboardShortcut))
           {
@@ -1722,10 +1614,11 @@ void AppContext::redoLastAction()
   auto const redoAction = fUndoManager->getLastRedoAction();
   if(redoAction)
   {
+    auto panelType = redoAction->getPanelType();
     fUndoManager->redoLastAction();
-    if(fCurrentPanelState->getType() != redoAction->fUndoAction->fPanelType)
+    if(fCurrentPanelState->getType() != panelType)
     {
-      computeErrors(redoAction->fUndoAction->fPanelType);
+      computeErrors(panelType);
     }
   }
 }
@@ -1748,19 +1641,6 @@ void RenderUndoAction(Action const *iAction)
   }
 }
 
-//------------------------------------------------------------------------
-// impl::RenderUndoAction
-//------------------------------------------------------------------------
-void RenderUndoAction(UndoAction const *iAction)
-{
-  if(auto adapter = dynamic_cast<const UndoActionAdapter *>(iAction))
-  {
-    RenderUndoAction(adapter->getAction());
-  }
-  else
-    ImGui::Text("%s", iAction->fDescription.c_str());
-}
-
 }
 
 //------------------------------------------------------------------------
@@ -1770,18 +1650,18 @@ void AppContext::renderUndoHistory()
 {
   if(auto l = fUndoHistoryWindow.begin())
   {
-    auto redoHistory = fUndoManager->getRedoHistory();
+    auto const &redoHistory = fUndoManager->getRedoHistory();
     if(!redoHistory.empty())
     {
       ReGui::TextSeparator("Redo");
-      for(auto &w : redoHistory)
+      for(auto &action : redoHistory)
       {
-        impl::RenderUndoAction(w->fUndoAction.get());
+        impl::RenderUndoAction(action.get());
       }
     }
 
     ReGui::TextSeparator("Undo");
-    auto undoHistory = fUndoManager->getUndoHistory();
+    auto const &undoHistory = fUndoManager->getUndoHistory();
     if(undoHistory.empty())
       ImGui::TextUnformatted("<emtpy>");
     else
