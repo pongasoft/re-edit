@@ -92,7 +92,7 @@ public:
   static std::unique_ptr<T> build(char const *iName, bool iRequired, typename T::value_t const &iDefaultValue, ConstructorArgs&& ...iArgs);
 
   virtual std::unique_ptr<Attribute> clone() const = 0;
-  bool copyFrom(Attribute const *iFromAttribute, std::optional<std::string> const &iDescription = std::nullopt);
+  bool copyFrom(Attribute const *iFromAttribute);
   virtual bool copyFromAction(Attribute const *iFromAttribute) = 0;
   virtual bool eq(Attribute const *iAttribute) const = 0;
 

@@ -22,6 +22,7 @@
 #include "imgui_internal.h"
 #include "Application.h"
 #include "Utils.h"
+#include "stl.h"
 #include "Clipboard.h"
 #include <regex>
 #include <efsw/efsw.hpp>
@@ -549,12 +550,24 @@ void AppContext::execute<void>(std::unique_ptr<ExecutableAction<void>> iAction)
 }
 
 //------------------------------------------------------------------------
+// AppContext::setNextUndoActionDescription
+//------------------------------------------------------------------------
+void AppContext::setNextUndoActionDescription(std::string iDescription)
+{
+  if(!isUndoEnabled())
+    fNextUndoActionDescriptions.emplace_back(std::move(iDescription));
+}
+
+//------------------------------------------------------------------------
 // AppContext::addUndo
 //------------------------------------------------------------------------
 void AppContext::addUndo(std::unique_ptr<Action> iAction)
 {
   if(!isUndoEnabled())
     return;
+
+  if(!fNextUndoActionDescriptions.empty())
+    iAction->setDescription(stl::popLast(fNextUndoActionDescriptions));
 
   if(!iAction->getMergeKey().empty())
   {
@@ -606,6 +619,10 @@ void AppContext::beginUndoTx(std::string iDescription, MergeKey const &iMergeKey
     fNestedUndoTxs.emplace_back(std::move(fUndoTx));
 
   fUndoTx = std::make_unique<UndoTx>(getCurrentPanel()->getType(), std::move(iDescription), iMergeKey);
+
+  if(!fNextUndoActionDescriptions.empty())
+    fUndoTx->setDescription(stl::popLast(fNextUndoActionDescriptions));
+
 }
 
 //------------------------------------------------------------------------
@@ -1497,7 +1514,7 @@ bool AppContext::pasteFromClipboard(Widget *oWidget)
   {
     auto currentWidget = fCurrentWidget;
     fCurrentWidget = oWidget;
-    auto res = oWidget->copyFrom(*data->getWidget(), fmt::printf("Paste all widget attributes from [%s] to [%s]", data->getWidget()->getName(), oWidget->getName()));
+    auto res = oWidget->copyFrom(*data->getWidget());
     fCurrentWidget = currentWidget;
     return res;
   }
@@ -1506,7 +1523,8 @@ bool AppContext::pasteFromClipboard(Widget *oWidget)
   {
     auto currentWidget = fCurrentWidget;
     fCurrentWidget = oWidget;
-    auto res = oWidget->copyFrom(data->getAttribute(), fmt::printf("Paste attribute [%s] to widget [%s]", data->getAttribute()->fName, oWidget->getName()));
+    AppContext::GetCurrent().setNextUndoActionDescription(fmt::printf("Paste attribute [%s] to widget [%s]", data->getAttribute()->fName, oWidget->getName()));
+    auto res = oWidget->copyFrom(data->getAttribute());
     fCurrentWidget = currentWidget;
     return res;
   }

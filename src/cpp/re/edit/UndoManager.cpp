@@ -20,6 +20,7 @@
 #include "Errors.h"
 #include "AppContext.h"
 #include "Panel.h"
+#include "stl.h"
 
 namespace re::edit {
 
@@ -32,18 +33,6 @@ inline Action *last(std::vector<std::unique_ptr<Action>> const &v)
 
   auto iter = v.end() - 1;
   return iter->get();
-}
-
-template<typename C>
-inline typename C::value_type popLast(C &v)
-{
-  if(v.empty())
-    return {};
-
-  auto iter = v.end() - 1;
-  auto res = std::move(*iter);
-  v.erase(iter);
-  return res;
 }
 
 }
@@ -83,7 +72,7 @@ void UndoManager::undoLastAction()
 //------------------------------------------------------------------------
 void UndoManager::redoLastAction()
 {
-  auto action = stl::popLast(fRedoHistory);
+  auto action = stl::popLastOrDefault(fRedoHistory);
   if(action)
   {
     action->redo();
@@ -115,7 +104,7 @@ std::unique_ptr<Action> UndoManager::popLastUndoAction()
   if(!isEnabled())
     return nullptr;
 
-  return stl::popLast(fUndoHistory);
+  return stl::popLastOrDefault(fUndoHistory);
 }
 
 //------------------------------------------------------------------------

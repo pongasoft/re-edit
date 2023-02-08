@@ -95,8 +95,8 @@ public:
   std::unique_ptr<Widget> clone() const;
   std::unique_ptr<Widget> fullClone() const; // includes id/selected
 //  bool eq(Widget *iWidget) const;
-  bool copyFrom(Widget const &iWidget, std::string iDescription);
-  bool copyFrom(widget::Attribute const *iAttribute, std::string iDescription);
+  bool copyFrom(Widget const &iWidget);
+  bool copyFrom(widget::Attribute const *iAttribute);
 
   // action implementations (no undo)
   std::string setNameAction(std::string iName);

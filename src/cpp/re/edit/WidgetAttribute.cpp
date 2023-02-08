@@ -83,10 +83,9 @@ std::string Attribute::toString() const
 //------------------------------------------------------------------------
 // Attribute::copyFrom
 //------------------------------------------------------------------------
-bool Attribute::copyFrom(Attribute const *iFromAttribute, std::optional<std::string> const &iDescription)
+bool Attribute::copyFrom(Attribute const *iFromAttribute)
 {
-  return update([this, iFromAttribute]{ this->copyFromAction(iFromAttribute); },
-                iDescription ? *iDescription : computeUpdateAttributeDescription());
+  return update([this, iFromAttribute]{ this->copyFromAction(iFromAttribute); }, computeUpdateAttributeDescription());
 }
 
 //------------------------------------------------------------------------

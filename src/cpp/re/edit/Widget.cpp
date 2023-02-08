@@ -1024,11 +1024,11 @@ std::unique_ptr<Widget> Widget::fullClone() const
 //------------------------------------------------------------------------
 // Widget::copyFrom
 //------------------------------------------------------------------------
-bool Widget::copyFrom(Widget const &iWidget, std::string iDescription)
+bool Widget::copyFrom(Widget const &iWidget)
 {
   auto &ctx = AppContext::GetCurrent();
 
-  ctx.beginUndoTx(std::move(iDescription));
+  ctx.beginUndoTx(fmt::printf("Paste all widget attributes from [%s] to [%s]", iWidget.getName(), getName()));
   bool res = false;
   for(auto &att: fAttributes)
   {
@@ -1067,12 +1067,12 @@ bool Widget::copyFromAction(Widget const &iWidget)
 //------------------------------------------------------------------------
 // Widget::copyFrom
 //------------------------------------------------------------------------
-bool Widget::copyFrom(widget::Attribute const *iAttribute, std::string iDescription)
+bool Widget::copyFrom(widget::Attribute const *iAttribute)
 {
   auto att = findAttributeByName(iAttribute->fName);
   if(att)
   {
-    auto res = att->copyFrom(iAttribute, std::move(iDescription));
+    auto res = att->copyFrom(iAttribute);
     if(res)
       fEdited = true;
     return res;

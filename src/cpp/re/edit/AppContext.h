@@ -187,10 +187,10 @@ public: // Undo
   }
 
   void addUndo(std::unique_ptr<Action> iAction);
-
   void beginUndoTx(std::string iDescription, MergeKey const &iMergeKey = MergeKey::none());
   void commitUndoTx();
   void rollbackUndoTx();
+  void setNextUndoActionDescription(std::string iDescription);
 
   template<typename R>
   R execute(std::unique_ptr<ExecutableAction<R>> iAction);
@@ -290,6 +290,7 @@ protected:
   std::shared_ptr<UndoManager> fUndoManager{};
   std::unique_ptr<UndoTx> fUndoTx{};
   std::vector<std::unique_ptr<UndoTx>> fNestedUndoTxs{};
+  std::vector<std::string> fNextUndoActionDescriptions{};
   std::unique_ptr<PanelState> fFrontPanel;
   std::unique_ptr<PanelState> fFoldedFrontPanel;
   std::unique_ptr<PanelState> fBackPanel;
