@@ -77,14 +77,14 @@ void Graphics::editView(AppContext &iCtx)
   {
     if(ImGui::MenuItem(ReGui_Prefix(ReGui_Icon_Reset, "Reset")))
     {
-      iCtx.getCurrentPanel()->setBackgroundKey("");
+      fParent->setBackgroundKey("");
     }
 
     if(ImGui::MenuItem(ReGui_Prefix(ReGui_Icon_ImportImages, "Import")))
     {
       auto textureKey = iCtx.importTextureBlocking();
       if(textureKey)
-        iCtx.getCurrentPanel()->setBackgroundKey(*textureKey);
+        fParent->setBackgroundKey(*textureKey);
     }
 
     ImGui::EndPopup();
@@ -100,7 +100,7 @@ void Graphics::editView(AppContext &iCtx)
     {
       auto const isSelected = p == key;
       if(ImGui::Selectable(p.c_str(), isSelected))
-        iCtx.getCurrentPanel()->setBackgroundKey(p);
+        fParent->setBackgroundKey(p);
       if(isSelected)
         ImGui::SetItemDefaultFocus();
     }
@@ -265,7 +265,10 @@ void Graphics::editView(AppContext &iCtx,
       fEdited = true;
     }
     if(ImGui::Button("Ok"))
+    {
+      iCtx.resetUndoMergeKey();
       ImGui::CloseCurrentPopup();
+    }
     ImGui::EndPopup();
   }
 
@@ -333,7 +336,7 @@ void Graphics::editPositionView(AppContext &iCtx)
   if(ReGui::ResetButton())
   {
     editedPosition.x = 0;
-    iCtx.getCurrentWidget()->setPosition(editedPosition);
+    getParent()->setPosition(editedPosition);
   }
   ImGui::PopID();
 
@@ -341,14 +344,14 @@ void Graphics::editPositionView(AppContext &iCtx)
 
   if(ReGui::InputInt("x", &editedPosition.x, 1, 5))
   {
-    iCtx.getCurrentWidget()->setPosition(editedPosition);
+    getParent()->setPosition(editedPosition);
   }
 
   ImGui::PushID("ResetY");
   if(ReGui::ResetButton())
   {
     editedPosition.y = 0;
-    iCtx.getCurrentWidget()->setPosition(editedPosition);
+    getParent()->setPosition(editedPosition);
   }
   ImGui::PopID();
 
@@ -356,7 +359,7 @@ void Graphics::editPositionView(AppContext &iCtx)
 
   if(ReGui::InputInt("y", &editedPosition.y, 1, 5))
   {
-    iCtx.getCurrentWidget()->setPosition(editedPosition);
+    getParent()->setPosition(editedPosition);
   }
 
   if(hasTexture())
@@ -388,14 +391,14 @@ void Graphics::editView(AppContext &iCtx)
                       setTextureKey(k);
                       fFrameNumber = 0;
                     },
-                    fmt::printf(fmt::printf("Change %s graphics", iCtx.getCurrentWidget()->getName())));
+                    fmt::printf(fmt::printf("Change %s graphics", getParent()->getName())));
            },
            [this, &iCtx](auto &s) {
              update([this, &s] {
                       setSize(s);
                       fFrameNumber = 0;
                     },
-                    fmt::printf(fmt::printf("Change %s size", iCtx.getCurrentWidget()->getName())),
+                    fmt::printf(fmt::printf("Change %s size", getParent()->getName())),
                     MergeKey::from(&fTexture));
            }
   );
@@ -419,7 +422,7 @@ void Graphics::editHitBoundariesView(AppContext &iCtx)
       update([this, &editedHB] {
                fHitBoundaries = editedHB;
              },
-             fmt::printf("Change %s Hit Boundaries", iCtx.getCurrentWidget()->getName()),
+             fmt::printf("Change %s Hit Boundaries", getParent()->getName()),
              MergeKey::from(&fHitBoundaries.fTopInset));
     }
 
@@ -429,7 +432,7 @@ void Graphics::editHitBoundariesView(AppContext &iCtx)
       update([this, &editedHB] {
                fHitBoundaries = editedHB;
              },
-             fmt::printf("Change %s Hit Boundaries", iCtx.getCurrentWidget()->getName()),
+             fmt::printf("Change %s Hit Boundaries", getParent()->getName()),
              MergeKey::from(&fHitBoundaries.fLeftInset));
     }
   }
@@ -498,7 +501,7 @@ void Graphics::findErrors(AppContext &iCtx, UserError &oErrors) const
 //------------------------------------------------------------------------
 void Graphics::hdgui2D(attribute_list_t &oAttributes) const
 {
-  hdgui2D(AppContext::GetCurrent().getCurrentWidget()->getName(), oAttributes);
+  hdgui2D(getParent()->getName(), oAttributes);
 }
 
 //------------------------------------------------------------------------

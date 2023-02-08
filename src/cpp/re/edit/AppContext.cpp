@@ -554,7 +554,7 @@ void AppContext::execute<void>(std::unique_ptr<ExecutableAction<void>> iAction)
 //------------------------------------------------------------------------
 void AppContext::setNextUndoActionDescription(std::string iDescription)
 {
-  if(!isUndoEnabled())
+  if(isUndoEnabled())
     fNextUndoActionDescriptions.emplace_back(std::move(iDescription));
 }
 
@@ -613,12 +613,12 @@ void AppContext::addUndo(std::unique_ptr<Action> iAction)
 //------------------------------------------------------------------------
 // AppContext::beginUndoTx
 //------------------------------------------------------------------------
-void AppContext::beginUndoTx(std::string iDescription, MergeKey const &iMergeKey)
+void AppContext::beginUndoTx(PanelType iPanelType, std::string iDescription, MergeKey const &iMergeKey)
 {
   if(fUndoTx)
     fNestedUndoTxs.emplace_back(std::move(fUndoTx));
 
-  fUndoTx = std::make_unique<UndoTx>(getCurrentPanel()->getType(), std::move(iDescription), iMergeKey);
+  fUndoTx = std::make_unique<UndoTx>(iPanelType, std::move(iDescription), iMergeKey);
 
   if(!fNextUndoActionDescriptions.empty())
     fUndoTx->setDescription(stl::popLast(fNextUndoActionDescriptions));
@@ -1494,7 +1494,7 @@ void AppContext::copyToClipboard(Widget const *iWidget, int iAttributeId)
 void AppContext::copyToClipboard(widget::Attribute const *iAttribute)
 {
   if(iAttribute)
-    fClipboard.setData(clipboard::WidgetAttributeData::copyFrom(getCurrentWidget(), iAttribute->fId));
+    fClipboard.setData(clipboard::WidgetAttributeData::copyFrom(iAttribute->getParent(), iAttribute->fId));
 }
 
 //------------------------------------------------------------------------
@@ -1512,21 +1512,13 @@ bool AppContext::pasteFromClipboard(Widget *oWidget)
 {
   if(auto data = getClipboardData<clipboard::WidgetData>())
   {
-    auto currentWidget = fCurrentWidget;
-    fCurrentWidget = oWidget;
-    auto res = oWidget->copyFrom(*data->getWidget());
-    fCurrentWidget = currentWidget;
-    return res;
+    return oWidget->copyFrom(*data->getWidget());
   }
 
   if(auto data = getClipboardData<clipboard::WidgetAttributeData>())
   {
-    auto currentWidget = fCurrentWidget;
-    fCurrentWidget = oWidget;
     AppContext::GetCurrent().setNextUndoActionDescription(fmt::printf("Paste attribute [%s] to widget [%s]", data->getAttribute()->fName, oWidget->getName()));
-    auto res = oWidget->copyFrom(data->getAttribute());
-    fCurrentWidget = currentWidget;
-    return res;
+    return oWidget->copyFrom(data->getAttribute());
   }
 
   return false;
@@ -1540,9 +1532,12 @@ bool AppContext::pasteFromClipboard(std::vector<Widget *> const &oWidgets)
   if(!isClipboardMatchesType(clipboard::DataType::kWidget | clipboard::DataType::kWidgetAttribute) || oWidgets.empty())
     return false;
 
+  if(oWidgets.empty())
+    return false;
+
   bool res = false;
 
-  beginUndoTx(fmt::printf("Paste %s to [%ld] widgets", fClipboard.getData()->getDescription(), oWidgets.size()));
+  beginUndoTx(oWidgets[0]->getPanelType(), fmt::printf("Paste %s to [%ld] widgets", fClipboard.getData()->getDescription(), oWidgets.size()));
 
   for(auto &w: oWidgets)
   {
@@ -1725,7 +1720,8 @@ void AppContext::overrideTextureNumFrames(FilmStrip::key_t const &iKey, int iNum
   if(texture)
   {
     auto fn = [key = iKey](AppContext *iCtx, auto iNumFrames) { return iCtx->overrideTextureNumFramesAction(key, iNumFrames); };
-    executeAction<AppContextValueAction<int>>(fn,
+    executeAction<AppContextValueAction<int>>(getCurrentPanel()->getType(),
+                                              fn,
                                               iNumFrames,
                                               fmt::printf("Change number of frames (%s)", iKey),
                                               MergeKey::from(texture.get()));

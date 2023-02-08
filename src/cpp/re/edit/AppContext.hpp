@@ -44,10 +44,10 @@ R AppContext::execute(std::unique_ptr<ExecutableAction<R>> iAction)
 // AppContext::executeAction
 //------------------------------------------------------------------------
 template<class T, class... Args>
-typename T::result_t AppContext::executeAction(Args &&... args)
+typename T::result_t AppContext::executeAction(PanelType iPanelType, Args &&... args)
 {
   auto action = std::make_unique<T>();
-  action->setPanelType(getCurrentPanel()->getType());
+  action->setPanelType(iPanelType);
   action->init(std::forward<Args>(args)...);
   return execute<typename T::result_t>(std::move(action));
 }

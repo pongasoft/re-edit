@@ -76,7 +76,13 @@ class Attribute : public Editable
 {
 public:
   explicit Attribute(char const *iName) : fName{iName} {}
+  Attribute(Attribute const &iOther);
   ~Attribute() override = default;
+
+  Attribute &operator=(Attribute const &iOther) = delete;
+  Attribute(Attribute &&iOther) = delete;
+  Attribute &operator=(Attribute &&iOther) = delete;
+
   virtual void hdgui2D(attribute_list_t &oAttributes) const {}
   virtual void collectUsedTexturePaths(std::set<fs::path> &oPaths) const {}
   virtual void collectUsedTextureBuiltIns(std::set<FilmStrip::key_t> &oKeys) const {}
@@ -112,10 +118,11 @@ public:
     return computeAttributeChangeDescription("Update", iAttribute, iIndex);
   }
 
+  inline Widget *getParent() const { RE_EDIT_INTERNAL_ASSERT(!isOrphan()); return fParent; }
+
 protected:
   template<typename T>
   static std::unique_ptr<Attribute> clone(T const &iAttribute);
-
 
   inline void copyToClipboardMenuItem(AppContext &iCtx) const
   {
@@ -128,9 +135,13 @@ protected:
   template<typename T, typename Eq>
   static bool eq(T const *iLeftAttribute, Attribute const *iRightAttribute, Eq &&eq);
 
-  void init(int id) { fId = id; }
+  void init(Widget *iParent, int id);
+
+  constexpr bool isOrphan() const { return fParent == nullptr; }
 
 public:
+  Widget *fParent{};
+  WidgetType fWidgetType{};
   int fId{-1};
   char const *fName;
   bool fRequired{};

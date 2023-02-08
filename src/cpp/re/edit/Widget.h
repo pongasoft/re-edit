@@ -42,6 +42,12 @@ class Widget : public Editable
 public:
   explicit Widget(WidgetType iType, std::optional<std::string> const &iName = std::nullopt);
 
+  Widget &operator=(Widget const &iOther) = delete;
+  Widget(Widget &&iOther) = delete;
+  Widget &operator=(Widget &&iOther) = delete;
+
+  inline PanelType getPanelType() const { return fPanelType; }
+
   inline std::string const &getName() const { return fName.value(); }
   inline StringWithHash::hash_t getNameHash() const { return fName.hash(); }
   void setName(const std::string& iName);
@@ -184,12 +190,12 @@ protected:
 
 private:
   std::string computeDefaultWidgetName() const;
-  Widget(Widget const &iOther, std::string iName);
   Widget(Widget const &iOther);
-  void init(int id) { fId = id; }
+  void init(Panel *iParent, int id);
 
 private:
   int fId{-1};
+  PanelType fPanelType{PanelType::kUnknown};
   WidgetType fType{};
   StringWithHash fName{};
   bool fSelected{};

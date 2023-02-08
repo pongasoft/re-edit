@@ -23,6 +23,8 @@
 
 namespace re::edit {
 
+class Panel;
+
 struct HitBoundaries
 {
   friend bool operator==(HitBoundaries const &lhs, HitBoundaries const &rhs);
@@ -41,8 +43,6 @@ namespace re::edit::panel {
 class Graphics : public Editable
 {
 public:
-  Graphics() = default;
-
   std::string device2D() const;
 
   inline bool hasTexture() const { return fDNZTexture != nullptr; }
@@ -55,10 +55,18 @@ public:
   void editView(AppContext &iCtx);
   void findErrors(AppContext &iCtx, UserError &oErrors) const override;
 
+  friend class re::edit::Panel;
+
 public:
   Texture::key_t fTextureKey{};
   std::shared_ptr<Texture> fDNZTexture{};
   FilmStrip::Filter fFilter{};
+
+private:
+  explicit Graphics(Panel *iParent) : fParent{iParent} {}
+
+private:
+  Panel *fParent;
 };
 
 }

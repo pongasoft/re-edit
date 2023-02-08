@@ -19,7 +19,6 @@
 #include "WidgetAttribute.h"
 #include "WidgetAttribute.hpp"
 #include "Widget.h"
-#include "AppContext.hpp"
 #include "Errors.h"
 #include <re/mock/fmt.h>
 #include <imgui.h>
@@ -73,6 +72,28 @@ bool Editable::errorView()
 namespace re::edit::widget {
 
 //------------------------------------------------------------------------
+// Attribute::Attribute
+//------------------------------------------------------------------------
+Attribute::Attribute(Attribute const &iOther) :
+  fParent{nullptr},
+  fWidgetType{iOther.fWidgetType},
+  fId{iOther.fId},
+  fName{iOther.fName},
+  fRequired{iOther.fRequired}
+{
+}
+
+//------------------------------------------------------------------------
+// Attribute::init
+//------------------------------------------------------------------------
+void Attribute::init(Widget *iParent, int id)
+{
+  fParent = iParent;
+  fWidgetType = fParent->getType();
+  fId = id;
+}
+
+//------------------------------------------------------------------------
 // Attribute::toString
 //------------------------------------------------------------------------
 std::string Attribute::toString() const
@@ -93,10 +114,8 @@ bool Attribute::copyFrom(Attribute const *iFromAttribute)
 //------------------------------------------------------------------------
 bool Attribute::resetAttribute(Attribute *iAttributeForDescription)
 {
-  auto &ctx = AppContext::GetCurrent();
-  auto w = const_cast<Widget *>(ctx.getCurrentWidget()); // TODO hack for now
   return update([this] { reset(); },
-                fmt::printf("Reset %s.%s", w->getName(), iAttributeForDescription ? iAttributeForDescription->fName : fName));
+                fmt::printf("Reset %s.%s", getParent()->getName(), iAttributeForDescription ? iAttributeForDescription->fName : fName));
 }
 
 //------------------------------------------------------------------------
@@ -104,12 +123,10 @@ bool Attribute::resetAttribute(Attribute *iAttributeForDescription)
 //------------------------------------------------------------------------
 std::string Attribute::computeAttributeChangeDescription(char const *iChangeAction, Attribute *iAttribute, std::optional<int> iIndex) const
 {
-  auto &ctx = AppContext::GetCurrent();
-  auto w = ctx.getCurrentWidget(); // TODO hack for now
   if(iIndex)
-    return fmt::printf("%s %s.%s[%d]", iChangeAction, w->getName(), iAttribute ? iAttribute->fName : fName, *iIndex);
+    return fmt::printf("%s %s.%s[%d]", iChangeAction, getParent()->getName(), iAttribute ? iAttribute->fName : fName, *iIndex);
   else
-    return fmt::printf("%s %s.%s", iChangeAction, w->getName(), iAttribute ? iAttribute->fName : fName);
+    return fmt::printf("%s %s.%s", iChangeAction, getParent()->getName(), iAttribute ? iAttribute->fName : fName);
 }
 
 //------------------------------------------------------------------------
@@ -511,7 +528,7 @@ bool Value::copyFromAction(Attribute const *iAttribute)
   if(pathAttribute)
   {
     reset();
-    fValue = *pathAttribute;
+    fValue.fValue = pathAttribute->fValue;
     return true;
   }
 
@@ -1211,7 +1228,7 @@ void StaticStringList::editView(AppContext &iCtx)
 //------------------------------------------------------------------------
 void Index::editView(AppContext &iCtx)
 {
-  auto valueAtt = iCtx.getCurrentWidget()->findAttributeByIdAndType<PropertyPath>(fValueAttributeId);
+  auto valueAtt = getParent()->findAttributeByIdAndType<PropertyPath>(fValueAttributeId);
 
   auto property = iCtx.findProperty(valueAtt->fValue);
   if(property)
@@ -1240,7 +1257,7 @@ void Index::editView(AppContext &iCtx)
 //------------------------------------------------------------------------
 void Index::findErrors(AppContext &iCtx, UserError &oErrors) const
 {
-  auto valueAtt = iCtx.getCurrentWidget()->findAttributeByIdAndType<PropertyPath>(fValueAttributeId);
+  auto valueAtt = getParent()->findAttributeByIdAndType<PropertyPath>(fValueAttributeId);
   auto property = iCtx.findProperty(valueAtt->fValue);
   if(property && (fValue < 0 || fValue >= property->stepCount()))
     oErrors.add("%d is not in range [0, %d]", fValue, property->stepCount() - 1);
@@ -1370,7 +1387,7 @@ void ValueTemplates::editView(AppContext &iCtx)
   ImGui::PopID();
   ImGui::EndGroup();
 
-  auto valueAtt = iCtx.getCurrentWidget()->findAttributeByIdAndType<Value>(fValueAttributeId);
+  auto valueAtt = getParent()->findAttributeByIdAndType<Value>(fValueAttributeId);
 
   // sanity check as the following line will have no effect unless valueAtt is processed first
   RE_EDIT_INTERNAL_ASSERT(valueAtt->fId < fId);
@@ -1384,7 +1401,7 @@ void ValueTemplates::findErrors(AppContext &iCtx, UserError &oErrors) const
 {
   if(fValue.size() > 1)
   {
-    auto valueAtt = iCtx.getCurrentWidget()->findAttributeByIdAndType<Value>(fValueAttributeId);
+    auto valueAtt = getParent()->findAttributeByIdAndType<Value>(fValueAttributeId);
     if(valueAtt->fUseSwitch)
     {
       auto property = iCtx.findProperty(valueAtt->fValueSwitch.fValue);
@@ -1417,7 +1434,7 @@ void ReadOnly::onChanged(AppContext &iCtx)
            && isOneOf(p.owner(), Property::Owner::kDocOwner | Property::Owner::kGUIOwner | Property::Owner::kRTOwner);
   }, "Must be a number, string, or boolean, rt_owner property (read_only is true)"};
 
-  auto valueAtt = iCtx.getCurrentWidget()->findAttributeByIdAndType<Value>(fValueAttributeId);
+  auto valueAtt = getParent()->findAttributeByIdAndType<Value>(fValueAttributeId);
   if(fValue)
     valueAtt->updateFilters(kReadOnlyValueFilter, kReadOnlyValueFilter);
   else

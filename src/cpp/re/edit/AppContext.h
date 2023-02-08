@@ -187,7 +187,7 @@ public: // Undo
   }
 
   void addUndo(std::unique_ptr<Action> iAction);
-  void beginUndoTx(std::string iDescription, MergeKey const &iMergeKey = MergeKey::none());
+  void beginUndoTx(PanelType iPanelType, std::string iDescription, MergeKey const &iMergeKey = MergeKey::none());
   void commitUndoTx();
   void rollbackUndoTx();
   void setNextUndoActionDescription(std::string iDescription);
@@ -196,15 +196,12 @@ public: // Undo
   R execute(std::unique_ptr<ExecutableAction<R>> iAction);
 
   template<class T, class... Args >
-  typename T::result_t executeAction(Args&&... args);
+  typename T::result_t executeAction(PanelType iPanelType, Args&&... args);
 
   void resetUndoMergeKey();
 
   void undoLastAction();
   void redoLastAction();
-
-  inline Widget const *getCurrentWidget() const { RE_EDIT_INTERNAL_ASSERT(fCurrentWidget != nullptr); return fCurrentWidget; }
-  inline Widget *getCurrentWidget() { RE_EDIT_INTERNAL_ASSERT(fCurrentWidget != nullptr); return const_cast<Widget *>(fCurrentWidget); }
 
   friend class PanelState;
   friend class Widget;
@@ -262,7 +259,6 @@ protected:
   void initPanels(fs::path const &iDevice2DFile,
                   fs::path const &iHDGui2DFile,
                   Utils::CancellableSPtr const &iCancellable);
-  inline void setCurrentWidget(Widget const *iWidget) { fCurrentWidget = iWidget; }
   inline ReGui::Canvas &getPanelCanvas() { return fPanelCanvas; }
   void newFrame();
   void beforeRenderFrame();
@@ -308,7 +304,6 @@ protected:
   long fCurrentFrame{};
   PanelState *fCurrentPanelState{};
   PanelState *fPreviousPanelState{};
-  Widget const *fCurrentWidget{};
   ReGui::Canvas fPanelCanvas{};
   Clipboard fClipboard{};
   bool fNeedsSaving{};

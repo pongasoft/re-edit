@@ -28,7 +28,7 @@ template<class T, class... Args>
 typename T::result_t Widget::executeAction(Args &&... args)
 {
   auto &ctx = AppContext::GetCurrent();
-  return ctx.executeAction<T>(fId, std::forward<Args>(args)...);
+  return ctx.executeAction<T>(fPanelType, fId, std::forward<Args>(args)...);
 }
 
 //------------------------------------------------------------------------

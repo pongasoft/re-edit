@@ -795,7 +795,6 @@ void Panel::clearSelection()
 {
   for(auto &p: fWidgets)
     p.second->unselect();
-  fComputedSelectedWidgets.clear();
 }
 
 

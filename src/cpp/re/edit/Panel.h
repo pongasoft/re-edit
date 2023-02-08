@@ -224,7 +224,7 @@ private:
   ImVec2 fSize{kDevicePixelWidth, toPixelHeight(1)};
   ReGui::Rect fComputedRect{{}, fSize};
   std::string fNodeName;
-  re::edit::panel::Graphics fGraphics{};
+  re::edit::panel::Graphics fGraphics{this};
   std::optional<ImVec2> fCableOrigin;
   std::optional<bool> fDisableSampleDropOnPanel{};
   bool fShowCableOrigin{};

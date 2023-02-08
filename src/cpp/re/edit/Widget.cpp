@@ -45,6 +45,7 @@ Widget::Widget(WidgetType iType, std::optional<std::string> const &iName) : fTyp
 //------------------------------------------------------------------------
 Widget::Widget(Widget const &iOther) :
   Editable(iOther),
+  fPanelType{iOther.fPanelType},
   fType(iOther.fType),
   fName(iOther.fName)
 {
@@ -67,38 +68,17 @@ Widget::Widget(Widget const &iOther) :
       fVisibility = visibility;
 #pragma clang diagnostic pop
     }
-    fAttributes.emplace_back(std::move(newAttribute));
+    addAttribute(std::move(newAttribute));
   }
 }
 
 //------------------------------------------------------------------------
-// Widget::Widget
+// Widget::init
 //------------------------------------------------------------------------
-Widget::Widget(Widget const &iOther, std::string iName) :
-  fType(iOther.fType),
-  fName(std::move(iName))
+void Widget::init(Panel *iParent, int id)
 {
-  for(auto &attribute: iOther.fAttributes)
-  {
-    auto newAttribute = attribute->clone();
-    auto graphics = dynamic_cast<widget::attribute::Graphics *>(newAttribute.get());
-    if(graphics)
-    {
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "LocalValueEscapesScope"
-      fGraphics = graphics;
-#pragma clang diagnostic pop
-    }
-    auto visibility = dynamic_cast<widget::attribute::Visibility *>(newAttribute.get());
-    if(visibility)
-    {
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "LocalValueEscapesScope"
-      fVisibility = visibility;
-#pragma clang diagnostic pop
-    }
-    fAttributes.emplace_back(std::move(newAttribute));
-  }
+  fPanelType = iParent->getType();
+  fId = id;
 }
 
 //------------------------------------------------------------------------
@@ -182,10 +162,8 @@ void Widget::draw(AppContext &iCtx, ReGui::Canvas &iCanvas)
 //------------------------------------------------------------------------
 void Widget::init(AppContext &iCtx)
 {
-  iCtx.setCurrentWidget(this);
   for(auto &att: fAttributes)
     att->init(iCtx);
-  iCtx.setCurrentWidget(nullptr);
 }
 
 //------------------------------------------------------------------------
@@ -218,13 +196,11 @@ bool Widget::checkForErrors(AppContext &iCtx)
   if(fEdited)
   {
     fUserError.clear();
-    iCtx.setCurrentWidget(this);
     for(auto &att: fAttributes)
     {
       if(att->checkForErrors(iCtx))
         addAllErrors(att->fName, *att);
     }
-    iCtx.setCurrentWidget(nullptr);
     fEdited = false;
   }
 
@@ -236,8 +212,6 @@ bool Widget::checkForErrors(AppContext &iCtx)
 //------------------------------------------------------------------------
 void Widget::editView(AppContext &iCtx)
 {
-  iCtx.setCurrentWidget(this);
-
   ImGui::PushID("Widget");
 
   auto editedHashedName = fName;
@@ -293,8 +267,6 @@ void Widget::editView(AppContext &iCtx)
   }
 
   ImGui::PopID();
-
-  iCtx.setCurrentWidget(nullptr);
 }
 
 //------------------------------------------------------------------------
@@ -302,8 +274,6 @@ void Widget::editView(AppContext &iCtx)
 //------------------------------------------------------------------------
 std::string Widget::hdgui2D() const
 {
-  AppContext::GetCurrent().setCurrentWidget(this);
-
   if(isPanelDecal())
     return "";
 
@@ -316,8 +286,6 @@ std::string Widget::hdgui2D() const
   std::transform(atts.begin(), atts.end(), std::back_inserter(l), [](auto &att) {
     return re::mock::fmt::printf("  %s = %s", att.fName, att.fValue);
   });
-
-  AppContext::GetCurrent().setCurrentWidget(nullptr);
 
   return re::mock::fmt::printf("jbox.%s {\n%s\n}", toString(fType), re::mock::stl::join_to_string(l, ",\n"));
 }
@@ -999,7 +967,9 @@ std::unique_ptr<Widget> Widget::panel_decal(std::optional<std::string> const &iN
 //------------------------------------------------------------------------
 std::unique_ptr<Widget> Widget::copy(std::string iName) const
 {
-  return std::unique_ptr<Widget>(new Widget(*this, std::move(iName)));
+  auto w = clone();
+  w->setNameAction(std::move(iName));
+  return w;
 }
 
 //------------------------------------------------------------------------
@@ -1028,7 +998,7 @@ bool Widget::copyFrom(Widget const &iWidget)
 {
   auto &ctx = AppContext::GetCurrent();
 
-  ctx.beginUndoTx(fmt::printf("Paste all widget attributes from [%s] to [%s]", iWidget.getName(), getName()));
+  ctx.beginUndoTx(getPanelType(), fmt::printf("Paste all widget attributes from [%s] to [%s]", iWidget.getName(), getName()));
   bool res = false;
   for(auto &att: fAttributes)
   {
@@ -1194,8 +1164,9 @@ widget::Attribute *Widget::findAttributeByName(std::string const &iAttributeName
 Widget *Widget::addAttribute(std::unique_ptr<widget::Attribute> iAttribute)
 {
   auto id = static_cast<int>(fAttributes.size());
-  iAttribute->init(id);
-  fAttributes.emplace_back(std::move(iAttribute)); return this;
+  iAttribute->init(this, id);
+  fAttributes.emplace_back(std::move(iAttribute));
+  return this;
 }
 
 namespace clipboard {

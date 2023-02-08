@@ -106,9 +106,8 @@ bool Attribute::update(F &&f, std::string const &iDescription, MergeKey const &i
     if(!currentValue->eq(previousValue.get()))
     {
       markEdited();
-      auto w = const_cast<Widget *>(ctx.getCurrentWidget()); // TODO hack for now
-      auto action = std::make_unique<AttributeUpdateAction>(w->getId(), std::move(currentValue), std::move(previousValue), iDescription, iMergeKey);
-      action->setPanelType(ctx.getCurrentPanel()->getType());
+      auto action = std::make_unique<AttributeUpdateAction>(getParent()->getId(), std::move(currentValue), std::move(previousValue), iDescription, iMergeKey);
+      action->setPanelType(getParent()->getPanelType());
       ctx.execute<void>(std::move(action));
       return true;
     }
