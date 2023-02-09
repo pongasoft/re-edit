@@ -117,6 +117,34 @@ void UndoManager::clear()
 }
 
 //------------------------------------------------------------------------
+// UndoManager::undoUntil
+//------------------------------------------------------------------------
+void UndoManager::undoUntil(Action const *iAction)
+{
+  while(!fUndoHistory.empty() && getLastUndoAction() != iAction)
+    undoLastAction();
+}
+
+//------------------------------------------------------------------------
+// UndoManager::undoAll
+//------------------------------------------------------------------------
+void UndoManager::undoAll()
+{
+  while(!fUndoHistory.empty())
+    undoLastAction();
+}
+
+//------------------------------------------------------------------------
+// UndoManager::redoUntil
+//------------------------------------------------------------------------
+void UndoManager::redoUntil(Action const *iAction)
+{
+  while(!fRedoHistory.empty() && getLastRedoAction() != iAction)
+    redoLastAction();
+  redoLastAction(); // we need to get one more
+}
+
+//------------------------------------------------------------------------
 // Action::getPanel
 //------------------------------------------------------------------------
 Panel *Action::getPanel() const

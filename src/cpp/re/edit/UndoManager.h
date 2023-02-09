@@ -204,7 +204,10 @@ public:
   constexpr void disable() { fEnabled = false; }
   void addUndoAction(std::unique_ptr<Action> iAction);
   void undoLastAction();
+  void undoUntil(Action const *iAction);
+  void undoAll();
   void redoLastAction();
+  void redoUntil(Action const *iAction);
   inline bool hasUndoHistory() const { return !fUndoHistory.empty(); }
   inline bool hasRedoHistory() const { return !fRedoHistory.empty(); }
   inline bool hasHistory() const { return hasUndoHistory() || hasRedoHistory(); }

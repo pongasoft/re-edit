@@ -203,6 +203,7 @@ public: // Undo
 
   void undoLastAction();
   void redoLastAction();
+  void clearUndoHistory();
 
   friend class PanelState;
   friend class Widget;
@@ -302,6 +303,7 @@ protected:
   ReGui::Window fWidgetsWindow{"Widgets", true, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoCollapse};
   ReGui::Window fPropertiesWindow{"Properties", true, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoCollapse};
   ReGui::Window fUndoHistoryWindow{"Undo History", true, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoCollapse};
+  bool fShowUndoDetails{};
   long fCurrentFrame{};
   PanelState *fCurrentPanelState{};
   PanelState *fPreviousPanelState{};
@@ -309,6 +311,7 @@ protected:
   Clipboard fClipboard{};
   bool fNeedsSaving{};
   void *fLastSavedUndoAction{};
+  void *fLastUndoAction{};
   bool fRecomputeDimensionsRequested{true};
   bool fReloadTexturesRequested{};
   std::atomic<bool> fMaybeReloadTextures{};

@@ -960,10 +960,13 @@ void AppContext::renderMainMenu()
       ImGui::BeginDisabled(!fUndoManager->hasHistory());
       if(ImGui::MenuItem("Clear Undo History"))
       {
-        fUndoManager->clear();
-        fLastSavedUndoAction = nullptr;
+        clearUndoHistory();
       }
       ImGui::EndDisabled();
+
+      ImGui::Separator();
+
+      fUndoHistoryWindow.menuItem();
 
       ImGui::EndMenu();
     }
@@ -1017,6 +1020,7 @@ void AppContext::renderMainMenu()
       fPanelWidgetsWindow.menuItem();
       fWidgetsWindow.menuItem();
       fPropertiesWindow.menuItem();
+      fUndoHistoryWindow.menuItem();
       ImGui::Separator();
       if(ImGui::BeginMenu("Zoom"))
       {
@@ -1101,7 +1105,8 @@ void AppContext::beforeRenderFrame()
     }
   }
 
-  fNeedsSaving = fUndoManager->getLastUndoAction() != fLastSavedUndoAction;
+  fLastUndoAction = fUndoManager->getLastUndoAction();
+  fNeedsSaving = fLastUndoAction != fLastSavedUndoAction;
 }
 
 //------------------------------------------------------------------------
@@ -1641,22 +1646,44 @@ void AppContext::redoLastAction()
   }
 }
 
+//------------------------------------------------------------------------
+// AppContext::clearUndoHistory
+//------------------------------------------------------------------------
+void AppContext::clearUndoHistory()
+{
+  fUndoManager->clear();
+  fLastSavedUndoAction = nullptr;
+}
+
 namespace impl {
 
 //------------------------------------------------------------------------
 // impl::RenderUndoAction
 //------------------------------------------------------------------------
-void RenderUndoAction(Action const *iAction)
+bool RenderUndoAction(Action const *iAction, bool iSelectable, bool iSelected, bool showDetails)
 {
-  ImGui::Text("%s", iAction->fDescription.c_str());
+  bool res = false;
 
-  if(auto c = dynamic_cast<const CompositeAction *>(iAction))
+  if(iSelectable)
   {
-    ImGui::Indent();
-    for(auto &a: c->getActions())
-      RenderUndoAction(a.get());
-    ImGui::Unindent();
+    if(ImGui::Selectable(iAction->fDescription.c_str(), iSelected))
+      res = true;
   }
+  else
+    ImGui::TextUnformatted(iAction->fDescription.c_str());
+
+  if(showDetails)
+  {
+    if(auto c = dynamic_cast<const CompositeAction *>(iAction))
+    {
+      ImGui::Indent();
+      for(auto &a: c->getActions())
+        RenderUndoAction(a.get(), false, false, showDetails);
+      ImGui::Unindent();
+    }
+  }
+
+  return res;
 }
 
 }
@@ -1668,29 +1695,68 @@ void AppContext::renderUndoHistory()
 {
   if(auto l = fUndoHistoryWindow.begin())
   {
-    auto const &redoHistory = fUndoManager->getRedoHistory();
-    if(!redoHistory.empty())
+    ImGui::BeginDisabled(fUndoManager->getLastUndoAction() == nullptr);
+    if(ImGui::Button(ReGui_Prefix(ReGui_Icon_Undo, "Undo ")))
+      undoLastAction();
+    ImGui::EndDisabled();
+    ImGui::SameLine();
+    ImGui::BeginDisabled(fUndoManager->getLastRedoAction() == nullptr);
+    if(ImGui::Button(ReGui_Prefix(ReGui_Icon_Redo, "Redo ")))
+      redoLastAction();
+    ImGui::EndDisabled();
+    ImGui::SameLine();
+    ImGui::BeginDisabled(!fUndoManager->hasHistory());
+    if(ImGui::Button(ReGui_Prefix(ReGui_Icon_Reset, "Clear")))
     {
-      ReGui::TextSeparator("Redo");
-      for(auto &action : redoHistory)
-      {
-        impl::RenderUndoAction(action.get());
-      }
+      clearUndoHistory();
     }
+    ImGui::EndDisabled();
+    ImGui::SameLine();
+    ImGui::Checkbox("details", &fShowUndoDetails);
 
-    ReGui::TextSeparator("Undo");
-    auto const &undoHistory = fUndoManager->getUndoHistory();
-    if(undoHistory.empty())
-      ImGui::TextUnformatted("<emtpy>");
-    else
+    if(ImGui::BeginChild("History", ImVec2{}, false, ImGuiWindowFlags_HorizontalScrollbar))
     {
-      for(auto i = undoHistory.rbegin(); i != undoHistory.rend(); i++)
+      auto const &undoHistory = fUndoManager->getUndoHistory();
+      auto const &redoHistory = fUndoManager->getRedoHistory();
+      if(redoHistory.empty() && undoHistory.empty())
       {
-        impl::RenderUndoAction((*i).get());
+        ImGui::TextUnformatted("<emtpy>");
+      }
+      else
+      {
+        Action *undoAction = nullptr;
+        Action *redoAction = nullptr;
+        if(ImGui::Selectable("<empty>"))
+          fUndoManager->undoAll();
+        if(!undoHistory.empty())
+        {
+          auto currentUndoAction = fUndoManager->getLastUndoAction();
+          for(auto &action : undoHistory)
+          {
+            if(impl::RenderUndoAction(action.get(), true, currentUndoAction == action.get(), fShowUndoDetails))
+              undoAction = action.get();
+            if(currentUndoAction == action.get() && currentUndoAction != fLastUndoAction)
+              ImGui::SetScrollHereY(1.0f);
+          }
+        }
+        if(!redoHistory.empty())
+        {
+          ImGui::PushStyleVar(ImGuiStyleVar_Alpha, 0.5f);
+          for(auto i = redoHistory.rbegin(); i != redoHistory.rend(); i++)
+          {
+            if(impl::RenderUndoAction((*i).get(), true, false, fShowUndoDetails))
+              redoAction = (*i).get();
+          }
+          ImGui::PopStyleVar();
+        }
+        if(undoAction)
+          fUndoManager->undoUntil(undoAction);
+        if(redoAction)
+          fUndoManager->redoUntil(redoAction);
       }
     }
+    ImGui::EndChild();
   }
-
 }
 
 //------------------------------------------------------------------------
