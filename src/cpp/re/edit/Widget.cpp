@@ -1102,6 +1102,7 @@ void Widget::showIfHidden(AppContext &iCtx)
 {
   if(canBeShown())
   {
+    iCtx.setNextUndoActionDescription(fmt::printf("Show [%s]", getName()));
     iCtx.setPropertyValueAsInt(fVisibility->fSwitch.fValue, fVisibility->fValues.fValue[0]);
   }
 }
@@ -1125,7 +1126,10 @@ void Widget::renderVisibilityMenu(AppContext &iCtx)
         if(!values.empty())
         {
           if(ImGui::MenuItem(fmt::printf("Show [value=%d]", values[0]).c_str()))
+          {
+            iCtx.setNextUndoActionDescription(fmt::printf("Show [%s]", getName()));
             iCtx.setPropertyValueAsInt(path, values[0]);
+          }
           if(values.size() > 1)
           {
             if(ImGui::BeginMenu(fmt::printf("Show with value", path).c_str()))
@@ -1134,7 +1138,10 @@ void Widget::renderVisibilityMenu(AppContext &iCtx)
               for(auto value: values)
               {
                 if(ImGui::MenuItem(fmt::printf("%d", value).c_str()))
+                {
+                  iCtx.setNextUndoActionDescription(fmt::printf("Show [%s]", getName()));
                   iCtx.setPropertyValueAsInt(path, value);
+                }
               }
               ImGui::EndMenu();
             }

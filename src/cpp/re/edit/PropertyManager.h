@@ -86,6 +86,23 @@ public:
   friend class AppContext;
 
 protected:
+  template<typename Num>
+  void setNumValue(std::string const &iPropertyPath, Num iValue);
+  template<typename Num>
+  Num setNumValueAction(std::string const &iPropertyPath, Num iValue);
+
+  void setBoolValue(std::string const &iPropertyPath, bool iValue);
+  bool setBoolValueAction(std::string const &iPropertyPath, bool iValue);
+
+  std::string setStringValueAction(std::string const &iPropertyPath, std::string const &iValue);
+
+  template<typename T, typename F>
+  void updateProperty(F &&f, std::string const &iPropertyPath, T iValue);
+
+  template<class T, class... Args >
+  typename T::result_t executeAction(Args&&... args);
+
+protected:
   void beforeRenderFrame();
   void afterRenderFrame();
 

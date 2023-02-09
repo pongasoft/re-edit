@@ -554,8 +554,8 @@ void AppContext::execute<void>(std::unique_ptr<ExecutableAction<void>> iAction)
 //------------------------------------------------------------------------
 void AppContext::setNextUndoActionDescription(std::string iDescription)
 {
-  if(isUndoEnabled())
-    fNextUndoActionDescriptions.emplace_back(std::move(iDescription));
+  if(isUndoEnabled() && !fNextUndoActionDescription)
+    fNextUndoActionDescription.emplace(std::move(iDescription));
 }
 
 //------------------------------------------------------------------------
@@ -566,8 +566,11 @@ void AppContext::addUndo(std::unique_ptr<Action> iAction)
   if(!isUndoEnabled())
     return;
 
-  if(!fNextUndoActionDescriptions.empty())
-    iAction->setDescription(stl::popLast(fNextUndoActionDescriptions));
+  if(fNextUndoActionDescription)
+  {
+    iAction->setDescription(*fNextUndoActionDescription);
+    fNextUndoActionDescription.reset();
+  }
 
   if(!iAction->getMergeKey().empty())
   {
@@ -620,9 +623,11 @@ void AppContext::beginUndoTx(PanelType iPanelType, std::string iDescription, Mer
 
   fUndoTx = std::make_unique<UndoTx>(iPanelType, std::move(iDescription), iMergeKey);
 
-  if(!fNextUndoActionDescriptions.empty())
-    fUndoTx->setDescription(stl::popLast(fNextUndoActionDescriptions));
-
+  if(fNextUndoActionDescription)
+  {
+    fUndoTx->setDescription(*fNextUndoActionDescription);
+    fNextUndoActionDescription.reset();
+  }
 }
 
 //------------------------------------------------------------------------

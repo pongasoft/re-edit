@@ -142,6 +142,7 @@ public: // Properties
   }
   void removePropertyFromWatchlist(std::string const &iPropertyPath) { fPropertyManager->removeFromWatchlist(iPropertyPath); }
   constexpr int getUserSamplesCount() const { return fPropertyManager->getUserSamplesCount(); }
+  PropertyManager *getPropertyManager() const { return fPropertyManager.get(); }
 
 public: // Clipboard
   inline bool isClipboardMatchesType(clipboard::DataType iType) const { return fClipboard.matchesType(iType); }
@@ -286,7 +287,7 @@ protected:
   std::shared_ptr<UndoManager> fUndoManager{};
   std::unique_ptr<UndoTx> fUndoTx{};
   std::vector<std::unique_ptr<UndoTx>> fNestedUndoTxs{};
-  std::vector<std::string> fNextUndoActionDescriptions{};
+  std::optional<std::string> fNextUndoActionDescription{};
   std::unique_ptr<PanelState> fFrontPanel;
   std::unique_ptr<PanelState> fFoldedFrontPanel;
   std::unique_ptr<PanelState> fBackPanel;

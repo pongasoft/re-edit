@@ -21,10 +21,36 @@
 #include <imgui.h>
 #include <misc/cpp/imgui_stdlib.h>
 #include "Errors.h"
+#include "UndoManager.h"
+#include "AppContext.hpp"
 
 using namespace re::mock;
 
 namespace re::edit {
+
+//------------------------------------------------------------------------
+// class PropertyManagerAction<T>
+//------------------------------------------------------------------------
+template<typename T>
+class PropertyManagerAction : public ValueAction<PropertyManager, T>
+{
+public:
+  PropertyManager *getTarget() const override
+  {
+    return AppContext::GetCurrent().getPropertyManager();
+  }
+};
+
+//------------------------------------------------------------------------
+// Panel::executeAction
+//------------------------------------------------------------------------
+template<class T, class... Args>
+typename T::result_t PropertyManager::executeAction(Args &&... args)
+{
+  auto &ctx = AppContext::GetCurrent();
+  return ctx.executeAction<T>(ctx.getCurrentPanel()->getType(), std::forward<Args>(args)...);
+}
+
 
 //------------------------------------------------------------------------
 // PropertyManager::init
@@ -242,10 +268,10 @@ void PropertyManager::setValueAsInt(std::string const &iPropertyPath, int iValue
     switch(iter->second.type())
     {
       case Property::Type::kNumber:
-        fDevice->setNum<int>(iPropertyPath, iValue);
+        setNumValue(iPropertyPath, iValue);
         break;
       case Property::Type::kBoolean:
-        fDevice->setBool(iPropertyPath, iValue != 0);
+        setBoolValue(iPropertyPath, iValue != 0);
         break;
       default:
         break;
@@ -431,13 +457,13 @@ void PropertyManager::editView(Property const *iProperty)
       {
         auto value = fDevice->getNum<int>(iProperty->path());
         if(ImGui::SliderInt("value", &value, 0, iProperty->stepCount() - 1))
-          fDevice->setNum<int>(iProperty->path(), value);
+          setNumValue(iProperty->path(), value);
       }
       else
       {
         auto floatValue = fDevice->getNum<float>(iProperty->path());
         if(ImGui::DragFloat("value", &floatValue))
-          fDevice->setNum<float>(iProperty->path(), floatValue);
+          setNumValue(iProperty->path(), floatValue);
       }
       break;
     }
@@ -446,10 +472,7 @@ void PropertyManager::editView(Property const *iProperty)
       auto value = iProperty->owner() != mock::PropertyOwner::kRTOwner ? fDevice->getString(iProperty->path()) : fDevice->getRTString(iProperty->path());
       if(ImGui::InputText("value", &value))
       {
-        if(iProperty->owner() != mock::PropertyOwner::kRTOwner)
-          fDevice->setString(iProperty->path(), iProperty->path());
-        else
-          fDevice->setRTString(iProperty->path(), iProperty->path());
+        updateProperty(&PropertyManager::setStringValueAction, iProperty->path(), value);
       }
       break;
     }
@@ -458,7 +481,7 @@ void PropertyManager::editView(Property const *iProperty)
     {
       auto value = fDevice->getBool(iProperty->path());
       if(ReGui::ToggleButton("false", "true", &value))
-        fDevice->setBool(iProperty->path(), value);
+        setBoolValue(iProperty->path(), value);
       break;
     }
 
@@ -466,6 +489,86 @@ void PropertyManager::editView(Property const *iProperty)
       ImGui::Text("%s", fDevice->toString(iProperty->path()).c_str());
       break;
   }
+}
+
+//------------------------------------------------------------------------
+// PropertyManager::updateProperty
+//------------------------------------------------------------------------
+template<typename T, typename F>
+void PropertyManager::updateProperty(F &&f, std::string const &iPropertyPath, T iValue)
+{
+  auto property = findProperty(iPropertyPath);
+  if(property)
+  {
+    executeAction<PropertyManagerAction<T>>([path = iPropertyPath, f = std::forward<F>(f)](auto *mgr, auto v) {
+                                              return std::invoke(f, mgr, path, v);
+                                            },
+                                            iValue,
+                                            fmt::printf("Update property [%s]", iPropertyPath),
+                                            MergeKey::from(const_cast<Property *>(property)));
+  }
+}
+
+//------------------------------------------------------------------------
+// PropertyManager::setBoolValueAction
+//------------------------------------------------------------------------
+bool PropertyManager::setBoolValueAction(std::string const &iPropertyPath, bool iValue)
+{
+  auto value = fDevice->getBool(iPropertyPath);
+  fDevice->setBool(iPropertyPath, iValue);
+  return value;
+}
+
+//------------------------------------------------------------------------
+// PropertyManager::setBoolValue
+//------------------------------------------------------------------------
+void PropertyManager::setBoolValue(std::string const &iPropertyPath, bool iValue)
+{
+  updateProperty(&PropertyManager::setBoolValueAction, iPropertyPath, iValue);
+}
+
+//------------------------------------------------------------------------
+// PropertyManager::setStringValueAction
+//------------------------------------------------------------------------
+std::string PropertyManager::setStringValueAction(std::string const &iPropertyPath, std::string const &iValue)
+{
+  std::string res{};
+
+  auto property = findProperty(iPropertyPath);
+  if(property)
+  {
+    if(property->owner() != mock::PropertyOwner::kRTOwner)
+    {
+      res = fDevice->getString(iPropertyPath);
+      fDevice->setString(iPropertyPath, iValue);
+    }
+    else
+    {
+      res = fDevice->getRTString(iPropertyPath);
+      fDevice->setRTString(iPropertyPath, iValue);
+    }
+  }
+  return res;
+}
+
+//------------------------------------------------------------------------
+// PropertyManager::setNumValueAction
+//------------------------------------------------------------------------
+template<typename Num>
+Num PropertyManager::setNumValueAction(std::string const &iPropertyPath, Num iValue)
+{
+  auto value = fDevice->getNum<Num>(iPropertyPath);
+  fDevice->setNum<Num>(iPropertyPath, iValue);
+  return value;
+}
+
+//------------------------------------------------------------------------
+// PropertyManager::setNumValue
+//------------------------------------------------------------------------
+template<typename Num>
+void PropertyManager::setNumValue(std::string const &iPropertyPath, Num iValue)
+{
+  updateProperty<Num>(&PropertyManager::setNumValueAction<Num>, iPropertyPath, iValue);
 }
 
 
