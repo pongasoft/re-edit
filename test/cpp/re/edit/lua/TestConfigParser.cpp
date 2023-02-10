@@ -37,6 +37,7 @@ global_config["device_history"][1] = {
   show_panel = true,
   show_panel_widgets = true,
   show_widgets = true,
+  show_undo_history = false,
   grid = { 10, 10 },
   ["imgui.ini"] = [==[<snipped> / CVA-7 CV Analyzer]==],
   native_window_pos = { 351, 151 },
@@ -47,10 +48,11 @@ global_config["device_history"][2] = {
   name = "Small",
   path = [==[/Volumes/Vault/tmp/com.acme.Small-plugin]==],
   type = "studio_fx",
-  show_properties = false,
+  show_properties = true,
   show_panel = true,
   show_panel_widgets = true,
   show_widgets = true,
+  show_undo_history = true,
   grid = { 10, 10 },
   ["imgui.ini"] = [==[<snipped> / Small]==],
   native_window_pos = { 222, 171 },
@@ -75,6 +77,7 @@ global_config["device_history"][2] = {
     ASSERT_TRUE(item.fShowPanel);
     ASSERT_TRUE(item.fShowPanelWidgets);
     ASSERT_TRUE(item.fShowWidgets);
+    ASSERT_FALSE(item.fShowUndoHistory);
     ASSERT_FLOAT_EQ(10.0f, item.fGrid.x); ASSERT_FLOAT_EQ(10.0f, item.fGrid.y);
     ASSERT_EQ(ImVec2(10.0f, 10.0f), item.fGrid);
     ASSERT_EQ("<snipped> / CVA-7 CV Analyzer", item.fImGuiIni);
@@ -88,10 +91,11 @@ global_config["device_history"][2] = {
     ASSERT_EQ("Small", item.fName);
     ASSERT_EQ("/Volumes/Vault/tmp/com.acme.Small-plugin", item.fPath);
     ASSERT_EQ("studio_fx", item.fType);
-    ASSERT_FALSE(item.fShowProperties);
+    ASSERT_TRUE(item.fShowProperties);
     ASSERT_TRUE(item.fShowPanel);
     ASSERT_TRUE(item.fShowPanelWidgets);
     ASSERT_TRUE(item.fShowWidgets);
+    ASSERT_TRUE(item.fShowUndoHistory);
     ASSERT_FLOAT_EQ(10.0f, item.fGrid.x); ASSERT_FLOAT_EQ(10.0f, item.fGrid.y);
     ASSERT_EQ(ImVec2(10.0f, 10.0f), item.fGrid);
     ASSERT_EQ("<snipped> / Small", item.fImGuiIni);

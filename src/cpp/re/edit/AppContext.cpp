@@ -697,6 +697,7 @@ void AppContext::init(config::Device const &iConfig)
   fPanelWidgetsWindow.setIsVisible(iConfig.fShowPanelWidgets);
   fPropertiesWindow.setIsVisible(iConfig.fShowProperties);
   fWidgetsWindow.setIsVisible(iConfig.fShowWidgets);
+  fUndoHistoryWindow.setIsVisible(iConfig.fShowUndoHistory);
   fGrid = ImVec2{std::fmax(iConfig.fGrid.x, 1.0f), std::fmax(iConfig.fGrid.y, 1.0f)};
 //  fShowBorder = static_cast<ShowBorder>(iConfig.fShowBorder);
 //  fShowCustomDisplay = static_cast<ShowCustomDisplay>(iConfig.fShowCustomDisplay);
@@ -719,6 +720,7 @@ config::Device AppContext::getConfig() const
     /* .fShowPanel        = */ fPanelWindow.isVisible(),
     /* .fShowPanelWidgets = */ fPanelWidgetsWindow.isVisible(),
     /* .fShowWidgets      = */ fWidgetsWindow.isVisible(),
+    /* .fShowUndoHistory  = */ fUndoHistoryWindow.isVisible(),
     /* .fGrid             = */ fGrid,
     /* .fImGuiIni         = */ ImGui::SaveIniSettingsToMemory()
   };
@@ -1657,29 +1659,48 @@ void AppContext::clearUndoHistory()
 
 namespace impl {
 
+void RenderCompositeAction(CompositeAction const *iAction);
+
 //------------------------------------------------------------------------
 // impl::RenderUndoAction
 //------------------------------------------------------------------------
-bool RenderUndoAction(Action const *iAction, bool iSelectable, bool iSelected, bool showDetails)
+void RenderUndoAction(Action const *iAction)
+{
+  ImGui::TextUnformatted(iAction->fDescription.c_str());
+
+  if(auto c = dynamic_cast<const CompositeAction *>(iAction))
+  {
+    RenderCompositeAction(c);
+  }
+}
+
+//------------------------------------------------------------------------
+// impl::RenderUndoAction
+//------------------------------------------------------------------------
+void RenderCompositeAction(CompositeAction const *iAction)
+{
+  ImGui::Indent();
+  for(auto &a: iAction->getActions())
+    RenderUndoAction(a.get());
+  ImGui::Unindent();
+
+}
+
+//------------------------------------------------------------------------
+// impl::RenderUndoAction
+//------------------------------------------------------------------------
+bool RenderUndoAction(Action const *iAction, bool iSelected)
 {
   bool res = false;
 
-  if(iSelectable)
-  {
-    if(ImGui::Selectable(iAction->fDescription.c_str(), iSelected))
-      res = true;
-  }
-  else
-    ImGui::TextUnformatted(iAction->fDescription.c_str());
+  if(ImGui::Selectable(iAction->fDescription.c_str(), iSelected))
+    res = true;
 
-  if(showDetails)
+  if(auto c = dynamic_cast<const CompositeAction *>(iAction))
   {
-    if(auto c = dynamic_cast<const CompositeAction *>(iAction))
+    if(ReGui::ShowQuickView())
     {
-      ImGui::Indent();
-      for(auto &a: c->getActions())
-        RenderUndoAction(a.get(), false, false, showDetails);
-      ImGui::Unindent();
+      ReGui::ToolTip([c] { RenderUndoAction(c); });
     }
   }
 
@@ -1711,8 +1732,6 @@ void AppContext::renderUndoHistory()
       clearUndoHistory();
     }
     ImGui::EndDisabled();
-    ImGui::SameLine();
-    ImGui::Checkbox("details", &fShowUndoDetails);
 
     if(ImGui::BeginChild("History", ImVec2{}, false, ImGuiWindowFlags_HorizontalScrollbar))
     {
@@ -1720,7 +1739,7 @@ void AppContext::renderUndoHistory()
       auto const &redoHistory = fUndoManager->getRedoHistory();
       if(redoHistory.empty() && undoHistory.empty())
       {
-        ImGui::TextUnformatted("<emtpy>");
+        ImGui::TextUnformatted("<empty>");
       }
       else
       {
@@ -1733,7 +1752,7 @@ void AppContext::renderUndoHistory()
           auto currentUndoAction = fUndoManager->getLastUndoAction();
           for(auto &action : undoHistory)
           {
-            if(impl::RenderUndoAction(action.get(), true, currentUndoAction == action.get(), fShowUndoDetails))
+            if(impl::RenderUndoAction(action.get(), currentUndoAction == action.get()))
               undoAction = action.get();
             if(currentUndoAction == action.get() && currentUndoAction != fLastUndoAction)
               ImGui::SetScrollHereY(1.0f);
@@ -1744,7 +1763,7 @@ void AppContext::renderUndoHistory()
           ImGui::PushStyleVar(ImGuiStyleVar_Alpha, 0.5f);
           for(auto i = redoHistory.rbegin(); i != redoHistory.rend(); i++)
           {
-            if(impl::RenderUndoAction((*i).get(), true, false, fShowUndoDetails))
+            if(impl::RenderUndoAction((*i).get(), false))
               redoAction = (*i).get();
           }
           ImGui::PopStyleVar();

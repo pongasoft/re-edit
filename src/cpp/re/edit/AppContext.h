@@ -303,7 +303,6 @@ protected:
   ReGui::Window fWidgetsWindow{"Widgets", true, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoCollapse};
   ReGui::Window fPropertiesWindow{"Properties", true, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoCollapse};
   ReGui::Window fUndoHistoryWindow{"Undo History", true, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoCollapse};
-  bool fShowUndoDetails{};
   long fCurrentFrame{};
   PanelState *fCurrentPanelState{};
   PanelState *fPreviousPanelState{};

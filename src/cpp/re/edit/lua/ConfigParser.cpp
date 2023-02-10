@@ -66,6 +66,7 @@ config::Global GlobalConfigParser::getConfig()
           withOptionalValue(L.getTableValueAsOptionalBoolean("show_panel"), [&item](auto v) { item.fShowPanel = v; });
           withOptionalValue(L.getTableValueAsOptionalBoolean("show_panel_widgets"), [&item](auto v) { item.fShowPanelWidgets = v; });
           withOptionalValue(L.getTableValueAsOptionalBoolean("show_properties"), [&item](auto v) { item.fShowProperties = v; });
+          withOptionalValue(L.getTableValueAsOptionalBoolean("show_undo_history"), [&item](auto v) { item.fShowUndoHistory = v; });
           withOptionalValue(L.getTableValueAsOptionalBoolean("show_widgets"), [&item](auto v) { item.fShowWidgets = v; });
           withOptionalValue(getOptionalImVec2TableField("grid"), [&item](auto v) { item.fGrid = v; });
           withOptionalValue(L.getTableValueAsOptionalNumber("last_access_time"), [&item](auto v) { item.fLastAccessTime = v; });
