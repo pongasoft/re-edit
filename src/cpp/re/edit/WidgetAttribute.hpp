@@ -24,18 +24,18 @@
 
 namespace re::edit::widget {
 
-class AttributeUpdateAction : public ExecutableAction<void>
+class AttributeUpdateAction : public ExecutableAction<void, PanelAction>
 {
 public:
-  AttributeUpdateAction(int iWidgetId,
-                        std::unique_ptr<widget::Attribute> iValue,
-                        std::unique_ptr<widget::Attribute> iPreviousValue,
-                        std::string iDescription,
-                        MergeKey const &iMergeKey) :
-    fId{iWidgetId},
-    fValue{std::move(iValue)},
-    fPreviousValue{std::move(iPreviousValue)}
+  void init(int iWidgetId,
+            std::unique_ptr<widget::Attribute> iValue,
+            std::unique_ptr<widget::Attribute> iPreviousValue,
+            std::string iDescription,
+            MergeKey const &iMergeKey)
   {
+    fWidgetId = iWidgetId;
+    fValue = std::move(iValue);
+    fPreviousValue = std::move(iPreviousValue);
     fDescription = std::move(iDescription);
     fMergeKey = iMergeKey;
   }
@@ -58,7 +58,7 @@ public:
 protected:
   Widget *getWidget() const
   {
-    return getPanel()->findWidget(fId);
+    return getPanel()->findWidget(fWidgetId);
   }
 
   bool canMergeWith(Action const *iAction) const override
@@ -66,7 +66,7 @@ protected:
     if(typeid(*this) != typeid(*iAction))
       return false;
     auto action = dynamic_cast<AttributeUpdateAction const *>(iAction);
-    return action && action->fId == fId && action->fPreviousValue->eq(fValue.get());
+    return action && action->fWidgetId == fWidgetId && action->fPreviousValue->eq(fValue.get());
   }
 
   std::unique_ptr<Action> doMerge(std::unique_ptr<Action> iAction) override
@@ -80,9 +80,9 @@ protected:
   }
 
 private:
-  int fId;
-  std::unique_ptr<widget::Attribute> fValue;
-  std::unique_ptr<widget::Attribute> fPreviousValue;
+  int fWidgetId{-1};
+  std::unique_ptr<widget::Attribute> fValue{};
+  std::unique_ptr<widget::Attribute> fPreviousValue{};
 };
 
 //------------------------------------------------------------------------
@@ -106,9 +106,12 @@ bool Attribute::update(F &&f, std::string const &iDescription, MergeKey const &i
     if(!currentValue->eq(previousValue.get()))
     {
       markEdited();
-      auto action = std::make_unique<AttributeUpdateAction>(getParent()->getId(), std::move(currentValue), std::move(previousValue), iDescription, iMergeKey);
-      action->setPanelType(getParent()->getPanelType());
-      ctx.execute<void>(std::move(action));
+      ctx.executeAction<AttributeUpdateAction>(getParent()->getPanelType(),
+                                               getParent()->getId(),
+                                               std::move(currentValue),
+                                               std::move(previousValue),
+                                               iDescription,
+                                               iMergeKey);
       return true;
     }
     else

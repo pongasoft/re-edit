@@ -998,7 +998,7 @@ bool Widget::copyFrom(Widget const &iWidget)
 {
   auto &ctx = AppContext::GetCurrent();
 
-  ctx.beginUndoTx(getPanelType(), fmt::printf("Paste all widget attributes from [%s] to [%s]", iWidget.getName(), getName()));
+  ctx.beginUndoTx(fmt::printf("Paste all widget attributes from [%s] to [%s]", iWidget.getName(), getName()));
   bool res = false;
   for(auto &att: fAttributes)
   {

@@ -21,13 +21,13 @@
 
 namespace re::edit {
 
-using PanelActionVoid = ExecutableAction<void>;
+using PanelActionVoid = PanelExecutableAction<void>;
 
 //------------------------------------------------------------------------
 // class PanelValueAction<T>
 //------------------------------------------------------------------------
 template<typename T>
-class PanelValueAction : public ValueAction<Panel, T>
+class PanelValueAction : public ValueAction<Panel, T, PanelAction>
 {
 public:
   Panel *getTarget() const override
@@ -238,7 +238,7 @@ bool Panel::unselectWidgetsAction(std::set<int> const &iWidgetIds)
 //------------------------------------------------------------------------
 // class AddWidgetAction
 //------------------------------------------------------------------------
-class AddWidgetAction : public ExecutableAction<int>
+class AddWidgetAction : public PanelExecutableAction<int>
 {
 public:
   void init(std::unique_ptr<Widget> iWidget, char const *iUndoActionName = "Add")
@@ -271,7 +271,7 @@ int Panel::addWidget(AppContext &iCtx, std::unique_ptr<Widget> iWidget, bool iMa
   RE_EDIT_INTERNAL_ASSERT(iWidget != nullptr);
   if(iMakeSingleSelected)
   {
-    iCtx.beginUndoTx(getType(), fmt::printf(fmt::printf("%s %s", iUndoActionName, re::edit::toString(iWidget->getType()))));
+    iCtx.beginUndoTx(fmt::printf(fmt::printf("%s %s", iUndoActionName, re::edit::toString(iWidget->getType()))));
     executeAction<ClearSelectionAction>();
     auto id = executeAction<AddWidgetAction>(std::move(iWidget), iUndoActionName);
     executeAction<SelectWidgetAction>(id);
@@ -331,7 +331,7 @@ bool Panel::pasteWidgets(AppContext &iCtx, std::vector<std::unique_ptr<Widget>> 
     }
   }
 
-  iCtx.beginUndoTx(getType(), fmt::printf("Paste [%d] widgets", iWidgets.size()));
+  iCtx.beginUndoTx(fmt::printf("Paste [%d] widgets", iWidgets.size()));
 
   executeAction<ClearSelectionAction>();
 
@@ -432,10 +432,10 @@ void Panel::deleteWidgets(AppContext &iCtx, std::vector<Widget *> const &iWidget
   if(iWidgets.empty())
     return;
 
-  iCtx.beginUndoTx(getType(),
-                   iWidgets.size() == 1 ?
-                   fmt::printf("Delete %s widget", iWidgets[0]->getName()) :
-                   fmt::printf("Delete %d widgets", iWidgets.size()));
+  iCtx.beginUndoTx(
+    iWidgets.size() == 1 ?
+    fmt::printf("Delete %s widget", iWidgets[0]->getName()) :
+    fmt::printf("Delete %d widgets", iWidgets.size()));
   for(auto const &w: iWidgets)
     executeAction<DeleteWidgetAction>(w);
   iCtx.commitUndoTx();
@@ -828,7 +828,7 @@ void Panel::alignWidgets(AppContext &iCtx, Panel::WidgetAlignment iAlignment)
   auto const min = fComputedSelectedRect->Min;
   auto const max = fComputedSelectedRect->Max;
 
-  iCtx.beginUndoTx(getType(), fmt::printf("Align [%ld] Widgets %s", fComputedSelectedWidgets.size(), alignment));
+  iCtx.beginUndoTx(fmt::printf("Align [%ld] Widgets %s", fComputedSelectedWidgets.size(), alignment));
 
   for(auto w: fComputedSelectedWidgets)
   {

@@ -26,21 +26,6 @@
 namespace re::edit {
 
 //------------------------------------------------------------------------
-// AppContext::execute
-//------------------------------------------------------------------------
-template<typename R>
-R AppContext::execute(std::unique_ptr<ExecutableAction<R>> iAction)
-{
-  auto &&result = iAction->execute();
-  if(isUndoEnabled() && iAction->isUndoEnabled())
-  {
-    addUndo(std::move(iAction));
-  }
-  return result;
-}
-
-
-//------------------------------------------------------------------------
 // AppContext::executeAction
 //------------------------------------------------------------------------
 template<class T, class... Args>
@@ -49,7 +34,7 @@ typename T::result_t AppContext::executeAction(PanelType iPanelType, Args &&... 
   auto action = std::make_unique<T>();
   action->setPanelType(iPanelType);
   action->init(std::forward<Args>(args)...);
-  return execute<typename T::result_t>(std::move(action));
+  return fUndoManager->execute<typename T::result_t, typename T::action_t>(std::move(action));
 }
 
 }

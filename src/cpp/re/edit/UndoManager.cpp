@@ -18,8 +18,6 @@
 
 #include "UndoManager.h"
 #include "Errors.h"
-#include "AppContext.h"
-#include "Panel.h"
 #include "stl.h"
 
 namespace re::edit {
@@ -38,13 +36,75 @@ inline Action *last(std::vector<std::unique_ptr<Action>> const &v)
 }
 
 //------------------------------------------------------------------------
-// UndoManager::addUndoAction
+// UndoManager::addOrMerge
 //------------------------------------------------------------------------
-void UndoManager::addUndoAction(std::unique_ptr<Action> iAction)
+void UndoManager::addOrMerge(std::unique_ptr<Action> iAction)
 {
   if(!isEnabled())
     return;
 
+  if(fNextUndoActionDescription)
+  {
+    iAction->setDescription(*fNextUndoActionDescription);
+    fNextUndoActionDescription.reset();
+  }
+
+  if(!iAction->getMergeKey().empty())
+  {
+    if(fUndoTx)
+    {
+//      RE_EDIT_LOG_WARNING("Undo action [%s] cannot be merged (not implemented yet)", iAction->getDescription());
+      fUndoTx->addAction(std::move(iAction));
+      return;
+    }
+    auto last = getLastUndoAction();
+    if(last && last->fMergeKey == iAction->getMergeKey())
+    {
+      iAction = last->merge(std::move(iAction));
+      if(iAction)
+      {
+        if(dynamic_cast<NoOpAction *>(iAction.get()))
+        {
+          // merge resulted in a noop => discard last
+          popLastUndoAction();
+          return;
+        }
+        else
+        {
+          // merge did not happen => new undo
+          addAction(std::move(iAction));
+          return;
+        }
+      }
+      else
+      {
+        // merge was successful => last was updated so no need to do anything
+        return;
+      }
+    }
+  }
+
+  if(fUndoTx)
+    fUndoTx->addAction(std::move(iAction));
+  else
+    addAction(std::move(iAction));
+}
+
+//------------------------------------------------------------------------
+// UndoManager::resetMergeKey
+//------------------------------------------------------------------------
+void UndoManager::resetMergeKey()
+{
+  auto last = getLastUndoAction();
+  if(last)
+    last->resetMergeKey();
+}
+
+//------------------------------------------------------------------------
+// UndoManager::addAction
+//------------------------------------------------------------------------
+void UndoManager::addAction(std::unique_ptr<Action> iAction)
+{
   auto last = stl::last(fUndoHistory);
   if(last)
     last->resetMergeKey();
@@ -145,11 +205,76 @@ void UndoManager::redoUntil(Action const *iAction)
 }
 
 //------------------------------------------------------------------------
-// Action::getPanel
+// UndoManager::beginTx
 //------------------------------------------------------------------------
-Panel *Action::getPanel() const
+void UndoManager::beginTx(std::string iDescription, MergeKey const &iMergeKey)
 {
-  return AppContext::GetCurrent().getPanel(fPanelType);
+  if(fUndoTx)
+    fNestedUndoTxs.emplace_back(std::move(fUndoTx));
+
+  fUndoTx = std::make_unique<UndoTx>(std::move(iDescription), iMergeKey);
+
+  if(fNextUndoActionDescription)
+  {
+    fUndoTx->setDescription(*fNextUndoActionDescription);
+    fNextUndoActionDescription.reset();
+  }
+}
+
+//------------------------------------------------------------------------
+// UndoManager::commitTx
+//------------------------------------------------------------------------
+void UndoManager::commitTx()
+{
+  RE_EDIT_INTERNAL_ASSERT(fUndoTx != nullptr, "no current transaction");
+
+  auto action = std::move(fUndoTx);
+
+  if(!fNestedUndoTxs.empty())
+  {
+    auto iter = fNestedUndoTxs.end() - 1;
+    fUndoTx = std::move(*iter);
+    fNestedUndoTxs.erase(iter);
+  }
+
+  if(isEnabled())
+  {
+    if(action->isEmpty())
+      return;
+
+    if(auto singleAction = action->single())
+      addOrMerge(std::move(singleAction));
+    else
+      addOrMerge(std::move(action));
+  }
+}
+
+//------------------------------------------------------------------------
+// UndoManager::rollbackTx
+//------------------------------------------------------------------------
+void UndoManager::rollbackTx()
+{
+  RE_EDIT_INTERNAL_ASSERT(fUndoTx != nullptr, "no current transaction");
+
+  auto action = std::move(fUndoTx);
+
+  action->undo();
+
+  if(!fNestedUndoTxs.empty())
+  {
+    auto iter = fNestedUndoTxs.end() - 1;
+    fUndoTx = std::move(*iter);
+    fNestedUndoTxs.erase(iter);
+  }
+}
+
+//------------------------------------------------------------------------
+// UndoManager::setNextActionDescription
+//------------------------------------------------------------------------
+void UndoManager::setNextActionDescription(std::string iDescription)
+{
+  if(isEnabled() && !fNextUndoActionDescription)
+    fNextUndoActionDescription.emplace(std::move(iDescription));
 }
 
 //------------------------------------------------------------------------
@@ -160,7 +285,6 @@ std::unique_ptr<Action> Action::merge(std::unique_ptr<Action> iAction)
   if(fMergeKey.empty() ||
      iAction->getMergeKey().empty() ||
      fMergeKey != iAction->getMergeKey() ||
-     fPanelType != iAction->getPanelType() ||
      !canMergeWith(iAction.get()))
   {
     return std::move(iAction);
@@ -193,9 +317,8 @@ void CompositeAction::redo()
 //------------------------------------------------------------------------
 // UndoTx::UndoTx
 //------------------------------------------------------------------------
-UndoTx::UndoTx(PanelType iPanelType, std::string iDescription, MergeKey const &iMergeKey)
+UndoTx::UndoTx(std::string iDescription, MergeKey const &iMergeKey)
 {
-  fPanelType = iPanelType;
   fDescription = std::move(iDescription);
   fMergeKey = iMergeKey;
 }
@@ -218,7 +341,6 @@ std::unique_ptr<Action> UndoTx::single()
 //------------------------------------------------------------------------
 void UndoTx::addAction(std::unique_ptr<Action> iAction)
 {
-  RE_EDIT_INTERNAL_ASSERT(fPanelType == iAction->getPanelType()); // no support for tx across panels
   fActions.emplace_back(std::move(iAction));
 }
 

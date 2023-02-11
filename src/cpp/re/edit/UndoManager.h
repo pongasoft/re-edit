@@ -26,10 +26,6 @@
 
 namespace re::edit {
 
-class Widget;
-class RedoAction;
-class Panel;
-
 struct MergeKey {
   void *fKey{};
 
@@ -51,9 +47,6 @@ public:
   virtual void redo() = 0;
   virtual std::unique_ptr<Action> merge(std::unique_ptr<Action> iAction);
 
-  inline PanelType getPanelType() const { return fPanelType; }
-  inline void setPanelType(PanelType iType) { fPanelType = iType; }
-
   inline MergeKey getMergeKey() const { return fMergeKey; }
   inline void setMergeKey(MergeKey iMergeKey) { fMergeKey = iMergeKey; }
   inline void resetMergeKey() { fMergeKey.reset(); }
@@ -62,8 +55,6 @@ public:
   void setDescription(std::string iDescription) { fDescription = std::move(iDescription); }
 
 protected:
-  Panel *getPanel() const;
-
   virtual bool canMergeWith(Action const *iAction) const { return false; }
 
   /**
@@ -74,7 +65,6 @@ protected:
   virtual std::unique_ptr<Action> doMerge(std::unique_ptr<Action> iAction) { return std::move(iAction); }
 
 public:
-  PanelType fPanelType{PanelType::kUnknown};
   std::string fDescription{};
   MergeKey fMergeKey{};
 };
@@ -105,16 +95,17 @@ protected:
 class UndoTx : public CompositeAction
 {
 public:
-  UndoTx(PanelType iPanelType, std::string iDescription, MergeKey const &iMergeKey);
+  UndoTx(std::string iDescription, MergeKey const &iMergeKey);
   std::unique_ptr<Action> single();
   void addAction(std::unique_ptr<Action> iAction);
 };
 
-template<typename R>
-class ExecutableAction : public Action
+template<typename R, typename A = Action>
+class ExecutableAction : public A
 {
 public:
   using result_t = R;
+  using action_t = A;
 
   virtual result_t execute() = 0;
 
@@ -133,8 +124,8 @@ protected:
 //------------------------------------------------------------------------
 // class ValueAction<T>
 //------------------------------------------------------------------------
-template<typename Target, typename T>
-class ValueAction : public ExecutableAction<void>
+template<typename Target, typename T, typename A = Action>
+class ValueAction : public ExecutableAction<void, A>
 {
 public:
   using update_function_t = std::function<T(Target *, T const &)>;
@@ -202,7 +193,12 @@ public:
   constexpr bool isEnabled() const { return fEnabled; }
   constexpr void enable() { fEnabled = true; }
   constexpr void disable() { fEnabled = false; }
-  void addUndoAction(std::unique_ptr<Action> iAction);
+  void addOrMerge(std::unique_ptr<Action> iAction);
+  void resetMergeKey();
+  void beginTx(std::string iDescription, MergeKey const &iMergeKey = MergeKey::none());
+  void commitTx();
+  void rollbackTx();
+  void setNextActionDescription(std::string iDescription);
   void undoLastAction();
   void undoUntil(Action const *iAction);
   void undoAll();
@@ -218,11 +214,74 @@ public:
   std::vector<std::unique_ptr<Action>> const &getRedoHistory() const { return fRedoHistory; }
   void clear();
 
+  template<typename R, typename A = Action>
+  R execute(std::unique_ptr<ExecutableAction<R, A>> iAction);
+
+  template<class T, class... Args >
+  typename T::result_t executeAction(Args&&... args);
+
+  template<class T, class... Args >
+  static std::unique_ptr<T> createAction(Args&&... args);
+
+protected:
+  void addAction(std::unique_ptr<Action> iAction);
+
 private:
   bool fEnabled{true};
+  std::unique_ptr<UndoTx> fUndoTx{};
+  std::vector<std::unique_ptr<UndoTx>> fNestedUndoTxs{};
+  std::optional<std::string> fNextUndoActionDescription{};
   std::vector<std::unique_ptr<Action>> fUndoHistory{};
   std::vector<std::unique_ptr<Action>> fRedoHistory{};
 };
+
+//------------------------------------------------------------------------
+// UndoManager::execute
+//------------------------------------------------------------------------
+template<typename R, typename A>
+R UndoManager::execute(std::unique_ptr<ExecutableAction<R, A>> iAction)
+{
+  if constexpr (std::is_void_v<R>)
+  {
+    iAction->execute();
+    if(isEnabled() && iAction->isUndoEnabled())
+    {
+      addOrMerge(std::move(iAction));
+    }
+  }
+  else
+  {
+    auto &&result = iAction->execute();
+    if(isEnabled() && iAction->isUndoEnabled())
+    {
+      addOrMerge(std::move(iAction));
+    }
+    return result;
+  }
+}
+
+//------------------------------------------------------------------------
+// UndoManager::createAction
+//------------------------------------------------------------------------
+template<class T, class... Args>
+std::unique_ptr<T> UndoManager::createAction(Args &&... args)
+{
+  auto action = std::make_unique<T>();
+  action->init(std::forward<Args>(args)...);
+  return action;
+}
+
+
+//------------------------------------------------------------------------
+// UndoManager::executeAction
+//------------------------------------------------------------------------
+template<class T, class... Args>
+typename T::result_t UndoManager::executeAction(Args &&... args)
+{
+  return execute<typename T::result_t, typename T::action_t>(createAction<T>(std::forward<Args>(args)...));
+}
+
+
 
 }
 

@@ -187,19 +187,20 @@ public: // Undo
       enableUndo();
   }
 
-  void addUndo(std::unique_ptr<Action> iAction);
-  void beginUndoTx(PanelType iPanelType, std::string iDescription, MergeKey const &iMergeKey = MergeKey::none());
-  void commitUndoTx();
-  void rollbackUndoTx();
-  void setNextUndoActionDescription(std::string iDescription);
+  inline void addUndo(std::unique_ptr<Action> iAction) { fUndoManager->addOrMerge(std::move(iAction)); }
+  inline void beginUndoTx(std::string iDescription, MergeKey const &iMergeKey = MergeKey::none()) { fUndoManager->beginTx(std::move(iDescription), iMergeKey); }
+  inline void commitUndoTx() { fUndoManager->commitTx(); }
+  inline void rollbackUndoTx() { fUndoManager->rollbackTx(); }
+  inline void setNextUndoActionDescription(std::string iDescription) { fUndoManager->setNextActionDescription(std::move(iDescription)); }
+  static PanelType getPanelType(Action const *iAction);
 
-  template<typename R>
-  R execute(std::unique_ptr<ExecutableAction<R>> iAction);
+  inline void resetUndoMergeKey() { fUndoManager->resetMergeKey(); }
+
+  template<typename R, typename A = Action>
+  R execute(std::unique_ptr<ExecutableAction<R, A>> iAction) { return fUndoManager->execute<R, A>(std::move(iAction)); }
 
   template<class T, class... Args >
   typename T::result_t executeAction(PanelType iPanelType, Args&&... args);
-
-  void resetUndoMergeKey();
 
   void undoLastAction();
   void redoLastAction();
@@ -282,13 +283,10 @@ protected:
 protected:
   fs::path fRoot;
   ReGui::Window fMainWindow{"re-edit", std::nullopt, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_HorizontalScrollbar};
+  std::shared_ptr<UndoManager> fUndoManager{};
   std::shared_ptr<TextureManager> fTextureManager{};
   std::shared_ptr<UserPreferences> fUserPreferences{};
   std::shared_ptr<PropertyManager> fPropertyManager{};
-  std::shared_ptr<UndoManager> fUndoManager{};
-  std::unique_ptr<UndoTx> fUndoTx{};
-  std::vector<std::unique_ptr<UndoTx>> fNestedUndoTxs{};
-  std::optional<std::string> fNextUndoActionDescription{};
   std::unique_ptr<PanelState> fFrontPanel;
   std::unique_ptr<PanelState> fFoldedFrontPanel;
   std::unique_ptr<PanelState> fBackPanel;
@@ -323,12 +321,6 @@ protected:
   std::shared_ptr<efsw::FileWatchListener> fRootListener{};
   std::optional<long> fRootWatchID{};
 };
-
-//------------------------------------------------------------------------
-// AppContext::execute
-//------------------------------------------------------------------------
-template<>
-void AppContext::execute<void>(std::unique_ptr<ExecutableAction<void>> iAction);
 
 }
 #endif //RE_EDIT_APP_CONTEXT_H

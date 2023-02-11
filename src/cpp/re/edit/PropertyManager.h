@@ -26,6 +26,8 @@
 #include <set>
 #include <re/mock/Rack.h>
 #include "fs.h"
+#include "UndoManager.h"
+#include <memory>
 
 #include "Property.h"
 
@@ -49,9 +51,10 @@ constexpr char const* deviceTypeToString(re::mock::DeviceType t) {
   }
 };
 
-class PropertyManager
+class PropertyManager : public std::enable_shared_from_this<PropertyManager>
 {
 public:
+  explicit PropertyManager(std::shared_ptr<UndoManager> iUndoManager);
 //  void init(std::string const &iMotherboardDefLuaFilename);
   // return the size of the device in RU
   mock::Info init(fs::path const &iDirectory);
@@ -107,6 +110,7 @@ protected:
   void afterRenderFrame();
 
 private:
+  std::shared_ptr<UndoManager> fUndoManager;
   re::mock::Rack fRack{};
   std::shared_ptr<re::mock::rack::Extension> fDevice{};
   std::map<std::string, Property> fProperties{};

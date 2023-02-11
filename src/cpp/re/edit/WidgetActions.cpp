@@ -35,7 +35,7 @@ typename T::result_t Widget::executeAction(Args &&... args)
 // class WidgetValueAction<T>
 //------------------------------------------------------------------------
 template<typename T>
-class WidgetValueAction : public ValueAction<Widget, T>
+class WidgetValueAction : public ValueAction<Widget, T, PanelAction>
 {
 public:
   Widget *getTarget() const override
@@ -50,13 +50,13 @@ public:
             MergeKey const &iMergeKey)
   {
     fId = iWidgetId;
-    ValueAction<Widget, T>::init(std::move(iUpdateFunction), std::move(iValue), std::move(iDescription), iMergeKey);
+    ValueAction<Widget, T, PanelAction>::init(std::move(iUpdateFunction), std::move(iValue), std::move(iDescription), iMergeKey);
   }
 
 protected:
   bool canMergeWith(Action const *iAction) const override
   {
-    if(ValueAction<Widget, T>::canMergeWith(iAction))
+    if(ValueAction<Widget, T, PanelAction>::canMergeWith(iAction))
     {
       auto action = dynamic_cast<WidgetValueAction const *>(iAction);
       return action->fId == fId;

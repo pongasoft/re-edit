@@ -21,8 +21,6 @@
 #include <imgui.h>
 #include <misc/cpp/imgui_stdlib.h>
 #include "Errors.h"
-#include "UndoManager.h"
-#include "AppContext.hpp"
 
 using namespace re::mock;
 
@@ -37,20 +35,33 @@ class PropertyManagerAction : public ValueAction<PropertyManager, T>
 public:
   PropertyManager *getTarget() const override
   {
-    return AppContext::GetCurrent().getPropertyManager();
+    return fPropertyManager.get();
   }
+
+  friend class PropertyManager;
+
+protected:
+  std::shared_ptr<PropertyManager> fPropertyManager;
 };
 
 //------------------------------------------------------------------------
-// Panel::executeAction
+// PropertyManager::executeAction
 //------------------------------------------------------------------------
 template<class T, class... Args>
 typename T::result_t PropertyManager::executeAction(Args &&... args)
 {
-  auto &ctx = AppContext::GetCurrent();
-  return ctx.executeAction<T>(ctx.getCurrentPanel()->getType(), std::forward<Args>(args)...);
+  auto action = UndoManager::createAction<T>(std::forward<Args>(args)...);
+  action->fPropertyManager = shared_from_this();
+  return fUndoManager->execute<typename T::result_t, typename T::action_t>(std::move(action));
 }
 
+//------------------------------------------------------------------------
+// PropertyManager::PropertyManager
+//------------------------------------------------------------------------
+PropertyManager::PropertyManager(std::shared_ptr<UndoManager> iUndoManager) : fUndoManager{std::move(iUndoManager) }
+{
+  // empty
+}
 
 //------------------------------------------------------------------------
 // PropertyManager::init

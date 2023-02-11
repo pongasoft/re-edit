@@ -244,6 +244,28 @@ private:
   std::optional<ReGui::Rect> fComputedSelectedRect{};
 };
 
+//------------------------------------------------------------------------
+// class PanelAction (add PanelType / getPanel())
+//------------------------------------------------------------------------
+class PanelAction : public Action
+{
+public:
+  inline PanelType getPanelType() const { return fPanelType; }
+  inline void setPanelType(PanelType iType) { fPanelType = iType; }
+
+protected:
+  Panel *getPanel() const;
+
+public:
+  PanelType fPanelType{PanelType::kUnknown};
+};
+
+//------------------------------------------------------------------------
+// PanelExecutableAction => specialization for PanelAction
+//------------------------------------------------------------------------
+template<typename T>
+using PanelExecutableAction = ExecutableAction<T, PanelAction>;
+
 }
 
 #endif //RE_EDIT_PANEL_H

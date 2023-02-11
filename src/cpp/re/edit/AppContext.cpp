@@ -99,10 +99,10 @@ private:
 //------------------------------------------------------------------------
 AppContext::AppContext(fs::path const &iRoot, std::shared_ptr<TextureManager> iTextureManager) :
   fRoot{fs::canonical(iRoot)},
+  fUndoManager{std::make_shared<UndoManager>()},
   fTextureManager{std::move(iTextureManager)},
   fUserPreferences{std::make_shared<UserPreferences>()},
-  fPropertyManager{std::make_shared<PropertyManager>()},
-  fUndoManager{std::make_shared<UndoManager>()},
+  fPropertyManager{std::make_shared<PropertyManager>(fUndoManager)},
   fFrontPanel(std::make_unique<PanelState>(PanelType::kFront)),
   fFoldedFrontPanel(std::make_unique<PanelState>(PanelType::kFoldedFront)),
   fBackPanel(std::make_unique<PanelState>(PanelType::kBack)),
@@ -537,158 +537,6 @@ void AppContext::toggleRails()
 }
 
 //------------------------------------------------------------------------
-// AppContext::execute
-//------------------------------------------------------------------------
-template<>
-void AppContext::execute<void>(std::unique_ptr<ExecutableAction<void>> iAction)
-{
-  iAction->execute();
-  if(isUndoEnabled() && iAction->isUndoEnabled())
-  {
-    addUndo(std::move(iAction));
-  }
-}
-
-//------------------------------------------------------------------------
-// AppContext::setNextUndoActionDescription
-//------------------------------------------------------------------------
-void AppContext::setNextUndoActionDescription(std::string iDescription)
-{
-  if(isUndoEnabled() && !fNextUndoActionDescription)
-    fNextUndoActionDescription.emplace(std::move(iDescription));
-}
-
-//------------------------------------------------------------------------
-// AppContext::addUndo
-//------------------------------------------------------------------------
-void AppContext::addUndo(std::unique_ptr<Action> iAction)
-{
-  if(!isUndoEnabled())
-    return;
-
-  if(fNextUndoActionDescription)
-  {
-    iAction->setDescription(*fNextUndoActionDescription);
-    fNextUndoActionDescription.reset();
-  }
-
-  if(!iAction->getMergeKey().empty())
-  {
-    if(fUndoTx)
-    {
-//      RE_EDIT_LOG_WARNING("Undo action [%s] cannot be merged (not implemented yet)", iAction->getDescription());
-      fUndoTx->addAction(std::move(iAction));
-      return;
-    }
-    auto last = fUndoManager->getLastUndoAction();
-    if(last && last->fMergeKey == iAction->getMergeKey())
-    {
-      iAction = last->merge(std::move(iAction));
-      if(iAction)
-      {
-        if(dynamic_cast<NoOpAction *>(iAction.get()))
-        {
-          // merge resulted in a noop => discard last
-          fUndoManager->popLastUndoAction();
-          return;
-        }
-        else
-        {
-          // merge did not happen => new undo
-          fUndoManager->addUndoAction(std::move(iAction));
-          return;
-        }
-      }
-      else
-      {
-        // merge was successful => last was updated so no need to do anything
-        return;
-      }
-    }
-  }
-
-  if(fUndoTx)
-    fUndoTx->addAction(std::move(iAction));
-  else
-    fUndoManager->addUndoAction(std::move(iAction));
-}
-
-//------------------------------------------------------------------------
-// AppContext::beginUndoTx
-//------------------------------------------------------------------------
-void AppContext::beginUndoTx(PanelType iPanelType, std::string iDescription, MergeKey const &iMergeKey)
-{
-  if(fUndoTx)
-    fNestedUndoTxs.emplace_back(std::move(fUndoTx));
-
-  fUndoTx = std::make_unique<UndoTx>(iPanelType, std::move(iDescription), iMergeKey);
-
-  if(fNextUndoActionDescription)
-  {
-    fUndoTx->setDescription(*fNextUndoActionDescription);
-    fNextUndoActionDescription.reset();
-  }
-}
-
-//------------------------------------------------------------------------
-// AppContext::commitUndoTx
-//------------------------------------------------------------------------
-void AppContext::commitUndoTx()
-{
-  RE_EDIT_INTERNAL_ASSERT(fUndoTx != nullptr, "no current transaction");
-
-  auto action = std::move(fUndoTx);
-
-  if(!fNestedUndoTxs.empty())
-  {
-    auto iter = fNestedUndoTxs.end() - 1;
-    fUndoTx = std::move(*iter);
-    fNestedUndoTxs.erase(iter);
-  }
-
-  if(isUndoEnabled())
-  {
-    if(action->isEmpty())
-      return;
-
-    if(auto singleAction = action->single())
-      addUndo(std::move(singleAction));
-    else
-      addUndo(std::move(action));
-  }
-
-}
-
-//------------------------------------------------------------------------
-// AppContext::rollbackUndoTx
-//------------------------------------------------------------------------
-void AppContext::rollbackUndoTx()
-{
-  RE_EDIT_INTERNAL_ASSERT(fUndoTx != nullptr, "no current transaction");
-
-  auto action = std::move(fUndoTx);
-
-  action->undo();
-
-  if(!fNestedUndoTxs.empty())
-  {
-    auto iter = fNestedUndoTxs.end() - 1;
-    fUndoTx = std::move(*iter);
-    fNestedUndoTxs.erase(iter);
-  }
-}
-
-//------------------------------------------------------------------------
-// AppContext::resetUndoMergeKey
-//------------------------------------------------------------------------
-void AppContext::resetUndoMergeKey()
-{
-  auto last = fUndoManager->getLastUndoAction();
-  if(last)
-    last->resetMergeKey();
-}
-
-//------------------------------------------------------------------------
 // AppContext::init
 //------------------------------------------------------------------------
 void AppContext::init(config::Device const &iConfig)
@@ -750,7 +598,7 @@ void AppContext::reloadTextures()
 //------------------------------------------------------------------------
 void AppContext::initDevice()
 {
-  auto propertyManager = std::make_shared<PropertyManager>();
+  auto propertyManager = std::make_shared<PropertyManager>(fUndoManager);
   auto info = propertyManager->init(fRoot);
   fHasFoldedPanels = info.fDeviceType != mock::DeviceType::kNotePlayer;
   fFrontPanel->fPanel.setDeviceHeightRU(info.fDeviceHeightRU);
@@ -912,12 +760,10 @@ void AppContext::renderMainMenu()
         {
           resetUndoMergeKey();
           auto desc = re::mock::fmt::printf(ReGui_Prefix(ReGui_Icon_Undo, "Undo %s"), undoAction->fDescription);
-          if(fCurrentPanelState && fCurrentPanelState->getType() != undoAction->fPanelType)
+          auto panelType = getPanelType(undoAction);
+          if(panelType != PanelType::kUnknown && fCurrentPanelState->getType() != panelType)
           {
-            if(undoAction->fPanelType == PanelType::kUnknown)
-              RE_EDIT_LOG_WARNING("unknown panel type for %s", undoAction->fDescription);
-            else
-              desc = re::mock::fmt::printf("%s (%s)", desc, Panel::toString(undoAction->fPanelType));
+            desc = re::mock::fmt::printf("%s (%s)", desc, Panel::toString(panelType));
           }
           if(ImGui::MenuItem(desc.c_str(), kKeyboardShortcut))
           {
@@ -939,12 +785,10 @@ void AppContext::renderMainMenu()
         if(redoAction)
         {
           auto desc = re::mock::fmt::printf(ReGui_Prefix(ReGui_Icon_Redo, "Redo %s"), redoAction->fDescription);
-          if(fCurrentPanelState && fCurrentPanelState->getType() != redoAction->fPanelType)
+          auto panelType = getPanelType(redoAction);
+          if(panelType != PanelType::kUnknown && fCurrentPanelState->getType() != panelType)
           {
-            if(redoAction->fPanelType == PanelType::kUnknown)
-              RE_EDIT_LOG_WARNING("unknown panel type for %s", redoAction->fDescription);
-            else
-              desc = re::mock::fmt::printf("%s (%s)", desc, Panel::toString(redoAction->fPanelType));
+            desc = re::mock::fmt::printf("%s (%s)", desc, Panel::toString(panelType));
           }
           if(ImGui::MenuItem(desc.c_str(), kKeyboardShortcut))
           {
@@ -1549,7 +1393,7 @@ bool AppContext::pasteFromClipboard(std::vector<Widget *> const &oWidgets)
 
   bool res = false;
 
-  beginUndoTx(oWidgets[0]->getPanelType(), fmt::printf("Paste %s to [%ld] widgets", fClipboard.getData()->getDescription(), oWidgets.size()));
+  beginUndoTx(fmt::printf("Paste %s to [%ld] widgets", fClipboard.getData()->getDescription(), oWidgets.size()));
 
   for(auto &w: oWidgets)
   {
@@ -1622,10 +1466,11 @@ void AppContext::undoLastAction()
   auto const undoAction = fUndoManager->getLastUndoAction();
   if(undoAction)
   {
+    auto panelType = getPanelType(undoAction);
     fUndoManager->undoLastAction();
-    if(fCurrentPanelState->getType() != undoAction->fPanelType)
+    if(panelType != PanelType::kUnknown && fCurrentPanelState->getType() != panelType)
     {
-      computeErrors(undoAction->fPanelType);
+      computeErrors(panelType);
     }
   }
 
@@ -1639,9 +1484,9 @@ void AppContext::redoLastAction()
   auto const redoAction = fUndoManager->getLastRedoAction();
   if(redoAction)
   {
-    auto panelType = redoAction->getPanelType();
+    auto panelType = getPanelType(redoAction);
     fUndoManager->redoLastAction();
-    if(fCurrentPanelState->getType() != panelType)
+    if(panelType != PanelType::kUnknown && fCurrentPanelState->getType() != panelType)
     {
       computeErrors(panelType);
     }
@@ -1810,12 +1655,22 @@ void AppContext::overrideTextureNumFrames(FilmStrip::key_t const &iKey, int iNum
   if(texture)
   {
     auto fn = [key = iKey](AppContext *iCtx, auto iNumFrames) { return iCtx->overrideTextureNumFramesAction(key, iNumFrames); };
-    executeAction<AppContextValueAction<int>>(getCurrentPanel()->getType(),
-                                              fn,
-                                              iNumFrames,
-                                              fmt::printf("Change number of frames (%s)", iKey),
-                                              MergeKey::from(texture.get()));
+    fUndoManager->executeAction<AppContextValueAction<int>>(fn,
+                                                            iNumFrames,
+                                                            fmt::printf("Change number of frames (%s)", iKey),
+                                                            MergeKey::from(texture.get()));
   }
+}
+
+//------------------------------------------------------------------------
+// AppContext::getPanelType
+//------------------------------------------------------------------------
+PanelType AppContext::getPanelType(Action const *iAction)
+{
+  if(auto panelAction = dynamic_cast<PanelAction const *>(iAction))
+    return panelAction->getPanelType();
+  else
+    return PanelType::kUnknown;
 }
 
 

@@ -1468,5 +1468,12 @@ void Panel::beforeEachFrame(AppContext &iCtx)
   }
 }
 
+//------------------------------------------------------------------------
+// PanelAction::getPanel
+//------------------------------------------------------------------------
+Panel *PanelAction::getPanel() const
+{
+  return AppContext::GetCurrent().getPanel(fPanelType);
+}
 
 }
