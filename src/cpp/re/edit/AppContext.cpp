@@ -1538,16 +1538,23 @@ bool RenderUndoAction(Action const *iAction, bool iSelected)
 {
   bool res = false;
 
+  ImGui::PushID(iAction);
   if(ImGui::Selectable(iAction->fDescription.c_str(), iSelected))
     res = true;
+  ImGui::PopID();
 
-  if(auto c = dynamic_cast<const CompositeAction *>(iAction))
+  if(ReGui::ShowQuickView())
   {
-    if(ReGui::ShowQuickView())
+    if(auto c = dynamic_cast<const CompositeAction *>(iAction))
     {
       ReGui::ToolTip([c] { RenderUndoAction(c); });
     }
+    else
+    {
+      ReGui::ToolTip([] { ImGui::TextUnformatted("No details"); });
+    }
   }
+
 
   return res;
 }
