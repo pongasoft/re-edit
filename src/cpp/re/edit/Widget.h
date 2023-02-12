@@ -37,6 +37,17 @@ namespace re::edit {
 
 class Panel;
 
+namespace widget {
+
+enum class Visibility
+{
+  kByProperty,
+  kManualVisible,
+  kManualHidden
+};
+
+}
+
 class Widget : public Editable
 {
 public:
@@ -68,8 +79,11 @@ public:
   constexpr void setSelected(bool b) { fSelected = b; }
 
   constexpr bool isHidden() const { return fHidden; }
-  constexpr bool canBeShown() const { return fHidden && fVisibility && !fVisibility->fSwitch.fValue.empty() && !fVisibility->fValues.fValue.empty(); }
-  constexpr bool hasVisibility() const { return fVisibility && !fVisibility->fSwitch.fValue.empty(); }
+  constexpr bool canBeShown() const { return fHidden && fVisibilityAttribute && !fVisibilityAttribute->fSwitch.fValue.empty() && !fVisibilityAttribute->fValues.fValue.empty(); }
+  constexpr bool hasVisibility() const { return fVisibilityAttribute && !fVisibilityAttribute->fSwitch.fValue.empty(); }
+  void setVisibility(widget::Visibility iVisibility);
+  void toggleVisibility();
+  constexpr widget::Visibility getVisibility() const { return fVisibility; }
 
   constexpr void setHitBoundaries(HitBoundaries const &iHitBoundaries) { fGraphics->setHitBoundaries(iHitBoundaries); fEdited |= fGraphics->isEdited(); }
   constexpr void disableHitBoundaries() { fGraphics->fHitBoundariesEnabled = false; }
@@ -110,6 +124,7 @@ public:
   bool copyFromAction(widget::Attribute const *iAttribute);
   ImVec2 setPositionAction(ImVec2 const &iPosition);
   constexpr void moveAction(ImVec2 const &iDelta) { fGraphics->move(iDelta); fEdited |= fGraphics->isEdited(); }
+  inline widget::Visibility setVisibilityAction(widget::Visibility iVisibility) { return setAction(&fVisibility, iVisibility); }
 
   static std::unique_ptr<Widget> panel_decal(std::optional<std::string> const &iName = std::nullopt);
   static std::unique_ptr<Widget> analog_knob(std::optional<std::string> const &iName = std::nullopt);
@@ -164,7 +179,9 @@ public:
 protected:
   void computeIsHidden(AppContext &iCtx);
   void showIfHidden(AppContext &iCtx);
+  void showByProperty(AppContext &iCtx, std::string const &iPath, int iValue);
   void renderVisibilityMenu(AppContext &iCtx);
+  void renderVisibilityToggle(AppContext &iCtx);
   bool isPanelDecal() const { return fType == WidgetType::kPanelDecal; }
 
 protected:
@@ -199,12 +216,13 @@ private:
   WidgetType fType{};
   StringWithHash fName{};
   bool fSelected{};
+  widget::Visibility fVisibility{widget::Visibility::kByProperty};
   bool fHidden{};
   std::vector<std::unique_ptr<widget::Attribute>> fAttributes{};
 
   // denormalized access to attributes
   widget::attribute::Graphics *fGraphics{};
-  widget::attribute::Visibility *fVisibility{};
+  widget::attribute::Visibility *fVisibilityAttribute{};
 
 private:
   static inline long fWidgetIota{1};

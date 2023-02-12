@@ -22,6 +22,8 @@ constexpr auto kCircleX = "\xee\x84\xae";	// U+e12e
 constexpr auto kClipboard = "\xef\x8c\xa8";	// U+f328
 #define ICON_FA_Clone "\xef\x89\x8d"	// U+f24d
 constexpr auto kClone = "\xef\x89\x8d";	// U+f24d
+#define ICON_FA_Eye "\xef\x81\xae"	// U+f06e
+constexpr auto kEye = "\xef\x81\xae";	// U+f06e
 #define ICON_FA_EyeSlash "\xef\x81\xb0"	// U+f070
 constexpr auto kEyeSlash = "\xef\x81\xb0";	// U+f070
 #define ICON_FA_Film "\xef\x80\x88"	// U+f008

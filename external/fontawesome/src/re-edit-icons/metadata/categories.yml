@@ -1,5 +1,6 @@
 accessibility:
-  icons: []
+  icons:
+    - eye
   label: Accessibility
 alert:
   icons:
@@ -69,6 +70,7 @@ construction:
 design:
   icons:
     - clone
+    - eye
     - eye-slash
     - floppy-disk
     - paste
@@ -143,6 +145,7 @@ logistics:
   label: Logistics
 maps:
   icons:
+    - eye
     - eye-slash
     - lightbulb
     - magnifying-glass
@@ -163,7 +166,8 @@ media-playback:
     - arrow-rotate-right
   label: Media Playback
 medical-health:
-  icons: []
+  icons:
+    - eye
   label: Medical + Health
 money:
   icons: []
@@ -183,6 +187,7 @@ numbers:
 photos-images:
   icons:
     - clone
+    - eye
     - eye-slash
     - film
     - folder-image
@@ -204,6 +209,7 @@ science-fiction:
   label: Science Fiction
 security:
   icons:
+    - eye
     - eye-slash
   label: Security
 shapes:

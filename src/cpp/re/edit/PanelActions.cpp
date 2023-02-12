@@ -432,12 +432,23 @@ void Panel::deleteWidgets(AppContext &iCtx, std::vector<Widget *> const &iWidget
   if(iWidgets.empty())
     return;
 
-  iCtx.beginUndoTx(
-    iWidgets.size() == 1 ?
-    fmt::printf("Delete %s widget", iWidgets[0]->getName()) :
-    fmt::printf("Delete %d widgets", iWidgets.size()));
+  iCtx.beginUndoTx(iWidgets.size() == 1 ?
+                   fmt::printf("Delete %s widget", iWidgets[0]->getName()) :
+                   fmt::printf("Delete %d widgets", iWidgets.size()));
   for(auto const &w: iWidgets)
     executeAction<DeleteWidgetAction>(w);
+  iCtx.commitUndoTx();
+}
+
+
+//------------------------------------------------------------------------
+// Panel::resetAllWidgetsVisibility
+//------------------------------------------------------------------------
+void Panel::resetAllWidgetsVisibility(AppContext &iCtx)
+{
+  iCtx.beginUndoTx("Reset widget visibility");
+  for(auto const &[_, w]: fWidgets)
+    w->setVisibility(widget::Visibility::kByProperty);
   iCtx.commitUndoTx();
 }
 

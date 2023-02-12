@@ -63,6 +63,15 @@ public:
   inline void errorViewSameLine() { if(hasErrors()) { ImGui::SameLine(); errorView(); } }
 
 protected:
+  template<typename T>
+  inline T setAction(T *o, T iNewValue)
+  {
+    auto res = std::move(*o);
+    *o = std::move(iNewValue);
+    fEdited = *o != res;
+    return res;
+  }
+protected:
   virtual void findErrors(AppContext &iCtx, UserError &oErrors) const { }
 
 protected:

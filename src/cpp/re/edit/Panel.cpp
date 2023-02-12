@@ -504,6 +504,11 @@ bool Panel::renderPanelWidgetMenu(AppContext &iCtx, ImVec2 const &iPosition)
     res |= true;
   }
 
+  if(ImGui::MenuItem("Reset Visibility"))
+  {
+    resetAllWidgetsVisibility(iCtx);
+  }
+
   return false;
 }
 
@@ -1039,11 +1044,9 @@ void Panel::editSingleSelectionView(AppContext &iCtx, Widget *iWidget)
     ImGui::EndCombo();
   }
 
-  if(iWidget->isHidden())
-  {
-    ImGui::SameLine();
-    ImGui::Text(ReGui::kHiddenWidgetIcon);
-  }
+  ImGui::SameLine();
+
+  iWidget->renderVisibilityToggle(iCtx);
 
   iWidget->errorViewSameLine();
 
@@ -1207,15 +1210,31 @@ void Panel::MultiSelectionList::editView(AppContext &iCtx)
   {
     for(auto id: getList())
     {
+      ImGui::PushID(id);
       auto widget = fPanel.getWidget(id);
+
+      widget->renderVisibilityToggle(iCtx);
+
+      ImGui::SameLine();
+
+      auto const hidden = widget->isHidden();
+      if(hidden)
+      {
+        ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().DisabledAlpha);
+      }
+
       if(ImGui::Selectable(widget->getName().c_str(), widget->isSelected(), ImGuiSelectableFlags_AllowDoubleClick))
       {
         auto io = ImGui::GetIO();
         if(ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
-          widget->showIfHidden(iCtx);
+          widget->toggleVisibility();
         else
           handleClick(widget, io.KeyShift, ReGui::IsSingleSelectKey(io));
       }
+
+      if(hidden)
+        ImGui::PopStyleVar();
+
       if(ImGui::BeginPopupContextItem())
       {
         fPanel.renderWidgetMenu(iCtx, widget);
@@ -1226,12 +1245,8 @@ void Panel::MultiSelectionList::editView(AppContext &iCtx)
         ReGui::ToolTip([this, widget] { fPanel.renderWidgetValues(widget); });
       }
 
-      if(widget->isHidden())
-      {
-        ImGui::SameLine();
-        ImGui::Text(ReGui::kHiddenWidgetIcon);
-      }
       widget->errorViewSameLine();
+      ImGui::PopID();
     }
   }
   ImGui::EndChild();

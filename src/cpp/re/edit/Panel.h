@@ -139,6 +139,7 @@ public:
   std::set<int> getSelectedWidgetIds() const;
 
   void deleteWidgets(AppContext &iCtx, std::vector<Widget *> const &iWidgets);
+  void resetAllWidgetsVisibility(AppContext &iCtx);
 
   std::string hdgui2D() const;
   std::string device2D() const;

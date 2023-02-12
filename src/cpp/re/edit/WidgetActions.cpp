@@ -129,4 +129,27 @@ std::string Widget::setNameAction(std::string iName)
   return res;
 }
 
+//------------------------------------------------------------------------
+// Widget::setVisibility
+//------------------------------------------------------------------------
+void Widget::setVisibility(widget::Visibility iVisibility)
+{
+  executeAction<WidgetValueAction<widget::Visibility>>([](Widget *w, auto value) {
+                                                         return w->setVisibilityAction(value);
+                                                       },
+                                                       iVisibility,
+                                                       fmt::printf("Changed [%s] visibility", getName()),
+                                                       MergeKey::from(&fName));
+}
+
+
+//------------------------------------------------------------------------
+// Widget::toggleVisibility
+//------------------------------------------------------------------------
+void Widget::toggleVisibility()
+{
+  setVisibility(isHidden() ? widget::Visibility::kManualVisible : widget::Visibility::kManualHidden);
+}
+
+
 }

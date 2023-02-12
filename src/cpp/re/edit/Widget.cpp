@@ -65,7 +65,7 @@ Widget::Widget(Widget const &iOther) :
     {
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "LocalValueEscapesScope"
-      fVisibility = visibility;
+      fVisibilityAttribute = visibility;
 #pragma clang diagnostic pop
     }
     addAttribute(std::move(newAttribute));
@@ -347,10 +347,10 @@ Widget *Widget::socket(re::mock::JboxObjectType iSocketType, Object::Filter iSoc
 //------------------------------------------------------------------------
 Widget *Widget::visibility()
 {
-  auto visibility = std::make_unique<Visibility>();
+  auto visibility = std::make_unique<widget::attribute::Visibility>();
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "LocalValueEscapesScope"
-  fVisibility = visibility.get();
+  fVisibilityAttribute = visibility.get();
 #pragma clang diagnostic pop
   return addAttribute(std::move(visibility));
 }
@@ -1092,7 +1092,20 @@ bool Widget::copyFromAction(widget::Attribute const *iAttribute)
 //------------------------------------------------------------------------
 void Widget::computeIsHidden(AppContext &iCtx)
 {
-  fHidden = fVisibility != nullptr && fVisibility->isHidden(iCtx);
+  switch(fVisibility)
+  {
+    case widget::Visibility::kByProperty:
+      fHidden = fVisibilityAttribute != nullptr && fVisibilityAttribute->isHidden(iCtx);
+      break;
+
+    case widget::Visibility::kManualVisible:
+      fHidden = false;
+      break;
+
+    case widget::Visibility::kManualHidden:
+      fHidden = true;
+      break;
+  }
 }
 
 //------------------------------------------------------------------------
@@ -1103,7 +1116,26 @@ void Widget::showIfHidden(AppContext &iCtx)
   if(canBeShown())
   {
     iCtx.setNextUndoActionDescription(fmt::printf("Show [%s]", getName()));
-    iCtx.setPropertyValueAsInt(fVisibility->fSwitch.fValue, fVisibility->fValues.fValue[0]);
+    iCtx.setPropertyValueAsInt(fVisibilityAttribute->fSwitch.fValue, fVisibilityAttribute->fValues.fValue[0]);
+  }
+}
+
+//------------------------------------------------------------------------
+// Widget::showByProperty
+//------------------------------------------------------------------------
+void Widget::showByProperty(AppContext &iCtx, std::string const &iPath, int iValue)
+{
+  if(getVisibility() == widget::Visibility::kByProperty)
+  {
+    iCtx.setNextUndoActionDescription(fmt::printf("Show [%s]", getName()));
+    iCtx.setPropertyValueAsInt(iPath, iValue);
+  }
+  else
+  {
+    iCtx.beginUndoTx(fmt::printf("Show [%s]", getName()));
+    setVisibility(widget::Visibility::kByProperty);
+    iCtx.setPropertyValueAsInt(iPath, iValue);
+    iCtx.commitUndoTx();
   }
 }
 
@@ -1112,44 +1144,78 @@ void Widget::showIfHidden(AppContext &iCtx)
 //------------------------------------------------------------------------
 void Widget::renderVisibilityMenu(AppContext &iCtx)
 {
+  if(ImGui::MenuItem(isHidden() ? "Show" : "Hide"))
+    setVisibility(isHidden() ? widget::Visibility::kManualVisible : widget::Visibility::kManualHidden);
+
   if(hasVisibility())
   {
     if(ImGui::BeginMenu("Visibility"))
     {
-      auto const &path = fVisibility->fSwitch.fValue;
+      auto const &path = fVisibilityAttribute->fSwitch.fValue;
       ReGui::TextSeparator(path.c_str());
       if(ImGui::MenuItem(ReGui_Prefix(ReGui_Icon_Watch, "Watch")))
         iCtx.addPropertyToWatchlist(path);
-      if(fHidden)
+      auto const &values = fVisibilityAttribute->fValues.fValue;
+      if(!values.empty())
       {
-        auto const &values = fVisibility->fValues.fValue;
-        if(!values.empty())
+        if(values.size() == 1)
         {
           if(ImGui::MenuItem(fmt::printf("Show [value=%d]", values[0]).c_str()))
           {
-            iCtx.setNextUndoActionDescription(fmt::printf("Show [%s]", getName()));
-            iCtx.setPropertyValueAsInt(path, values[0]);
+            showByProperty(iCtx, path, values[0]);
           }
-          if(values.size() > 1)
+        }
+        else // values.size() > 1
+        {
+          if(ImGui::BeginMenu(fmt::printf("Show with value", path).c_str()))
           {
-            if(ImGui::BeginMenu(fmt::printf("Show with value", path).c_str()))
+            ReGui::TextSeparator("value");
+            for(auto value: values)
             {
-              ReGui::TextSeparator("value");
-              for(auto value: values)
+              if(ImGui::MenuItem(fmt::printf("%d", value).c_str()))
               {
-                if(ImGui::MenuItem(fmt::printf("%d", value).c_str()))
-                {
-                  iCtx.setNextUndoActionDescription(fmt::printf("Show [%s]", getName()));
-                  iCtx.setPropertyValueAsInt(path, value);
-                }
+                showByProperty(iCtx, path, value);
               }
-              ImGui::EndMenu();
             }
+            ImGui::EndMenu();
           }
         }
       }
       ImGui::EndMenu();
     }
+  }
+}
+
+//------------------------------------------------------------------------
+// Widget::renderVisibilityToggle
+//------------------------------------------------------------------------
+void Widget::renderVisibilityToggle(AppContext &iCtx)
+{
+  if(isHidden())
+  {
+    ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().DisabledAlpha);
+    if(ImGui::Button(ReGui_Icon_Visibility_Widget))
+    {
+      toggleVisibility();
+    }
+    ImGui::PopStyleVar();
+  }
+  else
+  {
+    ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.0);
+    ImGui::PushStyleColor(ImGuiCol_Border, ImGui::GetStyle().Colors[ImGuiCol_Text]);
+    if(ImGui::Button(ReGui_Icon_Visibility_Widget))
+    {
+      toggleVisibility();
+    }
+    ImGui::PopStyleColor();
+    ImGui::PopStyleVar();
+  }
+
+  if(ImGui::BeginPopupContextItem())
+  {
+    renderVisibilityMenu(iCtx);
+    ImGui::EndPopup();
   }
 }
 
