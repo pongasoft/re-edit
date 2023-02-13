@@ -136,6 +136,16 @@ void Panel::draw(AppContext &iCtx, ReGui::Canvas &iCanvas, ImVec2 const &iPopupW
 
   auto const mousePos = iCanvas.getCanvasMousePos();
 
+  if(fMoveWidgetsAction && fComputedSelectedRect && (!ReGui::AnySpecialKey() || ImGui::GetIO().KeyAlt))
+  {
+    auto frameSize = getSize();
+    auto color = ImGui::GetColorU32({1,1,0,0.5});
+    iCanvas.addHorizontalLine(fComputedSelectedRect->Min, color);
+    iCanvas.addVerticalLine(fComputedSelectedRect->Min, color);
+    iCanvas.addHorizontalLine(fComputedSelectedRect->Max, color);
+    iCanvas.addVerticalLine(fComputedSelectedRect->Max, color);
+  }
+
   if(fSelectWidgetsAction)
   {
     handleSelectWidgetsAction(iCtx, mousePos);
@@ -173,15 +183,6 @@ void Panel::draw(AppContext &iCtx, ReGui::Canvas &iCanvas, ImVec2 const &iPopupW
     fPopupLocation = std::nullopt;
   ImGui::PopStyleVar();
 
-  if(fMoveWidgetsAction && fComputedSelectedRect && (!ReGui::AnySpecialKey() || ImGui::GetIO().KeyAlt))
-  {
-    auto frameSize = getSize();
-    auto color = ImGui::GetColorU32({1,1,0,0.5});
-    iCanvas.addHorizontalLine(fComputedSelectedRect->Min, color);
-    iCanvas.addVerticalLine(fComputedSelectedRect->Min, color);
-    iCanvas.addHorizontalLine(fComputedSelectedRect->Max, color);
-    iCanvas.addVerticalLine(fComputedSelectedRect->Max, color);
-  }
 
 //  auto logging = LoggingManager::instance();
 //
