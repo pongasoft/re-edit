@@ -1597,29 +1597,29 @@ void AppContext::renderUndoHistory()
       {
         Action *undoAction = nullptr;
         Action *redoAction = nullptr;
-        if(ImGui::Selectable("<empty>"))
-          fUndoManager->undoAll();
-        if(!undoHistory.empty())
-        {
-          auto currentUndoAction = fUndoManager->getLastUndoAction();
-          for(auto &action : undoHistory)
-          {
-            if(impl::RenderUndoAction(action.get(), currentUndoAction == action.get()))
-              undoAction = action.get();
-            if(currentUndoAction == action.get() && currentUndoAction != fLastUndoAction)
-              ImGui::SetScrollHereY(1.0f);
-          }
-        }
         if(!redoHistory.empty())
         {
           ImGui::PushStyleVar(ImGuiStyleVar_Alpha, 0.5f);
-          for(auto i = redoHistory.rbegin(); i != redoHistory.rend(); i++)
+          for(auto i = redoHistory.begin(); i != redoHistory.end(); i++)
           {
-            if(impl::RenderUndoAction((*i).get(), false))
-              redoAction = (*i).get();
+            auto action = (*i).get();
+            if(impl::RenderUndoAction(action, false))
+              redoAction = action;
           }
           ImGui::PopStyleVar();
         }
+        if(!undoHistory.empty())
+        {
+          auto currentUndoAction = fUndoManager->getLastUndoAction();
+          for(auto i = undoHistory.rbegin(); i != undoHistory.rend(); i++)
+          {
+            auto action = (*i).get();
+            if(impl::RenderUndoAction(action, currentUndoAction == action))
+              undoAction = action;
+          }
+        }
+        if(ImGui::Selectable("<empty>"))
+          fUndoManager->undoAll();
         if(undoAction)
           fUndoManager->undoUntil(undoAction);
         if(redoAction)
