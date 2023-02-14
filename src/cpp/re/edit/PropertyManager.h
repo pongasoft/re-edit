@@ -75,14 +75,6 @@ public:
 
   constexpr int getUserSamplesCount() const { return fUserSamplesCount; }
 
-  void addToWatchlist(std::string const &iPropertyPath);
-  void removeFromWatchlist(std::string const &iPropertyPath);
-  void clearWatchList() { fPropertyWatchlist.clear(); }
-
-  std::set<std::string> const &getWatchList() const { return fPropertyWatchlist; }
-
-  std::set<std::string> getNotWatchList() const;
-
   void editView(Property const *iProperty);
   void editView(std::string const &iPropertyPath) { editView(findProperty(iPropertyPath)); }
 
@@ -114,7 +106,6 @@ private:
   re::mock::Rack fRack{};
   std::shared_ptr<re::mock::rack::Extension> fDevice{};
   std::map<std::string, Property> fProperties{};
-  std::set<std::string> fPropertyWatchlist{};
   std::map<std::string, Object> fObjects{};
   int fUserSamplesCount{};
 };

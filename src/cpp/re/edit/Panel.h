@@ -107,6 +107,7 @@ public:
   void draw(AppContext &iCtx, ReGui::Canvas &iCanvas, ImVec2 const &iPopupWindowPadding);
   void editView(AppContext &iCtx);
   void editOrderView(AppContext &iCtx);
+  void visibilityPropertiesView(AppContext &iCtx);
   void markEdited() override;
   void resetEdited() override;
 
@@ -216,6 +217,28 @@ private:
   public:
     Panel &fPanel;
     Panel::WidgetOrDecal fWidgetOrDecal;
+    std::optional<int> fLastSelected{};
+  };
+
+public:
+  class WidgetSelectionList
+  {
+  public:
+    void handleClick(Panel &iPanel, Widget *iWidget, bool iRangeSelectKey, bool iMultiSelectKey);
+    void editView(AppContext &iCtx, Panel &iPanel);
+
+    inline std::vector<Widget *> const &getWidgets() const { return fWidgets; }
+    inline void emplace_back(Widget *iWidget) { fWidgets.emplace_back(iWidget); }
+
+    inline bool empty() const { return fWidgets.empty(); }
+
+    void clear()
+    {
+      fWidgets.clear();
+    }
+
+  private:
+    std::vector<Widget *> fWidgets{};
     std::optional<int> fLastSelected{};
   };
 

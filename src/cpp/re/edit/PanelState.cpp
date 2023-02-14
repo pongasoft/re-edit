@@ -231,56 +231,7 @@ void PanelState::renderProperties(AppContext &iCtx)
 {
   if(auto l = iCtx.fPropertiesWindow.begin())
   {
-    {
-      if(ImGui::Button("Add"))
-        ImGui::OpenPopup("add_property");
-
-      if(ImGui::BeginPopup("add_property"))
-      {
-        auto properties = iCtx.fPropertyManager->getNotWatchList();
-
-        for(auto const &path: properties)
-        {
-          if(ImGui::Selectable(path.c_str()))
-            iCtx.fPropertyManager->addToWatchlist(path);
-        }
-        ImGui::EndPopup();
-      }
-    }
-
-    ImGui::SameLine();
-    if(ImGui::Button("Clr"))
-      iCtx.fPropertyManager->clearWatchList();
-
-    ImGui::Separator();
-
-    if(ImGui::BeginChild("Content"))
-    {
-      auto properties = iCtx.fPropertyManager->getWatchList();
-
-      if(!properties.empty())
-      {
-        for(auto const &path: properties)
-        {
-          ImGui::PushID(path.c_str());
-          if(ReGui::ResetButton())
-            iCtx.fPropertyManager->removeFromWatchlist(path);
-          ImGui::SameLine();
-          ImGui::TextWrapped("%s", path.c_str());
-          if(ReGui::ShowQuickView())
-          {
-            ReGui::ToolTip([&iCtx, &path] {
-              ImGui::TextUnformatted(iCtx.getPropertyInfo(path).c_str());
-            });
-          }
-          ImGui::Indent();
-          iCtx.fPropertyManager->editView(path);
-          ImGui::Unindent();
-          ImGui::PopID();
-        }
-      }
-    }
-    ImGui::EndChild();
+    fPanel.visibilityPropertiesView(iCtx);
   }
 }
 

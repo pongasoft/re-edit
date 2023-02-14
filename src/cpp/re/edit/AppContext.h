@@ -136,11 +136,10 @@ public: // Properties
   void setPropertyValueAsInt(std::string const &iPropertyPath, int iValue) { return fPropertyManager->setValueAsInt(iPropertyPath, iValue); }
   void propertyEditView(std::string const &iPropertyPath) { fPropertyManager->editView(iPropertyPath); }
   void addPropertyToWatchlist(std::string const &iPropertyPath, bool iShowProperties = true) {
-    fPropertyManager->addToWatchlist(iPropertyPath);
-    if(iShowProperties)
+//    fPropertyManager->addToWatchlist(iPropertyPath);
+//    if(iShowProperties)
       fPropertiesWindow.setIsVisible(true);
   }
-  void removePropertyFromWatchlist(std::string const &iPropertyPath) { fPropertyManager->removeFromWatchlist(iPropertyPath); }
   constexpr int getUserSamplesCount() const { return fPropertyManager->getUserSamplesCount(); }
   PropertyManager *getPropertyManager() const { return fPropertyManager.get(); }
 

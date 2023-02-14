@@ -1224,13 +1224,10 @@ void Panel::MultiSelectionList::editView(AppContext &iCtx)
         ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().DisabledAlpha);
       }
 
-      if(ImGui::Selectable(widget->getName().c_str(), widget->isSelected(), ImGuiSelectableFlags_AllowDoubleClick))
+      if(ImGui::Selectable(widget->getName().c_str(), widget->isSelected()))
       {
         auto io = ImGui::GetIO();
-        if(ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
-          widget->toggleVisibility();
-        else
-          handleClick(widget, io.KeyShift, ReGui::IsSingleSelectKey(io));
+        handleClick(widget, io.KeyShift, ReGui::IsSingleSelectKey(io));
       }
 
       if(hidden)
@@ -1269,6 +1266,277 @@ void Panel::editOrderView(AppContext &iCtx)
     fDecalsSelectionList.editView(iCtx);
     ImGui::EndTabItem();
   }
+}
+
+//------------------------------------------------------------------------
+// Panel::WidgetSelectionList::editView
+//------------------------------------------------------------------------
+void Panel::WidgetSelectionList::editView(AppContext &iCtx, Panel &iPanel)
+{
+  for(auto widget: getWidgets())
+  {
+    ImGui::PushID(widget->getId());
+
+    widget->renderVisibilityToggle(iCtx);
+
+    ImGui::SameLine();
+
+    auto const hidden = widget->isHidden();
+    if(hidden)
+    {
+      ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().DisabledAlpha);
+    }
+
+    if(ImGui::Selectable(widget->getName().c_str(), widget->isSelected()))
+    {
+      auto io = ImGui::GetIO();
+      handleClick(iPanel, widget, io.KeyShift, ReGui::IsSingleSelectKey(io));
+    }
+
+    if(hidden)
+      ImGui::PopStyleVar();
+
+    if(ImGui::BeginPopupContextItem())
+    {
+      iPanel.renderWidgetMenu(iCtx, widget);
+      ImGui::EndPopup();
+    }
+    else if(ReGui::ShowQuickView())
+    {
+      ReGui::ToolTip([&iPanel, widget] { iPanel.renderWidgetValues(widget); });
+    }
+
+    widget->errorViewSameLine();
+    ImGui::PopID();
+  }
+}
+
+//------------------------------------------------------------------------
+// Panel::WidgetSelectionList::handleClick
+//------------------------------------------------------------------------
+void Panel::WidgetSelectionList::handleClick(Panel &iPanel, Widget *iWidget, bool iRangeSelectKey, bool iMultiSelectKey)
+{
+  auto id = iWidget->getId();
+
+  // when iMultiSelectKey is held => multiple selection
+  if(iMultiSelectKey)
+  {
+    if(!iWidget->isSelected())
+    {
+      iWidget->select();
+      fLastSelected = id;
+    }
+    else
+    {
+      iWidget->unselect();
+      fLastSelected = std::nullopt;
+    }
+    return;
+  }
+
+  auto &list = getWidgets();
+
+  // when iRangeSelectKey is held => add all properties between fLastSelected and this one
+  if(iRangeSelectKey && fLastSelected && std::find_if(list.begin(), list.end(), [id = *fLastSelected] (auto *w){ return w->getId() == id; }) != list.end())
+  {
+    bool copy = false;
+    for(auto elt: list)
+    {
+      if(id != *fLastSelected && (elt->getId() == id || elt->getId() == *fLastSelected))
+      {
+        copy = !copy;
+        elt->select();
+      }
+      else if(copy)
+        elt->select();
+    }
+
+    fLastSelected = id;
+    return;
+  }
+
+  // neither shift nor control is held => single selection (deselect all others)
+  auto wasSelected = iWidget->fSelected;
+  iPanel.clearSelection();
+  if(wasSelected)
+  {
+    fLastSelected = std::nullopt;
+  }
+  else
+  {
+    iWidget->fSelected = true;
+    fLastSelected = id;
+  }
+}
+
+//------------------------------------------------------------------------
+// struct VisibilityProperty
+//------------------------------------------------------------------------
+struct VisibilityProperty
+{
+  void add(int iValue, Widget *iWidget)
+  {
+    getOrCreate(iValue).emplace_back(iWidget);
+  }
+
+  //! only clears the underlying arrays
+  void clear()
+  {
+    for(auto &[id, v]: fValues)
+      v.clear();
+  }
+
+  //! gets rid of entries with no values
+  bool prune()
+  {
+    for(auto i = fValues.cbegin(); i != fValues.cend(); )
+    {
+      i = i->second.empty() ? fValues.erase(i) : std::next(i);
+    }
+    return fValues.empty();
+  }
+
+  std::map<int, Panel::WidgetSelectionList> &getValues() { return fValues; }
+
+private:
+  Panel::WidgetSelectionList &getOrCreate(int iValue)
+  {
+    auto iter = fValues.find(iValue);
+    if(iter == fValues.end())
+      fValues[iValue] = {};
+    return fValues[iValue];
+  }
+
+private:
+  std::map<int, Panel::WidgetSelectionList> fValues{};
+};
+
+//------------------------------------------------------------------------
+// struct VisibilityProperties
+//------------------------------------------------------------------------
+struct VisibilityProperties
+{
+  //! only clears the underlying arrays
+  void clear()
+  {
+    for(auto &[p, vp]: fProperties)
+      vp.clear();
+  }
+
+  //! Add the attribute in the proper bucket
+  void add(widget::attribute::Visibility *iAttribute)
+  {
+    if(iAttribute)
+    {
+      auto &path = iAttribute->fSwitch.fValue;
+      if(!path.empty())
+      {
+        auto id = iAttribute->getParent()->getId();
+        auto &vp = getOrCreate(path);
+        for(auto value: iAttribute->fValues.fValue)
+        {
+          vp.add(value, iAttribute->getParent());
+        }
+      }
+    }
+  }
+
+  //! gets rid of entries with no values
+  void prune()
+  {
+    for(auto i = fProperties.begin(); i != fProperties.end(); )
+    {
+      i = i->second.prune() ? fProperties.erase(i) : std::next(i);
+    }
+  }
+
+  std::map<std::string, VisibilityProperty> &getProperties() { return fProperties; }
+
+private:
+  VisibilityProperty &getOrCreate(std::string const &iPropertyPath)
+  {
+    auto iter = fProperties.find(iPropertyPath);
+    if(iter == fProperties.end())
+      fProperties[iPropertyPath] = {};
+    return fProperties[iPropertyPath];
+  }
+
+private:
+  std::map<std::string, VisibilityProperty> fProperties{};
+};
+
+//------------------------------------------------------------------------
+// Panel::visibilityPropertiesView
+//------------------------------------------------------------------------
+void Panel::visibilityPropertiesView(AppContext &iCtx)
+{
+  ReGui::MenuButton();
+  ImGui::Separator();
+  if(ImGui::BeginChild("Content"))
+  {
+    // Implementation note: in order to avoid allocations over and over from frame to frame, we reuse
+    // VisibilityProperties which gets cleared at the end of this call (so it is empty) while keeping the
+    // allocated arrays
+    static VisibilityProperties props{};
+
+    for(auto &[id, w]: fWidgets)
+    {
+      props.add(w->fVisibilityAttribute);
+    }
+    props.prune();
+
+    for(auto &[path, prop]: props.getProperties())
+    {
+      ImGui::PushID(path.c_str());
+      auto currentValue = iCtx.getPropertyValueAsInt(path);
+      ImGui::SeparatorText(path.c_str());
+      for(auto &[value, selectionList]: prop.getValues())
+      {
+        ImGui::PushID(value);
+        if(currentValue != value)
+        {
+          ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().DisabledAlpha);
+        }
+        else
+        {
+          ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.0);
+          ImGui::PushStyleColor(ImGuiCol_Border, ImGui::GetStyle().Colors[ImGuiCol_Text]);
+        }
+
+        if(ImGui::Selectable(re::edit::fmt::printf(" " ReGui_Icon_Visibility_Widget " value = %d", value).c_str(), currentValue == value))
+        {
+          iCtx.beginUndoTx(fmt::printf("Set Visibility by Property %s = %d", path, value));
+          iCtx.setPropertyValueAsInt(path, value);
+          for(auto w: selectionList.getWidgets())
+            w->setVisibility(widget::Visibility::kByProperty);
+          iCtx.commitUndoTx();
+        }
+
+        if(currentValue != value)
+        {
+          ImGui::PopStyleVar();
+        }
+        else
+        {
+          ImGui::PopStyleColor();
+          ImGui::PopStyleVar();
+        }
+
+        if(currentValue == value)
+        {
+          ImGui::Indent();
+          selectionList.editView(iCtx, *this);
+          ImGui::Unindent();
+        }
+
+        ImGui::PopID();
+      }
+      ImGui::PopID();
+    }
+
+    props.clear();
+  }
+  ImGui::EndChild();
 }
 
 //------------------------------------------------------------------------

@@ -307,37 +307,6 @@ void PropertyManager::afterRenderFrame()
 }
 
 //------------------------------------------------------------------------
-// PropertyManager::addToWatchlist
-//------------------------------------------------------------------------
-void PropertyManager::addToWatchlist(std::string const &iPropertyPath)
-{
-  if(hasProperty(iPropertyPath))
-    fPropertyWatchlist.emplace(iPropertyPath);
-}
-
-//------------------------------------------------------------------------
-// PropertyManager::removeFromWatchlist
-//------------------------------------------------------------------------
-void PropertyManager::removeFromWatchlist(std::string const &iPropertyPath)
-{
-  fPropertyWatchlist.erase(iPropertyPath);
-}
-
-//------------------------------------------------------------------------
-// PropertyManager::getNotWatchList
-//------------------------------------------------------------------------
-std::set<std::string> PropertyManager::getNotWatchList() const
-{
-  std::set<std::string> res{};
-  for(auto const&[name, _]: fProperties)
-  {
-    if(fPropertyWatchlist.find(name) == fPropertyWatchlist.end())
-      res.emplace(name);
-  }
-  return res;
-}
-
-//------------------------------------------------------------------------
 // ::toOwnerString
 //------------------------------------------------------------------------
 static char const *toOwnerString(PropertyOwner iOwner)
