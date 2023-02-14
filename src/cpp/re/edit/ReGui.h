@@ -446,13 +446,6 @@ void CopyToClipboard(F &&iContent)
 }
 
 //------------------------------------------------------------------------
-// ReGui::TextSeparator
-// Create a centered separator which can be immediately followed by a item
-// copied from https://github.com/ocornut/imgui/issues/1643#issuecomment-369376479
-//------------------------------------------------------------------------
-void TextSeparator(char const *text, float pre_width = 10.0f);
-
-//------------------------------------------------------------------------
 // ReGui::MultiLineText
 // Issues one ImGui::Text per line of text
 //------------------------------------------------------------------------

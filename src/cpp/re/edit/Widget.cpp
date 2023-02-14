@@ -1152,7 +1152,7 @@ void Widget::renderVisibilityMenu(AppContext &iCtx)
     if(ImGui::BeginMenu("Visibility"))
     {
       auto const &path = fVisibilityAttribute->fSwitch.fValue;
-      ReGui::TextSeparator(path.c_str());
+      ImGui::SeparatorText(path.c_str());
       if(ImGui::MenuItem(ReGui_Prefix(ReGui_Icon_Watch, "Watch")))
         iCtx.addPropertyToWatchlist(path);
       auto const &values = fVisibilityAttribute->fValues.fValue;
@@ -1169,7 +1169,7 @@ void Widget::renderVisibilityMenu(AppContext &iCtx)
         {
           if(ImGui::BeginMenu(fmt::printf("Show with value", path).c_str()))
           {
-            ReGui::TextSeparator("value");
+            ImGui::SeparatorText("value");
             for(auto value: values)
             {
               if(ImGui::MenuItem(fmt::printf("%d", value).c_str()))

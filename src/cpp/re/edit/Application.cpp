@@ -1424,7 +1424,7 @@ void Application::newAboutDialog()
 //------------------------------------------------------------------------
 void Application::about() const
 {
-  ReGui::TextSeparator("RE Edit");
+  ImGui::SeparatorText("RE Edit");
   ImGui::Text("Version:      %s", kFullVersion);
   ImGui::Text("Git Version:  %s", kGitVersion);
   ImGui::Text("Git Tag:      %s", kGitTag);
@@ -1435,7 +1435,7 @@ void Application::about() const
   {
     constexpr auto boolToString = [](bool b) { return b ? "true" : "false"; };
 
-    ReGui::TextSeparator("Rack Extension");
+    ImGui::SeparatorText("Rack Extension");
 
     auto const &info = fAppContext->fPropertyManager->getDeviceInfo();
     ImGui::Text("long_name:                       %s", info.fLongName.c_str());

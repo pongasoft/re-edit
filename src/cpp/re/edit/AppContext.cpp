@@ -280,7 +280,7 @@ void AppContext::render()
 
     if(hasNotifications())
     {
-      ReGui::TextSeparator("Notifications");
+      ImGui::SeparatorText("Notifications");
       if(maybeReloadTextures())
       {
         ImGui::AlignTextToFramePadding();
@@ -306,7 +306,7 @@ void AppContext::render()
       }
     }
 
-    ReGui::TextSeparator("Rendering");
+    ImGui::SeparatorText("Rendering");
 
     ImGui::PushID("Rendering");
 
@@ -409,7 +409,7 @@ void AppContext::render()
 
     ImGui::PopID(); // Rendering
 
-    ReGui::TextSeparator("Clipboard");
+    ImGui::SeparatorText("Clipboard");
     if(ReGui::ResetButton())
     {
       fClipboard.reset();

@@ -297,7 +297,7 @@ void Graphics::editView(AppContext &iCtx,
   {
     ReGui::ToolTip([this] {
       auto texture = getTexture();
-      ReGui::TextSeparator(texture->key().c_str());
+      ImGui::SeparatorText(texture->key().c_str());
       ImGui::Text("path   = GUI2D/%s.png", texture->key().c_str());
       if(texture->isValid())
       {

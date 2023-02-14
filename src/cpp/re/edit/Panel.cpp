@@ -453,7 +453,7 @@ void Panel::handleCanvasInputs(AppContext &iCtx, ReGui::Canvas &iCanvas)
 //------------------------------------------------------------------------
 bool Panel::renderPanelWidgetMenu(AppContext &iCtx, ImVec2 const &iPosition)
 {
-  ReGui::TextSeparator("Panel");
+  ImGui::SeparatorText("Panel");
 
   auto res = false;
 
@@ -520,7 +520,7 @@ bool Panel::renderWidgetMenu(AppContext &iCtx, Widget *iWidget)
 {
   bool res = false;
 
-  ReGui::TextSeparator(iWidget->getName().c_str());
+  ImGui::SeparatorText(iWidget->getName().c_str());
   if(ImGui::MenuItem(iWidget->isSelected() ? "Unselect" : "Select"))
   {
     toggleWidgetSelection(iWidget->getId(), true);
@@ -612,7 +612,7 @@ bool Panel::renderSelectedWidgetsMenu(AppContext &iCtx)
     res |= renderWidgetMenu(iCtx, fComputedSelectedWidgets[0]);
   else
   {
-    ReGui::TextSeparator(fmt::printf("Selected Widgets (%ld)", fComputedSelectedWidgets.size()).c_str());
+    ImGui::SeparatorText(fmt::printf("Selected Widgets (%ld)", fComputedSelectedWidgets.size()).c_str());
 
     if(ImGui::MenuItem("Unselect"))
     {
@@ -932,7 +932,7 @@ void Panel::editView(AppContext &iCtx)
 //------------------------------------------------------------------------
 void Panel::renderWidgetValues(Widget const *iWidget)
 {
-  ReGui::TextSeparator(fmt::printf("%s [%s]", iWidget->getName(), re::edit::toString(iWidget->getType())).c_str());
+  ImGui::SeparatorText(fmt::printf("%s [%s]", iWidget->getName(), re::edit::toString(iWidget->getType())).c_str());
   for(auto &att: iWidget->fAttributes)
   {
     ImGui::TextUnformatted(att->toValueString().c_str());
@@ -1089,7 +1089,7 @@ void Panel::editMultiSelectionView(AppContext &iCtx)
     moveWidgets(delta);
   }
 
-  ReGui::TextSeparator("Alignment");
+  ImGui::SeparatorText("Alignment");
   constexpr ImVec2 smallButtonSize{80, 0};
   ImVec2 bigButtonSize{smallButtonSize.x * 2.0f + ImGui::GetStyle().ItemSpacing.x, 0};
 
