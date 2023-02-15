@@ -1149,39 +1149,9 @@ void Widget::renderVisibilityMenu(AppContext &iCtx)
 
   if(hasVisibility())
   {
-    if(ImGui::BeginMenu("Visibility"))
+    if(ImGui::MenuItem(ReGui_Prefix(ReGui_Icon_Watch, "Visibility")))
     {
-      auto const &path = fVisibilityAttribute->fSwitch.fValue;
-      ImGui::SeparatorText(path.c_str());
-      if(ImGui::MenuItem(ReGui_Prefix(ReGui_Icon_Watch, "Watch")))
-        iCtx.addPropertyToWatchlist(path);
-      auto const &values = fVisibilityAttribute->fValues.fValue;
-      if(!values.empty())
-      {
-        if(values.size() == 1)
-        {
-          if(ImGui::MenuItem(fmt::printf("Show [value=%d]", values[0]).c_str()))
-          {
-            showByProperty(iCtx, path, values[0]);
-          }
-        }
-        else // values.size() > 1
-        {
-          if(ImGui::BeginMenu(fmt::printf("Show with value", path).c_str()))
-          {
-            ImGui::SeparatorText("value");
-            for(auto value: values)
-            {
-              if(ImGui::MenuItem(fmt::printf("%d", value).c_str()))
-              {
-                showByProperty(iCtx, path, value);
-              }
-            }
-            ImGui::EndMenu();
-          }
-        }
-      }
-      ImGui::EndMenu();
+      iCtx.requestPropertyWatch(fVisibilityAttribute->fSwitch.fValue);
     }
   }
 }

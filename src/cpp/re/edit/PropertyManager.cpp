@@ -378,7 +378,7 @@ static char const *toPersistenceString(lua::EPersistence iPersistence)
 
 
 //------------------------------------------------------------------------
-// PropertyManager::editView
+// PropertyManager::getPropertyInfo
 //------------------------------------------------------------------------
 std::string PropertyManager::getPropertyInfo(std::string const &iPropertyPath) const
 {
@@ -469,6 +469,41 @@ void PropertyManager::editView(Property const *iProperty)
       ImGui::Text("%s", fDevice->toString(iProperty->path()).c_str());
       break;
   }
+}
+
+//------------------------------------------------------------------------
+// PropertyManager::editViewAsInt
+//------------------------------------------------------------------------
+void PropertyManager::editViewAsInt(Property const *iProperty, std::function<void(int)> const &iOnChange) const
+{
+  if(iProperty == nullptr)
+    return;
+
+  switch(iProperty->type())
+  {
+    case Property::Type::kNumber:
+    {
+      if(iProperty->isDiscrete())
+      {
+        auto value = fDevice->getNum<int>(iProperty->path());
+        if(ImGui::SliderInt("value", &value, 0, iProperty->stepCount() - 1))
+          iOnChange(value);
+      }
+      break;
+    }
+
+    case Property::Type::kBoolean:
+    {
+      auto value = fDevice->getBool(iProperty->path()) ? 1 : 0;
+      if(ImGui::SliderInt("value", &value, 0, 1))
+        iOnChange(value ? 1 : 0);
+      break;
+    }
+
+    default:
+      break;
+  }
+
 }
 
 //------------------------------------------------------------------------

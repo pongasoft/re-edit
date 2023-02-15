@@ -889,8 +889,8 @@ void PropertyPath::menuView(AppContext &iCtx,
       iOnCopy();
 
     ImGui::BeginDisabled(iPropertyPath.empty());
-    if(ImGui::MenuItem(ReGui_Prefix(ReGui_Icon_Watch, "Watch")))
-      iCtx.addPropertyToWatchlist(iPropertyPath);
+    if(ImGui::MenuItem(ReGui_Prefix(ReGui_Icon_Watch, "Visibility")))
+      iCtx.requestPropertyWatch(iPropertyPath);
     if(ImGui::MenuItem(ReGui_Prefix(ReGui_Icon_Edit, "Edit")))
       ImGui::OpenPopup(editPopupId);
     ImGui::EndDisabled();

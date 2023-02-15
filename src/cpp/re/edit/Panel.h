@@ -108,6 +108,7 @@ public:
   void editView(AppContext &iCtx);
   void editOrderView(AppContext &iCtx);
   void visibilityPropertiesView(AppContext &iCtx);
+  void requestPropertyWatch(std::string const &iPropertyPath) { fPropertyWatchRequest = iPropertyPath; }
   void markEdited() override;
   void resetEdited() override;
 
@@ -229,7 +230,6 @@ public:
 
     inline std::vector<Widget *> const &getWidgets() const { return fWidgets; }
     inline void emplace_back(Widget *iWidget) { fWidgets.emplace_back(iWidget); }
-
     inline bool empty() const { return fWidgets.empty(); }
 
     void clear()
@@ -261,6 +261,7 @@ private:
   std::optional<MouseDrag> fSelectWidgetsAction{};
   std::optional<MouseDrag> fMoveCanvasAction{};
   std::optional<ImVec2> fPopupLocation{};
+  std::optional<std::string> fPropertyWatchRequest{};
   int fWidgetCounter{1}; // used for unique id
   MultiSelectionList fWidgetsSelectionList{*this, Panel::WidgetOrDecal::kWidget};
   MultiSelectionList fDecalsSelectionList{*this, Panel::WidgetOrDecal::kDecal};

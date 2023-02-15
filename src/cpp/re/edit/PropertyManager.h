@@ -76,7 +76,9 @@ public:
   constexpr int getUserSamplesCount() const { return fUserSamplesCount; }
 
   void editView(Property const *iProperty);
-  void editView(std::string const &iPropertyPath) { editView(findProperty(iPropertyPath)); }
+  inline void editView(std::string const &iPropertyPath) { editView(findProperty(iPropertyPath)); }
+  void editViewAsInt(Property const *iProperty, std::function<void(int)> const &iOnChange) const;
+  inline void editViewAsInt(std::string const &iPropertyPath, std::function<void(int)> const &iOnChange) const { editViewAsInt(findProperty(iPropertyPath), iOnChange); }
 
   friend class AppContext;
 

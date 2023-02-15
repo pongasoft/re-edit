@@ -135,13 +135,9 @@ public: // Properties
   int getPropertyValueAsInt(std::string const &iPropertyPath) const { return fPropertyManager->getValueAsInt(iPropertyPath); }
   void setPropertyValueAsInt(std::string const &iPropertyPath, int iValue) { return fPropertyManager->setValueAsInt(iPropertyPath, iValue); }
   void propertyEditView(std::string const &iPropertyPath) { fPropertyManager->editView(iPropertyPath); }
-  void addPropertyToWatchlist(std::string const &iPropertyPath, bool iShowProperties = true) {
-//    fPropertyManager->addToWatchlist(iPropertyPath);
-//    if(iShowProperties)
-      fPropertiesWindow.setIsVisible(true);
-  }
+  void propertyEditViewAsInt(std::string const &iPropertyPath, std::function<void(int)> const &iOnChange) const { fPropertyManager->editViewAsInt(iPropertyPath, iOnChange); }
+  void requestPropertyWatch(std::string const &iPropertyPath);
   constexpr int getUserSamplesCount() const { return fPropertyManager->getUserSamplesCount(); }
-  PropertyManager *getPropertyManager() const { return fPropertyManager.get(); }
 
 public: // Clipboard
   inline bool isClipboardMatchesType(clipboard::DataType iType) const { return fClipboard.matchesType(iType); }

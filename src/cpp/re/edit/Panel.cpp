@@ -1397,6 +1397,17 @@ struct VisibilityProperty
   }
 
   std::map<int, Panel::WidgetSelectionList> &getValues() { return fValues; }
+  bool hasValue(int iValue) const { return fValues.find(iValue) != fValues.end(); }
+  Panel::WidgetSelectionList &getList(int iValue) { return fValues[iValue]; }
+
+  void resetVisibility()
+  {
+    for(auto &[id, v]: fValues)
+    {
+      for(auto w: v.getWidgets())
+        w->setVisibility(widget::Visibility::kByProperty);
+    }
+  }
 
 private:
   Panel::WidgetSelectionList &getOrCreate(int iValue)
@@ -1470,8 +1481,23 @@ private:
 //------------------------------------------------------------------------
 void Panel::visibilityPropertiesView(AppContext &iCtx)
 {
-  ReGui::MenuButton();
-  ImGui::Separator();
+  bool compactTab = true;
+
+  if(ImGui::BeginTabBar("Visibility", ImGuiTabBarFlags_None))
+  {
+    if(ImGui::BeginTabItem("Compact"))
+    {
+      compactTab = true;
+      ImGui::EndTabItem();
+    }
+    if(ImGui::BeginTabItem("Expanded"))
+    {
+      compactTab = false;
+      ImGui::EndTabItem();
+    }
+    ImGui::EndTabBar();
+  }
+
   if(ImGui::BeginChild("Content"))
   {
     // Implementation note: in order to avoid allocations over and over from frame to frame, we reuse
@@ -1485,53 +1511,94 @@ void Panel::visibilityPropertiesView(AppContext &iCtx)
     }
     props.prune();
 
-    for(auto &[path, prop]: props.getProperties())
+    if(compactTab)
     {
-      ImGui::PushID(path.c_str());
-      auto currentValue = iCtx.getPropertyValueAsInt(path);
-      ImGui::SeparatorText(path.c_str());
-      for(auto &[value, selectionList]: prop.getValues())
+      for(auto &[path, prop]: props.getProperties())
       {
-        ImGui::PushID(value);
-        if(currentValue != value)
-        {
-          ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().DisabledAlpha);
-        }
-        else
-        {
-          ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.0);
-          ImGui::PushStyleColor(ImGuiCol_Border, ImGui::GetStyle().Colors[ImGuiCol_Text]);
-        }
+        ImGui::PushID(path.c_str());
+        auto currentValue = iCtx.getPropertyValueAsInt(path);
+        ImGui::SeparatorText(path.c_str());
+        ImGui::AlignTextToFramePadding();
+        ImGui::TextUnformatted(ReGui_Icon_Visibility_Widget);
+        ImGui::SameLine();
+        ImGui::BeginGroup();
 
-        if(ImGui::Selectable(re::edit::fmt::printf(" " ReGui_Icon_Visibility_Widget " value = %d", value).c_str(), currentValue == value))
-        {
-          iCtx.beginUndoTx(fmt::printf("Set Visibility by Property %s = %d", path, value));
-          iCtx.setPropertyValueAsInt(path, value);
-          for(auto w: selectionList.getWidgets())
-            w->setVisibility(widget::Visibility::kByProperty);
+        auto &localPath = path; // lambda requirement :(
+        auto &localProp = prop; // lambda requirement :(
+        iCtx.propertyEditViewAsInt(path, [&iCtx, &localPath, &localProp](auto newValue) {
+          iCtx.beginUndoTx(fmt::printf("Set Visibility by Property %s = %d", localPath, newValue));
+          iCtx.setPropertyValueAsInt(localPath, newValue);
+          localProp.resetVisibility();
           iCtx.commitUndoTx();
+        });
+
+        if(fPropertyWatchRequest && *fPropertyWatchRequest == path)
+        {
+          ImGui::SetScrollHereY(0);
+          fPropertyWatchRequest = std::nullopt;
         }
 
-        if(currentValue != value)
+        if(prop.hasValue(currentValue))
         {
-          ImGui::PopStyleVar();
-        }
-        else
-        {
-          ImGui::PopStyleColor();
-          ImGui::PopStyleVar();
+          prop.getList(currentValue).editView(iCtx, *this);
         }
 
-        if(currentValue == value)
+        ImGui::EndGroup();
+        ImGui::PopID();
+      }
+    }
+    else
+    {
+      for(auto &[path, prop]: props.getProperties())
+      {
+        ImGui::PushID(path.c_str());
+        auto currentValue = iCtx.getPropertyValueAsInt(path);
+        ImGui::SeparatorText(path.c_str());
+        for(auto &[value, selectionList]: prop.getValues())
         {
+          ImGui::PushID(value);
+          if(currentValue != value)
+          {
+            ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().DisabledAlpha);
+          }
+          else
+          {
+            ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.0);
+            ImGui::PushStyleColor(ImGuiCol_Border, ImGui::GetStyle().Colors[ImGuiCol_Text]);
+          }
+
+          if(ImGui::Selectable(re::edit::fmt::printf(" " ReGui_Icon_Visibility_Widget " value = %d", value).c_str(), currentValue == value))
+          {
+            iCtx.beginUndoTx(fmt::printf("Set Visibility by Property %s = %d", path, value));
+            iCtx.setPropertyValueAsInt(path, value);
+            prop.resetVisibility();
+            iCtx.commitUndoTx();
+          }
+
+          if(fPropertyWatchRequest && *fPropertyWatchRequest == path)
+          {
+            ImGui::SetScrollHereY(0);
+            fPropertyWatchRequest = std::nullopt;
+          }
+
+          if(currentValue != value)
+          {
+            ImGui::PopStyleVar();
+          }
+          else
+          {
+            ImGui::PopStyleColor();
+            ImGui::PopStyleVar();
+          }
+
           ImGui::Indent();
           selectionList.editView(iCtx, *this);
           ImGui::Unindent();
-        }
 
+          ImGui::PopID();
+        }
         ImGui::PopID();
       }
-      ImGui::PopID();
     }
 
     props.clear();
