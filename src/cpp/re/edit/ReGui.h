@@ -309,32 +309,30 @@ inline bool MenuButton()
 }
 
 //------------------------------------------------------------------------
+// ReGui::SpacingY
+//------------------------------------------------------------------------
+inline void SpacingY()
+{
+  auto cp = ImGui::GetCursorScreenPos();
+  cp.y += ImGui::GetStyle().ItemSpacing.y;
+  ImGui::SetCursorScreenPos(cp);
+}
+
+//------------------------------------------------------------------------
 // ReGui::VisibilityButton
 //------------------------------------------------------------------------
-inline bool VisibilityButton(bool isHidden)
+inline bool VisibilityButton(bool isHidden, bool isSelected)
 {
-  bool res = false;
+  bool res;
   if(isHidden)
   {
     ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().DisabledAlpha / 2.0f);
-    auto cp = ImGui::GetCursorScreenPos();
-    ImGui::TextUnformatted(ReGui_Icon_Visibility_Widget);
-    ImGui::SetCursorScreenPos(cp);
-    if(ImGui::InvisibleButton(ReGui_Icon_Visibility_Widget, ImGui::GetItemRectSize()))
-    {
-      res = true;
-    }
+    res = ImGui::Selectable(ReGui_Icon_Visibility_Widget, isSelected, 0, ImGui::CalcTextSize(ReGui_Icon_Visibility_Widget));
     ImGui::PopStyleVar();
   }
   else
   {
-    auto cp = ImGui::GetCursorScreenPos();
-    ImGui::TextUnformatted(ReGui_Icon_Visibility_Widget);
-    ImGui::SetCursorScreenPos(cp);
-    if(ImGui::InvisibleButton(ReGui_Icon_Visibility_Widget, ImGui::GetItemRectSize()))
-    {
-      res = true;
-    }
+    res = ImGui::Selectable(ReGui_Icon_Visibility_Widget, isSelected, 0, ImGui::CalcTextSize(ReGui_Icon_Visibility_Widget));
   }
   return res;
 }

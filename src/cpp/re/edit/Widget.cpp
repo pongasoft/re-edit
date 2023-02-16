@@ -1161,7 +1161,7 @@ void Widget::renderVisibilityMenu(AppContext &iCtx)
 //------------------------------------------------------------------------
 void Widget::renderVisibilityToggle(AppContext &iCtx)
 {
-  if(ReGui::VisibilityButton(isHidden()))
+  if(ReGui::VisibilityButton(isHidden(), isSelected()))
     toggleVisibility();
 
   if(ImGui::BeginPopupContextItem())

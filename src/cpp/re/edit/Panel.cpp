@@ -1183,7 +1183,9 @@ void Panel::OrderSelectionList::editView(AppContext &iCtx, Panel &iPanel)
 
   ImGui::Separator();
 
-  fWidgetSelectionList.editView(iCtx, iPanel);
+  if(ImGui::BeginChild("Content"))
+    fWidgetSelectionList.editView(iCtx, iPanel);
+  ImGui::EndChild();
 }
 
 //------------------------------------------------------------------------
@@ -1200,7 +1202,9 @@ void Panel::editOrderView(AppContext &iCtx)
     }
     kAllList.popupMenuView(iCtx, *this);
     ImGui::Separator();
-    kAllList.editView(iCtx, *this);
+    if(ImGui::BeginChild("Content"))
+      kAllList.editView(iCtx, *this);
+    ImGui::EndChild();
     kAllList.clear();
     ImGui::EndTabItem();
   }
@@ -1238,7 +1242,7 @@ void Panel::WidgetSelectionList::editView(AppContext &iCtx, Panel &iPanel)
     auto const hidden = widget->isHidden();
     if(hidden)
     {
-      ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().DisabledAlpha);
+      ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().DisabledAlpha / 2.0f);
     }
 
     if(ImGui::Selectable(widget->getName().c_str(), widget->isSelected()))
@@ -1543,19 +1547,24 @@ void Panel::visibilityPropertiesView(AppContext &iCtx)
           {
             ImGui::PushID(value);
 
-            bool selectValue = ReGui::VisibilityButton(currentValue != value);
+            bool selectValue = ReGui::VisibilityButton(currentValue != value, currentValue == value);
 
             ImGui::SameLine();
             ImGui::BeginGroup();
 
             if(currentValue != value)
             {
-              ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().DisabledAlpha);
+              ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().DisabledAlpha / 2.0f);
             }
 
             if(ImGui::Selectable(re::edit::fmt::printf("value = %d", value).c_str(), currentValue == value))
             {
               selectValue = true;
+            }
+
+            if(currentValue != value)
+            {
+              ImGui::PopStyleVar();
             }
 
             if(selectValue)
@@ -1572,13 +1581,10 @@ void Panel::visibilityPropertiesView(AppContext &iCtx)
               fPropertyWatchRequest = std::nullopt;
             }
 
-            if(currentValue != value)
-            {
-              ImGui::PopStyleVar();
-            }
-
+            ReGui::SpacingY();
             selectionList.editView(iCtx, *this);
             ImGui::EndGroup();
+            ReGui::SpacingY();
 
             ImGui::PopID();
           }
