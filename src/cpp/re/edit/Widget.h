@@ -173,6 +173,8 @@ public:
 
   static void resetWidgetIota() { fWidgetIota = 1; }
 
+  static void sortByName(std::vector<Widget *> &iWidgets);
+
   friend class Panel;
   friend class widget::Attribute;
 

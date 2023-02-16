@@ -97,9 +97,6 @@ public:
   constexpr std::string const &getNodeName() const { return fNodeName; };
   constexpr ImVec2 getSize() const { return fSize; }
   constexpr ImVec2 getCenter() const { return getSize() / 2.0f; }
-  constexpr ImVec2 getTotalSize() const { return fComputedRect.GetSize(); }
-  constexpr ImVec2 getTopLeftOffset() const { return {-fComputedRect.Min.x, -fComputedRect.Min.y}; }
-  constexpr ReGui::Rect getRect() const { return fComputedRect; }
   constexpr PanelType getType() const { return fType; }
 
   void setDeviceHeightRU(int iDeviceHeightRU);
@@ -183,9 +180,12 @@ private:
   void setCableOrigin(ImVec2 const &iPosition);
   void setPanelOptions(bool iDisableSampleDropOnPanel);
   void beforeEachFrame(AppContext &iCtx);
+  void computeDNZ(AppContext *iCtx = nullptr) const;
   bool renderPanelWidgetMenu(AppContext &iCtx, ImVec2 const &iPosition = {});
   bool renderPanelMenus(AppContext &iCtx, std::optional<ImVec2> iPosition = std::nullopt);
-  bool renderSelectedWidgetsMenu(AppContext &iCtx);
+  bool renderSelectedWidgetsMenu(AppContext &iCtx, std::vector<Widget *> const &iWidgets);
+  bool renderSelectedWidgetsMenu(AppContext &iCtx) { return renderSelectedWidgetsMenu(iCtx, dnz().fSelectedWidgets); }
+  bool renderWidgetsMenu(AppContext &iCtx, std::vector<Widget *> const &iWidgets);
   bool renderWidgetMenu(AppContext &iCtx, Widget *iWidget);
   void renderWidgetValues(Widget const *iWidget);
   void drawWidgets(AppContext &iCtx, ReGui::Canvas &iCanvas, std::vector<int> const &iOrder);
@@ -204,29 +204,14 @@ private:
   template<class T, class... Args >
   typename T::result_t executeAction(Args&&... args);
 
-private:
-  class MultiSelectionList
-  {
-  public:
-    MultiSelectionList(Panel &iPanel, Panel::WidgetOrDecal iType) : fPanel{iPanel}, fWidgetOrDecal{iType} {}
-    void handleClick(Widget *iWidget, bool iRangeSelectKey, bool iMultiSelectKey);
-    void editView(AppContext &iCtx);
-
-  private:
-    inline std::vector<int> const &getList() const { return fPanel.getOrder(fWidgetOrDecal); }
-
-  public:
-    Panel &fPanel;
-    Panel::WidgetOrDecal fWidgetOrDecal;
-    std::optional<int> fLastSelected{};
-  };
-
 public:
   class WidgetSelectionList
   {
   public:
     void handleClick(Panel &iPanel, Widget *iWidget, bool iRangeSelectKey, bool iMultiSelectKey);
     void editView(AppContext &iCtx, Panel &iPanel);
+    void menuView(AppContext &iCtx, Panel &iPanel);
+    void popupMenuView(AppContext &iCtx, Panel &iPanel);
 
     inline std::vector<Widget *> const &getWidgets() const { return fWidgets; }
     inline void emplace_back(Widget *iWidget) { fWidgets.emplace_back(iWidget); }
@@ -237,16 +222,57 @@ public:
       fWidgets.clear();
     }
 
+    void resetLastSelected() { fLastSelected = std::nullopt; }
+
   private:
     std::vector<Widget *> fWidgets{};
     std::optional<int> fLastSelected{};
   };
 
+  friend class WidgetSelectionList;
+
+private:
+  class OrderSelectionList
+  {
+  public:
+    explicit OrderSelectionList(Panel::WidgetOrDecal iType) : fType{iType} {}
+    void editView(AppContext &iCtx, Panel &iPanel);
+
+    void init(Panel &iPanel);
+
+    void clear()
+    {
+      fWidgetSelectionList.clear();
+    }
+
+  private:
+    Panel::WidgetOrDecal fType;
+    WidgetSelectionList fWidgetSelectionList{};
+  };
+
+  struct DNZ
+  {
+    std::vector<Widget *> fSelectedWidgets{};
+    std::vector<Widget *> fSortedByNameWidgets{};
+    std::optional<ReGui::Rect> fSelectedRect{};
+
+    friend class Panel;
+
+  private:
+    void clear();
+    inline void markDirty() { fDirty = true; clear(); }
+    inline void markClean() { fDirty = false; }
+
+  private:
+    bool fDirty{true};
+  };
+
+  inline DNZ &dnz() const { if(fDNZ.fDirty) computeDNZ(); return fDNZ; }
+
 private:
   PanelType fType;
   int fDeviceHeightRU{1};
   ImVec2 fSize{kDevicePixelWidth, toPixelHeight(1)};
-  ReGui::Rect fComputedRect{{}, fSize};
   std::string fNodeName;
   re::edit::panel::Graphics fGraphics{this};
   std::optional<ImVec2> fCableOrigin;
@@ -263,10 +289,9 @@ private:
   std::optional<ImVec2> fPopupLocation{};
   std::optional<std::string> fPropertyWatchRequest{};
   int fWidgetCounter{1}; // used for unique id
-  MultiSelectionList fWidgetsSelectionList{*this, Panel::WidgetOrDecal::kWidget};
-  MultiSelectionList fDecalsSelectionList{*this, Panel::WidgetOrDecal::kDecal};
-  std::vector<Widget *> fComputedSelectedWidgets{};
-  std::optional<ReGui::Rect> fComputedSelectedRect{};
+  OrderSelectionList fWidgetsSelectionList{Panel::WidgetOrDecal::kWidget};
+  OrderSelectionList fDecalsSelectionList{Panel::WidgetOrDecal::kDecal};
+  mutable DNZ fDNZ{};
 };
 
 //------------------------------------------------------------------------

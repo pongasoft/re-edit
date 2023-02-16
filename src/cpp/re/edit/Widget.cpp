@@ -1161,26 +1161,8 @@ void Widget::renderVisibilityMenu(AppContext &iCtx)
 //------------------------------------------------------------------------
 void Widget::renderVisibilityToggle(AppContext &iCtx)
 {
-  if(isHidden())
-  {
-    ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().DisabledAlpha);
-    if(ImGui::Button(ReGui_Icon_Visibility_Widget))
-    {
-      toggleVisibility();
-    }
-    ImGui::PopStyleVar();
-  }
-  else
-  {
-    ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.0);
-    ImGui::PushStyleColor(ImGuiCol_Border, ImGui::GetStyle().Colors[ImGuiCol_Text]);
-    if(ImGui::Button(ReGui_Icon_Visibility_Widget))
-    {
-      toggleVisibility();
-    }
-    ImGui::PopStyleColor();
-    ImGui::PopStyleVar();
-  }
+  if(ReGui::VisibilityButton(isHidden()))
+    toggleVisibility();
 
   if(ImGui::BeginPopupContextItem())
   {
@@ -1210,6 +1192,31 @@ Widget *Widget::addAttribute(std::unique_ptr<widget::Attribute> iAttribute)
   iAttribute->init(this, id);
   fAttributes.emplace_back(std::move(iAttribute));
   return this;
+}
+
+namespace impl {
+
+//------------------------------------------------------------------------
+// sortByNameCompare (name first, then id for tie breaker)
+//------------------------------------------------------------------------
+static struct {
+  bool operator()(Widget *w1, Widget *w2) const {
+    auto c = w1->getName().compare(w2->getName());
+    if(c == 0)
+      return w1->getId() < w2->getId();
+    return c < 0;
+  }
+}  sortByNameCompare;
+
+}
+
+//------------------------------------------------------------------------
+// Widget::sortByName
+//------------------------------------------------------------------------
+void Widget::sortByName(std::vector<Widget *> &iWidgets)
+{
+  std::sort(iWidgets.begin(), iWidgets.end(), re::edit::impl::sortByNameCompare);
+
 }
 
 namespace clipboard {

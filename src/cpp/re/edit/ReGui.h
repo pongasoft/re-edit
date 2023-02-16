@@ -309,6 +309,37 @@ inline bool MenuButton()
 }
 
 //------------------------------------------------------------------------
+// ReGui::VisibilityButton
+//------------------------------------------------------------------------
+inline bool VisibilityButton(bool isHidden)
+{
+  bool res = false;
+  if(isHidden)
+  {
+    ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().DisabledAlpha / 2.0f);
+    auto cp = ImGui::GetCursorScreenPos();
+    ImGui::TextUnformatted(ReGui_Icon_Visibility_Widget);
+    ImGui::SetCursorScreenPos(cp);
+    if(ImGui::InvisibleButton(ReGui_Icon_Visibility_Widget, ImGui::GetItemRectSize()))
+    {
+      res = true;
+    }
+    ImGui::PopStyleVar();
+  }
+  else
+  {
+    auto cp = ImGui::GetCursorScreenPos();
+    ImGui::TextUnformatted(ReGui_Icon_Visibility_Widget);
+    ImGui::SetCursorScreenPos(cp);
+    if(ImGui::InvisibleButton(ReGui_Icon_Visibility_Widget, ImGui::GetItemRectSize()))
+    {
+      res = true;
+    }
+  }
+  return res;
+}
+
+//------------------------------------------------------------------------
 // ReGui::ErrorIcon
 //------------------------------------------------------------------------
 inline void ErrorIcon()

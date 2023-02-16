@@ -67,6 +67,8 @@ int Panel::addWidgetAction(int iWidgetId, std::unique_ptr<Widget> iWidget, int o
   iWidget->markEdited();
   fEdited = true;
 
+  fDNZ.markDirty();
+
   fWidgets[iWidgetId] = std::move(iWidget);
 
   return iWidgetId;
@@ -384,7 +386,7 @@ std::pair<std::unique_ptr<Widget>, int> Panel::deleteWidgetAction(int id)
     }
 
     // make sure that we don't have a dangling pointer
-    fComputedSelectedWidgets.clear();
+    fDNZ.markDirty();
 
     std::unique_ptr<Widget> deleted{};
     std::swap(fWidgets[id], deleted);
@@ -520,7 +522,7 @@ std::unique_ptr<Widget> Panel::replaceWidgetAction(int iWidgetId, std::unique_pt
   }
 
   // make sure that we don't have a dangling pointer
-  fComputedSelectedWidgets.clear();
+  fDNZ.markDirty();
 
   std::swap(fWidgets[iWidgetId], iWidget);
   return iWidget;
@@ -814,8 +816,10 @@ ImVec2 Panel::setCableOriginPositionAction(ImVec2 const &iPosition)
 //------------------------------------------------------------------------
 void Panel::alignWidgets(AppContext &iCtx, Panel::WidgetAlignment iAlignment)
 {
+  auto &dnz = this->dnz();
+
   // can only align multiple widgets!
-  if(fComputedSelectedWidgets.size() < 2)
+  if(dnz.fSelectedWidgets.size() < 2)
     return;
 
   char const *alignment = "";
@@ -836,12 +840,12 @@ void Panel::alignWidgets(AppContext &iCtx, Panel::WidgetAlignment iAlignment)
       break;
   }
 
-  auto const min = fComputedSelectedRect->Min;
-  auto const max = fComputedSelectedRect->Max;
+  auto const min = dnz.fSelectedRect->Min;
+  auto const max = dnz.fSelectedRect->Max;
 
-  iCtx.beginUndoTx(fmt::printf("Align [%ld] Widgets %s", fComputedSelectedWidgets.size(), alignment));
+  iCtx.beginUndoTx(fmt::printf("Align [%ld] Widgets %s", dnz.fSelectedWidgets.size(), alignment));
 
-  for(auto w: fComputedSelectedWidgets)
+  for(auto w: dnz.fSelectedWidgets)
   {
     auto position = w->getPosition();
     ImVec2 alignedPosition{};
