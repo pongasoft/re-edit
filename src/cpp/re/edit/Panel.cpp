@@ -477,7 +477,7 @@ bool Panel::renderPanelWidgetMenu(AppContext &iCtx, ImVec2 const &iPosition)
 
   if(ImGui::BeginMenu(alt ? "Select By Type (+ " ReGui_Icon_Hidden_Widget ")" : "Select By Type"))
   {
-    res |= iCtx.renderWidgetDefMenuItems(fType, [this, alt](WidgetDef const &iDef) { selectByType(iDef.fType, alt); });
+    res |= renderSelectWidgetsByTypeMenuItems(dnz().fSortedByNameWidgets, alt);
     ImGui::EndMenu();
   }
 
@@ -664,6 +664,33 @@ bool Panel::renderSelectedWidgetsMenu(AppContext &iCtx, std::vector<Widget *> co
 }
 
 //------------------------------------------------------------------------
+// Panel::renderSelectWidgetsByTypeMenuItems
+//------------------------------------------------------------------------
+bool Panel::renderSelectWidgetsByTypeMenuItems(std::vector<Widget *> const &iWidgets, bool iIncludeHiddenWidgets)
+{
+  bool res = false;
+  WidgetTypeArray<int> byTypeCount{};
+  for(auto w: iWidgets)
+  {
+    if(!w->isHidden() || iIncludeHiddenWidgets)
+      byTypeCount[w->getType()]++;
+  }
+  for(auto const &def: kAllWidgetDefs)
+  {
+    auto const count = byTypeCount[def.fType];
+    if(count > 0)
+    {
+      if(ImGui::MenuItem(fmt::printf("%s [%d]", def.fName, count).c_str()))
+      {
+        Widget::selectByType(iWidgets, def.fType, iIncludeHiddenWidgets);
+        res = true;
+      }
+    }
+  }
+  return res;
+}
+
+//------------------------------------------------------------------------
 // Panel::renderWidgetsMenu
 //------------------------------------------------------------------------
 bool Panel::renderWidgetsMenu(AppContext &iCtx, std::vector<Widget *> const &iWidgets)
@@ -671,15 +698,30 @@ bool Panel::renderWidgetsMenu(AppContext &iCtx, std::vector<Widget *> const &iWi
   static std::vector<Widget *> kSelectedWidgets{};
   std::copy_if(iWidgets.begin(), iWidgets.end(), std::back_inserter(kSelectedWidgets), [](auto w) { return w->isSelected(); });
   bool res = false;
-  if(kSelectedWidgets.empty())
+  ImGui::SeparatorText("List");
+  ImGui::BeginDisabled(kSelectedWidgets.empty());
+  if(ImGui::MenuItem("Unselect All"))
   {
-    if(ImGui::MenuItem("Select All"))
-    {
-      for(auto w: iWidgets)
-        w->select();
-    }
+    for(auto w: iWidgets)
+      w->unselect();
   }
-  else
+  ImGui::EndDisabled();
+
+  ImGui::BeginDisabled(kSelectedWidgets.size() == iWidgets.size());
+  if(ImGui::MenuItem("Select All"))
+  {
+    for(auto w: iWidgets)
+      w->select();
+  }
+  ImGui::EndDisabled();
+
+  if(ImGui::BeginMenu("Select By Type"))
+  {
+    renderSelectWidgetsByTypeMenuItems(iWidgets, true);
+    ImGui::EndMenu();
+  }
+
+  if(!kSelectedWidgets.empty())
   {
     renderSelectedWidgetsMenu(iCtx, kSelectedWidgets);
   }
@@ -1507,8 +1549,15 @@ void Panel::visibilityPropertiesView(AppContext &iCtx)
           ImGui::PushID(path.c_str());
           auto currentValue = iCtx.getPropertyValueAsInt(path);
           ImGui::SeparatorText(path.c_str());
-          ImGui::AlignTextToFramePadding();
-          ImGui::TextUnformatted(ReGui_Icon_Visibility_Widget);
+//          ImGui::AlignTextToFramePadding();
+          if(ReGui::MenuButton())
+            ImGui::OpenPopup("Menu");
+
+          if(ImGui::BeginPopup("Menu"))
+          {
+            renderWidgetsMenu(iCtx, prop.hasValue(currentValue) ? prop.getList(currentValue).getWidgets() : std::vector<Widget *>{});
+            ImGui::EndPopup();
+          }
           ImGui::SameLine();
           ImGui::BeginGroup();
 
@@ -1547,7 +1596,14 @@ void Panel::visibilityPropertiesView(AppContext &iCtx)
           {
             ImGui::PushID(value);
 
-            bool selectValue = ReGui::VisibilityButton(currentValue != value, currentValue == value);
+            if(ReGui::MenuButton())
+              ImGui::OpenPopup("Menu");
+
+            if(ImGui::BeginPopup("Menu"))
+            {
+              renderWidgetsMenu(iCtx, selectionList.getWidgets());
+              ImGui::EndPopup();
+            }
 
             ImGui::SameLine();
             ImGui::BeginGroup();
@@ -1559,20 +1615,15 @@ void Panel::visibilityPropertiesView(AppContext &iCtx)
 
             if(ImGui::Selectable(re::edit::fmt::printf("value = %d", value).c_str(), currentValue == value))
             {
-              selectValue = true;
+              iCtx.beginUndoTx(fmt::printf("Set Visibility by Property %s = %d", path, value));
+              iCtx.setPropertyValueAsInt(path, value);
+              prop.resetVisibility();
+              iCtx.commitUndoTx();
             }
 
             if(currentValue != value)
             {
               ImGui::PopStyleVar();
-            }
-
-            if(selectValue)
-            {
-              iCtx.beginUndoTx(fmt::printf("Set Visibility by Property %s = %d", path, value));
-              iCtx.setPropertyValueAsInt(path, value);
-              prop.resetVisibility();
-              iCtx.commitUndoTx();
             }
 
             if(fPropertyWatchRequest && *fPropertyWatchRequest == path)

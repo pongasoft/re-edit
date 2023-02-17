@@ -83,7 +83,17 @@ enum class WidgetType : int
 
   kPanelDecal, // re-edit widget
 
-  kInternalWidgetTypeSize = kPanelDecal
+  kInternalWidgetTypeSize
+};
+
+template<typename T>
+struct WidgetTypeArray
+{
+  constexpr T &operator[](WidgetType iType) { return fValues[static_cast<size_t>(iType)]; }
+  constexpr T const &operator[](WidgetType iType) const { return fValues[static_cast<size_t>(iType)]; }
+
+private:
+  T fValues[static_cast<size_t>(WidgetType::kInternalWidgetTypeSize)]{};
 };
 
 char const *toString(WidgetType iType);

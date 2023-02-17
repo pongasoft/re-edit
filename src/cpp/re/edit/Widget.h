@@ -174,6 +174,7 @@ public:
   static void resetWidgetIota() { fWidgetIota = 1; }
 
   static void sortByName(std::vector<Widget *> &iWidgets);
+  static void selectByType(std::vector<Widget *> const &iWidgets, WidgetType iType, bool iIncludeHiddenWidgets);
 
   friend class Panel;
   friend class widget::Attribute;

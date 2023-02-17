@@ -186,6 +186,7 @@ private:
   bool renderSelectedWidgetsMenu(AppContext &iCtx, std::vector<Widget *> const &iWidgets);
   bool renderSelectedWidgetsMenu(AppContext &iCtx) { return renderSelectedWidgetsMenu(iCtx, dnz().fSelectedWidgets); }
   bool renderWidgetsMenu(AppContext &iCtx, std::vector<Widget *> const &iWidgets);
+  bool renderSelectWidgetsByTypeMenuItems(std::vector<Widget *> const &iWidgets, bool iIncludeHiddenWidgets);
   bool renderWidgetMenu(AppContext &iCtx, Widget *iWidget);
   void renderWidgetValues(Widget const *iWidget);
   void drawWidgets(AppContext &iCtx, ReGui::Canvas &iCanvas, std::vector<int> const &iOrder);

@@ -32,7 +32,7 @@ PanelState::PanelState(PanelType iPanelType) :
   std::copy_if(std::begin(kAllWidgetDefs), std::end(kAllWidgetDefs), std::back_inserter(fWidgetDefs),
                [iPanelType](auto const &def) { return isPanelOfType(iPanelType, def.fAllowedPanels); });
   for(auto &def: fWidgetDefs)
-    fAllowedWidgetTypes[static_cast<size_t>(def.fType)] = true;
+    fAllowedWidgetTypes[def.fType] = true;
 }
 
 //------------------------------------------------------------------------

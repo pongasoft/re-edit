@@ -1219,6 +1219,18 @@ void Widget::sortByName(std::vector<Widget *> &iWidgets)
 
 }
 
+//------------------------------------------------------------------------
+// Widget::selectByType
+//------------------------------------------------------------------------
+void Widget::selectByType(std::vector<Widget *> const &iWidgets, WidgetType iType, bool iIncludeHiddenWidgets)
+{
+  for(auto w: iWidgets)
+  {
+    if(w->getType() == iType && (iIncludeHiddenWidgets || !w->isHidden()))
+      w->select();
+  }
+}
+
 namespace clipboard {
 
 //------------------------------------------------------------------------

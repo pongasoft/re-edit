@@ -34,7 +34,7 @@ public:
   constexpr bool isUnfoldedPanel() const { return isPanelOfType(getType(), kPanelTypeAnyUnfolded); }
 
   std::vector<WidgetDef> const &getAllowedWidgets() const { return fWidgetDefs; }
-  inline bool isWidgetAllowed(WidgetType iType) const { return fAllowedWidgetTypes[static_cast<size_t>(iType)]; }
+  inline bool isWidgetAllowed(WidgetType iType) const { return fAllowedWidgetTypes[iType]; }
 
   std::map<std::string, int> initPanel(AppContext &iCtx,
                                        std::shared_ptr<lua::panel_nodes> const &iPanelNodes,
@@ -56,7 +56,7 @@ public:
 
 private:
   std::vector<WidgetDef> fWidgetDefs{};
-  bool fAllowedWidgetTypes[static_cast<size_t>(WidgetType::kInternalWidgetTypeSize)]{};
+  WidgetTypeArray<bool> fAllowedWidgetTypes{};
 };
 
 }
