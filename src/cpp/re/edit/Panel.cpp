@@ -1549,13 +1549,21 @@ void Panel::visibilityPropertiesView(AppContext &iCtx)
           ImGui::PushID(path.c_str());
           auto currentValue = iCtx.getPropertyValueAsInt(path);
           ImGui::SeparatorText(path.c_str());
-//          ImGui::AlignTextToFramePadding();
           if(ReGui::MenuButton())
             ImGui::OpenPopup("Menu");
 
           if(ImGui::BeginPopup("Menu"))
           {
             renderWidgetsMenu(iCtx, prop.hasValue(currentValue) ? prop.getList(currentValue).getWidgets() : std::vector<Widget *>{});
+            ImGui::Separator();
+            if(ImGui::BeginMenu("Add Widget"))
+            {
+              for(auto w: dnz().fSortedByNameWidgets)
+              {
+                w->renderAddVisibilityMenuItem(iCtx, path, currentValue);
+              }
+              ImGui::EndMenu();
+            }
             ImGui::EndPopup();
           }
           ImGui::SameLine();
@@ -1602,6 +1610,15 @@ void Panel::visibilityPropertiesView(AppContext &iCtx)
             if(ImGui::BeginPopup("Menu"))
             {
               renderWidgetsMenu(iCtx, selectionList.getWidgets());
+              ImGui::Separator();
+              if(ImGui::BeginMenu("Add Widget"))
+              {
+                for(auto w: dnz().fSortedByNameWidgets)
+                {
+                  w->renderAddVisibilityMenuItem(iCtx, path, value);
+                }
+                ImGui::EndMenu();
+              }
               ImGui::EndPopup();
             }
 

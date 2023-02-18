@@ -427,6 +427,8 @@ public:
   void markEdited() override;
   void resetEdited() override;
 
+  void addVisibility(std::string const &iPropertyPath, int iPropertyValue);
+
   void reset() override;
 
   std::string toString() const override;

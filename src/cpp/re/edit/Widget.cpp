@@ -1157,6 +1157,21 @@ void Widget::renderVisibilityMenu(AppContext &iCtx)
 }
 
 //------------------------------------------------------------------------
+// Widget::renderAddVisibilityMenuItem
+//------------------------------------------------------------------------
+void Widget::renderAddVisibilityMenuItem(AppContext &iCtx, std::string const &iPath, int iValue)
+{
+  if(hasVisibilityAttribute() && !hasVisibility(iPath, iValue))
+  {
+    if(ImGui::MenuItem(getName().c_str()))
+    {
+      iCtx.setNextUndoActionDescription(fmt::printf("Add [%s] to Visibility Group %s = %d", getName(), iPath, iValue));
+      addVisibility(iPath, iValue);
+    }
+  }
+}
+
+//------------------------------------------------------------------------
 // Widget::renderVisibilityToggle
 //------------------------------------------------------------------------
 void Widget::renderVisibilityToggle(AppContext &iCtx)
@@ -1228,6 +1243,28 @@ void Widget::selectByType(std::vector<Widget *> const &iWidgets, WidgetType iTyp
   {
     if(w->getType() == iType && (iIncludeHiddenWidgets || !w->isHidden()))
       w->select();
+  }
+}
+
+//------------------------------------------------------------------------
+// Widget::hasVisibility
+//------------------------------------------------------------------------
+bool Widget::hasVisibility(std::string const &iPropertyPath, int iPropertyValue) const
+{
+  return fVisibilityAttribute &&
+         fVisibilityAttribute->fSwitch.fValue == iPropertyPath &&
+         fVisibilityAttribute->fValues.contains(iPropertyValue);
+}
+
+//------------------------------------------------------------------------
+// Widget::addVisibility
+//------------------------------------------------------------------------
+void Widget::addVisibility(std::string const &iPropertyPath, int iPropertyValue)
+{
+  if(fVisibilityAttribute)
+  {
+    fVisibilityAttribute->addVisibility(iPropertyPath, iPropertyValue);
+    fEdited = fVisibilityAttribute->isEdited();
   }
 }
 

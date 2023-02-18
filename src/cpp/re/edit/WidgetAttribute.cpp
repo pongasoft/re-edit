@@ -573,18 +573,13 @@ void Visibility::editView(AppContext &iCtx)
                      iCtx.copyToClipboard(this);
                    }, // onCopy
                    [this] (const Property *p) { // onSelect
-                     if(updateAttribute([this, p] {
-                                          fSwitch.fValue = p->path();
-                                          fSwitch.fProvided = true;
-                                          fValues.fValue = {0};
-                                          fValues.fProvided = true;
-                                        },
-                                        &fSwitch
-                     ))
-                     {
-                       fSwitch.markEdited();
-                       fValues.markEdited();
-                     }
+                     updateAttribute([this, p] {
+                                       fSwitch.fValue = p->path();
+                                       fSwitch.fProvided = true;
+                                       fValues.fValue = {0};
+                                       fValues.fProvided = true;
+                                     },
+                                     &fSwitch);
                    },
                    [this](auto &iCtx) { fSwitch.editPropertyView(iCtx); },
                    [this](auto &iCtx) { fSwitch.tooltipPropertyView(iCtx); },
@@ -600,43 +595,57 @@ void Visibility::editView(AppContext &iCtx)
       ImGui::BeginGroup();
       fValues.editView(0, stepCount - 1,
                        [this]() { // onAdd
-                         if(updateAttribute([this] {
-                                              fValues.fValue.emplace_back(0);
-                                              fValues.fProvided = true;
-                                            },
-                                            &fValues))
-                         {
-                           fValues.markEdited();
-                         }
+                         updateAttribute([this] {
+                                           fValues.fValue.emplace_back(0);
+                                           fValues.fProvided = true;
+                                         },
+                                         &fValues);
                        },
                        [this](int iIndex, int iValue) { // onUpdate
-                         if(update([this, iIndex, iValue] {
-                                     fValues.fValue[iIndex] = iValue;
-                                     fValues.fProvided = true;
-                                   },
-                                   computeUpdateAttributeDescription(&fValues, iIndex),
-                                   MergeKey::from(&fValues.fValue[iIndex])))
-                         {
-                           fValues.markEdited();
-                         }
+                         update([this, iIndex, iValue] {
+                                  fValues.fValue[iIndex] = iValue;
+                                  fValues.fProvided = true;
+                                },
+                                computeUpdateAttributeDescription(&fValues, iIndex),
+                                MergeKey::from(&fValues.fValue[iIndex]));
                        },
                        [this](int iIndex) { // onDelete
-                         if(updateAttribute([this, iIndex] {
-                                              fValues.fValue.erase(fValues.fValue.begin() + iIndex);
-                                              fValues.fProvided = true;
-                                            },
-                                            &fValues))
-                         {
-                           fValues.markEdited();
-                         }
+                         updateAttribute([this, iIndex] {
+                                           fValues.fValue.erase(fValues.fValue.begin() + iIndex);
+                                           fValues.fProvided = true;
+                                         },
+                                         &fValues);
                        }
       );
       ImGui::EndGroup();
     }
   }
   ImGui::PopID();
+}
 
-  fEdited |= fSwitch.isEdited() || fValues.isEdited();
+//------------------------------------------------------------------------
+// Visibility::addVisibility
+//------------------------------------------------------------------------
+void Visibility::addVisibility(std::string const &iPropertyPath, int iPropertyValue)
+{
+  if(fSwitch.fValue != iPropertyPath)
+  {
+    updateAttribute([this, &iPropertyPath, iPropertyValue] {
+        fSwitch.fValue = iPropertyPath;
+        fSwitch.fProvided = true;
+        fValues.fValue = {iPropertyValue};
+        fValues.fProvided = true;
+    });
+  }
+  else
+  {
+    if(!fValues.contains(iPropertyValue))
+    {
+      updateAttribute([this, iPropertyValue] {
+        fValues.fValue.emplace_back(iPropertyValue);
+      });
+    }
+  }
 }
 
 //------------------------------------------------------------------------
