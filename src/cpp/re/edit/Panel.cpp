@@ -1198,23 +1198,7 @@ void Panel::OrderSelectionList::init(Panel &iPanel)
 //------------------------------------------------------------------------
 void Panel::OrderSelectionList::editView(AppContext &iCtx, Panel &iPanel)
 {
-  if(ReGui::MenuButton())
-    ImGui::OpenPopup("Menu");
-
-  if(ImGui::BeginPopup("Menu"))
-  {
-    if(iPanel.dnz().fSelectedWidgets.empty())
-    {
-      if(iPanel.renderPanelWidgetMenu(iCtx, iPanel.getCenter()))
-        fWidgetSelectionList.resetLastSelected();
-    }
-    else
-    {
-      if(iPanel.renderSelectedWidgetsMenu(iCtx))
-        fWidgetSelectionList.resetLastSelected();
-    }
-    ImGui::EndPopup();
-  }
+  fWidgetSelectionList.popupMenuView(iCtx, iPanel);
 
   ImGui::SameLine();
   if(ImGui::Button("Up  "))
