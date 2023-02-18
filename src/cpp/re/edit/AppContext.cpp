@@ -1680,16 +1680,6 @@ PanelType AppContext::getPanelType(Action const *iAction)
     return PanelType::kUnknown;
 }
 
-//------------------------------------------------------------------------
-// AppContext::requestPropertyWatch
-//------------------------------------------------------------------------
-void AppContext::requestPropertyWatch(std::string const &iPropertyPath)
-{
-  fCurrentPanelState->fPanel.requestPropertyWatch(iPropertyPath);
-  fPropertiesWindow.setIsVisible(true);
-}
-
-
 ////------------------------------------------------------------------------
 //// AppContext::onNativeWindowPositionChange
 ////------------------------------------------------------------------------

@@ -136,7 +136,6 @@ public: // Properties
   void setPropertyValueAsInt(std::string const &iPropertyPath, int iValue) { return fPropertyManager->setValueAsInt(iPropertyPath, iValue); }
   void propertyEditView(std::string const &iPropertyPath) { fPropertyManager->editView(iPropertyPath); }
   void propertyEditViewAsInt(std::string const &iPropertyPath, std::function<void(int)> const &iOnChange) const { fPropertyManager->editViewAsInt(iPropertyPath, iOnChange); }
-  void requestPropertyWatch(std::string const &iPropertyPath);
   constexpr int getUserSamplesCount() const { return fPropertyManager->getUserSamplesCount(); }
 
 public: // Clipboard

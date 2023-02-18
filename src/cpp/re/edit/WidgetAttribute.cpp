@@ -649,6 +649,25 @@ void Visibility::addVisibility(std::string const &iPropertyPath, int iPropertyVa
 }
 
 //------------------------------------------------------------------------
+// Visibility::removeVisibility
+//------------------------------------------------------------------------
+void Visibility::removeVisibility(std::string const &iPropertyPath, int iPropertyValue)
+{
+  if(fSwitch.fValue == iPropertyPath)
+  {
+    if(fValues.contains(iPropertyValue))
+    {
+      updateAttribute([this, iPropertyValue] {
+        auto &v = fValues.fValue;
+        v.erase(std::remove(v.begin(), v.end(), iPropertyValue), v.end());
+        if(v.empty())
+          fSwitch.reset();
+      });
+    }
+  }
+}
+
+//------------------------------------------------------------------------
 // Visibility::findErrors
 //------------------------------------------------------------------------
 void Visibility::findErrors(AppContext &iCtx, UserError &oErrors) const
@@ -898,8 +917,6 @@ void PropertyPath::menuView(AppContext &iCtx,
       iOnCopy();
 
     ImGui::BeginDisabled(iPropertyPath.empty());
-    if(ImGui::MenuItem(ReGui_Prefix(ReGui_Icon_Watch, "Visibility")))
-      iCtx.requestPropertyWatch(iPropertyPath);
     if(ImGui::MenuItem(ReGui_Prefix(ReGui_Icon_Edit, "Edit")))
       ImGui::OpenPopup(editPopupId);
     ImGui::EndDisabled();

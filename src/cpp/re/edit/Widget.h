@@ -85,6 +85,7 @@ public:
   bool hasVisibility(std::string const &iPropertyPath, int iPropertyValue) const;
   void setVisibility(widget::Visibility iVisibility);
   void addVisibility(std::string const &iPropertyPath, int iPropertyValue);
+  void removeVisibility(std::string const &iPropertyPath, int iPropertyValue);
   void toggleVisibility();
   constexpr widget::Visibility getVisibility() const { return fVisibility; }
 
@@ -184,10 +185,7 @@ public:
 
 protected:
   void computeIsHidden(AppContext &iCtx);
-  void showIfHidden(AppContext &iCtx);
-  void showByProperty(AppContext &iCtx, std::string const &iPath, int iValue);
   void renderVisibilityMenu(AppContext &iCtx);
-  void renderAddVisibilityMenuItem(AppContext &iCtx, std::string const &iPath, int iValue);
   void renderVisibilityToggle(AppContext &iCtx);
   bool isPanelDecal() const { return fType == WidgetType::kPanelDecal; }
 

@@ -1109,66 +1109,12 @@ void Widget::computeIsHidden(AppContext &iCtx)
 }
 
 //------------------------------------------------------------------------
-// Widget::showIfHidden
-//------------------------------------------------------------------------
-void Widget::showIfHidden(AppContext &iCtx)
-{
-  if(canBeShown())
-  {
-    iCtx.setNextUndoActionDescription(fmt::printf("Show [%s]", getName()));
-    iCtx.setPropertyValueAsInt(fVisibilityAttribute->fSwitch.fValue, fVisibilityAttribute->fValues.fValue[0]);
-  }
-}
-
-//------------------------------------------------------------------------
-// Widget::showByProperty
-//------------------------------------------------------------------------
-void Widget::showByProperty(AppContext &iCtx, std::string const &iPath, int iValue)
-{
-  if(getVisibility() == widget::Visibility::kByProperty)
-  {
-    iCtx.setNextUndoActionDescription(fmt::printf("Show [%s]", getName()));
-    iCtx.setPropertyValueAsInt(iPath, iValue);
-  }
-  else
-  {
-    iCtx.beginUndoTx(fmt::printf("Show [%s]", getName()));
-    setVisibility(widget::Visibility::kByProperty);
-    iCtx.setPropertyValueAsInt(iPath, iValue);
-    iCtx.commitUndoTx();
-  }
-}
-
-//------------------------------------------------------------------------
 // Widget::renderVisibilityMenu
 //------------------------------------------------------------------------
 void Widget::renderVisibilityMenu(AppContext &iCtx)
 {
   if(ImGui::MenuItem(isHidden() ? "Show" : "Hide"))
     setVisibility(isHidden() ? widget::Visibility::kManualVisible : widget::Visibility::kManualHidden);
-
-  if(hasVisibility())
-  {
-    if(ImGui::MenuItem(ReGui_Prefix(ReGui_Icon_Watch, "Visibility")))
-    {
-      iCtx.requestPropertyWatch(fVisibilityAttribute->fSwitch.fValue);
-    }
-  }
-}
-
-//------------------------------------------------------------------------
-// Widget::renderAddVisibilityMenuItem
-//------------------------------------------------------------------------
-void Widget::renderAddVisibilityMenuItem(AppContext &iCtx, std::string const &iPath, int iValue)
-{
-  if(hasVisibilityAttribute() && !hasVisibility(iPath, iValue))
-  {
-    if(ImGui::MenuItem(getName().c_str()))
-    {
-      iCtx.setNextUndoActionDescription(fmt::printf("Add [%s] to Visibility Group %s = %d", getName(), iPath, iValue));
-      addVisibility(iPath, iValue);
-    }
-  }
 }
 
 //------------------------------------------------------------------------
@@ -1264,6 +1210,18 @@ void Widget::addVisibility(std::string const &iPropertyPath, int iPropertyValue)
   if(fVisibilityAttribute)
   {
     fVisibilityAttribute->addVisibility(iPropertyPath, iPropertyValue);
+    fEdited = fVisibilityAttribute->isEdited();
+  }
+}
+
+//------------------------------------------------------------------------
+// Widget::removeVisibility
+//------------------------------------------------------------------------
+void Widget::removeVisibility(std::string const &iPropertyPath, int iPropertyValue)
+{
+  if(fVisibilityAttribute)
+  {
+    fVisibilityAttribute->removeVisibility(iPropertyPath, iPropertyValue);
     fEdited = fVisibilityAttribute->isEdited();
   }
 }

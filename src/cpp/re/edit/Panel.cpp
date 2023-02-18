@@ -646,6 +646,26 @@ bool Panel::renderSelectedWidgetsMenu(AppContext &iCtx, std::vector<Widget *> co
       res |= true;
     }
 
+    if(ImGui::BeginMenu("Visibility"))
+    {
+      if(ImGui::MenuItem("Show"))
+      {
+        setWidgetsVisibility(iCtx, iWidgets, widget::Visibility::kManualVisible);
+        res |= true;
+      }
+      if(ImGui::MenuItem("Hide"))
+      {
+        setWidgetsVisibility(iCtx, iWidgets, widget::Visibility::kManualHidden);
+        res |= true;
+      }
+      if(ImGui::MenuItem("Reset"))
+      {
+        setWidgetsVisibility(iCtx, iWidgets, widget::Visibility::kByProperty);
+        res |= true;
+      }
+      ImGui::EndMenu();
+    }
+
     if(ImGui::BeginMenu(fmt::printf("Widgets (%ld)", iWidgets.size()).c_str()))
     {
       for(auto &w: iWidgets)
@@ -693,11 +713,11 @@ bool Panel::renderSelectWidgetsByTypeMenuItems(std::vector<Widget *> const &iWid
 //------------------------------------------------------------------------
 // Panel::renderWidgetsMenu
 //------------------------------------------------------------------------
-bool Panel::renderWidgetsMenu(AppContext &iCtx, std::vector<Widget *> const &iWidgets)
+std::size_t Panel::renderWidgetsMenu(AppContext &iCtx, std::vector<Widget *> const &iWidgets)
 {
   static std::vector<Widget *> kSelectedWidgets{};
   std::copy_if(iWidgets.begin(), iWidgets.end(), std::back_inserter(kSelectedWidgets), [](auto w) { return w->isSelected(); });
-  bool res = false;
+  ImGui::PushID("List");
   ImGui::SeparatorText("List");
   ImGui::BeginDisabled(kSelectedWidgets.empty());
   if(ImGui::MenuItem("Unselect All"))
@@ -721,10 +741,30 @@ bool Panel::renderWidgetsMenu(AppContext &iCtx, std::vector<Widget *> const &iWi
     ImGui::EndMenu();
   }
 
+  if(ImGui::BeginMenu("Visibility"))
+  {
+    if(ImGui::MenuItem("Show"))
+    {
+      setWidgetsVisibility(iCtx, iWidgets, widget::Visibility::kManualVisible);
+    }
+    if(ImGui::MenuItem("Hide"))
+    {
+      setWidgetsVisibility(iCtx, iWidgets, widget::Visibility::kManualHidden);
+    }
+    if(ImGui::MenuItem("Reset"))
+    {
+      setWidgetsVisibility(iCtx, iWidgets, widget::Visibility::kByProperty);
+    }
+    ImGui::EndMenu();
+  }
+
+  ImGui::PopID();
+
   if(!kSelectedWidgets.empty())
   {
     renderSelectedWidgetsMenu(iCtx, kSelectedWidgets);
   }
+  auto res = kSelectedWidgets.size();
   kSelectedWidgets.clear();
   return res;
 }
@@ -1277,6 +1317,14 @@ void Panel::WidgetSelectionList::editView(AppContext &iCtx, Panel &iPanel)
       handleClick(iPanel, widget, io.KeyShift, ReGui::IsSingleSelectKey(io));
     }
 
+    if(ImGui::BeginDragDropSource(ImGuiDragDropFlags_None))
+    {
+      auto id = widget->getId();
+      ImGui::SetDragDropPayload("RE_EDIT_WIDGET", &id, sizeof(int));
+      ImGui::Text("Widget [%s]", widget->getName().c_str());
+      ImGui::EndDragDropSource();
+    }
+
     if(hidden)
       ImGui::PopStyleVar();
 
@@ -1485,11 +1533,55 @@ private:
   std::map<std::string, VisibilityProperty> fProperties{};
 };
 
+namespace impl {
+
+//------------------------------------------------------------------------
+// impl::removeFromGroupMenuItem
+//------------------------------------------------------------------------
+static void removeFromGroupMenuItem(AppContext &iCtx,
+                                    std::vector<Widget *> const &iWidgets,
+                                    std::size_t selectedCount,
+                                    std::string const &iPath, int iValue)
+{
+  if(selectedCount > 0)
+  {
+    ImGui::SeparatorText("Visibility");
+    auto name = fmt::printf("Remove [%d] widgets from %s = %d", selectedCount, iPath, iValue);
+    if(ImGui::MenuItem(name.c_str()))
+    {
+      iCtx.beginUndoTx(name);
+      for(auto w: iWidgets)
+      {
+        if(w->isSelected())
+          w->removeVisibility(iPath, iValue);
+      }
+      iCtx.commitUndoTx();
+    }
+  }
+};
+
+}
+
 //------------------------------------------------------------------------
 // Panel::visibilityPropertiesView
 //------------------------------------------------------------------------
 void Panel::visibilityPropertiesView(AppContext &iCtx)
 {
+  static auto const handleDrop = [](Panel &iPanel, std::string const &iPath, int iValue) {
+    if(ImGui::BeginDragDropTarget())
+    {
+      if(const ImGuiPayload *payload = ImGui::AcceptDragDropPayload("RE_EDIT_WIDGET"))
+      {
+        RE_EDIT_INTERNAL_ASSERT(payload->DataSize == sizeof(int));
+        int id = *(const int *) payload->Data;
+        auto widget = iPanel.findWidget(id);
+        if(widget)
+          widget->addVisibility(iPath, iValue);
+      }
+      ImGui::EndDragDropTarget();
+    }
+  };
+  
   bool compactTab = true;
 
   if(ImGui::BeginTabBar("Visibility", ImGuiTabBarFlags_None))
@@ -1538,16 +1630,14 @@ void Panel::visibilityPropertiesView(AppContext &iCtx)
 
           if(ImGui::BeginPopup("Menu"))
           {
-            renderWidgetsMenu(iCtx, prop.hasValue(currentValue) ? prop.getList(currentValue).getWidgets() : std::vector<Widget *>{});
-            ImGui::Separator();
-            if(ImGui::BeginMenu("Add Widget"))
+            if(prop.hasValue(currentValue))
             {
-              for(auto w: dnz().fSortedByNameWidgets)
-              {
-                w->renderAddVisibilityMenuItem(iCtx, path, currentValue);
-              }
-              ImGui::EndMenu();
+              auto const &widgets = prop.getList(currentValue).getWidgets();
+              auto selectedCount = renderWidgetsMenu(iCtx, widgets);
+              impl::removeFromGroupMenuItem(iCtx, widgets, selectedCount, path, currentValue);
             }
+            else
+              renderWidgetsMenu(iCtx, std::vector<Widget *>{});
             ImGui::EndPopup();
           }
           ImGui::SameLine();
@@ -1562,18 +1652,13 @@ void Panel::visibilityPropertiesView(AppContext &iCtx)
             iCtx.commitUndoTx();
           });
 
-          if(fPropertyWatchRequest && *fPropertyWatchRequest == path)
-          {
-            ImGui::SetScrollHereY(0);
-            fPropertyWatchRequest = std::nullopt;
-          }
-
           if(prop.hasValue(currentValue))
           {
             prop.getList(currentValue).editView(iCtx, *this);
           }
 
           ImGui::EndGroup();
+          handleDrop(*this, path, currentValue);
           ImGui::PopID();
         }
       }
@@ -1593,16 +1678,9 @@ void Panel::visibilityPropertiesView(AppContext &iCtx)
 
             if(ImGui::BeginPopup("Menu"))
             {
-              renderWidgetsMenu(iCtx, selectionList.getWidgets());
-              ImGui::Separator();
-              if(ImGui::BeginMenu("Add Widget"))
-              {
-                for(auto w: dnz().fSortedByNameWidgets)
-                {
-                  w->renderAddVisibilityMenuItem(iCtx, path, value);
-                }
-                ImGui::EndMenu();
-              }
+              auto const &widgets = selectionList.getWidgets();
+              auto selectedCount = renderWidgetsMenu(iCtx, widgets);
+              impl::removeFromGroupMenuItem(iCtx, widgets, selectedCount, path, value);
               ImGui::EndPopup();
             }
 
@@ -1627,15 +1705,10 @@ void Panel::visibilityPropertiesView(AppContext &iCtx)
               ImGui::PopStyleVar();
             }
 
-            if(fPropertyWatchRequest && *fPropertyWatchRequest == path)
-            {
-              ImGui::SetScrollHereY(0);
-              fPropertyWatchRequest = std::nullopt;
-            }
-
             ReGui::SpacingY();
             selectionList.editView(iCtx, *this);
             ImGui::EndGroup();
+            handleDrop(*this, path, value);
             ReGui::SpacingY();
 
             ImGui::PopID();

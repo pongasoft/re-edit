@@ -454,6 +454,22 @@ void Panel::resetAllWidgetsVisibility(AppContext &iCtx)
   iCtx.commitUndoTx();
 }
 
+
+//------------------------------------------------------------------------
+// Panel::setWidgetsVisibility
+//------------------------------------------------------------------------
+void Panel::setWidgetsVisibility(AppContext &iCtx,
+                                 std::vector<Widget *> const &iWidgets,
+                                 re::edit::widget::Visibility iVisibility)
+{
+  iCtx.beginUndoTx(iWidgets.size() == 1 ?
+                   fmt::printf("Update [%s] visibility", iWidgets[0]->getName()) :
+                   fmt::printf("Update [%d] widgets visibility", iWidgets.size()));
+  for(auto w: iWidgets)
+    w->setVisibility(iVisibility);
+  iCtx.commitUndoTx();
+}
+
 //------------------------------------------------------------------------
 // class ReplaceWidgetAction
 //------------------------------------------------------------------------

@@ -105,7 +105,6 @@ public:
   void editView(AppContext &iCtx);
   void editOrderView(AppContext &iCtx);
   void visibilityPropertiesView(AppContext &iCtx);
-  void requestPropertyWatch(std::string const &iPropertyPath) { fPropertyWatchRequest = iPropertyPath; }
   void markEdited() override;
   void resetEdited() override;
 
@@ -139,6 +138,7 @@ public:
 
   void deleteWidgets(AppContext &iCtx, std::vector<Widget *> const &iWidgets);
   void resetAllWidgetsVisibility(AppContext &iCtx);
+  void setWidgetsVisibility(AppContext &iCtx, std::vector<Widget *> const &iWidgets, re::edit::widget::Visibility iVisibility);
 
   std::string hdgui2D() const;
   std::string device2D() const;
@@ -185,7 +185,7 @@ private:
   bool renderPanelMenus(AppContext &iCtx, std::optional<ImVec2> iPosition = std::nullopt);
   bool renderSelectedWidgetsMenu(AppContext &iCtx, std::vector<Widget *> const &iWidgets);
   bool renderSelectedWidgetsMenu(AppContext &iCtx) { return renderSelectedWidgetsMenu(iCtx, dnz().fSelectedWidgets); }
-  bool renderWidgetsMenu(AppContext &iCtx, std::vector<Widget *> const &iWidgets);
+  std::size_t renderWidgetsMenu(AppContext &iCtx, std::vector<Widget *> const &iWidgets);
   bool renderSelectWidgetsByTypeMenuItems(std::vector<Widget *> const &iWidgets, bool iIncludeHiddenWidgets);
   bool renderWidgetMenu(AppContext &iCtx, Widget *iWidget);
   void renderWidgetValues(Widget const *iWidget);
@@ -288,7 +288,6 @@ private:
   std::optional<MouseDrag> fSelectWidgetsAction{};
   std::optional<MouseDrag> fMoveCanvasAction{};
   std::optional<ImVec2> fPopupLocation{};
-  std::optional<std::string> fPropertyWatchRequest{};
   int fWidgetCounter{1}; // used for unique id
   OrderSelectionList fWidgetsSelectionList{Panel::WidgetOrDecal::kWidget};
   OrderSelectionList fDecalsSelectionList{Panel::WidgetOrDecal::kDecal};

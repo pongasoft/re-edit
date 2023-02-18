@@ -428,6 +428,7 @@ public:
   void resetEdited() override;
 
   void addVisibility(std::string const &iPropertyPath, int iPropertyValue);
+  void removeVisibility(std::string const &iPropertyPath, int iPropertyValue);
 
   void reset() override;
 
