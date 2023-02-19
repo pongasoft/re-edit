@@ -43,10 +43,7 @@ void Color3::editView(AppContext &iCtx)
 
   if(ReGui::ColorEdit(fName, &editedValue))
   {
-    updateAttribute([this, &editedValue] {
-      fValue = editedValue;
-      fProvided = true;
-    });
+    mergeUpdate(editedValue);
   }
 }
 
