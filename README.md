@@ -93,6 +93,15 @@ pongasoft produces a variety of high quality and free/open source software. If y
 
 Release Notes
 -------------
+
+* #### 1.4.0 - 2023/02/20
+
+- Implemented Undo History / Timeline (quickly undo/redo multiple operations)
+- Easily show/hide a widget even if there is no visibility property defined (eye icon)
+- Added an "All" widgets tab in the Widgets window (in this tab, widgets are sorted by name). The "Widgets" and "Decals" tab remain the same and are sorted by Z-order (this is where you would go to change their respective orders).
+- Major redesign of the "Properties" window to only show visibility properties currently in use
+- Implemented "drag and drop" to easily add a widget to a visibility group (use "Alt" key to add to multiple groups): drag a widget from the Widgets window and drop onto a group in the Properties window (drag and drop also works from within the Properties window itself).
+- Internal complete redesign of the Undo layer to be more flexible and allow "timeline"
  
 * #### 1.3.0 - 2023/01/31
 
