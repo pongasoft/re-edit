@@ -27,6 +27,11 @@
 
 namespace re::edit {
 
+namespace dnd
+{
+constexpr auto kWidget = "DNDW";
+}
+
 using namespace re::mock;
 
 //------------------------------------------------------------------------
@@ -1317,12 +1322,17 @@ void Panel::WidgetSelectionList::editView(AppContext &iCtx, Panel &iPanel)
       handleClick(iPanel, widget, io.KeyShift, ReGui::IsSingleSelectKey(io));
     }
 
-    if(ImGui::BeginDragDropSource(ImGuiDragDropFlags_None))
+    // this is a shortcut/optimization since the only drop target (at the moment) is in the lists in the properties
+    // window for a widget that has a visibility attribute
+    if(iCtx.isPropertiesWindowVisible() && widget->hasVisibilityAttribute())
     {
-      auto id = widget->getId();
-      ImGui::SetDragDropPayload("RE_EDIT_WIDGET", &id, sizeof(int));
-      ImGui::Text("Widget [%s]", widget->getName().c_str());
-      ImGui::EndDragDropSource();
+      if(ImGui::BeginDragDropSource(ImGuiDragDropFlags_None))
+      {
+        auto id = widget->getId();
+        ImGui::SetDragDropPayload(dnd::kWidget, &id, sizeof(int));
+        ImGui::Text("Widget [%s]", widget->getName().c_str());
+        ImGui::EndDragDropSource();
+      }
     }
 
     if(hidden)
@@ -1570,13 +1580,18 @@ void Panel::visibilityPropertiesView(AppContext &iCtx)
   static auto const handleDrop = [](Panel &iPanel, std::string const &iPath, int iValue) {
     if(ImGui::BeginDragDropTarget())
     {
-      if(const ImGuiPayload *payload = ImGui::AcceptDragDropPayload("RE_EDIT_WIDGET"))
+      if(const ImGuiPayload *payload = ImGui::AcceptDragDropPayload(dnd::kWidget))
       {
         RE_EDIT_INTERNAL_ASSERT(payload->DataSize == sizeof(int));
         int id = *(const int *) payload->Data;
         auto widget = iPanel.findWidget(id);
         if(widget)
-          widget->addVisibility(iPath, iValue);
+        {
+          if(ImGui::GetIO().KeyAlt)
+            widget->addVisibility(iPath, iValue);
+          else
+            widget->setVisibility(iPath, iValue);
+        }
       }
       ImGui::EndDragDropTarget();
     }

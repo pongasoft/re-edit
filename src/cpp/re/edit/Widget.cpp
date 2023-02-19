@@ -1215,6 +1215,18 @@ void Widget::addVisibility(std::string const &iPropertyPath, int iPropertyValue)
 }
 
 //------------------------------------------------------------------------
+// Widget::setVisibility
+//------------------------------------------------------------------------
+void Widget::setVisibility(std::string const &iPropertyPath, int iPropertyValue)
+{
+  if(fVisibilityAttribute)
+  {
+    fVisibilityAttribute->setVisibility(iPropertyPath, iPropertyValue);
+    fEdited = fVisibilityAttribute->isEdited();
+  }
+}
+
+//------------------------------------------------------------------------
 // Widget::removeVisibility
 //------------------------------------------------------------------------
 void Widget::removeVisibility(std::string const &iPropertyPath, int iPropertyValue)

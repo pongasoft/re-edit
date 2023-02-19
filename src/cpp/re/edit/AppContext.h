@@ -137,6 +137,7 @@ public: // Properties
   void propertyEditView(std::string const &iPropertyPath) { fPropertyManager->editView(iPropertyPath); }
   void propertyEditViewAsInt(std::string const &iPropertyPath, std::function<void(int)> const &iOnChange) const { fPropertyManager->editViewAsInt(iPropertyPath, iOnChange); }
   constexpr int getUserSamplesCount() const { return fPropertyManager->getUserSamplesCount(); }
+  constexpr bool isPropertiesWindowVisible() const { return fPropertiesWindow.isVisible(); }
 
 public: // Clipboard
   inline bool isClipboardMatchesType(clipboard::DataType iType) const { return fClipboard.matchesType(iType); }

@@ -85,6 +85,7 @@ public:
   bool hasVisibility(std::string const &iPropertyPath, int iPropertyValue) const;
   void setVisibility(widget::Visibility iVisibility);
   void addVisibility(std::string const &iPropertyPath, int iPropertyValue);
+  void setVisibility(std::string const &iPropertyPath, int iPropertyValue);
   void removeVisibility(std::string const &iPropertyPath, int iPropertyValue);
   void toggleVisibility();
   constexpr widget::Visibility getVisibility() const { return fVisibility; }

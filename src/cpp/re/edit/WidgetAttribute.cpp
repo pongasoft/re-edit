@@ -630,12 +630,7 @@ void Visibility::addVisibility(std::string const &iPropertyPath, int iPropertyVa
 {
   if(fSwitch.fValue != iPropertyPath)
   {
-    updateAttribute([this, &iPropertyPath, iPropertyValue] {
-        fSwitch.fValue = iPropertyPath;
-        fSwitch.fProvided = true;
-        fValues.fValue = {iPropertyValue};
-        fValues.fProvided = true;
-    });
+    setVisibility(iPropertyPath, iPropertyValue);
   }
   else
   {
@@ -646,6 +641,19 @@ void Visibility::addVisibility(std::string const &iPropertyPath, int iPropertyVa
       });
     }
   }
+}
+
+//------------------------------------------------------------------------
+// Visibility::setVisibility
+//------------------------------------------------------------------------
+void Visibility::setVisibility(std::string const &iPropertyPath, int iPropertyValue)
+{
+  updateAttribute([this, &iPropertyPath, iPropertyValue] {
+    fSwitch.fValue = iPropertyPath;
+    fSwitch.fProvided = true;
+    fValues.fValue = {iPropertyValue};
+    fValues.fProvided = true;
+  });
 }
 
 //------------------------------------------------------------------------
