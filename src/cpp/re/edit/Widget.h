@@ -70,8 +70,7 @@ public:
   constexpr ImVec2 getBottomRight() const { return fGraphics->getBottomRight(); }
   inline ImVec2 getSize() const { return fGraphics->getSize(); }
   void setPosition(ImVec2 const &iPosition);
-  constexpr void setPositionFromCenter(ImVec2 const &iCenterPosition) {
-    setPositionAction(iCenterPosition - getSize() / 2.0f); }
+  inline void setPositionFromCenter(ImVec2 const &iCenterPosition) { setPositionAction(iCenterPosition - getSize() / 2.0f); }
 
   constexpr bool isSelected() const { return fSelected; }
   constexpr void select() { fSelected = true; }
