@@ -16,54 +16,20 @@
 
 cmake_minimum_required(VERSION 3.24)
 
-include(FetchContent)
+include(cmake/REEditFetchContent.cmake)
 
-if(GOOGLETEST_ROOT_DIR)
-  # instructs FetchContent to not download or update but use the location instead
-  set(FETCHCONTENT_SOURCE_DIR_GOOGLETEST ${GOOGLETEST_ROOT_DIR})
-else()
-  set(FETCHCONTENT_SOURCE_DIR_GOOGLETEST "")
-endif()
-
-#------------------------------------------------------------------------
-# The git respository to fetch googletest from
-#------------------------------------------------------------------------
+#################
+# googletest
+#################
 set(googletest_GIT_REPO "https://github.com/google/googletest" CACHE STRING "googletest git repository URL")
-
-#------------------------------------------------------------------------
-# The git tag for googletest
-# release-1.12.1 (2022/06/30)
-#------------------------------------------------------------------------
-set(googletest_GIT_TAG "release-1.12.1" CACHE STRING "googletest git tag")
-
-#------------------------------------------------------------------------
-# The download URL for googletest
-#------------------------------------------------------------------------
+set(googletest_GIT_TAG "v1.13.0" CACHE STRING "googletest git tag")
 set(googletest_DOWNLOAD_URL "${googletest_GIT_REPO}/archive/refs/tags/${googletest_GIT_TAG}.zip" CACHE STRING "googletest download url" FORCE)
+set(googletest_DOWNLOAD_URL_HASH "SHA256=ffa17fbc5953900994e2deec164bb8949879ea09b411e07f215bfbb1f87f4632" CACHE STRING "googletest download url hash" FORCE)
 
-FetchContent_Declare(googletest
-    URL                        "${googletest_DOWNLOAD_URL}"
-    DOWNLOAD_EXTRACT_TIMESTAMP true
-    SOURCE_DIR                 "${CMAKE_BINARY_DIR}/googletest-src"
-    BINARY_DIR                 "${CMAKE_BINARY_DIR}/googletest-build"
-    )
-
-FetchContent_GetProperties(googletest)
-
-if(NOT googletest_POPULATED)
-
-  if(FETCHCONTENT_SOURCE_DIR_GOOGLETEST)
-    message(STATUS "Using googletest from local ${FETCHCONTENT_SOURCE_DIR_GOOGLETEST}")
-  else()
-    message(STATUS "Fetching googletest from ${googletest_DOWNLOAD_URL}")
-  endif()
-
-  FetchContent_Populate(googletest)
-
-endif()
+re_edit_fetch_content(NAME googletest)
 
 # Prevent overriding the parent project's compiler/linker settings on Windows
-set(gtest_force_shared_crt ON CACHE BOOL "Set by re-cmake" FORCE)
+set(gtest_force_shared_crt ON CACHE BOOL "Set by re-edit" FORCE)
 
 # Do not install GoogleTest!
 option(INSTALL_GTEST "Enable installation of googletest. (Projects embedding googletest may want to turn this OFF.)" OFF)

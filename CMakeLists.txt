@@ -89,7 +89,6 @@ elseif(WIN32)
 endif()
 
 # Adding dependency on re-mock
-option(RE_MOCK_SUPPORT_FOR_AUDIO_FILE "" ON)
 #set(re-mock_ROOT_DIR "${CMAKE_CURRENT_LIST_DIR}/../../pongasoft/re-mock")
 include(cmake/fetch_re-mock.cmake)
 
