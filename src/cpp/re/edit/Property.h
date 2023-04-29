@@ -105,6 +105,7 @@ struct Property
   constexpr re::mock::lua::EPersistence persistence() const { return fInfo.fPersistence; };
 
   constexpr bool isDiscrete() const { return fInfo.fStepCount > 0; }
+  constexpr bool isDiscreteNumber() const { return isDiscrete() && type() == mock::JboxPropertyType::kNumber; }
 
   re::mock::JboxPropertyInfo fInfo{};
   Object fParent{};

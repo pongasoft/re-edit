@@ -683,20 +683,25 @@ void Visibility::findErrors(AppContext &iCtx, UserError &oErrors) const
   auto property = iCtx.findProperty(fSwitch.fValue);
   if(property)
   {
-    auto const stepCount = property->stepCount();
-
-    if(stepCount == 0)
-      oErrors.add("The property must be a discrete property");
-
-    if(fValues.fValue.empty())
-      oErrors.add("You must provide at least 1 value");
-
-    int i = 0;
-    for(auto v: fValues.fValue)
+    if(!fSwitch.fFilter(*property))
+      oErrors.add(fSwitch.fFilter.fDescription);
+    else
     {
-      if(v < 0 || v >= stepCount)
-        oErrors.add("Invalid value [%d] (%d outside of bound)", i, v);
-      i++;
+      auto const stepCount = property->stepCount();
+
+      if(stepCount == 0)
+        oErrors.add("The property must be a discrete property");
+
+      if(fValues.fValue.empty())
+        oErrors.add("You must provide at least 1 value");
+
+      int i = 0;
+      for(auto v: fValues.fValue)
+      {
+        if(v < 0 || v >= stepCount)
+          oErrors.add("Invalid value [%d] (%d outside of bound)", i, v);
+        i++;
+      }
     }
   }
   else
@@ -769,12 +774,14 @@ std::string Visibility::toValueString() const
   return fmt::printf("%s = \"%s\" ([%ld] values)", fSwitch.fName, fSwitch.fValue, fValues.fValue.size());
 }
 
-static const Property::Filter kIsDiscreteFilter{[](const Property &p) { return p.isDiscrete(); }, "Must be a discrete (stepped) number property"};
+static const Property::Filter kVisibilitySwitchFilter{[](const Property &p) {
+  return p.isDiscreteNumber() && isOneOf(p.owner(), Property::Owner::kDocOwner | Property::Owner::kGUIOwner); },
+                                                      "Must be a discrete (stepped) number property (document or gui owned)"};
 
 //------------------------------------------------------------------------
 // Visibility::Visibility
 //------------------------------------------------------------------------
-Visibility::Visibility() : CompositeAttribute("visibility"), fSwitch{"visibility_switch", kIsDiscreteFilter} {}
+Visibility::Visibility() : CompositeAttribute("visibility"), fSwitch{"visibility_switch", kVisibilitySwitchFilter} {}
 
 //------------------------------------------------------------------------
 // Visibility::copyFromAction
