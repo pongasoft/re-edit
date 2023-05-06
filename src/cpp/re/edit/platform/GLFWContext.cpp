@@ -179,7 +179,7 @@ static void onDropCallback(GLFWwindow* iWindow, int iCount, const char** iPaths)
   if(iCount > 0)
   {
     auto application = reinterpret_cast<re::edit::Application *>(glfwGetWindowUserPointer(iWindow));
-    application->maybeLoadProject(fs::path{iPaths[0]});
+    application->maybeLoadProject(std::filesystem::u8path(iPaths[0]));
   }
 }
 
