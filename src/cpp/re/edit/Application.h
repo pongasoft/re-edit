@@ -87,6 +87,7 @@ public:
 
   void loadProject(fs::path const &iRoot);
   void loadProjectDeferred(fs::path const &iRoot);
+  void maybeLoadProject(fs::path const &iProjectRoot);
   void maybeSaveProject(gui_action_t const &iNextAction = {});
   void saveProject();
   void closeProject();

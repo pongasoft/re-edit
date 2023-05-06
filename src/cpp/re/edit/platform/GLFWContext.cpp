@@ -172,6 +172,18 @@ static void onWindowClose(GLFWwindow* iWindow)
 }
 
 //------------------------------------------------------------------------
+// onDropCallback
+//------------------------------------------------------------------------
+static void onDropCallback(GLFWwindow* iWindow, int iCount, const char** iPaths)
+{
+  if(iCount > 0)
+  {
+    auto application = reinterpret_cast<re::edit::Application *>(glfwGetWindowUserPointer(iWindow));
+    application->maybeLoadProject(fs::path{iPaths[0]});
+  }
+}
+
+//------------------------------------------------------------------------
 // GLFWContext::setupCallbacks
 //------------------------------------------------------------------------
 void GLFWContext::setupCallbacks(Application *iApplication)
@@ -179,6 +191,7 @@ void GLFWContext::setupCallbacks(Application *iApplication)
   glfwSetWindowUserPointer(fWindow, iApplication);
   glfwSetWindowContentScaleCallback(fWindow, onWindowContentScaleChange);
   glfwSetWindowCloseCallback(fWindow, onWindowClose);
+  glfwSetDropCallback(fWindow, onDropCallback);
 }
 
 }

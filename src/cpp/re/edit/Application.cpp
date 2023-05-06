@@ -492,6 +492,19 @@ inline void maybeInvoke(Application::gui_action_t const &iAction) { if(iAction) 
 }
 
 //------------------------------------------------------------------------
+// Application::maybeLoadProject
+//------------------------------------------------------------------------
+void Application::maybeLoadProject(fs::path const &iProjectRoot)
+{
+  auto validRoot = impl::inferValidRoot(iProjectRoot);
+  if(validRoot)
+  {
+    if(fState == State::kReLoaded || fState == State::kNoReLoaded)
+      maybeCloseProject(std::nullopt, [this, path = *validRoot]() { loadProject(path); });
+  }
+}
+
+//------------------------------------------------------------------------
 // Application::maybeSaveProject
 //------------------------------------------------------------------------
 void Application::maybeSaveProject(gui_action_t const &iNextAction)
@@ -1153,7 +1166,7 @@ void Application::renderMainMenu()
             ImGui::PushID(item.fPath.c_str()); // fName is not unique
             if(ImGui::MenuItem(item.fName.c_str()))
             {
-              maybeCloseProject(std::nullopt, [this, path = item.fPath]() { loadProject(path); });
+              maybeLoadProject(item.fPath);
             }
             if(ReGui::ShowQuickView())
             {
@@ -1260,7 +1273,7 @@ void Application::renderLoadDialogBlocking()
       .text(fmt::printf("%s is not a valid Rack Extension project (could not find info.lua)", luaPath.u8string()))
       .buttonOk();
     else
-      maybeCloseProject(std::nullopt, [this, path = *newProjectPath]() { loadProject(path); });
+      maybeLoadProject(*newProjectPath);
   }
   else if(result == NFD_CANCEL)
   {
