@@ -15,6 +15,7 @@
 #include <version.h>
 #include "LocalSettingsManager.h"
 #include "WindowsNetworkManager.h"
+#include "WindowsMultipleInstanceManager.h"
 #include "../GLFWContext.h"
 #include <thread>
 #include <mutex>
@@ -35,6 +36,24 @@
 //#if defined(_MSC_VER) && (_MSC_VER >= 1900) && !defined(IMGUI_DISABLE_WIN32_FUNCTIONS)
 //#pragma comment(lib, "legacy_stdio_definitions")
 //#endif
+
+/*
+ * Note: how to convert a std::string to LPCWSTR
+ *
+ * std::string str = "foo";
+ * std::wstring temp = std::wstring(str.begin(), str.end());
+ * LPCWSTR wideString = temp.c_str();
+ */
+
+inline void writeToConsoleStdOut(std::string const &iMessage)
+{
+  WriteConsole(GetStdHandle(STD_OUTPUT_HANDLE), iMessage.c_str(), iMessage.size(), NULL, NULL);
+}
+
+inline void writeToConsoleStdErr(std::string const &iMessage)
+{
+  WriteConsole(GetStdHandle(STD_ERROR_HANDLE), iMessage.c_str(), iMessage.size(), NULL, NULL);
+}
 
 class WindowsContext : public re::edit::platform::GLFWContext
 {
@@ -150,7 +169,9 @@ static void printInfo(GLFWwindow *iWindow)
 
 int doMain(int argc, char **argv)
 {
-  fprintf(stdout, "RE Edit - %s | %s\n", re::edit::kFullVersion, re::edit::kGitVersion);
+  AttachConsole(ATTACH_PARENT_PROCESS);
+
+  writeToConsoleStdOut(re::edit::fmt::printf("RE Edit - %s | %s\n", re::edit::kFullVersion, re::edit::kGitVersion));
   SetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE);
 
   const char *glsl_version = "#version 130";
@@ -173,6 +194,10 @@ int doMain(int argc, char **argv)
   ImGui::StyleColorsDark();
   //ImGui::StyleColorsClassic();
 
+  // init glfw
+  if(!re::edit::platform::GLFWContext::initGLFW())
+    return 1;
+
   auto preferencesManager = std::make_shared<re::edit::LocalSettingsManager>();
 
   std::vector<std::string> args{};
@@ -181,8 +206,14 @@ int doMain(int argc, char **argv)
 
   auto config = re::edit::Application::parseArgs(preferencesManager.get(), std::move(args));
 
-  // init glfw
-  if(!re::edit::platform::GLFWContext::initGLFW())
+  if(!re::edit::WindowsMultipleInstanceManager::isSingleInstance())
+  {
+    writeToConsoleStdOut("Detected multiple instances running. No preferences will be saved to avoid conflict.\n");
+    config.fGlobalConfig.fSaveEnabled = false;
+  }
+
+  // we always register as a sin
+  if(!re::edit::WindowsMultipleInstanceManager::registerInstance())
     return 1;
 
   auto scale = re::edit::platform::GLFWContext::getFontDpiScale(nullptr); // primary monitor
@@ -214,7 +245,7 @@ int doMain(int argc, char **argv)
 
   if(NFD_Init() != NFD_OKAY)
   {
-    fprintf(stderr, "Error while initializing nfd");
+    writeToConsoleStdErr("Error while initializing nfd");
     return 1;
   }
 
@@ -296,7 +327,7 @@ int main(int argc, char **argv)
   }
   catch(...)
   {
-    RE_EDIT_LOG_ERROR("Unrecoverable error detected... aborting: %s", re::edit::Application::what(std::current_exception()));
+    writeToConsoleStdErr(re::edit::fmt::printf("Unrecoverable error detected... aborting: %s", re::edit::Application::what(std::current_exception())));
     return 1;
   }
 }

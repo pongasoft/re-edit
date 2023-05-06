@@ -22,8 +22,10 @@
 //------------------------------------------------------------------------
 // Defining the C-API to invoke from lua as jbox.xxx
 //------------------------------------------------------------------------
+#if __clang__
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "ConstantFunctionResult"
+#endif
 extern "C" {
 
 using namespace re::edit::lua;
@@ -971,4 +973,6 @@ bool HDGui2D::populate(std::shared_ptr<jbox_widget> &oWidget, std::string const 
 
 
 }
+#if __clang__
 #pragma clang diagnostic pop
+#endif
