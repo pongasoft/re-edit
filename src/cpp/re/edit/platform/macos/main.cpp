@@ -13,6 +13,7 @@
 #include "MTLManagers.h"
 #include "NSUserDefaultsManager.h"
 #include "MacOSNetworkManager.h"
+#include "MacOSMultipleInstanceManager.h"
 #include "nfd.h"
 #include <version.h>
 
@@ -91,6 +92,10 @@ int doMain(int argc, char **argv)
   ImGui::StyleColorsDark();
   //ImGui::StyleColorsClassic();
 
+  // init glfw
+  if(!re::edit::platform::GLFWContext::initGLFW())
+    return 1;
+
   auto preferencesManager = std::make_shared<re::edit::NSUserDefaultsManager>();
 
   std::vector<std::string> args{};
@@ -99,9 +104,11 @@ int doMain(int argc, char **argv)
 
   auto config = re::edit::Application::parseArgs(preferencesManager.get(), std::move(args));
 
-  // init glfw
-  if(!re::edit::platform::GLFWContext::initGLFW())
-    return 1;
+  if(!re::edit::MacOSMultipleInstanceManager::isSingleInstance())
+  {
+    fprintf(stdout, "Detected multiple instances running. No preferences will be saved to avoid conflict.\n");
+    config.fGlobalConfig.fSaveEnabled = false;
+  }
 
   // Create window with graphics context
   glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);

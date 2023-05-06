@@ -197,6 +197,12 @@ Application::Config Application::parseArgs(NativePreferencesManager const *iPref
 //------------------------------------------------------------------------
 void Application::savePreferences(UserError *oErrors) noexcept
 {
+  if(!fConfig.fSaveEnabled)
+  {
+    RE_EDIT_LOG_DEBUG("Preference saving is disabled... skipping");
+    return;
+  }
+
   try
   {
     auto mgr = fContext->getPreferencesManager();

@@ -183,6 +183,7 @@ if(APPLE)
   list(APPEND re-edit_BUILD_SOURCES
       "${re-edit_CPP_SRC_DIR}/re/edit/platform/macos/MTLManagers.cpp"
       "${re-edit_CPP_SRC_DIR}/re/edit/platform/macos/MacOSNetworkManager.mm"
+      "${re-edit_CPP_SRC_DIR}/re/edit/platform/macos/MacOSMultipleInstanceManager.mm"
       "${re-edit_CPP_SRC_DIR}/re/edit/platform/macos/NSUserDefaultsManager.mm"
       )
   set(re-edit_MAIN_SRC "${re-edit_CPP_SRC_DIR}/re/edit/platform/macos/main.cpp" "${re-edit_CPP_SRC_DIR}/re/edit/platform/macos/metal.cpp")
