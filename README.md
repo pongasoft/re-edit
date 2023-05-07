@@ -94,6 +94,12 @@ pongasoft produces a variety of high quality and free/open source software. If y
 Release Notes
 -------------
 
+* #### 1.4.1 - 2023/05/07
+
+- Added ability to load a project by simply dragging it from the Finder (resp. File Explorer) onto the main window
+- Disable saving preferences when there are multiple instances running (to avoid conflicts)
+- Fixed visibility property type and owner
+
 * #### 1.4.0 - 2023/02/20
 
 - Implemented Undo History / Timeline (quickly undo/redo multiple operations)
