@@ -161,6 +161,8 @@ private:
   void renderApplicationMenuItems();
   void newAboutDialog();
   void about() const;
+  void newHelpDialog();
+  void help() const;
   inline bool hasDialog() const { return fCurrentDialog != nullptr || !fDialogs.empty(); }
   template<typename F>
   void executeAndAbortOnException(F&& f) noexcept;

@@ -1093,6 +1093,10 @@ void Application::renderApplicationMenuItems()
   {
     newAboutDialog();
   }
+  if(ImGui::MenuItem("Help"))
+  {
+    newHelpDialog();
+  }
   if(ImGui::BeginMenu("Style"))
   {
     std::optional<config::Style> newStyle{};
@@ -1504,5 +1508,71 @@ void Application::about() const
   }
 }
 
+//------------------------------------------------------------------------
+// Application::newHelpDialog
+//------------------------------------------------------------------------
+void Application::newHelpDialog()
+{
+  newDialog("Help")
+    .lambda([this]() { help(); })
+    .buttonOk();
+}
+
+//------------------------------------------------------------------------
+// Application::help
+//------------------------------------------------------------------------
+void Application::help() const
+{
+  static const std::vector<std::tuple<char const *, char const *, std::vector<char const *>>> kShortcuts = {
+    {"CMD =", "Ctrl + =", {"Increment zoom (+10%)"} },
+    {"CMD -", "Ctrl + -", {"Decrement zoom (+10%)"} },
+    {"CMD 0", "Ctrl + 0", {"Zoom to fit"} },
+    {"CMD Z", "Ctrl + Z", {"Undo"} },
+    {"CMD Shift Z", "Ctrl + Shift + Z", {"Redo"} },
+    {"CMD S", "Ctrl + S", {"Save"} },
+    {"CMD Q", "Ctrl + Q", {"Quit"} },
+    {"Alt", "Alt", {"Disable the grid temporarily while being held", "Display alternate menu entries (ex: \"Select All\" includes hidden widgets)", "Add the dragged widget to the visibility group"} },
+    {"Arrows", "Arrows", {"Move the panel"} },
+    {"Space Bar + LMB", "Space Bar + LMB", {"Move the panel (when mouse is over the panel)"} },
+    {"Mouse Wheel", "Mouse Wheel", {"Zoom in/out (when mouse is over the Panel)"} },
+    {"A", "A", {"Toggle Select All/Select None"} },
+    {"B", "B", {"Toggle Widget Borders"} },
+    {"C", "C", {"Center the panel"} },
+    {"F", "F", {"Zoom to fit (one hand shortcut)"} },
+    {"Q", "Q", {"Quick View (while being held)"} },
+    {"R", "R", {"Toggle Rails (also toggle Panel X-Ray to see the rails)"} },
+    {"X", "X", {"Toggle Widget X-Ray"} },
+  };
+
+#if WIN32
+  static constexpr int kShortcutIndex = 1;
+#else
+  static constexpr int kShortcutIndex = 0;
+#endif
+
+  ImGui::SeparatorText("Keyboard Shortcuts");
+  if(ImGui::BeginTable("keyboard_shortcuts", 2, ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersOuter | ImGuiTableFlags_BordersInnerV))
+  {
+    ImGui::TableSetupColumn("Shortcut");
+    ImGui::TableSetupColumn("Description");
+    ImGui::TableHeadersRow();
+
+    for(auto &shortcut: kShortcuts)
+    {
+      ImGui::TableNextRow();
+      ImGui::TableSetColumnIndex(0);
+      ImGui::TextUnformatted(std::get<kShortcutIndex>(shortcut));
+      ImGui::TableSetColumnIndex(1);
+      auto const &description = std::get<2>(shortcut);
+      for(auto const &item: std::get<2>(shortcut))
+      {
+        ImGui::TextUnformatted(item);
+      }
+    }
+
+    ImGui::EndTable();
+  }
+
+}
 
 }

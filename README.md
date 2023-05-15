@@ -94,6 +94,11 @@ pongasoft produces a variety of high quality and free/open source software. If y
 Release Notes
 -------------
 
+* #### 1.4.2 - 2023/05/15
+
+- Added Help menu: displays the keyboard shortcuts
+- Uses re-mock 1.4.3 which means re-edit can be built without depending on the RE SDK
+
 * #### 1.4.1 - 2023/05/07
 
 - Added ability to load a project by simply dragging it from the Finder (resp. File Explorer) onto the main window
