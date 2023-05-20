@@ -67,10 +67,11 @@ public:
 
   constexpr ImVec2 getPosition() const { return fGraphics->getPosition(); }
   constexpr ImVec2 getTopLeft() const { return fGraphics->getTopLeft(); }
+  constexpr ImVec2 getTopLeftFromCenter(ImVec2 const &iCenterPosition) const { return iCenterPosition - getSize() / 2.0f; }
   constexpr ImVec2 getBottomRight() const { return fGraphics->getBottomRight(); }
   inline ImVec2 getSize() const { return fGraphics->getSize(); }
   void setPosition(ImVec2 const &iPosition);
-  inline void setPositionFromCenter(ImVec2 const &iCenterPosition) { setPositionAction(iCenterPosition - getSize() / 2.0f); }
+  inline void initPosition(ImVec2 const &iPosition) { setPositionAction(iPosition); }
 
   constexpr bool isSelected() const { return fSelected; }
   constexpr void select() { fSelected = true; }

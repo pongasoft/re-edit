@@ -546,7 +546,7 @@ void AppContext::init(config::Device const &iConfig)
   fPropertiesWindow.setIsVisible(iConfig.fShowProperties);
   fWidgetsWindow.setIsVisible(iConfig.fShowWidgets);
   fUndoHistoryWindow.setIsVisible(iConfig.fShowUndoHistory);
-  fGrid = ImVec2{std::fmax(iConfig.fGrid.x, 1.0f), std::fmax(iConfig.fGrid.y, 1.0f)};
+  fGrid = Grid{std::fmax(iConfig.fGrid.x, 1.0f), std::fmax(iConfig.fGrid.y, 1.0f)};
 //  fShowBorder = static_cast<ShowBorder>(iConfig.fShowBorder);
 //  fShowCustomDisplay = static_cast<ShowCustomDisplay>(iConfig.fShowCustomDisplay);
 //  fShowSampleDropZone = static_cast<ShowSampleDropZone>(iConfig.fShowSampleDropZone);
@@ -569,7 +569,7 @@ config::Device AppContext::getConfig() const
     /* .fShowPanelWidgets = */ fPanelWidgetsWindow.isVisible(),
     /* .fShowWidgets      = */ fWidgetsWindow.isVisible(),
     /* .fShowUndoHistory  = */ fUndoHistoryWindow.isVisible(),
-    /* .fGrid             = */ fGrid,
+    /* .fGrid             = */ {fGrid.width(), fGrid.height()},
     /* .fImGuiIni         = */ ImGui::SaveIniSettingsToMemory()
   };
 
@@ -1265,7 +1265,7 @@ void AppContext::renderZoomSelection()
 //------------------------------------------------------------------------
 void AppContext::renderGridSelection()
 {
-  static bool kSquare = fGrid.x == fGrid.y;
+  static bool kSquare = fGrid.fSize.x == fGrid.fSize.y;
   constexpr auto kGridStep = 5;
   constexpr auto kGridFastStep = 50;
 
@@ -1279,21 +1279,21 @@ void AppContext::renderGridSelection()
 
   if(kSquare)
   {
-    auto size = fGrid.x;
+    auto size = fGrid.fSize.x;
     if(ReGui::InputInt("##grid", &size, kGridStep, kGridFastStep))
     {
-      fGrid.x = std::fmax(size, 1.0f);
-      fGrid.y = std::fmax(size, 1.0f);
+      fGrid.fSize.x = std::fmax(size, 1.0f);
+      fGrid.fSize.y = std::fmax(size, 1.0f);
     }
   }
   else
   {
     auto grid = fGrid;
-    if(ReGui::InputInt("w", &grid.x, kGridStep, kGridFastStep))
-      fGrid.x = std::fmax(grid.x, 1.0f);
+    if(ReGui::InputInt("w", &grid.fSize.x, kGridStep, kGridFastStep))
+      fGrid.fSize.x = std::fmax(grid.fSize.x, 1.0f);
     ImGui::SameLine();
-    if(ReGui::InputInt("h", &grid.y, kGridStep, kGridFastStep))
-      fGrid.y = std::fmax(grid.y, 1.0f);
+    if(ReGui::InputInt("h", &grid.fSize.y, kGridStep, kGridFastStep))
+      fGrid.fSize.y = std::fmax(grid.fSize.y, 1.0f);
   }
 
   ImGui::SameLine();
@@ -1301,7 +1301,7 @@ void AppContext::renderGridSelection()
   if(ImGui::Checkbox("Square", &kSquare))
   {
     if(kSquare)
-      fGrid.y = fGrid.x;
+      fGrid.fSize.y = fGrid.fSize.x;
   }
 
   ImGui::PopItemWidth();

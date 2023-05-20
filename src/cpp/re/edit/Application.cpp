@@ -1525,7 +1525,7 @@ void Application::help() const
 {
   static const std::vector<std::tuple<char const *, char const *, std::vector<char const *>>> kShortcuts = {
     {"CMD =", "Ctrl + =", {"Increment zoom (+10%)"} },
-    {"CMD -", "Ctrl + -", {"Decrement zoom (+10%)"} },
+    {"CMD -", "Ctrl + -", {"Decrement zoom (-10%)"} },
     {"CMD 0", "Ctrl + 0", {"Zoom to fit"} },
     {"CMD Z", "Ctrl + Z", {"Undo"} },
     {"CMD Shift Z", "Ctrl + Shift + Z", {"Redo"} },

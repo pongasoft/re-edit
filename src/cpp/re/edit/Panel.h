@@ -172,7 +172,7 @@ private:
   void selectWidgets(AppContext &iCtx, ImVec2 const &iPosition1, ImVec2 const &iPosition2);
   Widget *findWidgetOnTopAt(std::vector<int> const &iOrder, ImVec2 const &iPosition) const;
   Widget *findWidgetOnTopAt(ImVec2 const &iPosition) const;
-  void moveWidgets(AppContext &iCtx, ImVec2 const &iPosition, ImVec2 const &iGrid);
+  void moveWidgets(AppContext &iCtx, ImVec2 const &iPosition, Grid const &iGrid);
   void endMoveWidgets(AppContext &iCtx);
   bool moveWidgets(ImVec2 const &iDelta);
   enum class WidgetAlignment { kTop, kBottom, kLeft, kRight};

@@ -292,7 +292,7 @@ int Panel::addWidget(AppContext &iCtx, std::unique_ptr<Widget> iWidget, bool iMa
 void Panel::addWidget(AppContext &iCtx, WidgetDef const &iDef, ImVec2 const &iPosition)
 {
   auto widget = iDef.fFactory(std::nullopt);
-  widget->setPositionFromCenter(iPosition);
+  widget->initPosition(iCtx.fGrid.clamp(widget->getTopLeftFromCenter(iPosition)));
   addWidget(iCtx, std::move(widget), true);
 }
 
@@ -304,7 +304,7 @@ bool Panel::pasteWidget(AppContext &iCtx, Widget const *iWidget, ImVec2 const &i
   if(iCtx.isWidgetAllowed(fType, iWidget->getType()))
   {
     auto widget = copy(iWidget);
-    widget->setPositionFromCenter(iPosition);
+    widget->initPosition(iCtx.fGrid.clamp(widget->getTopLeftFromCenter(iPosition)));
     addWidget(iCtx, std::move(widget), true, "Paste");
     return true;
   }
@@ -718,50 +718,14 @@ private:
   WidgetSelection fWidgetSelection{};
 };
 
-namespace impl {
-
-//------------------------------------------------------------------------
-// impl::clampToGrid
-//------------------------------------------------------------------------
-constexpr float clampToGrid(float v, float g)
-{
-  RE_EDIT_INTERNAL_ASSERT(g > 0);
-
-  if(v == 0)
-    return 0;
-
-  if(v < 0)
-    return -clampToGrid(-v, g);
-
-  // This is clearly not the best implementation but can't figure out using
-  // fmod (which would not be constexpr)
-  float res = 0;
-  while(v >= g)
-  {
-    res += g;
-    v -= g;
-  }
-  return res;
-}
-
-//------------------------------------------------------------------------
-// impl::clampToGrid
-//------------------------------------------------------------------------
-constexpr ImVec2 clampToGrid(ImVec2 v, ImVec2 g)
-{
-  return { clampToGrid(v.x, g.x), clampToGrid(v.y, g.y) };
-}
-
-}
-
 //------------------------------------------------------------------------
 // Panel::moveWidgets
 //------------------------------------------------------------------------
-void Panel::moveWidgets(AppContext &iCtx, ImVec2 const &iPosition, ImVec2 const &iGrid)
+void Panel::moveWidgets(AppContext &iCtx, ImVec2 const &iPosition, Grid const &iGrid)
 {
   if(fWidgetMove)
   {
-    auto totalDelta = impl::clampToGrid(iPosition - fWidgetMove->fInitialPosition, iGrid);
+    auto totalDelta = iGrid.clamp(iPosition - fWidgetMove->fInitialPosition);
     if(moveWidgets(totalDelta - fWidgetMove->fDelta))
       fWidgetMove->fDelta = totalDelta;
   }

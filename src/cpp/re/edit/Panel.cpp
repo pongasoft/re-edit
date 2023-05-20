@@ -352,14 +352,14 @@ void Panel::handleMoveWidgetsAction(AppContext &iCtx, ReGui::Canvas::canvas_pos_
   else
   {
     bool shouldMoveWidgets = false;
-    auto grid = ImGui::GetIO().KeyAlt ? ImVec2{1.0f, 1.0f} : iCtx.fGrid;
+    auto grid = ImGui::GetIO().KeyAlt ? Grid::kUnity : iCtx.fGrid;
     fMoveWidgetsAction->fCurrentPosition = iMousePos;
-    if(std::abs(fMoveWidgetsAction->fLastUpdatePosition.x - fMoveWidgetsAction->fCurrentPosition.x) >= grid.x)
+    if(std::abs(fMoveWidgetsAction->fLastUpdatePosition.x - fMoveWidgetsAction->fCurrentPosition.x) >= grid.width())
     {
       fMoveWidgetsAction->fLastUpdatePosition.x = fMoveWidgetsAction->fCurrentPosition.x;
       shouldMoveWidgets = true;
     }
-    if(std::abs(fMoveWidgetsAction->fLastUpdatePosition.y - fMoveWidgetsAction->fCurrentPosition.y) >= grid.y)
+    if(std::abs(fMoveWidgetsAction->fLastUpdatePosition.y - fMoveWidgetsAction->fCurrentPosition.y) >= grid.height())
     {
       fMoveWidgetsAction->fLastUpdatePosition.y = fMoveWidgetsAction->fCurrentPosition.y;
       shouldMoveWidgets = true;
@@ -507,7 +507,7 @@ bool Panel::renderPanelWidgetMenu(AppContext &iCtx, ImVec2 const &iPosition)
   if(ImGui::MenuItem("Add Decal"))
   {
     auto widget = Widget::panel_decal();
-    widget->setPositionFromCenter(iPosition);
+    widget->initPosition(iCtx.fGrid.clamp(widget->getTopLeftFromCenter(iPosition)));
     addWidget(iCtx, std::move(widget), true);
     res |= true;
   }

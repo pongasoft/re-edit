@@ -141,6 +141,7 @@ set(re-edit_BUILD_SOURCES
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/FilmStrip.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/FontManager.h"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/FontManager.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/Grid.h"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/LoggingManager.h"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/LoggingManager.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/Graphics.h"

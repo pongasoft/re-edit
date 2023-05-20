@@ -36,6 +36,7 @@
 #include "Utils.h"
 #include "Canvas.h"
 #include "Clipboard.h"
+#include "Grid.h"
 
 namespace efsw {
 class FileWatcher;
@@ -228,7 +229,7 @@ public:
   constexpr float getZoom() const { return fDpiAdjustedZoom; }
   constexpr bool isZoomFitContent() const { return fZoomFitContent; }
 
-  ImVec2 fGrid{1.0f, 1.0f};
+  Grid fGrid{1.0f, 1.0f};
   float fItemWidth{300.0f};
 
   inline static thread_local AppContext *kCurrent{};
