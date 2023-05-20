@@ -258,6 +258,7 @@ public:
   std::set<FilmStrip::key_t> importBuiltIns(std::set<FilmStrip::key_t> const &iKeys, UserError *oErrors = nullptr);
 
   static std::vector<FilmStrip::Source> scanDirectory(fs::path const &iDirectory);
+  static bool isValidTexturePath(fs::path const &iPath);
 
 private:
   static std::shared_ptr<FilmStrip::Source> toSource(FilmStrip::key_t const &iKey, BuiltIn const &iBuiltIn);

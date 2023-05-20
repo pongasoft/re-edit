@@ -638,6 +638,53 @@ void Application::onNativeWindowFontScaleChange(float iFontScale)
 }
 
 //------------------------------------------------------------------------
+// Application::onNativeDropFiles
+//------------------------------------------------------------------------
+void Application::onNativeDropFiles(std::vector<fs::path> const &iPaths)
+{
+  if(fState == State::kReLoaded || fState == State::kNoReLoaded)
+  {
+    // first we try to find a project in the list of paths
+    auto project = std::find_if(iPaths.begin(), iPaths.end(), [](const fs::path &p) { return impl::inferValidRoot(p) != std::nullopt; });
+    if(project != iPaths.end())
+    {
+      maybeLoadProject(*project);
+      RE_EDIT_LOG_DEBUG("onNativeDropFiles: Detected valid project %s", project->u8string().c_str());
+    }
+    else
+    {
+      if(fState == State::kReLoaded)
+      {
+        // no project found => textures?
+        std::vector<fs::path> textures{};
+        std::copy_if(iPaths.begin(),
+                     iPaths.end(),
+                     std::back_inserter(textures),
+                     [](const fs::path &p) { return FilmStripMgr::isValidTexturePath(p); }
+        );
+        if(!textures.empty())
+        {
+          RE_EDIT_LOG_DEBUG("onNativeDropFiles: Detected %ld textures to import", textures.size());
+          deferNextFrame([textures = std::move(textures), this]() {
+            // we check again to make sure we still are in the proper state...
+            if(fState == State::kReLoaded)
+            {
+              RE_EDIT_INTERNAL_ASSERT(fAppContext != nullptr);
+              for(auto const &texture: textures)
+                fAppContext->importTexture(texture);
+            }
+          });
+        }
+      }
+      else
+      {
+        RE_EDIT_LOG_DEBUG("onNativeDropFiles: cannot import textures when no project loaded");
+      }
+    }
+  }
+}
+
+//------------------------------------------------------------------------
 // Application::handleNewFrameActions
 //------------------------------------------------------------------------
 void Application::handleNewFrameActions()

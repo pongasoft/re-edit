@@ -165,6 +165,7 @@ public: // Texture
   int overrideTextureNumFramesAction(FilmStrip::key_t const &iKey, int iNumFrames);
   void overrideTextureNumFrames(FilmStrip::key_t const &iKey, int iNumFrames);
   std::optional<FilmStrip::key_t> importTextureBlocking();
+  std::optional<FilmStrip::key_t> importTexture(fs::path const &iTexturePath);
   std::size_t importTexturesBlocking();
 
 public: // Undo

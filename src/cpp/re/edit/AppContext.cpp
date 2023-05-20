@@ -1126,6 +1126,14 @@ void AppContext::disableFileWatcher()
 }
 
 //------------------------------------------------------------------------
+// AppContext::importTexture
+//------------------------------------------------------------------------
+std::optional<FilmStrip::key_t> AppContext::importTexture(fs::path const &iTexturePath)
+{
+  return fTextureManager->importTexture(iTexturePath);
+}
+
+//------------------------------------------------------------------------
 // AppContext::importTextureBlocking
 //------------------------------------------------------------------------
 std::optional<FilmStrip::key_t> AppContext::importTextureBlocking()

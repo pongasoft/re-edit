@@ -104,6 +104,7 @@ public:
 
   void onNativeWindowFontDpiScaleChange(float iFontDpiScale);
   void onNativeWindowFontScaleChange(float iFontScale);
+  void onNativeDropFiles(std::vector<fs::path> const &iPaths);
 //  inline void onNativeWindowPositionChange(int x, int y, float iFontScale, float iFontDpiScale) { fAppContext.onNativeWindowPositionChange(x, y, iFontScale, iFontDpiScale); }
 
   bool newFrame() noexcept;

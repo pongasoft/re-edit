@@ -298,12 +298,23 @@ std::set<FilmStrip::key_t> FilmStripMgr::scanDirectory()
   return modifiedKeys;
 }
 
+static const std::regex FILENAME_REGEX{"(([0-9]+)_?frames)?\\.png$", std::regex_constants::icase};
+
+//------------------------------------------------------------------------
+// FilmStripMgr::isValidImagePath
+//------------------------------------------------------------------------
+bool FilmStripMgr::isValidTexturePath(fs::path const &iPath)
+{
+  std::cmatch m;
+  auto filename = iPath.filename().u8string();
+  return std::regex_search(iPath.filename().u8string().c_str(), m, FILENAME_REGEX);
+}
+
 //------------------------------------------------------------------------
 // FilmStripMgr::scanDirectory
 //------------------------------------------------------------------------
 std::vector<FilmStrip::Source> FilmStripMgr::scanDirectory(fs::path const &iDirectory)
 {
-  static const std::regex FILENAME_REGEX{"(([0-9]+)_?frames)?\\.png$", std::regex_constants::icase};
 
   std::vector<FilmStrip::Source> res{};
 

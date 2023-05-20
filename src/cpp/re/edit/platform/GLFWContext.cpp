@@ -178,8 +178,12 @@ static void onDropCallback(GLFWwindow* iWindow, int iCount, const char** iPaths)
 {
   if(iCount > 0)
   {
+    std::vector<fs::path> paths{};
+    paths.reserve(iCount);
+    for(auto i = 0; i < iCount; i++)
+      paths.emplace_back(std::filesystem::u8path(iPaths[i]));
     auto application = reinterpret_cast<re::edit::Application *>(glfwGetWindowUserPointer(iWindow));
-    application->maybeLoadProject(std::filesystem::u8path(iPaths[0]));
+    application->onNativeDropFiles(paths);
   }
 }
 
