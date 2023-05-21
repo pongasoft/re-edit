@@ -157,6 +157,20 @@ int TextureManager::overrideNumFrames(std::string const &iKey, int iNumFrames) c
 }
 
 //------------------------------------------------------------------------
+// Texture::ItemFit
+//------------------------------------------------------------------------
+void Texture::ItemFit(ImVec2 const &iSize, int iFrameNumber, ImU32 iBorderColor, ImU32 iTextureColor) const
+{
+  auto size = frameSize();
+  auto scaleX = iSize.x == 0 ? 1.0f: std::min(iSize.x, size.x) / size.x;
+  auto scaleY = iSize.y == 0 ? 1.0f: std::min(iSize.y, size.y) / size.y;
+
+  auto scale = std::min(scaleX, scaleY);
+
+  Item(size * scale, iFrameNumber, iBorderColor, iTextureColor);
+}
+
+//------------------------------------------------------------------------
 // Texture::doDraw
 //------------------------------------------------------------------------
 void Texture::doDraw(bool iAddItem,

@@ -101,6 +101,8 @@ void Graphics::editView(AppContext &iCtx)
       auto const isSelected = p == key;
       if(ImGui::Selectable(p.c_str(), isSelected))
         fParent->setBackgroundKey(p);
+      if(ReGui::ShowQuickView())
+        iCtx.textureTooltip(p);
       if(isSelected)
         ImGui::SetItemDefaultFocus();
     }
@@ -112,10 +114,13 @@ void Graphics::editView(AppContext &iCtx)
     ReGui::ToolTip([this] {
       auto texture = getTexture();
       if(texture->isValid())
+      {
         ImGui::TextUnformatted(fmt::printf("%dx%d | %d frames",
                                            static_cast<int>(texture->frameWidth()),
                                            static_cast<int>(texture->frameHeight()),
                                            texture->numFrames()).c_str());
+        texture->ItemFit({static_cast<float>(k1UPixelSize), static_cast<float>(k1UPixelSize)});
+      }
       else
         ImGui::TextUnformatted(fmt::printf("%s", texture->getFilmStrip()->errorMessage()).c_str());
     });
@@ -287,6 +292,10 @@ void Graphics::editView(AppContext &iCtx,
       {
         iOnTextureUpdate(p);
       }
+
+      if(ReGui::ShowQuickView())
+        iCtx.textureTooltip(p);
+
       if(isSelected)
         ImGui::SetItemDefaultFocus();
     }
@@ -295,18 +304,7 @@ void Graphics::editView(AppContext &iCtx,
 
   if(hasTexture() && ReGui::ShowQuickView())
   {
-    ReGui::ToolTip([this] {
-      auto texture = getTexture();
-      ImGui::SeparatorText(texture->key().c_str());
-      ImGui::Text("path   = GUI2D/%s.png", texture->key().c_str());
-      if(texture->isValid())
-      {
-        ImGui::Text("size   = %dx%d", static_cast<int>(texture->frameWidth()), static_cast<int>(texture->frameHeight()));
-        ImGui::Text("frames = %d", texture->numFrames());
-      }
-      else
-        ImGui::Text("error  = %s", texture->getFilmStrip()->errorMessage().c_str());
-    });
+    iCtx.textureTooltip(getTextureKey());
   }
 
   if(hasSize() && fSizeEnabled)

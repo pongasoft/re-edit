@@ -1341,6 +1341,31 @@ std::shared_ptr<Texture> AppContext::getBuiltInTexture(FilmStrip::key_t const &i
   return Application::GetCurrent().getTexture(iKey);
 }
 
+
+//------------------------------------------------------------------------
+// AppContext::textureTooltip
+//------------------------------------------------------------------------
+void AppContext::textureTooltip(FilmStrip::key_t const &iKey) const
+{
+  auto texture = findTexture(iKey);
+  if(texture)
+  {
+    ReGui::ToolTip([texture] {
+      ImGui::SeparatorText(texture->key().c_str());
+      ImGui::Text("path   = GUI2D/%s.png", texture->key().c_str());
+      if(texture->isValid())
+      {
+        auto w = ImGui::GetItemRectSize().x;
+        ImGui::Text("size   = %dx%d", static_cast<int>(texture->frameWidth()), static_cast<int>(texture->frameHeight()));
+        ImGui::Text("frames = %d", texture->numFrames());
+        texture->ItemFit({w, w});
+      }
+      else
+        ImGui::Text("error  = %s", texture->getFilmStrip()->errorMessage().c_str());
+    });
+  }
+}
+
 //------------------------------------------------------------------------
 // AppContext::copyToClipboard
 //------------------------------------------------------------------------

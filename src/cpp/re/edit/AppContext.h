@@ -162,6 +162,7 @@ public: // Texture
   std::shared_ptr<Texture> getBuiltInTexture(FilmStrip::key_t const &iKey) const;
   inline std::shared_ptr<Texture> findTexture(FilmStrip::key_t const &iKey) const { return fTextureManager->findTexture(iKey); };
   inline std::shared_ptr<Texture> findHDTexture(FilmStrip::key_t const &iKey) const { return fTextureManager->findHDTexture(iKey); }
+  void textureTooltip(FilmStrip::key_t const &iKey) const;
   int overrideTextureNumFramesAction(FilmStrip::key_t const &iKey, int iNumFrames);
   void overrideTextureNumFrames(FilmStrip::key_t const &iKey, int iNumFrames);
   std::optional<FilmStrip::key_t> importTextureBlocking();

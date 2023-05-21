@@ -670,8 +670,39 @@ void Application::onNativeDropFiles(std::vector<fs::path> const &iPaths)
             if(fState == State::kReLoaded)
             {
               RE_EDIT_INTERNAL_ASSERT(fAppContext != nullptr);
+
+              std::vector<FilmStrip::key_t> textureKeys{};
+              textureKeys.reserve(textures.size());
               for(auto const &texture: textures)
-                fAppContext->importTexture(texture);
+              {
+                auto maybeKey = fAppContext->importTexture(texture);
+                if(maybeKey)
+                  textureKeys.emplace_back(*maybeKey);
+              }
+
+              if(!textureKeys.empty())
+              {
+                newDialog("Texture Import")
+                  .preContentMessage(fmt::printf("Successfully imported %ld graphics", textureKeys.size()))
+                  .lambda([this, keys = textureKeys]() {
+                    if(fAppContext)
+                    {
+                      auto textureSize = ImGui::CalcTextSize("W").y * 2.0f;
+
+                      for(auto &key: keys)
+                      {
+                        auto texture = fAppContext->findTexture(key);
+                        if(texture && texture->isValid())
+                        {
+                          texture->ItemFit({textureSize, textureSize});
+                          ImGui::SameLine();
+                          ImGui::TextUnformatted(key.c_str());
+                        }
+                      }
+                    }
+                  })
+                  .buttonOk();
+              }
             }
           });
         }

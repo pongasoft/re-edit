@@ -75,6 +75,11 @@ public:
     doDraw(true, ImGui::GetCursorScreenPos(), iSize, iFrameNumber, iBorderColor, iTextureColor);
   }
 
+  void ItemFit(ImVec2 const &iSize,
+               int iFrameNumber = 0,
+               ImU32 iBorderColor = ReGui::kTransparentColorU32,
+               ImU32 iTextureColor = ReGui::kWhiteColorU32) const;
+
   inline void draw(ImVec2 const &iScreenPosition,
                    ImVec2 const &iSize = {},
                    int iFrameNumber = 0,
