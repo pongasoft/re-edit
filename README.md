@@ -94,6 +94,14 @@ pongasoft produces a variety of high quality and free/open source software. If y
 Release Notes
 -------------
 
+* #### 1.5.0 - 2023/05/22
+
+- Added ability to drag and drop image(s) (png) from the Finder (resp. File Explorer) onto the main window to import them
+- Use grid when adding widgets/decals
+- Turned "Add Decal" into a menu showing the list of all graphics (since a decal is nothing more than a graphic)
+- Shows the image in Quick View for graphics
+- Added Quick View in lists of graphics (menu lists and dropdowns) to easily and quickly be able to pick the right graphic
+
 * #### 1.4.2 - 2023/05/15
 
 - Added Help menu: displays the keyboard shortcuts
