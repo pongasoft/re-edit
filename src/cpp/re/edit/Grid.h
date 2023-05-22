@@ -33,7 +33,7 @@ struct Grid
 
   ImVec2 fSize;
 
-  static const Grid kUnity;
+  static constexpr Grid unity() { return Grid{}; };
 
   //------------------------------------------------------------------------
   // clamp
@@ -76,8 +76,6 @@ private:
 #pragma clang diagnostic pop
 #endif
 };
-
-constexpr Grid Grid::kUnity = Grid{};
 
 }
 

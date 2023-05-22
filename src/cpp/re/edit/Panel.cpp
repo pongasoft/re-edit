@@ -353,7 +353,7 @@ void Panel::handleMoveWidgetsAction(AppContext &iCtx, ReGui::Canvas::canvas_pos_
   else
   {
     bool shouldMoveWidgets = false;
-    auto grid = ImGui::GetIO().KeyAlt ? Grid::kUnity : iCtx.fGrid;
+    auto grid = ImGui::GetIO().KeyAlt ? Grid::unity() : iCtx.fGrid;
     fMoveWidgetsAction->fCurrentPosition = iMousePos;
     if(std::abs(fMoveWidgetsAction->fLastUpdatePosition.x - fMoveWidgetsAction->fCurrentPosition.x) >= grid.width())
     {
