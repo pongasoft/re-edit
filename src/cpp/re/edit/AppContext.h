@@ -168,6 +168,8 @@ public: // Texture
   std::optional<FilmStrip::key_t> importTextureBlocking();
   std::optional<FilmStrip::key_t> importTexture(fs::path const &iTexturePath);
   std::size_t importTexturesBlocking();
+  template<typename F>
+  bool textureMenu(FilmStrip::Filter const &iFilter, F &&f);
 
 public: // Undo
   constexpr bool isUndoEnabled() const { return fUndoManager->isEnabled(); }

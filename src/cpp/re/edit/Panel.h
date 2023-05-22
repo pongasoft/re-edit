@@ -181,7 +181,7 @@ private:
   void setPanelOptions(bool iDisableSampleDropOnPanel);
   void beforeEachFrame(AppContext &iCtx);
   void computeDNZ(AppContext *iCtx = nullptr) const;
-  bool renderPanelWidgetMenu(AppContext &iCtx, ImVec2 const &iPosition = {});
+  bool renderPanelWidgetMenu(AppContext &iCtx, ImVec2 const &iPosition);
   bool renderPanelMenus(AppContext &iCtx, std::optional<ImVec2> iPosition = std::nullopt);
   bool renderSelectedWidgetsMenu(AppContext &iCtx, std::vector<Widget *> const &iWidgets);
   bool renderSelectedWidgetsMenu(AppContext &iCtx) { return renderSelectedWidgetsMenu(iCtx, dnz().fSelectedWidgets); }

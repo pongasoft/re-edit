@@ -671,6 +671,8 @@ void Application::onNativeDropFiles(std::vector<fs::path> const &iPaths)
             {
               RE_EDIT_INTERNAL_ASSERT(fAppContext != nullptr);
 
+              bool maybeReloadTextures = fAppContext->maybeReloadTextures();
+
               std::vector<FilmStrip::key_t> textureKeys{};
               textureKeys.reserve(textures.size());
               for(auto const &texture: textures)
@@ -701,7 +703,11 @@ void Application::onNativeDropFiles(std::vector<fs::path> const &iPaths)
                       }
                     }
                   })
-                  .buttonOk();
+                  .button("Ok", [maybeReloadTextures, this] {
+                    // dismisses the reload textures notification (unless there was one before starting...)
+                    if(fAppContext && !maybeReloadTextures)
+                      fAppContext->maybeReloadTextures(false);
+                  }, true);
               }
             }
           });

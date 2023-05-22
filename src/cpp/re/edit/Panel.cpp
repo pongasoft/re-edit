@@ -23,6 +23,7 @@
 #include "ReGui.h"
 #include "Constants.h"
 #include "LoggingManager.h"
+#include "AppContext.hpp"
 #include "imgui_internal.h"
 
 namespace re::edit {
@@ -504,12 +505,23 @@ bool Panel::renderPanelWidgetMenu(AppContext &iCtx, ImVec2 const &iPosition)
     res |= iCtx.renderWidgetDefMenuItems(fType, [this, &iCtx, &iPosition](WidgetDef const &iDef) { addWidget(iCtx, iDef, iPosition); });
     ImGui::EndMenu();
   }
-  if(ImGui::MenuItem("Add Decal"))
+  if(ImGui::BeginMenu("Add Decal"))
   {
-    auto widget = Widget::panel_decal();
-    widget->initPosition(iCtx.fGrid.clamp(widget->getTopLeftFromCenter(iPosition)));
-    addWidget(iCtx, std::move(widget), true);
-    res |= true;
+    if(ImGui::MenuItem("No Graphics"))
+    {
+      auto widget = Widget::panel_decal();
+      widget->initPosition(iCtx.fGrid.clamp(widget->getTopLeftFromCenter(iPosition)));
+      addWidget(iCtx, std::move(widget), true);
+      res |= true;
+    }
+    ImGui::Separator();
+    res |= iCtx.textureMenu(FilmStrip::kAllFilter, [this, &iCtx, iPosition](const auto &iTextureKey) {
+      auto widget = Widget::panel_decal();
+      widget->setTextureKey(iTextureKey);
+      widget->initPosition(iCtx.fGrid.clamp(widget->getTopLeftFromCenter(iPosition)));
+      addWidget(iCtx, std::move(widget), true);
+    });
+    ImGui::EndMenu();
   }
 
   if(ImGui::MenuItem("Reset Visibility"))
@@ -1064,7 +1076,7 @@ void Panel::editNoSelectionView(AppContext &iCtx)
 
   if(ImGui::BeginPopup("Menu"))
   {
-    renderPanelWidgetMenu(iCtx);
+    renderPanelWidgetMenu(iCtx, getCenter());
     ImGui::EndPopup();
   }
 

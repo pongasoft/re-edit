@@ -22,6 +22,8 @@
 #include "AppContext.h"
 #include "Widget.h"
 #include "Panel.h"
+#include "TextureManager.h"
+#include <imgui.h>
 
 namespace re::edit {
 
@@ -36,6 +38,28 @@ typename T::result_t AppContext::executeAction(PanelType iPanelType, Args &&... 
   action->init(std::forward<Args>(args)...);
   return fUndoManager->execute<typename T::result_t, typename T::action_t>(std::move(action));
 }
+
+//------------------------------------------------------------------------
+// AppContext::textureMenu
+//------------------------------------------------------------------------
+template<typename F>
+bool AppContext::textureMenu(FilmStrip::Filter const &iFilter, F &&f)
+{
+  bool res = false;
+  auto const keys = fTextureManager->findTextureKeys(iFilter);
+  for(auto const &key: keys)
+  {
+    if(ImGui::MenuItem(key.c_str()))
+    {
+      f(key);
+      res = true;
+    }
+    if(ReGui::ShowQuickView())
+      textureTooltip(key);
+  }
+  return res;
+}
+
 
 }
 
