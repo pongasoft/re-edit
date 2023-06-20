@@ -22,6 +22,7 @@
 #include <imgui.h>
 #include <chrono>
 #include <vector>
+#include "Errors.h"
 
 namespace re::edit::config {
 
@@ -42,6 +43,8 @@ constexpr char const *to_string(Style s)
       return "Light";
     case Style::kClassic:
       return "Classic";
+    default:
+      RE_EDIT_FAIL("Not reached");
   }
 }
 
