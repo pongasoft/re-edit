@@ -1,2 +1,2 @@
-Version 8b5f1f37b5b75829fc72d38e7b5d4bcbf8a26d55 from https://github.com/nothings/stb 2022/19/14
-stb_image.h version 2.27
+Version 5736b15f7ea0ffb08dd38af21067c314d6a3aae9 from https://github.com/nothings/stb 2023/01/29
+stb_image.h version 2.28
