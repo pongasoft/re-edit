@@ -186,8 +186,8 @@ void Graphics::draw(AppContext &iCtx, ReGui::Canvas &iCanvas, ImU32 iBorderColor
   auto texture = hasTexture() ? getTexture() : nullptr;
   if(texture && texture->isValid())
   {
-    iCanvas.addTexture(texture, fPosition, fFrameNumber, iBorderColor,
-                       hasTint() ? impl::computeTextureColor(fTint, iXRay) : impl::computeTextureColor(iXRay));
+    iCanvas.addResizedTexture(texture, fSize, fPosition, fFrameNumber, iBorderColor,
+                              hasTint() ? impl::computeTextureColor(fTint, iXRay) : impl::computeTextureColor(iXRay));
   }
   else
   {
@@ -263,6 +263,14 @@ void Graphics::editView(AppContext &iCtx,
       iOnTintUpdate(kNoTintColor);
     ImGui::EndDisabled();
 
+    if(ImGui::MenuItem("Reset Size"))
+    {
+      if(hasSize())
+        iOnSizeUpdate(kNoGraphics);
+      else
+        iOnSizeUpdate(getTexture()->frameSize());
+    }
+
     if(ImGui::MenuItem(ReGui_Prefix(ReGui_Icon_ImportImages, "Import")))
     {
       auto textureKey = iCtx.importTextureBlocking();
@@ -329,19 +337,19 @@ void Graphics::editView(AppContext &iCtx,
     }
   }
 
-  if(hasSize() && fSizeEnabled)
+  auto editedSize = fSize;
+  if(ReGui::InputInt("width", &editedSize.x, 1, static_cast<int>(iCtx.fGrid.width())))
   {
-    auto editedSize = std::get<ImVec2>(fTexture);
-    if(ReGui::InputInt("w", &editedSize.x, 1, 5))
-    {
-      iOnSizeUpdate(editedSize);
-    }
-
-    if(ReGui::InputInt("h", &editedSize.y, 1, 5))
-    {
-      iOnSizeUpdate(editedSize);
-    }
+    editedSize.x = std::max(1.0f, editedSize.x);
+    iOnSizeUpdate(editedSize);
   }
+
+  if(ReGui::InputInt("height", &editedSize.y, 1, static_cast<int>(iCtx.fGrid.height())))
+  {
+    editedSize.y = std::max(1.0f, editedSize.y);
+    iOnSizeUpdate(editedSize);
+  }
+
   ImGui::EndGroup();
 }
 
@@ -362,7 +370,7 @@ void Graphics::editPositionView(AppContext &iCtx)
 
   ImGui::SameLine();
 
-  if(ReGui::InputInt("x", &editedPosition.x, 1, 5))
+  if(ReGui::InputInt("x", &editedPosition.x, 1, static_cast<int>(iCtx.fGrid.width())))
   {
     getParent()->setPosition(editedPosition);
   }
@@ -377,7 +385,7 @@ void Graphics::editPositionView(AppContext &iCtx)
 
   ImGui::SameLine();
 
-  if(ReGui::InputInt("y", &editedPosition.y, 1, 5))
+  if(ReGui::InputInt("y", &editedPosition.y, 1, static_cast<int>(iCtx.fGrid.height())))
   {
     getParent()->setPosition(editedPosition);
   }
@@ -415,11 +423,10 @@ void Graphics::editView(AppContext &iCtx)
            },
            [this](auto &s) {
              update([this, &s] {
-                      setSize(s);
-                      fFrameNumber = 0;
+                      fSize = s;
                     },
                     fmt::printf(fmt::printf("Change %s size", getParent()->getName())),
-                    MergeKey::from(&fTexture));
+                    MergeKey::from(&fSize));
            },
            [this](auto &tint) {
              update([this, &tint] {
@@ -470,10 +477,10 @@ void Graphics::editHitBoundariesView(AppContext &iCtx)
 //------------------------------------------------------------------------
 void Graphics::reset()
 {
-  if(fDNZTexture && fDNZTexture->isValid())
-    fTexture = fDNZTexture->frameSize();
+  if(!fTexture)
+    fSize = kNoGraphics;
   else
-    fTexture = kNoGraphics;
+    fTexture = std::nullopt;
   fDNZTexture = nullptr;
   fHitBoundaries = {};
   fEdited = true;
@@ -638,11 +645,34 @@ bool Graphics::copyFromAction(Attribute const *iFromAttribute)
     fTexture = fromAttribute->fTexture;
     fDNZTexture = fromAttribute->fDNZTexture;
     fTint = fromAttribute->fTint;
+    fSize = fromAttribute->fSize;
     fEdited = true;
     return true;
   }
   else
     return false;
+}
+
+//------------------------------------------------------------------------
+// Graphics::setTextureKey
+//------------------------------------------------------------------------
+void Graphics::setTextureKey(Texture::key_t const &iTextureKey)
+{
+  fTexture = iTextureKey;
+  fDNZTexture = AppContext::GetCurrent().getTexture(iTextureKey);
+  fSize = getTexture()->frameSize();
+  fEdited = true;
+}
+
+//------------------------------------------------------------------------
+// Graphics::setSize
+//------------------------------------------------------------------------
+void Graphics::setSize(ImVec2 const &iSize)
+{
+  fSize = iSize;
+  fTexture = std::nullopt;
+  fDNZTexture.reset();
+  fEdited = true;
 }
 
 //------------------------------------------------------------------------

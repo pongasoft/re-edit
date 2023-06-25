@@ -72,6 +72,13 @@ public:
                   ImU32 iBorderColor = ReGui::kTransparentColorU32,
                   ImU32 iTextureColor = ReGui::kWhiteColorU32) const;
 
+  void addResizedTexture(Texture const *iTexture,
+                         ImVec2 const &iTextureSize,
+                         canvas_pos_t const &iPos = {0,0},
+                         int iFrameNumber = 0,
+                         ImU32 iBorderColor = ReGui::kTransparentColorU32,
+                         ImU32 iTextureColor = ReGui::kWhiteColorU32) const;
+
   void addScaledTexture(Texture const *iTexture,
                         ImVec2 const &iScale,
                         canvas_pos_t const &iPos = {0,0},

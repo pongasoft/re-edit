@@ -20,6 +20,7 @@
 #define RE_EDIT_GRAPHICS_NODE_H
 
 #include "WidgetAttribute.h"
+#include <optional>
 
 namespace re::edit {
 
@@ -115,7 +116,7 @@ public:
     return true;
   }
 
-  inline ImVec2 getSize() const { return hasTexture() ? getTexture()->frameSize() : std::get<ImVec2>(fTexture); }
+  constexpr ImVec2 getSize() const { return fSize; }
   constexpr ImVec2 getPosition() const { return fPosition; }
   constexpr ImVec2 getTopLeft() const { return fPosition; }
   constexpr ImVec2 getBottomRight() const { return fPosition + getSize(); }
@@ -127,15 +128,15 @@ public:
 
   constexpr void move(ImVec2 const &iDelta) { fPosition = fPosition + iDelta; fEdited = true; }
 
-  inline bool hasTexture() const { return std::holds_alternative<Texture::key_t>(fTexture); }
-  inline bool hasSize() const { return std::holds_alternative<ImVec2>(fTexture); }
+  inline bool hasTexture() const { return fTexture.has_value(); }
+  inline bool hasSize() const { return !hasTexture(); }
   constexpr bool hasTint() const { return fTint != kNoTintColor; }
   constexpr bool isEditingTint() const { return fEditingTint; }
 
   inline Texture const *getTexture() const { RE_EDIT_INTERNAL_ASSERT(fDNZTexture != nullptr); return fDNZTexture.get(); }
-  inline Texture::key_t getTextureKey() const { return std::get<Texture::key_t>(fTexture); }
-  void setTextureKey(Texture::key_t const &iTextureKey) { fTexture = iTextureKey; fDNZTexture = AppContext::GetCurrent().getTexture(iTextureKey); fEdited = true; }
-  inline void setSize(ImVec2 const &iSize) { fTexture = iSize; fDNZTexture.reset(); fEdited = true; }
+  inline Texture::key_t getTextureKey() const { return fTexture.value(); }
+  void setTextureKey(Texture::key_t const &iTextureKey);
+  void setSize(ImVec2 const &iSize);
 
   void reset() override;
 
@@ -163,6 +164,7 @@ public:
       return l->fPosition == r->fPosition &&
              l->fHitBoundaries == r->fHitBoundaries &&
              l->fTexture == r->fTexture &&
+             l->fSize == r->fSize &&
              l->fTint == r->fTint;
     });
   }
@@ -173,7 +175,8 @@ public:
   ImVec2 fPosition{};
   HitBoundaries fHitBoundaries{};
   bool fHitBoundariesEnabled{true};
-  std::variant<ImVec2, Texture::key_t> fTexture{kNoGraphics};
+  std::optional<Texture::key_t> fTexture{};
+  ImVec2 fSize{kNoGraphics};
   bool fSizeEnabled{true};
   bool fCheckForOOBError{true};
   std::shared_ptr<Texture> fDNZTexture{};

@@ -126,6 +126,19 @@ void Canvas::addTexture(Texture const *iTexture,
 }
 
 //------------------------------------------------------------------------
+// Canvas::addResizedTexture
+//------------------------------------------------------------------------
+void Canvas::addResizedTexture(Texture const *iTexture,
+                               ImVec2 const &iTextureSize,
+                               Canvas::canvas_pos_t const &iPos,
+                               int iFrameNumber,
+                               ImU32 iBorderColor,
+                               ImU32 iTextureColor) const
+{
+  iTexture->draw(toScreenPos(iPos), iTextureSize * fZoom.value(), iFrameNumber, iBorderColor, iTextureColor);
+}
+
+//------------------------------------------------------------------------
 // Canvas::addScaledTexture
 //------------------------------------------------------------------------
 void Canvas::addScaledTexture(Texture const *iTexture,
