@@ -54,6 +54,16 @@ static constexpr bool operator!=(const ImVec2& lhs, const ImVec2& rhs)
   return !(lhs == rhs);
 }
 
+static constexpr bool operator==(const ImVec4& lhs, const ImVec4& rhs)
+{
+  return lhs.x == rhs.x && lhs.y == rhs.y && lhs.z == rhs.z && lhs.w == rhs.w;
+}
+
+static constexpr bool operator!=(const ImVec4& lhs, const ImVec4& rhs)
+{
+  return !(lhs == rhs);
+}
+
 namespace re::edit::ReGui {
 
 namespace impl {

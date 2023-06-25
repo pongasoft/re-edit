@@ -164,8 +164,16 @@ namespace impl {
 constexpr ImU32 computeTextureColor(bool iXRay)
 {
   return iXRay ?
-         ReGui::GetColorU32(kWhiteColor) :
-         ReGui::GetColorU32(kXRayColor);
+         ReGui::GetColorU32(kXRayColor) :
+         ReGui::GetColorU32(kWhiteColor);
+}
+
+//------------------------------------------------------------------------
+// impl::computeTextureColor
+//------------------------------------------------------------------------
+constexpr ImU32 computeTextureColor(ImVec4 const &iTintColor, bool iXRay)
+{
+  return iXRay ? ReGui::GetColorU32(iTintColor * kXRayColor) : ReGui::GetColorU32(iTintColor);
 }
 
 }
@@ -178,7 +186,8 @@ void Graphics::draw(AppContext &iCtx, ReGui::Canvas &iCanvas, ImU32 iBorderColor
   auto texture = hasTexture() ? getTexture() : nullptr;
   if(texture && texture->isValid())
   {
-    iCanvas.addTexture(texture, fPosition, fFrameNumber, iBorderColor, impl::computeTextureColor(iXRay));
+    iCanvas.addTexture(texture, fPosition, fFrameNumber, iBorderColor,
+                       hasTint() ? impl::computeTextureColor(fTint, iXRay) : impl::computeTextureColor(iXRay));
   }
   else
   {
@@ -228,7 +237,8 @@ void Graphics::drawHitBoundaries(ReGui::Canvas &iCanvas, ImU32 iColor) const
 void Graphics::editView(AppContext &iCtx,
                         FilmStrip::Filter const &iFilter,
                         std::function<void(std::string const &)> const &iOnTextureUpdate,
-                        std::function<void(ImVec2 const &)> const &iOnSizeUpdate)
+                        std::function<void(ImVec2 const &)> const &iOnSizeUpdate,
+                        std::function<void(ImVec4 const &)> const &iOnTintUpdate)
 {
   if(ReGui::MenuButton())
     ImGui::OpenPopup("Menu");
@@ -248,6 +258,9 @@ void Graphics::editView(AppContext &iCtx,
     ImGui::BeginDisabled(hasSize());
     if(ImGui::MenuItem(ReGui_Prefix(ReGui_Icon_Frames, "Change number of frames")))
       ImGui::OpenPopup(numFramesPopup);
+    ImGui::MenuItem("Edit tint", nullptr, &fEditingTint);
+    if(ImGui::MenuItem("Reset Tint"))
+      iOnTintUpdate(kNoTintColor);
     ImGui::EndDisabled();
 
     if(ImGui::MenuItem(ReGui_Prefix(ReGui_Icon_ImportImages, "Import")))
@@ -305,6 +318,15 @@ void Graphics::editView(AppContext &iCtx,
   if(hasTexture() && ReGui::ShowQuickView())
   {
     iCtx.textureTooltip(getTextureKey());
+  }
+
+  if(isEditingTint())
+  {
+    ImVec4 tint = fTint;
+    if(ImGui::ColorEdit3("tint", &tint.x))
+    {
+      iOnTintUpdate(tint);
+    }
   }
 
   if(hasSize() && fSizeEnabled)
@@ -384,20 +406,27 @@ void Graphics::editView(AppContext &iCtx)
 {
   editView(iCtx,
            fFilter,
-           [this, &iCtx](auto &k) {
+           [this](auto &k) {
              update([this, &k] {
                       setTextureKey(k);
                       fFrameNumber = 0;
                     },
                     fmt::printf(fmt::printf("Change %s graphics", getParent()->getName())));
            },
-           [this, &iCtx](auto &s) {
+           [this](auto &s) {
              update([this, &s] {
                       setSize(s);
                       fFrameNumber = 0;
                     },
                     fmt::printf(fmt::printf("Change %s size", getParent()->getName())),
                     MergeKey::from(&fTexture));
+           },
+           [this](auto &tint) {
+             update([this, &tint] {
+                      fTint = tint;
+                    },
+                    fmt::printf(fmt::printf("Change %s tint", getParent()->getName())),
+                    MergeKey::from(&fTint));
            }
   );
   ImGui::Indent();
@@ -448,6 +477,8 @@ void Graphics::reset()
   fDNZTexture = nullptr;
   fHitBoundaries = {};
   fEdited = true;
+  fTint = kNoTintColor;
+  fEditingTint = false;
 }
 
 //------------------------------------------------------------------------
@@ -606,6 +637,7 @@ bool Graphics::copyFromAction(Attribute const *iFromAttribute)
     fHitBoundaries = fromAttribute->fHitBoundaries;
     fTexture = fromAttribute->fTexture;
     fDNZTexture = fromAttribute->fDNZTexture;
+    fTint = fromAttribute->fTint;
     fEdited = true;
     return true;
   }

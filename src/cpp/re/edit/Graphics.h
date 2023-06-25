@@ -129,6 +129,8 @@ public:
 
   inline bool hasTexture() const { return std::holds_alternative<Texture::key_t>(fTexture); }
   inline bool hasSize() const { return std::holds_alternative<ImVec2>(fTexture); }
+  constexpr bool hasTint() const { return fTint != kNoTintColor; }
+  constexpr bool isEditingTint() const { return fEditingTint; }
 
   inline Texture const *getTexture() const { RE_EDIT_INTERNAL_ASSERT(fDNZTexture != nullptr); return fDNZTexture.get(); }
   inline Texture::key_t getTextureKey() const { return std::get<Texture::key_t>(fTexture); }
@@ -144,7 +146,8 @@ public:
   void editView(AppContext &iCtx,
                 FilmStrip::Filter const &iFilter,
                 std::function<void(std::string const &)> const &iOnTextureUpdate,
-                std::function<void(ImVec2 const &)> const &iOnSizeUpdate);
+                std::function<void(ImVec2 const &)> const &iOnSizeUpdate,
+                std::function<void(ImVec4 const &)> const &iOnTintUpdate);
 
   void findErrors(AppContext &iCtx, UserError &oErrors) const override;
 
@@ -159,7 +162,8 @@ public:
     return Attribute::eq(this, iAttribute, [](auto *l, auto *r) {
       return l->fPosition == r->fPosition &&
              l->fHitBoundaries == r->fHitBoundaries &&
-             l->fTexture == r->fTexture;
+             l->fTexture == r->fTexture &&
+             l->fTint == r->fTint;
     });
   }
 
@@ -175,6 +179,9 @@ public:
   std::shared_ptr<Texture> fDNZTexture{};
   FilmStrip::Filter fFilter{};
   int fFrameNumber{};
+
+  bool fEditingTint{false};
+  ImVec4 fTint{kNoTintColor};
 };
 
 class Background : public String

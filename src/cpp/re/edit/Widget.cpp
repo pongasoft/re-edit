@@ -106,7 +106,7 @@ void Widget::draw(AppContext &iCtx, ReGui::Canvas &iCanvas)
   }
   else
   {
-    auto xRay = iCtx.fWidgetRendering == AppContext::EWidgetRendering::kNormal;
+    auto xRay = iCtx.fWidgetRendering == AppContext::EWidgetRendering::kXRay;
 
     switch(fType)
     {
