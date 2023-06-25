@@ -113,6 +113,14 @@ constexpr ImVec4 GetColorImVec4(ImU32 iColor)
 }
 
 //------------------------------------------------------------------------
+// ReGui::GetColorImVec4
+//------------------------------------------------------------------------
+constexpr ImVec4 GetColorImVec4(JboxColor3 const &iColor)
+{
+  return toFloatColor(iColor.fRed, iColor.fGreen, iColor.fBlue);
+}
+
+//------------------------------------------------------------------------
 // ReGui::ColorIsTransparent
 // return `true` if the color is fully transparent (meaning drawing with it is a noop)
 //------------------------------------------------------------------------

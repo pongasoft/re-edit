@@ -66,14 +66,6 @@ namespace re::edit::lua {
 
 using namespace widget::attribute;
 
-template<typename F>
-void HDGui2D::withField(int index, char const *iFieldName, int iFieldType, F f)
-{
-  if(lua_getfield(L, index, iFieldName) == iFieldType)
-    f();
-  lua_pop(L, 1);
-}
-
 struct JBoxObjectUD
 {
   int fId;

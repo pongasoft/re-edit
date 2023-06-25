@@ -594,15 +594,17 @@ std::string Graphics::device2D() const
   if(hasTexture())
   {
     auto texture = getTexture();
-    if(texture->numFrames() > 1)
-      path = re::mock::fmt::printf("path = \"%s\", frames = %d", texture->key(), texture->numFrames());
-    else
-      path = re::mock::fmt::printf("path = \"%s\"", texture->key());
+    path = re::mock::fmt::printf("path = \"%s\"%s%s%s",
+                                 texture->key(),
+                                 texture->numFrames() > 1 ?  re::mock::fmt::printf(", frames = %d", texture->numFrames()) : "",
+                                 hasTint() ?  re::mock::fmt::printf(", re_edit_tint = { %d, %d, %d }", toIntColor(fTint.x), toIntColor(fTint.y), toIntColor(fTint.z)) : "",
+                                 fSize != texture->frameSize() ?  re::mock::fmt::printf(", re_edit_size = { %d, %d }", static_cast<int>(fSize.x),  static_cast<int>(fSize.y)) : ""
+                                 );
+
   }
   else
   {
-    auto size = getSize();
-    path = re::mock::fmt::printf("size = { %d, %d }", static_cast<int>(size.x),  static_cast<int>(size.y));
+    path = re::mock::fmt::printf("size = { %d, %d }", static_cast<int>(fSize.x),  static_cast<int>(fSize.y));
   }
   auto pos = getPosition();
   if(pos.x == 0 && pos.y == 0)
@@ -645,6 +647,7 @@ bool Graphics::copyFromAction(Attribute const *iFromAttribute)
     fTexture = fromAttribute->fTexture;
     fDNZTexture = fromAttribute->fDNZTexture;
     fTint = fromAttribute->fTint;
+    fEditingTint = fromAttribute->fEditingTint;
     fSize = fromAttribute->fSize;
     fEdited = true;
     return true;
@@ -661,6 +664,25 @@ void Graphics::setTextureKey(Texture::key_t const &iTextureKey)
   fTexture = iTextureKey;
   fDNZTexture = AppContext::GetCurrent().getTexture(iTextureKey);
   fSize = getTexture()->frameSize();
+  fTint = kNoTintColor;
+  fEdited = true;
+}
+
+//------------------------------------------------------------------------
+// Graphics::initTextureKey
+//------------------------------------------------------------------------
+void Graphics::initTextureKey(Texture::key_t const &iTextureKey,
+                              std::optional<ImVec2> const &iSize,
+                              std::optional<ImVec4> const &iTint)
+{
+  fTexture = iTextureKey;
+  fDNZTexture = AppContext::GetCurrent().getTexture(iTextureKey);
+  fSize = iSize ? *iSize : getTexture()->frameSize();
+  if(iTint)
+  {
+    fTint = *iTint;
+    fEditingTint = true;
+  }
   fEdited = true;
 }
 

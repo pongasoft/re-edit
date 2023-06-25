@@ -104,7 +104,8 @@ std::map<std::string, int> PanelState::initPanel(AppContext &iCtx,
       {
         auto key = node->getKey();
         if(!key.empty())
-          widget->setTextureKey(key);
+          widget->initTextureKey(key, node->fOverrideSize,
+                                 node->fOverrideTint ? std::optional<ImVec4>(ReGui::GetColorImVec4(*node->fOverrideTint)) : std::nullopt);
         else
           RE_EDIT_LOG_WARNING("Empty node path for widget %s", node->fName);
       }

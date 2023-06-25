@@ -161,6 +161,20 @@ std::optional<gfx_node> Device2D::getMaybeNodeOnTopOfStack()
     if(frames)
       node.fNumFrames = static_cast<int>(frames.value());
 
+    // check for re_edit_size
+    lua_getfield(L, -1, "re_edit_size");
+    if(lua_type(L, -1) == LUA_TTABLE)
+      node.fOverrideSize = getImVec2();
+    lua_pop(L, 1);
+
+    JboxColor3 tint;
+    if(withField(-1, "re_edit_tint", LUA_TTABLE, [this, &tint]() {
+      tint.fRed = static_cast<int>(L.getArrayValueAsInteger(1));
+      tint.fGreen = static_cast<int>(L.getArrayValueAsInteger(2));
+      tint.fBlue = static_cast<int>(L.getArrayValueAsInteger(3));
+    }))
+      node.fOverrideTint = tint;
+
     if(node.hasKey() || node.hasSize())
     {
       return node;

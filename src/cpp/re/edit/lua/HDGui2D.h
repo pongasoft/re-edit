@@ -139,12 +139,6 @@ protected:
   template<typename T>
   bool populate(std::shared_ptr<jbox_widget> &oWidget, std::string const &iAttributeName);
 
-  /**
-   * Pushes onto the stack the value `t[k]`, where `t` is the value at the given index and executes f only if
-   * this value is of type `iFieldType`. This function then properly pops the stack. */
-  template<typename F>
-  void withField(int index, char const *k, int iFieldType, F f);
-
 private:
   re::mock::ObjectManager<impl::jbox_object> fObjects{};
 };

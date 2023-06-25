@@ -89,5 +89,4 @@ std::optional<std::string> Base::getReEditVersion()
 }
 
 
-
 }

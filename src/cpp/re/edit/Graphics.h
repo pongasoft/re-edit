@@ -136,6 +136,7 @@ public:
   inline Texture const *getTexture() const { RE_EDIT_INTERNAL_ASSERT(fDNZTexture != nullptr); return fDNZTexture.get(); }
   inline Texture::key_t getTextureKey() const { return fTexture.value(); }
   void setTextureKey(Texture::key_t const &iTextureKey);
+  void initTextureKey(Texture::key_t const &iTextureKey, std::optional<ImVec2> const &iSize, std::optional<ImVec4> const &iTint);
   void setSize(ImVec2 const &iSize);
 
   void reset() override;

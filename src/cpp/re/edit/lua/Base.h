@@ -37,6 +37,12 @@ protected:
   std::optional<ImVec2> getOptionalImVec2TableField(char const *iKey, int idx = -1);
   inline bool isTableAt(int idx) { return lua_type(L, idx) == LUA_TTABLE; }
   inline bool isTableOnTopOfStack() { return isTableAt(-1); }
+
+  /**
+   * Pushes onto the stack the value `t[iFieldName]`, where `t` is the value at the given index and executes f only if
+   * this value is of type `iFieldType`. This function then properly pops the stack. */
+  template<typename F>
+  bool withField(int index, char const *iFieldName, int iFieldType, F f);
 };
 
 //------------------------------------------------------------------------
@@ -47,6 +53,22 @@ inline void withOptionalValue(std::optional<T> const &iOptionalValue, F &&f)
 {
   if(iOptionalValue)
     f(*iOptionalValue);
+}
+
+//------------------------------------------------------------------------
+// withField
+//------------------------------------------------------------------------
+template<typename F>
+bool Base::withField(int index, char const *iFieldName, int iFieldType, F f)
+{
+  bool res = false;
+  if(lua_getfield(L, index, iFieldName) == iFieldType)
+  {
+    f();
+    res = true;
+  }
+  lua_pop(L, 1);
+  return res;
 }
 
 }
