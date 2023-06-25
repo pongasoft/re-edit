@@ -47,7 +47,7 @@ public:
 class MTLTextureManager : public TextureManager
 {
 public:
-  MTLTextureManager(MTL::Device *iDevice);
+  explicit MTLTextureManager(MTL::Device *iDevice);
   ~MTLTextureManager() override = default;
 
 protected:
@@ -61,7 +61,7 @@ private:
 class MTLFontManager : public NativeFontManager
 {
 public:
-  MTLFontManager(MTL::Device *iDevice) : NativeFontManager{}, fDevice{iDevice} {}
+  explicit MTLFontManager(MTL::Device *iDevice) : NativeFontManager{}, fDevice{iDevice} {}
   void createFontsTexture() override;
   void destroyFontsTexture() override;
 
