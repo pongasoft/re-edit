@@ -20,6 +20,7 @@
 #define RE_EDIT_STL_H
 
 #include <stdexcept>
+#include <algorithm>
 
 namespace re::edit::stl {
 
@@ -55,6 +56,23 @@ inline typename C::value_type popLastOrDefault(C &v)
   return res;
 }
 
+//------------------------------------------------------------------------
+// stl::round
+//------------------------------------------------------------------------
+template<typename T, typename R>
+inline R round(T iValue)
+{
+  return static_cast<R>(std::round(iValue));
+}
+
+//------------------------------------------------------------------------
+// stl::roundToInt
+//------------------------------------------------------------------------
+template<typename T>
+inline int roundToInt(T iValue)
+{
+  return round<T, int>(iValue);
+}
 
 }
 

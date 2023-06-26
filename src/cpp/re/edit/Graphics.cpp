@@ -21,6 +21,7 @@
 #include "Errors.h"
 #include "Panel.h"
 #include "AppContext.hpp"
+#include "stl.h"
 
 namespace re::edit {
 
@@ -348,7 +349,10 @@ void Graphics::editView(AppContext &iCtx,
   {
     size.x = std::max(1.0f, size.x);
     if(kLinkWidthAndHeight)
-      size.y = fSize.y + (size.x - fSize.x);
+    {
+      auto originalSize = getOriginalSize();
+      size.y = std::max(1.0f, originalSize.y * (size.x / std::max(1.0f, originalSize.x)));
+    }
     iOnSizeUpdate(size);
   }
 
@@ -356,7 +360,10 @@ void Graphics::editView(AppContext &iCtx,
   {
     size.y = std::max(1.0f, size.y);
     if(kLinkWidthAndHeight)
-      size.x = fSize.x + (size.y - fSize.y);
+    {
+      auto originalSize = getOriginalSize();
+      size.x = std::max(1.0f, originalSize.x * (size.y / std::max(1.0f, originalSize.y)));
+    }
     iOnSizeUpdate(size);
   }
 
@@ -612,13 +619,13 @@ std::string Graphics::device2D() const
                                  texture->key(),
                                  texture->numFrames() > 1 ?  re::mock::fmt::printf(", frames = %d", texture->numFrames()) : "",
                                  hasTint() ?  re::mock::fmt::printf(", re_edit_tint = { %d, %d, %d }", toIntColor(fTint.x), toIntColor(fTint.y), toIntColor(fTint.z)) : "",
-                                 fSize != texture->frameSize() ?  re::mock::fmt::printf(", re_edit_size = { %d, %d }", static_cast<int>(fSize.x),  static_cast<int>(fSize.y)) : ""
+                                 fSize != texture->frameSize() ?  re::mock::fmt::printf(", re_edit_size = { %d, %d }", stl::roundToInt(fSize.x),  stl::roundToInt(fSize.y)) : ""
                                  );
 
   }
   else
   {
-    path = re::mock::fmt::printf("size = { %d, %d }", static_cast<int>(fSize.x),  static_cast<int>(fSize.y));
+    path = re::mock::fmt::printf("size = { %d, %d }", stl::roundToInt(fSize.x),  stl::roundToInt(fSize.y));
   }
   auto pos = getPosition();
   if(pos.x == 0 && pos.y == 0)
@@ -626,8 +633,8 @@ std::string Graphics::device2D() const
                                  path);
   else
     return re::mock::fmt::printf("{ offset = { %d, %d }, { %s } }",
-                                 static_cast<int>(pos.x),
-                                 static_cast<int>(pos.y),
+                                 stl::roundToInt(pos.x),
+                                 stl::roundToInt(pos.y),
                                  path);
 }
 
@@ -645,7 +652,7 @@ std::string Graphics::toValueString() const
   else
   {
     auto size = getSize();
-    return fmt::printf("graphics = { %d, %d }", static_cast<int>(size.x),  static_cast<int>(size.y));
+    return fmt::printf("graphics = { %d, %d }", stl::roundToInt(size.x),  stl::roundToInt(size.y));
   }
 }
 

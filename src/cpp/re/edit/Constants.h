@@ -20,6 +20,7 @@
 #define RE_EDIT_CONSTANTS_H
 
 #include <string>
+#include <algorithm>
 #include <imgui.h>
 #include <bitmask_operators.hpp>
 #include <re/mock/fmt.h>
@@ -131,7 +132,7 @@ constexpr int toPixelHeight(int iDeviceHeightRU)
   return k1UPixelSize * static_cast<int>(iDeviceHeightRU);
 }
 
-constexpr int toIntColor(float iColor) { return static_cast<int>(iColor * 255.0f); }
+inline int toIntColor(float iColor) { return static_cast<int>(std::clamp(std::round(iColor * 255.0f), 1.0f, 255.f)); }
 
 namespace fmt {
 template<typename ... Args>

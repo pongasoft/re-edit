@@ -172,6 +172,9 @@ public:
 
   bool copyFromAction(Attribute const *iFromAttribute) override;
 
+protected:
+  inline ImVec2 getOriginalSize() const { return hasTexture() ? fDNZTexture->frameSize() : fSize; }
+
 public:
   ImVec2 fPosition{};
   HitBoundaries fHitBoundaries{};
