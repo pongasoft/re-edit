@@ -258,18 +258,7 @@ void Graphics::editView(AppContext &iCtx,
     ImGui::BeginDisabled(hasSize());
     if(ImGui::MenuItem(ReGui_Prefix(ReGui_Icon_Frames, "Change number of frames")))
       ImGui::OpenPopup(numFramesPopup);
-    ImGui::MenuItem("Edit tint", nullptr, &fEditingTint);
-    if(ImGui::MenuItem("Reset Tint"))
-      iOnTintUpdate(kNoTintColor);
     ImGui::EndDisabled();
-
-    if(ImGui::MenuItem("Reset Size"))
-    {
-      if(hasSize())
-        iOnSizeUpdate(kNoGraphics);
-      else
-        iOnSizeUpdate(getTexture()->frameSize());
-    }
 
     if(ImGui::MenuItem(ReGui_Prefix(ReGui_Icon_ImportImages, "Import")))
     {
@@ -277,6 +266,21 @@ void Graphics::editView(AppContext &iCtx,
       if(textureKey)
         iOnTextureUpdate(*textureKey);
     }
+
+    ImGui::SeparatorText("Editing");
+
+    ImGui::BeginDisabled(hasSize());
+    ImGui::MenuItem("Edit tint", nullptr, &fEditingTint);
+    if(ImGui::MenuItem("Reset Tint"))
+      iOnTintUpdate(kNoTintColor);
+    if(ImGui::MenuItem("Reset Size"))
+    {
+      if(hasSize())
+        iOnSizeUpdate(kNoGraphics);
+      else
+        iOnSizeUpdate(getTexture()->frameSize());
+    }
+    ImGui::EndDisabled();
 
     ImGui::EndPopup();
   }
@@ -337,18 +341,28 @@ void Graphics::editView(AppContext &iCtx,
     }
   }
 
-  auto editedSize = fSize;
-  if(ReGui::InputInt("width", &editedSize.x, 1, static_cast<int>(iCtx.fGrid.width())))
+  static bool kLinkWidthAndHeight{true};
+
+  auto size = fSize;
+  if(ReGui::InputInt("w", &size.x, 1, static_cast<int>(iCtx.fGrid.width())))
   {
-    editedSize.x = std::max(1.0f, editedSize.x);
-    iOnSizeUpdate(editedSize);
+    size.x = std::max(1.0f, size.x);
+    if(kLinkWidthAndHeight)
+      size.y = fSize.y + (size.x - fSize.x);
+    iOnSizeUpdate(size);
   }
 
-  if(ReGui::InputInt("height", &editedSize.y, 1, static_cast<int>(iCtx.fGrid.height())))
+  if(ReGui::InputInt("h", &size.y, 1, static_cast<int>(iCtx.fGrid.height())))
   {
-    editedSize.y = std::max(1.0f, editedSize.y);
-    iOnSizeUpdate(editedSize);
+    size.y = std::max(1.0f, size.y);
+    if(kLinkWidthAndHeight)
+      size.x = fSize.x + (size.y - fSize.y);
+    iOnSizeUpdate(size);
   }
+
+  ImGui::SameLine();
+
+  ImGui::Checkbox("Link", &kLinkWidthAndHeight);
 
   ImGui::EndGroup();
 }
