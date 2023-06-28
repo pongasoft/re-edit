@@ -206,33 +206,6 @@ std::optional<gfx_node> panel_nodes::findNodeByName(std::string const &iName) co
 }
 
 //------------------------------------------------------------------------
-// panel_nodes::getNumFrames
-//------------------------------------------------------------------------
-std::map<std::string, int> panel_nodes::getNumFrames() const
-{
-  std::map<std::string, int> numFrames{};
-  for(auto &[k, node]: fNodes)
-  {
-    if(node.hasKey())
-    {
-      auto key = node.getKey();
-      if(!key.empty() && node.fNumFrames)
-      {
-        auto numFrame2 = numFrames.find(key);
-        if(numFrame2 != numFrames.end())
-        {
-          if(*node.fNumFrames != numFrame2->second)
-            RE_EDIT_LOG_WARNING("Inconsistent number of frames for %s : %d and %d", key, numFrame2->second, *node.fNumFrames);
-        }
-        numFrames[key] = *node.fNumFrames;
-      }
-    }
-  }
-
-  return numFrames;
-}
-
-//------------------------------------------------------------------------
 // panel_nodes::addNode
 //------------------------------------------------------------------------
 void panel_nodes::addNode(std::optional<std::string> const &iName, gfx_node iNode)

@@ -21,6 +21,7 @@
 
 #include "WidgetAttribute.h"
 #include <optional>
+#include <variant>
 
 namespace re::edit {
 
@@ -116,7 +117,8 @@ public:
     return true;
   }
 
-  constexpr ImVec2 getSize() const { return fSize; }
+  inline ImVec2 getSize() const { return hasSize() ? std::get<ImVec2>(fTexture) :
+                                         fSizeOverride ? *fSizeOverride : getTexture()->frameSize(); }
   constexpr ImVec2 getPosition() const { return fPosition; }
   constexpr ImVec2 getTopLeft() const { return fPosition; }
   constexpr ImVec2 getBottomRight() const { return fPosition + getSize(); }
@@ -128,13 +130,14 @@ public:
 
   constexpr void move(ImVec2 const &iDelta) { fPosition = fPosition + iDelta; fEdited = true; }
 
-  inline bool hasTexture() const { return fTexture.has_value(); }
-  inline bool hasSize() const { return !hasTexture(); }
+  constexpr bool hasTexture() const { return std::holds_alternative<Texture::key_t>(fTexture); }
+  constexpr bool hasSize() const { return std::holds_alternative<ImVec2>(fTexture); }
+  constexpr bool hasSizeOverride() const { return fSizeOverride.has_value(); }
   constexpr bool hasTint() const { return fTint != kNoTintColor; }
   constexpr bool isEditingTint() const { return fEditingTint; }
 
   inline Texture const *getTexture() const { RE_EDIT_INTERNAL_ASSERT(fDNZTexture != nullptr); return fDNZTexture.get(); }
-  inline Texture::key_t getTextureKey() const { return fTexture.value(); }
+  inline Texture::key_t getTextureKey() const { return std::get<Texture::key_t>(fTexture); }
   void setTextureKey(Texture::key_t const &iTextureKey);
   void initTextureKey(Texture::key_t const &iTextureKey, std::optional<ImVec2> const &iSize, std::optional<ImVec4> const &iTint);
   void setSize(ImVec2 const &iSize);
@@ -165,7 +168,7 @@ public:
       return l->fPosition == r->fPosition &&
              l->fHitBoundaries == r->fHitBoundaries &&
              l->fTexture == r->fTexture &&
-             l->fSize == r->fSize &&
+             l->fSizeOverride == r->fSizeOverride &&
              l->fTint == r->fTint;
     });
   }
@@ -173,14 +176,13 @@ public:
   bool copyFromAction(Attribute const *iFromAttribute) override;
 
 protected:
-  inline ImVec2 getOriginalSize() const { return hasTexture() ? fDNZTexture->frameSize() : fSize; }
+  inline ImVec2 getOriginalSize() const { return hasTexture() ? fDNZTexture->frameSize() : getSize(); }
 
 public:
   ImVec2 fPosition{};
   HitBoundaries fHitBoundaries{};
   bool fHitBoundariesEnabled{true};
-  std::optional<Texture::key_t> fTexture{};
-  ImVec2 fSize{kNoGraphics};
+  std::variant<ImVec2, Texture::key_t> fTexture{kNoGraphics};
   bool fSizeEnabled{true};
   bool fCheckForOOBError{true};
   std::shared_ptr<Texture> fDNZTexture{};
@@ -189,6 +191,7 @@ public:
 
   bool fEditingTint{false};
   ImVec4 fTint{kNoTintColor};
+  std::optional<ImVec2> fSizeOverride{};
 };
 
 class Background : public String

@@ -136,35 +136,19 @@ void AppContext::initPanels(fs::path const &iDevice2DFile,
   iCancellable->progress("Loading hdgui_2D.lua...");
   auto hdg = lua::HDGui2D::fromFile(iHDGui2DFile);
 
-  auto merge = [](std::map<std::string, int> &m1, std::map<std::string, int> const &m2) {
-    for(auto &[k, numFrame]: m2)
-    {
-      auto numFrame2 = m1.find(k);
-      if(numFrame2 != m1.end())
-      {
-        if(numFrame != numFrame2->second)
-          RE_EDIT_LOG_WARNING("Inconsistent number of frames for %s : %d and %d", k, numFrame2->second, numFrame);
-      }
-      else
-        m1[k] = numFrame;
-    }
-  };
-  std::map<std::string, int> numFrames{};
   iCancellable->progress("Init front panel...");
-  merge(numFrames, fFrontPanel->initPanel(*this, d2d->front(), hdg->front()));
+  fFrontPanel->initPanel(*this, d2d->front(), hdg->front());
 
   iCancellable->progress("Init back panel...");
-  merge(numFrames, fBackPanel->initPanel(*this, d2d->back(), hdg->back()));
+  fBackPanel->initPanel(*this, d2d->back(), hdg->back());
   if(fHasFoldedPanels)
   {
     iCancellable->progress("Init folded front panel...");
-    merge(numFrames, fFoldedFrontPanel->initPanel(*this, d2d->folded_front(), hdg->folded_front()));
+    fFoldedFrontPanel->initPanel(*this, d2d->folded_front(), hdg->folded_front());
 
     iCancellable->progress("Init folded back panel...");
-    merge(numFrames, fFoldedBackPanel->initPanel(*this, d2d->folded_back(), hdg->folded_back()));
+    fFoldedBackPanel->initPanel(*this, d2d->folded_back(), hdg->folded_back());
   }
-  iCancellable->progress("Computing num frames...");
-  fTextureManager->overrideNumFrames(numFrames);
   markEdited();
   iCancellable->progress("Checking for errors...");
   checkForErrors();

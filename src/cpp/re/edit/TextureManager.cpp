@@ -49,6 +49,38 @@ std::shared_ptr<Texture> TextureManager::getTexture(std::string const &iKey) con
 }
 
 //------------------------------------------------------------------------
+// TextureManager::loadTexture
+//------------------------------------------------------------------------
+std::shared_ptr<Texture> TextureManager::loadTexture(FilmStrip::key_t const &iKey, std::optional<int> iNumFrames)
+{
+  if(iKey.empty())
+    return nullptr;
+
+  static auto overrideNumFrames = [](std::shared_ptr<FilmStrip> const &iFilmStrip, std::optional<int> iNumFrames) {
+    if(iNumFrames)
+    {
+      auto previousNumFrames = iFilmStrip->overrideNumFrames(*iNumFrames);
+      if(previousNumFrames != 0 && previousNumFrames != 1 && previousNumFrames != iNumFrames)
+        RE_EDIT_LOG_WARNING("Inconsistent number of frames for %s : %d and %d", iFilmStrip->key(), previousNumFrames, iNumFrames);
+    }
+  };
+
+  auto iter = fTextures.find(iKey);
+  if(iter != fTextures.end())
+  {
+    auto texture = iter->second;
+    overrideNumFrames(texture->getFilmStrip(), iNumFrames);
+    return iter->second;
+  }
+
+  auto filmStrip = fFilmStripMgr->getFilmStrip(iKey);
+  overrideNumFrames(filmStrip, iNumFrames);
+  std::shared_ptr<Texture> texture = updateTexture(createTexture(), filmStrip);
+  fTextures[iKey] = texture;
+  return texture;
+}
+
+//------------------------------------------------------------------------
 // TextureManager::getTexture
 //------------------------------------------------------------------------
 std::shared_ptr<Texture> TextureManager::findTexture(std::string const &iKey) const
@@ -135,17 +167,6 @@ std::shared_ptr<Texture> TextureManager::updateTexture(std::shared_ptr<Texture> 
     populateTexture(iTexture);
 
   return iTexture;
-}
-
-//------------------------------------------------------------------------
-// TextureManager::overrideNumFrames
-//------------------------------------------------------------------------
-void TextureManager::overrideNumFrames(std::map<std::string, int> const &iNumFrames) const
-{
-  for(auto &[k, numFrames]: iNumFrames)
-  {
-    getTexture(k)->fFilmStrip->overrideNumFrames(numFrames);
-  }
 }
 
 //------------------------------------------------------------------------

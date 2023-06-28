@@ -47,8 +47,6 @@ struct panel_nodes
 
   std::map<std::string, gfx_node> fNodes{};
 
-  std::map<std::string, int> getNumFrames() const;
-
   std::optional<gfx_node> findNodeByName(std::string const &iName) const;
 
   void addNode(std::optional<std::string> const &iName, gfx_node iNode);

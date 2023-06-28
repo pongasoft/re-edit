@@ -36,9 +36,9 @@ public:
   std::vector<WidgetDef> const &getAllowedWidgets() const { return fWidgetDefs; }
   inline bool isWidgetAllowed(WidgetType iType) const { return fAllowedWidgetTypes[iType]; }
 
-  std::map<std::string, int> initPanel(AppContext &iCtx,
-                                       std::shared_ptr<lua::panel_nodes> const &iPanelNodes,
-                                       std::shared_ptr<lua::jbox_panel> const &iPanel);
+  void initPanel(AppContext &iCtx,
+                 std::shared_ptr<lua::panel_nodes> const &iPanelNodes,
+                 std::shared_ptr<lua::jbox_panel> const &iPanel);
 
   void beforeRender(AppContext &iCtx);
   void render(AppContext &iCtx);

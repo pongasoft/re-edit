@@ -187,8 +187,12 @@ void Graphics::draw(AppContext &iCtx, ReGui::Canvas &iCanvas, ImU32 iBorderColor
   auto texture = hasTexture() ? getTexture() : nullptr;
   if(texture && texture->isValid())
   {
-    iCanvas.addResizedTexture(texture, fSize, fPosition, fFrameNumber, iBorderColor,
-                              hasTint() ? impl::computeTextureColor(fTint, iXRay) : impl::computeTextureColor(iXRay));
+    if(fSizeOverride)
+      iCanvas.addResizedTexture(texture, *fSizeOverride, fPosition, fFrameNumber, iBorderColor,
+                                hasTint() ? impl::computeTextureColor(fTint, iXRay) : impl::computeTextureColor(iXRay));
+    else
+      iCanvas.addTexture(texture, fPosition, fFrameNumber, iBorderColor,
+                         hasTint() ? impl::computeTextureColor(fTint, iXRay) : impl::computeTextureColor(iXRay));
   }
   else
   {
@@ -344,7 +348,7 @@ void Graphics::editView(AppContext &iCtx,
 
   static bool kLinkWidthAndHeight{true};
 
-  auto size = fSize;
+  auto size = getSize();
   if(ReGui::InputInt("w", &size.x, 1, static_cast<int>(iCtx.fGrid.width())))
   {
     size.x = std::max(1.0f, size.x);
@@ -444,10 +448,13 @@ void Graphics::editView(AppContext &iCtx)
            },
            [this](auto &s) {
              update([this, &s] {
-                      fSize = s;
+                      if(hasTexture())
+                        fSizeOverride = s;
+                      else
+                        fTexture = s;
                     },
                     fmt::printf(fmt::printf("Change %s size", getParent()->getName())),
-                    MergeKey::from(&fSize));
+                    MergeKey::from(&fSizeOverride));
            },
            [this](auto &tint) {
              update([this, &tint] {
@@ -498,15 +505,19 @@ void Graphics::editHitBoundariesView(AppContext &iCtx)
 //------------------------------------------------------------------------
 void Graphics::reset()
 {
-  if(!fTexture)
-    fSize = kNoGraphics;
-  else
-    fTexture = std::nullopt;
+  fTexture = kNoGraphics;
+  if(fSizeOverride)
+    fTexture = *fSizeOverride;
+  else if(fDNZTexture && fDNZTexture->isValid())
+  {
+    fTexture = fDNZTexture->frameSize();
+  }
   fDNZTexture = nullptr;
   fHitBoundaries = {};
   fEdited = true;
   fTint = kNoTintColor;
   fEditingTint = false;
+  fSizeOverride = std::nullopt;
 }
 
 //------------------------------------------------------------------------
@@ -619,13 +630,14 @@ std::string Graphics::device2D() const
                                  texture->key(),
                                  texture->numFrames() > 1 ?  re::mock::fmt::printf(", frames = %d", texture->numFrames()) : "",
                                  hasTint() ?  re::mock::fmt::printf(", re_edit_tint = { %d, %d, %d }", toIntColor(fTint.x), toIntColor(fTint.y), toIntColor(fTint.z)) : "",
-                                 fSize != texture->frameSize() ?  re::mock::fmt::printf(", re_edit_size = { %d, %d }", stl::roundToInt(fSize.x),  stl::roundToInt(fSize.y)) : ""
+                                 fSizeOverride && fSizeOverride != texture->frameSize() ?  re::mock::fmt::printf(", re_edit_size = { %d, %d }", stl::roundToInt(fSizeOverride->x),  stl::roundToInt(fSizeOverride->y)) : ""
                                  );
 
   }
   else
   {
-    path = re::mock::fmt::printf("size = { %d, %d }", stl::roundToInt(fSize.x),  stl::roundToInt(fSize.y));
+    auto size = getSize();
+    path = re::mock::fmt::printf("size = { %d, %d }", stl::roundToInt(size.x),  stl::roundToInt(size.y));
   }
   auto pos = getPosition();
   if(pos.x == 0 && pos.y == 0)
@@ -669,7 +681,7 @@ bool Graphics::copyFromAction(Attribute const *iFromAttribute)
     fDNZTexture = fromAttribute->fDNZTexture;
     fTint = fromAttribute->fTint;
     fEditingTint = fromAttribute->fEditingTint;
-    fSize = fromAttribute->fSize;
+    fSizeOverride = fromAttribute->fSizeOverride;
     fEdited = true;
     return true;
   }
@@ -684,7 +696,7 @@ void Graphics::setTextureKey(Texture::key_t const &iTextureKey)
 {
   fTexture = iTextureKey;
   fDNZTexture = AppContext::GetCurrent().getTexture(iTextureKey);
-  fSize = getTexture()->frameSize();
+  fSizeOverride = std::nullopt;
   fTint = kNoTintColor;
   fEdited = true;
 }
@@ -698,7 +710,7 @@ void Graphics::initTextureKey(Texture::key_t const &iTextureKey,
 {
   fTexture = iTextureKey;
   fDNZTexture = AppContext::GetCurrent().getTexture(iTextureKey);
-  fSize = iSize ? *iSize : getTexture()->frameSize();
+  fSizeOverride = iSize;
   if(iTint)
   {
     fTint = *iTint;
@@ -712,9 +724,10 @@ void Graphics::initTextureKey(Texture::key_t const &iTextureKey,
 //------------------------------------------------------------------------
 void Graphics::setSize(ImVec2 const &iSize)
 {
-  fSize = iSize;
-  fTexture = std::nullopt;
+  fTexture = iSize;
   fDNZTexture.reset();
+  fSizeOverride = std::nullopt;
+  fTint = kNoTintColor;
   fEdited = true;
 }
 

@@ -34,6 +34,7 @@ public:
 
   void init(std::vector<BuiltIns::Def> const &iBuiltIns, std::optional<fs::path> iDirectory = std::nullopt);
 
+  std::shared_ptr<Texture> loadTexture(FilmStrip::key_t const &iKey, std::optional<int> iNumFrames);
   std::shared_ptr<Texture> getTexture(std::string const &iKey) const;
   std::shared_ptr<Texture> findTexture(std::string const &iKey) const;
   std::shared_ptr<Texture> findHDTexture(std::string const &iKey) const;
@@ -44,7 +45,6 @@ public:
   inline std::vector<std::string> getTextureKeys() const { return fFilmStripMgr->getKeys(); };
   inline std::vector<std::string> findTextureKeys(FilmStrip::Filter const &iFilter) const { return fFilmStripMgr->findKeys(iFilter); }
   inline bool checkTextureKeyMatchesFilter(FilmStrip::key_t const &iKey, FilmStrip::Filter const &iFilter) const { return fFilmStripMgr->checkKeyMatchesFilter(iKey, iFilter); }
-  void overrideNumFrames(std::map<std::string, int> const &iNumFrames) const;
   int overrideNumFrames(std::string const &iKey, int iNumFrames) const;
   std::optional<FilmStrip::key_t> importTexture(fs::path const &iTexturePath);
   void importBuiltIns(std::set<FilmStrip::key_t> const &iKeys, UserError *oErrors = nullptr);

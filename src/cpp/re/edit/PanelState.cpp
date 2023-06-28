@@ -38,12 +38,12 @@ PanelState::PanelState(PanelType iPanelType) :
 //------------------------------------------------------------------------
 // PanelState::initPanel
 //------------------------------------------------------------------------
-std::map<std::string, int> PanelState::initPanel(AppContext &iCtx,
-                                                 std::shared_ptr<lua::panel_nodes> const &iPanelNodes,
-                                                 std::shared_ptr<lua::jbox_panel> const &iPanel)
+void PanelState::initPanel(AppContext &iCtx,
+                           std::shared_ptr<lua::panel_nodes> const &iPanelNodes,
+                           std::shared_ptr<lua::jbox_panel> const &iPanel)
 {
   if(iPanelNodes == nullptr || iPanel == nullptr)
-    return {};
+    return;
 
   iCtx.disableUndo();
 
@@ -104,8 +104,12 @@ std::map<std::string, int> PanelState::initPanel(AppContext &iCtx,
       {
         auto key = node->getKey();
         if(!key.empty())
-          widget->initTextureKey(key, node->fOverrideSize,
+        {
+          iCtx.loadTexture(key, node->fNumFrames);
+          widget->initTextureKey(key,
+                                 node->fOverrideSize,
                                  node->fOverrideTint ? std::optional<ImVec4>(ReGui::GetColorImVec4(*node->fOverrideTint)) : std::nullopt);
+        }
         else
           RE_EDIT_LOG_WARNING("Empty node path for widget %s", node->fName);
       }
@@ -133,7 +137,12 @@ std::map<std::string, int> PanelState::initPanel(AppContext &iCtx,
 
       auto key = node.getKey();
       if(!key.empty())
-        widget->setTextureKey(key);
+      {
+        iCtx.loadTexture(key, node.fNumFrames);
+        widget->initTextureKey(key,
+                               node.fOverrideSize,
+                               node.fOverrideTint ? std::optional<ImVec4>(ReGui::GetColorImVec4(*node.fOverrideTint)) : std::nullopt);
+      }
       else
         RE_EDIT_LOG_WARNING("Empty node path for decal %s", name);
 
@@ -144,8 +153,6 @@ std::map<std::string, int> PanelState::initPanel(AppContext &iCtx,
   iCtx.enableUndo();
 
   iCtx.fCurrentPanelState = currentPanelState;
-
-  return iPanelNodes->getNumFrames();
 }
 
 //------------------------------------------------------------------------
