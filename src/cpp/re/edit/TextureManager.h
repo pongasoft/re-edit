@@ -39,8 +39,6 @@ public:
   std::shared_ptr<Texture> findTexture(std::string const &iKey) const;
   std::shared_ptr<Texture> findHDTexture(std::string const &iKey) const;
 
-//  bool loadFilmStrip(char const *iPath, int iNumFrames = 1) { return fFilmStripMgr.maybeAddFilmStrip(iPath, iNumFrames); }
-
   void scanDirectory();
   inline std::vector<std::string> getTextureKeys() const { return fFilmStripMgr->getKeys(); };
   inline std::vector<std::string> findTextureKeys(FilmStrip::Filter const &iFilter) const { return fFilmStripMgr->findKeys(iFilter); }

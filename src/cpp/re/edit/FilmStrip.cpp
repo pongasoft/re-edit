@@ -155,6 +155,37 @@ FilmStripMgr::FilmStripMgr(std::vector<BuiltIns::Def> const &iBuiltIns,
 }
 
 //------------------------------------------------------------------------
+// FilmStripMgr::applyColorFactor
+//------------------------------------------------------------------------
+void FilmStrip::applyColorFactor(ImVec4 const &iColorFactor)
+{
+  auto size = width() * height();
+  auto p = fData->data();
+  for(int i = 0; i < size; i++)
+  {
+    *p = static_cast<data_t>(std::clamp(static_cast<float>(*p) * iColorFactor.x, 0.0f, 255.0f));
+    p++;
+    *p = static_cast<data_t>(std::clamp(static_cast<float>(*p) * iColorFactor.y, 0.0f, 255.0f));
+    p++;
+    *p = static_cast<data_t>(std::clamp(static_cast<float>(*p) * iColorFactor.z, 0.0f, 255.0f));
+    p++;
+    *p = static_cast<data_t>(std::clamp(static_cast<float>(*p) * iColorFactor.w, 0.0f, 255.0f));
+    p++;
+  }
+}
+
+//------------------------------------------------------------------------
+// FilmStrip::clone
+//------------------------------------------------------------------------
+std::unique_ptr<FilmStrip> FilmStrip::clone() const
+{
+  auto size = width() * height() * 4 * sizeof(data_t);
+  auto data = std::make_unique<Data>(static_cast<data_t *>(malloc(size)));
+  std::memcpy(data->data(), fData->data(), size);
+  return std::unique_ptr<FilmStrip>(new FilmStrip(fSource, fWidth, fHeight, std::move(data)));
+}
+
+//------------------------------------------------------------------------
 // FilmStripMgr::overrideNumFrames
 //------------------------------------------------------------------------
 int FilmStrip::overrideNumFrames(int iNumFrames)

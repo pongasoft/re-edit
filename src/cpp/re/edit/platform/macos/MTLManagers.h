@@ -41,9 +41,11 @@ public:
   explicit MTLTexture(MTL::Device *iDevice) : fDevice{iDevice} {}
   ~MTLTexture() override = default;
 
-  void loadOnGPU(std::shared_ptr<FilmStrip> iFilmStrip) override;
-
   inline static int kMaxTextureHeight = 16384;
+
+protected:
+  void doLoadOnGPU(std::shared_ptr<FilmStrip> const &iFilmStrip) const override;
+
 private:
   MTL::Device *fDevice;
 };

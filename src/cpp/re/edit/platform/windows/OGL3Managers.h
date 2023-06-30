@@ -27,31 +27,30 @@ namespace re::edit {
 class OGL3Texture : public Texture
 {
 public:
-  class OGL3Data : public Texture::Data
+  class OGL3GPUData : public Texture::GPUData
   {
   public:
-    OGL3Data(ImTextureID iImTextureID, float iHeight);
-    ~OGL3Data() override;
+    OGL3GPUData(ImTextureID iImTextureID, float iHeight);
+    ~OGL3GPUData() override;
 //    OGL3::Texture *getOGL3Texture() const { return reinterpret_cast<OGL3::Texture *>(fImTextureID); }
   };
 
 public:
   OGL3Texture() = default;
   ~OGL3Texture() override = default;
+
+protected:
+  void doLoadOnGPU(std::shared_ptr<FilmStrip> const &iFilmStrip) const override;
 };
 
 class OGL3TextureManager : public TextureManager
 {
 public:
-  explicit OGL3TextureManager(int iMaxTextureSize);
+   OGL3TextureManager() = default;
   ~OGL3TextureManager() override = default;
 
 protected:
   std::unique_ptr<Texture> createTexture() const override;
-  void populateTexture(std::shared_ptr<Texture> const &iTexture) const override;
-
-private:
-  int fMaxTextureSize;
 };
 
 class OGL3FontManager : public NativeFontManager

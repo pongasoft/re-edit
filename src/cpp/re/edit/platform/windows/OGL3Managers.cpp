@@ -27,15 +27,6 @@
 namespace re::edit {
 
 //------------------------------------------------------------------------
-// OGL3TextureManager::OGL3TextureManager
-//------------------------------------------------------------------------
-OGL3TextureManager::OGL3TextureManager(int iMaxTextureSize) :
-  TextureManager(),
-  fMaxTextureSize{iMaxTextureSize}
-{
-}
-
-//------------------------------------------------------------------------
 // OGL3TextureManager::createTexture
 //------------------------------------------------------------------------
 std::unique_ptr<Texture> OGL3TextureManager::createTexture() const
@@ -44,65 +35,74 @@ std::unique_ptr<Texture> OGL3TextureManager::createTexture() const
 }
 
 //------------------------------------------------------------------------
-// OGL3TextureManager::populateTexture
+// OGL3GPUData::OGL3GPUData
 //------------------------------------------------------------------------
-void OGL3TextureManager::populateTexture(std::shared_ptr<Texture> const &iTexture) const
-{
-  RE_EDIT_ASSERT(iTexture->isValid());
-
-  auto filmStrip = iTexture->getFilmStrip();
-
-  auto const width = filmStrip->width();
-  RE_EDIT_ASSERT(width < fMaxTextureSize);
-
-  auto height = filmStrip->height();
-
-  auto pixels = filmStrip->data();
-
-  do
-  {
-    auto h = std::min(height, fMaxTextureSize);
-
-    GLuint imageTexture;
-    glGenTextures(1, &imageTexture);
-    glBindTexture(GL_TEXTURE_2D, imageTexture);
-
-    // Setup filtering parameters for display
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-//  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); // This is required on WebGL for non power-of-two textures
-//  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE); // Same
-
-    // Upload pixels into texture
-    glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
-    glBindTexture(GL_TEXTURE_2D, 0);
-
-    auto textureID = reinterpret_cast<ImTextureID>(static_cast<intptr_t>(imageTexture));
-
-    auto ogl3Data = std::make_unique<OGL3Texture::OGL3Data>(textureID, static_cast<float>(h));
-
-    iTexture->addData(std::move(ogl3Data));
-
-    height -= h;
-    pixels += 4 * width * h;
-  }
-  while(height != 0);
-}
-
-//------------------------------------------------------------------------
-// OGL3Data::OGL3Data
-//------------------------------------------------------------------------
-OGL3Texture::OGL3Data::OGL3Data(ImTextureID iImTextureID, float iHeight) : Data(iImTextureID, iHeight)
+OGL3Texture::OGL3GPUData::OGL3GPUData(ImTextureID iImTextureID, float iHeight) : GPUData(iImTextureID, iHeight)
 {}
 
 //------------------------------------------------------------------------
-// OGL3Data::~OGL3Data
+// OGL3GPUData::OGL3GPUData
 //------------------------------------------------------------------------
-OGL3Texture::OGL3Data::~OGL3Data()
+OGL3Texture::OGL3GPUData::~OGL3GPUData()
 {
   GLuint imageTexture = static_cast<GLuint>(reinterpret_cast<intptr_t>(fImTextureID));
   glDeleteTextures(1, &imageTexture);
+}
+
+// YP implementation note: including gl/GL.h for this constant results in many compilation errors
+// => redefining here where it is needed
+#define GL_MAX_TEXTURE_SIZE               0x0D33
+
+//------------------------------------------------------------------------
+// OGL3Texture::doLoadOnGPU
+//------------------------------------------------------------------------
+void OGL3Texture::doLoadOnGPU(std::shared_ptr<FilmStrip> const &iFilmStrip) const
+{
+  fGPUData.clear();
+
+  if(iFilmStrip->isValid())
+  {
+    int glMaxTextureSize;
+    glGetIntegerv(GL_MAX_TEXTURE_SIZE, &glMaxTextureSize);
+
+    auto const width = iFilmStrip->width();
+    RE_EDIT_ASSERT(width < glMaxTextureSize);
+
+    auto height = iFilmStrip->height();
+
+    auto pixels = iFilmStrip->data();
+
+    do
+    {
+      auto h = std::min(height, glMaxTextureSize);
+
+      GLuint imageTexture;
+      glGenTextures(1, &imageTexture);
+      glBindTexture(GL_TEXTURE_2D, imageTexture);
+
+      // Setup filtering parameters for display
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+//  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); // This is required on WebGL for non power-of-two textures
+//  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE); // Same
+
+      // Upload pixels into texture
+      glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+      glBindTexture(GL_TEXTURE_2D, 0);
+
+      auto textureID = reinterpret_cast<ImTextureID>(static_cast<intptr_t>(imageTexture));
+
+      auto ogl3Data = std::make_unique<OGL3Texture::OGL3GPUData>(textureID, static_cast<float>(h));
+
+      fGPUData.emplace_back(std::move(ogl3Data));
+
+      height -= h;
+      pixels += 4 * width * h;
+    }
+    while(height != 0);
+  }
+
 }
 
 //------------------------------------------------------------------------

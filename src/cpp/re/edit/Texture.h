@@ -89,11 +89,13 @@ public:
     doDraw(false, iScreenPosition, iSize, iFrameNumber, iBorderColor, iTextureColor);
   }
 
+  void loadOnGPU(std::shared_ptr<FilmStrip> iFilmStrip);
+
   friend class TextureManager;
 
-  virtual void loadOnGPU(std::shared_ptr<FilmStrip> iFilmStrip) = 0;
-
 protected:
+  virtual void doLoadOnGPU(std::shared_ptr<FilmStrip> const &iFilmStrip) const = 0;
+
   void doDraw(bool iAddItem,
               ImVec2 const &iScreenPosition,
               ImVec2 const &iSize,
@@ -101,9 +103,11 @@ protected:
               ImU32 iBorderColor,
               ImU32 iTextureColor) const;
 
+//  void reloadOnGPU() const { doLoadOnGPU(fFilmStrip); }
+
 protected:
   std::shared_ptr<FilmStrip> fFilmStrip{};
-  std::vector<std::unique_ptr<GPUData>> fGPUData{};
+  mutable std::vector<std::unique_ptr<GPUData>> fGPUData{};
 };
 
 struct Icon

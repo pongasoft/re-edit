@@ -59,11 +59,9 @@ class WindowsContext : public re::edit::platform::GLFWContext
 {
 public:
   explicit WindowsContext(std::shared_ptr<re::edit::NativePreferencesManager> iPreferencesManager,
-                          GLFWwindow *iWindow,
-                          int iGLMaxTextureSize) :
+                          GLFWwindow *iWindow) :
     GLFWContext(std::move(iPreferencesManager), iWindow),
-    fGUIThreadID{std::this_thread::get_id()},
-    fGLMaxTextureSize{iGLMaxTextureSize}
+    fGUIThreadID{std::this_thread::get_id()}
   {
     fMainDC = wglGetCurrentDC();
     RE_EDIT_ASSERT(fMainDC != nullptr, "Error %lu in wglGetCurrentDC.", GetLastError());
@@ -85,7 +83,7 @@ public:
 
   std::shared_ptr<re::edit::TextureManager> newTextureManager() const override
   {
-    return std::make_shared<re::edit::OGL3TextureManager>(fGLMaxTextureSize);
+    return std::make_shared<re::edit::OGL3TextureManager>();
   }
 
   std::shared_ptr<re::edit::NativeFontManager> newNativeFontManager() const override
@@ -129,7 +127,6 @@ private:
   HDC fMainDC;
   HGLRC fOGL3SecondaryContext;
   mutable std::mutex fOGL3Mutex;
-  int fGLMaxTextureSize;
 };
 
 static void printInfo(GLFWwindow *iWindow)
@@ -234,12 +231,9 @@ int doMain(int argc, char **argv)
   ImGui_ImplGlfw_InitForOpenGL(window, true);
   ImGui_ImplOpenGL3_Init(glsl_version);
 
-  int glMaxTextureSize;
-  glGetIntegerv(GL_MAX_TEXTURE_SIZE, &glMaxTextureSize);
-
   printInfo(window);
 
-  auto ctx = std::make_shared<WindowsContext>(preferencesManager, window, glMaxTextureSize);
+  auto ctx = std::make_shared<WindowsContext>(preferencesManager, window);
 
   re::edit::Application application{ctx, config};
 

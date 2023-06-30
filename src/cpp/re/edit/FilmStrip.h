@@ -144,6 +144,11 @@ public:
 
     constexpr data_t const *data() const { return fData; }
 
+    friend class FilmStrip;
+
+  protected:
+    constexpr data_t *data() { return fData; }
+
   private:
     data_t *fData{};
   };
@@ -223,6 +228,10 @@ public:
 
   static inline Filter kAllFilter{[] (FilmStrip const &iFilmStrip) { return true; }, "Match all"};
 
+  void applyColorFactor(ImVec4 const &iColorFactor);
+
+  std::unique_ptr<FilmStrip> clone() const;
+
   ~FilmStrip();
 
   friend class FilmStripMgr;
@@ -230,6 +239,7 @@ public:
 private:
   FilmStrip(std::shared_ptr<Source> iSource, char const *iErrorMessage);
   FilmStrip(std::shared_ptr<Source> iSource, int iWidth, int iHeight, std::shared_ptr<Data> iData);
+
 
   static std::unique_ptr<FilmStrip> loadBuiltInCompressedBase85(std::shared_ptr<Source> const &iSource);
 

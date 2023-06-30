@@ -61,6 +61,7 @@ std::unique_ptr<Texture> MTLTextureManager::createTexture() const
 //------------------------------------------------------------------------
 MTLTexture::MTLGPUData::MTLGPUData(ImTextureID iImTextureID, float iHeight) : GPUData(iImTextureID, iHeight)
 {
+//  RE_EDIT_LOG_DEBUG("MTLGPUData(%p)", iImTextureID);
   getMTLTexture()->retain();
 }
 
@@ -69,6 +70,7 @@ MTLTexture::MTLGPUData::MTLGPUData(ImTextureID iImTextureID, float iHeight) : GP
 //------------------------------------------------------------------------
 MTLTexture::MTLGPUData::~MTLGPUData()
 {
+//  RE_EDIT_LOG_DEBUG("~MTLGPUData(%p)", fImTextureID);
   getMTLTexture()->release();
 }
 
@@ -89,19 +91,18 @@ void MTLFontManager::destroyFontsTexture()
 }
 
 //------------------------------------------------------------------------
-// MTLTexture::loadOnGPU
+// MTLTexture::doLoadOnGPU
 //------------------------------------------------------------------------
-void MTLTexture::loadOnGPU(std::shared_ptr<FilmStrip> iFilmStrip)
+void MTLTexture::doLoadOnGPU(std::shared_ptr<FilmStrip> const &iFilmStrip) const
 {
   fGPUData.clear();
-  fFilmStrip = std::move(iFilmStrip);
 
-  if(fFilmStrip->isValid())
+  if(iFilmStrip->isValid())
   {
-    auto const width = fFilmStrip->width();
-    auto height = fFilmStrip->height();
+    auto const width = iFilmStrip->width();
+    auto height = iFilmStrip->height();
 
-    auto pixels = fFilmStrip->data();
+    auto pixels = iFilmStrip->data();
 
     do
     {
@@ -122,7 +123,8 @@ void MTLTexture::loadOnGPU(std::shared_ptr<FilmStrip> iFilmStrip)
 
       height -= h;
       pixels += 4 * width * h;
-    } while(height != 0);
+    }
+    while(height != 0);
   }
 }
 

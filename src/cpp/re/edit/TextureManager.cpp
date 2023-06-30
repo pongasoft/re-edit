@@ -167,6 +167,16 @@ void Texture::ItemFit(ImVec2 const &iSize, int iFrameNumber, ImU32 iBorderColor,
   Item(size * scale, iFrameNumber, iBorderColor, iTextureColor);
 }
 
+
+//------------------------------------------------------------------------
+// Texture::loadOnGPU
+//------------------------------------------------------------------------
+void Texture::loadOnGPU(std::shared_ptr<FilmStrip> iFilmStrip)
+{
+  doLoadOnGPU(iFilmStrip);
+  fFilmStrip = std::move(iFilmStrip);
+}
+
 //------------------------------------------------------------------------
 // Texture::doDraw
 //------------------------------------------------------------------------
@@ -177,6 +187,9 @@ void Texture::doDraw(bool iAddItem,
                      ImU32 iBorderColor,
                      ImU32 iTextureColor) const
 {
+//  if(fGPUData.empty())
+//    reloadOnGPU();
+//
   if(fGPUData.empty())
     return;
 
@@ -258,5 +271,6 @@ void Texture::doDraw(bool iAddItem,
   if(!ReGui::ColorIsTransparent(iBorderColor))
     drawList->AddRect(rect.Min, rect.Max, iBorderColor, 0.0f);
 }
+
 
 }
