@@ -53,51 +53,13 @@ MTLTextureManager::MTLTextureManager(MTL::Device *iDevice) :
 //------------------------------------------------------------------------
 std::unique_ptr<Texture> MTLTextureManager::createTexture() const
 {
-  return std::make_unique<MTLTexture>();
-}
-
-//------------------------------------------------------------------------
-// MTLTextureManager::populateTexture
-//------------------------------------------------------------------------
-void MTLTextureManager::populateTexture(std::shared_ptr<Texture> const &iTexture) const
-{
-  RE_EDIT_ASSERT(iTexture->isValid());
-
-  auto filmStrip = iTexture->getFilmStrip();
-
-  auto const width = filmStrip->width();
-  auto height = filmStrip->height();
-
-  auto pixels = filmStrip->data();
-
-  do
-  {
-    auto h = std::min(height, MTLTexture::kMaxTextureHeight);
-
-    auto desc = MTL::TextureDescriptor::texture2DDescriptor(MTL::PixelFormatRGBA8Unorm,
-                                                            width,
-                                                            h,
-                                                            false);
-
-    auto mtlData = std::make_unique<MTLTexture::MTLData>(fDevice->newTexture(desc), h);
-
-    // copy the texture from memory (filmstrip) to GPU
-    auto region = MTL::Region::Make2D(0, 0, width, h);
-    mtlData->getMTLTexture()->replaceRegion(region, 0, pixels, 4 * width);
-
-    iTexture->addData(std::move(mtlData));
-
-    height -= h;
-    pixels += 4 * width * h;
-  }
-  while(height != 0);
-
+  return std::make_unique<MTLTexture>(fDevice);
 }
 
 //------------------------------------------------------------------------
 // MTLTexture::MTLData::MTLData
 //------------------------------------------------------------------------
-MTLTexture::MTLData::MTLData(ImTextureID iImTextureID, float iHeight) : Data(iImTextureID, iHeight)
+MTLTexture::MTLGPUData::MTLGPUData(ImTextureID iImTextureID, float iHeight) : GPUData(iImTextureID, iHeight)
 {
   getMTLTexture()->retain();
 }
@@ -105,7 +67,7 @@ MTLTexture::MTLData::MTLData(ImTextureID iImTextureID, float iHeight) : Data(iIm
 //------------------------------------------------------------------------
 // MTLTexture::MTLData::MTLData
 //------------------------------------------------------------------------
-MTLTexture::MTLData::~MTLData()
+MTLTexture::MTLGPUData::~MTLGPUData()
 {
   getMTLTexture()->release();
 }
@@ -124,6 +86,44 @@ void MTLFontManager::createFontsTexture()
 void MTLFontManager::destroyFontsTexture()
 {
   ImGui_ImplMetal_DestroyFontsTexture();
+}
+
+//------------------------------------------------------------------------
+// MTLTexture::loadOnGPU
+//------------------------------------------------------------------------
+void MTLTexture::loadOnGPU(std::shared_ptr<FilmStrip> iFilmStrip)
+{
+  fGPUData.clear();
+  fFilmStrip = std::move(iFilmStrip);
+
+  if(fFilmStrip->isValid())
+  {
+    auto const width = fFilmStrip->width();
+    auto height = fFilmStrip->height();
+
+    auto pixels = fFilmStrip->data();
+
+    do
+    {
+      auto h = std::min(height, MTLTexture::kMaxTextureHeight);
+
+      auto desc = MTL::TextureDescriptor::texture2DDescriptor(MTL::PixelFormatRGBA8Unorm,
+                                                              width,
+                                                              h,
+                                                              false);
+
+      auto mtlData = std::make_unique<MTLTexture::MTLGPUData>(fDevice->newTexture(desc), h);
+
+      // copy the texture from memory (filmstrip) to GPU
+      auto region = MTL::Region::Make2D(0, 0, width, h);
+      mtlData->getMTLTexture()->replaceRegion(region, 0, pixels, 4 * width);
+
+      fGPUData.emplace_back(std::move(mtlData));
+
+      height -= h;
+      pixels += 4 * width * h;
+    } while(height != 0);
+  }
 }
 
 }

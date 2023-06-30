@@ -32,13 +32,13 @@ public:
   using key_t = FilmStrip::key_t;
 
 public:
-  class Data
+  class GPUData
   {
   public:
-    Data(ImTextureID iImTextureID, float iHeight) : fImTextureID{iImTextureID}, fHeight{iHeight} {}
-    virtual ~Data() = default;
-    Data(const Data &) = delete;
-    Data &operator=(const Data &) = delete;
+    GPUData(ImTextureID iImTextureID, float iHeight) : fImTextureID{iImTextureID}, fHeight{iHeight} {}
+    virtual ~GPUData() = default;
+    GPUData(const GPUData &) = delete;
+    GPUData &operator=(const GPUData &) = delete;
     constexpr ImTextureID data() const { return fImTextureID; }
 
     friend class Texture;
@@ -89,10 +89,9 @@ public:
     doDraw(false, iScreenPosition, iSize, iFrameNumber, iBorderColor, iTextureColor);
   }
 
-  void addData(std::unique_ptr<Data> iData) { fData.emplace_back(std::move(iData)); }
-  void clearData() { fData.clear(); }
-
   friend class TextureManager;
+
+  virtual void loadOnGPU(std::shared_ptr<FilmStrip> iFilmStrip) = 0;
 
 protected:
   void doDraw(bool iAddItem,
@@ -104,7 +103,7 @@ protected:
 
 protected:
   std::shared_ptr<FilmStrip> fFilmStrip{};
-  std::vector<std::unique_ptr<Data>> fData{};
+  std::vector<std::unique_ptr<GPUData>> fGPUData{};
 };
 
 struct Icon

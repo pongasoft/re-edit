@@ -29,19 +29,23 @@ namespace re::edit {
 class MTLTexture : public Texture
 {
 public:
-  class MTLData : public Texture::Data
+  class MTLGPUData : public Texture::GPUData
   {
   public:
-    MTLData(ImTextureID iImTextureID, float iHeight);
-    ~MTLData() override;
+    MTLGPUData(ImTextureID iImTextureID, float iHeight);
+    ~MTLGPUData() override;
     MTL::Texture *getMTLTexture() const { return reinterpret_cast<MTL::Texture *>(fImTextureID); }
   };
 
 public:
-  MTLTexture() = default;
+  explicit MTLTexture(MTL::Device *iDevice) : fDevice{iDevice} {}
   ~MTLTexture() override = default;
 
+  void loadOnGPU(std::shared_ptr<FilmStrip> iFilmStrip) override;
+
   inline static int kMaxTextureHeight = 16384;
+private:
+  MTL::Device *fDevice;
 };
 
 class MTLTextureManager : public TextureManager
@@ -52,7 +56,6 @@ public:
 
 protected:
   std::unique_ptr<Texture> createTexture() const override;
-  void populateTexture(std::shared_ptr<Texture> const &iTexture) const override;
 
 private:
   MTL::Device *fDevice;

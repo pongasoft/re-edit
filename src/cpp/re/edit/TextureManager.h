@@ -51,9 +51,7 @@ public:
 
 protected:
   virtual std::unique_ptr<Texture> createTexture() const = 0;
-  virtual void populateTexture(std::shared_ptr<Texture> const &iTexture) const = 0;
   void updateTexture(FilmStrip::key_t const &iKey);
-  std::shared_ptr<Texture> updateTexture(std::shared_ptr<Texture> const &iTexture, std::shared_ptr<FilmStrip> const &iFilmStrip) const;
 
 private:
   std::unique_ptr<FilmStripMgr> fFilmStripMgr{};

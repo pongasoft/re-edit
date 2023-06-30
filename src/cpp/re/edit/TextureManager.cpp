@@ -43,8 +43,10 @@ std::shared_ptr<Texture> TextureManager::getTexture(std::string const &iKey) con
   if(iter != fTextures.end())
     return iter->second;
 
-  std::shared_ptr<Texture> texture = updateTexture(createTexture(), fFilmStripMgr->getFilmStrip(iKey));
+  std::shared_ptr<Texture> texture = createTexture();
+  texture->loadOnGPU(fFilmStripMgr->getFilmStrip(iKey));
   fTextures[iKey] = texture;
+
   return texture;
 }
 
@@ -56,27 +58,14 @@ std::shared_ptr<Texture> TextureManager::loadTexture(FilmStrip::key_t const &iKe
   if(iKey.empty())
     return nullptr;
 
-  static auto overrideNumFrames = [](std::shared_ptr<FilmStrip> const &iFilmStrip, std::optional<int> iNumFrames) {
-    if(iNumFrames)
-    {
-      auto previousNumFrames = iFilmStrip->overrideNumFrames(*iNumFrames);
-      if(previousNumFrames != 0 && previousNumFrames != 1 && previousNumFrames != iNumFrames)
-        RE_EDIT_LOG_WARNING("Inconsistent number of frames for %s : %d and %d", iFilmStrip->key(), previousNumFrames, iNumFrames);
-    }
-  };
-
-  auto iter = fTextures.find(iKey);
-  if(iter != fTextures.end())
+  auto texture = getTexture(iKey);
+  if(iNumFrames)
   {
-    auto texture = iter->second;
-    overrideNumFrames(texture->getFilmStrip(), iNumFrames);
-    return iter->second;
+    auto previousNumFrames = texture->getFilmStrip()->overrideNumFrames(*iNumFrames);
+    if(previousNumFrames != 0 && previousNumFrames != 1 && previousNumFrames != iNumFrames)
+      RE_EDIT_LOG_WARNING("Inconsistent number of frames for %s : %d and %d", iKey, previousNumFrames, iNumFrames);
   }
 
-  auto filmStrip = fFilmStripMgr->getFilmStrip(iKey);
-  overrideNumFrames(filmStrip, iNumFrames);
-  std::shared_ptr<Texture> texture = updateTexture(createTexture(), filmStrip);
-  fTextures[iKey] = texture;
   return texture;
 }
 
@@ -92,8 +81,10 @@ std::shared_ptr<Texture> TextureManager::findTexture(std::string const &iKey) co
   auto filmStrip = fFilmStripMgr->findFilmStrip(iKey);
   if(filmStrip)
   {
-    std::shared_ptr<Texture> texture = updateTexture(createTexture(), filmStrip);
+    std::shared_ptr<Texture> texture = createTexture();
+    texture->loadOnGPU(fFilmStripMgr->getFilmStrip(iKey));
     fTextures[iKey] = texture;
+
     return texture;
   }
   else
@@ -150,23 +141,8 @@ void TextureManager::updateTexture(FilmStrip::key_t const &iKey)
   auto iter = fTextures.find(iKey);
   if(iter != fTextures.end())
   {
-    updateTexture(iter->second, fFilmStripMgr->getFilmStrip(iKey));
+    iter->second->loadOnGPU(fFilmStripMgr->getFilmStrip(iKey));
   }
-}
-
-//------------------------------------------------------------------------
-// TextureManager::updateTexture
-//------------------------------------------------------------------------
-std::shared_ptr<Texture> TextureManager::updateTexture(std::shared_ptr<Texture> const &iTexture,
-                                                       std::shared_ptr<FilmStrip> const &iFilmStrip) const
-{
-  iTexture->fFilmStrip = iFilmStrip;
-  iTexture->clearData();
-
-  if(iFilmStrip->isValid())
-    populateTexture(iTexture);
-
-  return iTexture;
 }
 
 //------------------------------------------------------------------------
@@ -201,7 +177,7 @@ void Texture::doDraw(bool iAddItem,
                      ImU32 iBorderColor,
                      ImU32 iTextureColor) const
 {
-  if(fData.empty())
+  if(fGPUData.empty())
     return;
 
   auto const size = ImVec2{iSize.x == 0 ? frameWidth()  : iSize.x, iSize.y == 0 ? frameHeight() : iSize.y};
@@ -222,9 +198,9 @@ void Texture::doDraw(bool iAddItem,
   const auto frameHeight = this->frameHeight();
   const auto frameY = frameHeight * static_cast<float>(iFrameNumber);
 
-  auto data = fData[0].get();
+  auto data = fGPUData[0].get();
 
-  if(fData.size() == 1)
+  if(fGPUData.size() == 1)
   {
     // most frequent use case
     auto height = data->fHeight;
@@ -243,7 +219,7 @@ void Texture::doDraw(bool iAddItem,
     while(startY > data->fHeight)
     {
       startY -= data->fHeight;
-      data = fData[i++].get();
+      data = fGPUData[i++].get();
     }
     auto height = data->fHeight;
     auto endY = startY + frameHeight;
@@ -268,7 +244,7 @@ void Texture::doDraw(bool iAddItem,
       auto rect1 = rect;
       rect1.Max.y = (rect.Max.y - rect.Min.y) * fraction + rect.Min.y;
       drawList->AddImage(data->fImTextureID, rect1.Min, rect1.Max, uv0, uv1, iTextureColor);
-      data = fData[i++].get();
+      data = fGPUData[i++].get();
       height = data->fHeight;
       uv0 = ImVec2(0, 0);
       uv1 = ImVec2(1, heightInData2 / height);
