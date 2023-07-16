@@ -59,22 +59,42 @@ if(WIN32)
   add_compile_options("$<$<CONFIG:RELEASE>:/MT>")
 endif()
 
-# Including glfw
-set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
-set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
-set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
-add_subdirectory(external/glfw/glfw-3.3.8 EXCLUDE_FROM_ALL)
+## Including glfw
+#set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
+#set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+#set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+#add_subdirectory(external/glfw/glfw-3.3.8 EXCLUDE_FROM_ALL)
+#
+## Include stb (for loading png images)
+#add_subdirectory(external/nothings/stb EXCLUDE_FROM_ALL)
 
-# Include stb (for loading png images)
-add_subdirectory(external/nothings/stb EXCLUDE_FROM_ALL)
+#######################################################
+# Including raylib
+#######################################################
+# option(CUSTOMIZE_BUILD "Show options for customizing your Raylib library build." ON)
+if (APPLE)
+  set(OPENGL_VERSION "ES 2.0" CACHE STRING "Forcing ES 2.0 to use angle")
+endif()
+add_subdirectory("${CMAKE_SOURCE_DIR}/external/raysan5/raylib" raylib EXCLUDE_FROM_ALL)
 
+#######################################################
 # Including Dear ImGui
+#######################################################
 add_subdirectory(external/ocornut/imgui EXCLUDE_FROM_ALL)
 
+#######################################################
+# Including rlImGui (ImGui backend)
+#######################################################
+add_subdirectory("${CMAKE_SOURCE_DIR}/external/raylib-extras/rlImGui" rlImGui EXCLUDE_FROM_ALL)
+
+#######################################################
 # Include nativefiledialog (open native file dialog)
+#######################################################
 add_subdirectory(external/btzy/nativefiledialog-extended EXCLUDE_FROM_ALL)
 
+#######################################################
 # Include efsw (cross platform filesystem watcher)
+#######################################################
 add_subdirectory(external/SpartanJ/efsw EXCLUDE_FROM_ALL)
 
 # Using RE SDK version 4.3.0
@@ -111,67 +131,69 @@ string(REPLACE "\\" "\\\\" re-edit_ICON_FILE "${re-edit_ICON_FILE}")
 
 # Defines all the common sources
 set(re-edit_BUILD_SOURCES
-    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/lua/Base.h"
-    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/lua/Base.cpp"
-    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/lua/ConfigParser.h"
-    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/lua/ConfigParser.cpp"
-    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/lua/Device2D.h"
-    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/lua/Device2D.cpp"
-    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/lua/HDGui2D.h"
-    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/lua/HDGui2D.cpp"
-    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/platform/GLFWContext.h"
-    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/platform/GLFWContext.cpp"
-    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/AppContext.h"
-    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/AppContext.hpp"
-    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/AppContext.cpp"
-    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/Application.h"
-    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/Application.cpp"
-    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/BuiltIns.cpp"
-    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/Canvas.h"
-    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/Canvas.cpp"
-    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/Clipboard.h"
-    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/Color.h"
-    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/Color.cpp"
-    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/Config.h"
-    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/Constants.h"
-    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/Dialog.h"
-    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/Dialog.cpp"
-    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/Errors.h"
-    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/FilmStrip.h"
-    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/FilmStrip.cpp"
-    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/FontManager.h"
-    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/FontManager.cpp"
-    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/Grid.h"
-    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/LoggingManager.h"
-    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/LoggingManager.cpp"
-    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/Graphics.h"
-    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/Graphics.cpp"
-    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/NetworkManager.h"
-    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/NetworkManager.cpp"
-    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/Panel.h"
-    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/Panel.cpp"
-    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/PanelActions.cpp"
-    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/PanelState.h"
-    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/PanelState.cpp"
-    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/PreferencesManager.h"
-    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/PreferencesManager.cpp"
-    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/Property.h"
-    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/PropertyManager.cpp"
-    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/ReGui.h"
-    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/ReGui.cpp"
-    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/String.h"
-    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/String.cpp"
-    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/TextureManager.h"
-    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/TextureManager.cpp"
-    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/UndoManager.h"
-    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/UndoManager.cpp"
-    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/Views.h"
-    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/Views.cpp"
-    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/Widget.h"
-    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/Widget.cpp"
-    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/WidgetActions.cpp"
-    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/WidgetAttribute.h"
-    "${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/WidgetAttribute.cpp")
+    "${re-edit_CPP_SRC_DIR}/re/edit/lua/Base.h"
+    "${re-edit_CPP_SRC_DIR}/re/edit/lua/Base.cpp"
+    "${re-edit_CPP_SRC_DIR}/re/edit/lua/ConfigParser.h"
+    "${re-edit_CPP_SRC_DIR}/re/edit/lua/ConfigParser.cpp"
+    "${re-edit_CPP_SRC_DIR}/re/edit/lua/Device2D.h"
+    "${re-edit_CPP_SRC_DIR}/re/edit/lua/Device2D.cpp"
+    "${re-edit_CPP_SRC_DIR}/re/edit/lua/HDGui2D.h"
+    "${re-edit_CPP_SRC_DIR}/re/edit/lua/HDGui2D.cpp"
+    "${re-edit_CPP_SRC_DIR}/re/edit/platform/GLFWContext.h"
+    "${re-edit_CPP_SRC_DIR}/re/edit/platform/GLFWContext.cpp"
+    "${re-edit_CPP_SRC_DIR}/re/edit/AppContext.h"
+    "${re-edit_CPP_SRC_DIR}/re/edit/AppContext.hpp"
+    "${re-edit_CPP_SRC_DIR}/re/edit/AppContext.cpp"
+    "${re-edit_CPP_SRC_DIR}/re/edit/Application.h"
+    "${re-edit_CPP_SRC_DIR}/re/edit/Application.cpp"
+    "${re-edit_CPP_SRC_DIR}/re/edit/BuiltIns.cpp"
+    "${re-edit_CPP_SRC_DIR}/re/edit/Canvas.h"
+    "${re-edit_CPP_SRC_DIR}/re/edit/Canvas.cpp"
+    "${re-edit_CPP_SRC_DIR}/re/edit/Clipboard.h"
+    "${re-edit_CPP_SRC_DIR}/re/edit/Color.h"
+    "${re-edit_CPP_SRC_DIR}/re/edit/Color.cpp"
+    "${re-edit_CPP_SRC_DIR}/re/edit/Config.h"
+    "${re-edit_CPP_SRC_DIR}/re/edit/Constants.h"
+    "${re-edit_CPP_SRC_DIR}/re/edit/Dialog.h"
+    "${re-edit_CPP_SRC_DIR}/re/edit/Dialog.cpp"
+    "${re-edit_CPP_SRC_DIR}/re/edit/Errors.h"
+    "${re-edit_CPP_SRC_DIR}/re/edit/FilmStrip.h"
+    "${re-edit_CPP_SRC_DIR}/re/edit/FilmStrip.cpp"
+    "${re-edit_CPP_SRC_DIR}/re/edit/FontManager.h"
+    "${re-edit_CPP_SRC_DIR}/re/edit/FontManager.cpp"
+    "${re-edit_CPP_SRC_DIR}/re/edit/Grid.h"
+    "${re-edit_CPP_SRC_DIR}/re/edit/LoggingManager.h"
+    "${re-edit_CPP_SRC_DIR}/re/edit/LoggingManager.cpp"
+    "${re-edit_CPP_SRC_DIR}/re/edit/Graphics.h"
+    "${re-edit_CPP_SRC_DIR}/re/edit/Graphics.cpp"
+    "${re-edit_CPP_SRC_DIR}/re/edit/NetworkManager.h"
+    "${re-edit_CPP_SRC_DIR}/re/edit/NetworkManager.cpp"
+    "${re-edit_CPP_SRC_DIR}/re/edit/Panel.h"
+    "${re-edit_CPP_SRC_DIR}/re/edit/Panel.cpp"
+    "${re-edit_CPP_SRC_DIR}/re/edit/PanelActions.cpp"
+    "${re-edit_CPP_SRC_DIR}/re/edit/PanelState.h"
+    "${re-edit_CPP_SRC_DIR}/re/edit/PanelState.cpp"
+    "${re-edit_CPP_SRC_DIR}/re/edit/PreferencesManager.h"
+    "${re-edit_CPP_SRC_DIR}/re/edit/PreferencesManager.cpp"
+    "${re-edit_CPP_SRC_DIR}/re/edit/Property.h"
+    "${re-edit_CPP_SRC_DIR}/re/edit/PropertyManager.cpp"
+    "${re-edit_CPP_SRC_DIR}/re/edit/ReGui.h"
+    "${re-edit_CPP_SRC_DIR}/re/edit/ReGui.cpp"
+    "${re-edit_CPP_SRC_DIR}/re/edit/String.h"
+    "${re-edit_CPP_SRC_DIR}/re/edit/String.cpp"
+    "${re-edit_CPP_SRC_DIR}/re/edit/TextureManager.h"
+    "${re-edit_CPP_SRC_DIR}/re/edit/TextureManager.cpp"
+    "${re-edit_CPP_SRC_DIR}/re/edit/UIContext.h"
+    "${re-edit_CPP_SRC_DIR}/re/edit/UIContext.cpp"
+    "${re-edit_CPP_SRC_DIR}/re/edit/UndoManager.h"
+    "${re-edit_CPP_SRC_DIR}/re/edit/UndoManager.cpp"
+    "${re-edit_CPP_SRC_DIR}/re/edit/Views.h"
+    "${re-edit_CPP_SRC_DIR}/re/edit/Views.cpp"
+    "${re-edit_CPP_SRC_DIR}/re/edit/Widget.h"
+    "${re-edit_CPP_SRC_DIR}/re/edit/Widget.cpp"
+    "${re-edit_CPP_SRC_DIR}/re/edit/WidgetActions.cpp"
+    "${re-edit_CPP_SRC_DIR}/re/edit/WidgetAttribute.h"
+    "${re-edit_CPP_SRC_DIR}/re/edit/WidgetAttribute.cpp")
 
 set(VERSION_DIR "${CMAKE_BINARY_DIR}/generated")
 configure_file("${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/version.h.in" "${VERSION_DIR}/version.h")
@@ -182,12 +204,11 @@ set(RE_EDIT_FONTS_DIR "${CMAKE_CURRENT_LIST_DIR}/external/fonts")
 # Defines the macos main
 if(APPLE)
   list(APPEND re-edit_BUILD_SOURCES
-      "${re-edit_CPP_SRC_DIR}/re/edit/platform/macos/MTLManagers.cpp"
       "${re-edit_CPP_SRC_DIR}/re/edit/platform/macos/MacOSNetworkManager.mm"
       "${re-edit_CPP_SRC_DIR}/re/edit/platform/macos/MacOSMultipleInstanceManager.mm"
       "${re-edit_CPP_SRC_DIR}/re/edit/platform/macos/NSUserDefaultsManager.mm"
       )
-  set(re-edit_MAIN_SRC "${re-edit_CPP_SRC_DIR}/re/edit/platform/macos/main.cpp" "${re-edit_CPP_SRC_DIR}/re/edit/platform/macos/metal.cpp")
+  set(re-edit_MAIN_SRC "${re-edit_CPP_SRC_DIR}/re/edit/platform/macos/main.cpp")
 elseif(WIN32)
   list(APPEND re-edit_BUILD_SOURCES
       "${re-edit_CPP_SRC_DIR}/re/edit/platform/windows/OGL3Managers.cpp"
@@ -195,7 +216,7 @@ elseif(WIN32)
       "${re-edit_CPP_SRC_DIR}/re/edit/platform/windows/WindowsMultipleInstanceManager.cpp"
       "${re-edit_CPP_SRC_DIR}/re/edit/platform/windows/WindowsNetworkManager.cpp"
       )
-  set(re-edit_MAIN_SRC "${re-edit_CPP_SRC_DIR}/re/edit/platform/windows/main.cpp" "${re-edit_RESOURCES_DIR}/re-edit.rc")
+  set(re-edit_MAIN_SRC "${re-edit_RESOURCES_DIR}/re-edit.rc")
   set(re-edit_LINK_LIBRARIES "winhttp")
 endif()
 
@@ -208,7 +229,7 @@ target_include_directories("${target}_lib" PUBLIC
     "${RE_EDIT_FONTS_DIR}/includes"
     "${RE_EDIT_FONTS_DIR}/src"
     )
-target_link_libraries("${target}_lib" PUBLIC imgui stb-image re-mock nfd efsw "${re-edit_LINK_LIBRARIES}")
+target_link_libraries("${target}_lib" PUBLIC raylib imgui rlImGui re-mock nfd efsw "${re-edit_LINK_LIBRARIES}")
 target_compile_definitions("${target}_lib" PUBLIC ENABLE_RE_EDIT_INTERNAL_ASSERT=1)
 
 # Build the executable
@@ -225,9 +246,15 @@ if(APPLE)
       MACOSX_BUNDLE_ICON_NAME "AppIcon"
       MACOSX_BUNDLE_COPYRIGHT "© 2023 pongasoft"
       MACOSX_BUNDLE_INFO_PLIST "${CMAKE_SOURCE_DIR}/cmake/MacOSXBundleInfo.plist.in"
+      INSTALL_RPATH "@executable_path/../Frameworks"
       )
   target_sources(${target} PRIVATE "src/resources/re-edit.icns")
   set_source_files_properties("src/resources/re-edit.icns" PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
+
+  # link with google angle which implements the old/deprecated macOS OpenGL API to use metal
+  set(GOOGLE_ANGLE_DIR "${CMAKE_CURRENT_LIST_DIR}/external/google/angle")
+  list(APPEND google_angle_libs "${GOOGLE_ANGLE_DIR}/macOS/libEGL.dylib" "${GOOGLE_ANGLE_DIR}/macOS/libGLESv2.dylib")
+  target_link_libraries(${target} PRIVATE "${google_angle_libs}")
 endif()
 
 macro(cmake_option_to_python_bool cmake_opt python_opt)
@@ -252,6 +279,17 @@ install(
     TARGETS "${target}"
     DESTINATION "."
 )
+
+if (APPLE)
+  # installs the libraries under Content/Frameworks
+  install(
+      FILES "${google_angle_libs}"
+      DESTINATION "$<TARGET_BUNDLE_DIR_NAME:${target}>/Contents/Frameworks"
+  )
+
+  # TODO: if using the Xcode generator, the executable needs to be resigned...
+
+endif()
 
 #######################################################
 # Archive

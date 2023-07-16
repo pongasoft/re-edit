@@ -63,17 +63,6 @@ private:
   MTL::Device *fDevice;
 };
 
-class MTLFontManager : public NativeFontManager
-{
-public:
-  explicit MTLFontManager(MTL::Device *iDevice) : NativeFontManager{}, fDevice{iDevice} {}
-  void createFontsTexture() override;
-  void destroyFontsTexture() override;
-
-private:
-  MTL::Device *fDevice;
-};
-
 }
 
 #endif //RE_EDIT_MTL_TEXTURE_MANAGER_H

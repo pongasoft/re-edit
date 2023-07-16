@@ -20,7 +20,6 @@
 #define RE_EDIT_FILMSTRIP_H
 
 #include <string>
-#include <stb_image.h>
 #include <map>
 #include <set>
 #include <memory>
@@ -29,10 +28,59 @@
 #include <variant>
 #include <imgui.h>
 #include "fs.h"
+#include <raylib.h>
 #include "Constants.h"
 #include "Errors.h"
 
 namespace re::edit {
+
+struct RLImage
+{
+  using data_t = unsigned char;
+
+  RLImage() : fImage{
+    nullptr,
+    100,
+    100,
+    PIXELFORMAT_UNCOMPRESSED_R8G8B8A8
+  } {}
+
+  explicit RLImage(Image iImage) : fImage{iImage} { ensureProperFormat(); }
+
+  ~RLImage() { UnloadImage(fImage); }
+
+
+  explicit RLImage(RLImage &&iOther) noexcept : fImage{iOther.fImage}
+  {
+    iOther.fImage.data = nullptr;
+    ensureProperFormat();
+  };
+
+  RLImage(RLImage const &) = delete;
+  RLImage &operator=(RLImage const &) = delete;
+
+  RLImage &operator=(RLImage &&iOther) noexcept
+  {
+    fImage = iOther.fImage;
+    iOther.fImage.data = nullptr;
+    ensureProperFormat();
+    return *this;
+  }
+
+  constexpr bool isValid() const { return fImage.data != nullptr; }
+  constexpr int width() const { return fImage.width; }
+  constexpr int height() const { return fImage.height; }
+  constexpr data_t *data() const { return static_cast<data_t *>(fImage.data); }
+
+  // TODO remove this
+  constexpr Image const &rlImage() const { return fImage; }
+
+private:
+  void ensureProperFormat() { ImageFormat(&fImage, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8); }
+
+private:
+  Image fImage;
+};
 
 class FilmStrip;
 
@@ -135,23 +183,6 @@ public:
   };
 
 public:
-  using data_t = stbi_uc;
-
-  struct Data
-  {
-    explicit Data(data_t *iData) : fData{iData} {}
-    ~Data();
-
-    constexpr data_t const *data() const { return fData; }
-
-    friend class FilmStrip;
-
-  protected:
-    constexpr data_t *data() { return fData; }
-
-  private:
-    data_t *fData{};
-  };
 
   inline key_t const &key() const { return fSource->fKey; };
   constexpr bool hasPath() const { return fSource->hasPath(); }
@@ -160,16 +191,19 @@ public:
 
   constexpr std::string const &errorMessage() const { return fErrorMessage; };
 
-  inline bool isValid() const { return fData != nullptr; }
+  constexpr bool isValid() const { return fImage.isValid(); }
 
-  constexpr int width() const { return fWidth; }
-  constexpr int height() const { return fHeight; }
+  constexpr int width() const { return fImage.width(); }
+  constexpr int height() const { return fImage.height(); }
   constexpr int numFrames() const { return fNumFrames > 0 ? fNumFrames : fSource->fNumFrames; }
 
-  constexpr int frameWidth() const { return fWidth; }
-  constexpr int frameHeight() const { return fHeight / numFrames(); }
+  constexpr int frameWidth() const { return width(); }
+  constexpr int frameHeight() const { return height() / numFrames(); }
 
-  constexpr data_t const *data() const { return fData->data(); }
+  constexpr RLImage::data_t const *data() const { return fImage.data(); }
+
+  // TODO remove this
+  constexpr Image const &rlImage() const { return fImage.rlImage(); }
 
   int overrideNumFrames(int iNumFrames);
 
@@ -228,9 +262,7 @@ public:
 
   static inline Filter kAllFilter{[] (FilmStrip const &iFilmStrip) { return true; }, "Match all"};
 
-  void applyColorFactor(ImVec4 const &iColorFactor);
-
-  std::unique_ptr<FilmStrip> clone() const;
+//  std::unique_ptr<FilmStrip> clone() const;
 
   ~FilmStrip();
 
@@ -238,17 +270,14 @@ public:
 
 private:
   FilmStrip(std::shared_ptr<Source> iSource, char const *iErrorMessage);
-  FilmStrip(std::shared_ptr<Source> iSource, int iWidth, int iHeight, std::shared_ptr<Data> iData);
-
+  FilmStrip(std::shared_ptr<Source> iSource, RLImage &&iImage);
 
   static std::unique_ptr<FilmStrip> loadBuiltInCompressedBase85(std::shared_ptr<Source> const &iSource);
 
 private:
   std::shared_ptr<Source> fSource;
+  RLImage fImage;
   int fNumFrames{0};
-  int fWidth{100};
-  int fHeight{100};
-  std::shared_ptr<Data> fData{};
 
   std::string fErrorMessage;
 };

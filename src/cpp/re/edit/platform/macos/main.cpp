@@ -3,58 +3,31 @@
 // If you are new to Dear ImGui, read documentation from the docs/ folder + read the top of imgui.cpp.
 // Read online: https://github.com/ocornut/imgui/tree/master/docs
 
-#include <imgui.h>
-#include <backends/imgui_impl_glfw.h>
-#include <backends/imgui_impl_metal.h>
-#include <backends/regui_impl_metal.h>
+#include <raylib.h>
+#include <rlImGui.h>
 #include <cstdio>
 #include <cstdlib>
 #include "../GLFWContext.h"
-#include "MTLManagers.h"
 #include "NSUserDefaultsManager.h"
 #include "MacOSNetworkManager.h"
 #include "MacOSMultipleInstanceManager.h"
 #include "nfd.h"
+#include "../../UIContext.h"
 #include <version.h>
-
-
-#define GLFW_INCLUDE_NONE
-#define GLFW_EXPOSE_NATIVE_COCOA
-
-#include <GLFW/glfw3.h>
-#include <GLFW/glfw3native.h>
-
-#define NS_PRIVATE_IMPLEMENTATION
-#define MTL_PRIVATE_IMPLEMENTATION
-
-#import <Metal/Metal.hpp>
-
-#import <Metal/MTLPixelFormat.hpp>
-
-#define CA_PRIVATE_IMPLEMENTATION
-
-#include "QuartzCore/QuartzCore.hpp"
 
 class MacOsContext : public re::edit::platform::GLFWContext
 {
 public:
   explicit MacOsContext(std::shared_ptr<re::edit::NativePreferencesManager> iPreferencesManager,
-                        GLFWwindow *iWindow,
-                        MTL::Device *iDevice) :
-    GLFWContext(std::move(iPreferencesManager), iWindow),
-    fDevice{iDevice}
+                        GLFWwindow *iWindow) :
+    GLFWContext(std::move(iPreferencesManager), iWindow)
     {
       // empty
     }
 
   std::shared_ptr<re::edit::TextureManager> newTextureManager() const override
   {
-    return std::make_shared<re::edit::MTLTextureManager>(fDevice);
-  }
-
-  std::shared_ptr<re::edit::NativeFontManager> newNativeFontManager() const override
-  {
-    return std::make_shared<re::edit::MTLFontManager>(fDevice);
+    return std::make_shared<re::edit::TextureManager>();
   }
 
   std::shared_ptr<re::edit::NetworkManager> newNetworkManager() const override
@@ -71,30 +44,37 @@ public:
   {
     std::system(re::mock::fmt::printf("open \"%s\"", iURL).c_str());
   }
-
-private:
-  MTL::Device *fDevice;
 };
 
 int doMain(int argc, char **argv)
 {
   fprintf(stdout, "RE Edit - %s | %s\n", re::edit::kFullVersion, re::edit::kGitVersion);
-  // Setup Dear ImGui context
-  IMGUI_CHECKVERSION();
-  ImGui::CreateContext();
+
+  re::edit::UIContext uiContext{};
+  re::edit::UIContext::kCurrent = &uiContext;
+
+//  glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+//  glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_TRUE);
+
+  SetWindowState(FLAG_WINDOW_HIGHDPI);
+
+  InitWindow(re::edit::config::kWelcomeWindowWidth,
+             re::edit::config::kWelcomeWindowHeight,
+             re::edit::config::kWelcomeWindowTitle);
+
+  SetWindowState(FLAG_WINDOW_RESIZABLE);
+
+  rlImGuiSetup(true); // true is for Dark Style
+
   ImGuiIO &io = ImGui::GetIO();
 
   // enable docking
   io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
   io.ConfigDockingWithShift = false;
 
-  // Setup style
-  ImGui::StyleColorsDark();
-  //ImGui::StyleColorsClassic();
-
-  // init glfw
-  if(!re::edit::platform::GLFWContext::initGLFW())
-    return 1;
+//  // init glfw
+//  if(!re::edit::platform::GLFWContext::initGLFW())
+//    return 1;
 
   auto preferencesManager = std::make_shared<re::edit::NSUserDefaultsManager>();
 
@@ -110,33 +90,7 @@ int doMain(int argc, char **argv)
     config.fGlobalConfig.fSaveEnabled = false;
   }
 
-  // Create window with graphics context
-  glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-  glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_TRUE);
-  GLFWwindow *window = glfwCreateWindow(re::edit::config::kWelcomeWindowWidth,
-                                        re::edit::config::kWelcomeWindowHeight,
-                                        re::edit::config::kWelcomeWindowTitle,
-                                        nullptr,
-                                        nullptr);
-  if(window == nullptr)
-    return 1;
-
-  auto device = MTL::CreateSystemDefaultDevice();
-  auto commandQueue = device->newCommandQueue();
-
-  // Setup Platform/Renderer backends
-  ImGui_ImplGlfw_InitForOpenGL(window, true);
-  ImGui_ImplMetal_Init(device);
-
-  auto nswin = glfwGetCocoaWindow(window);
-  auto layer = ImGui_ImplMetal_Layer();
-  ImGui_ImplMetal_Layer_SetDevice(layer, device);
-  ImGui_ImplMetal_Layer_SetPixelFormat(layer, MTL::PixelFormatBGRA8Unorm);
-  ImGui_ImplMetal_NSWindow_SetLayer(nswin, layer);
-
-  auto renderPassDescriptor = MTL::RenderPassDescriptor::alloc()->init();
-
-  auto ctx = std::make_shared<MacOsContext>(preferencesManager, window, device);
+  auto ctx = std::make_shared<MacOsContext>(preferencesManager, nullptr);
 
   re::edit::Application application{ctx, config};
 
@@ -150,71 +104,44 @@ int doMain(int argc, char **argv)
   ctx->setupCallbacks(&application);
   ctx->centerWindow();
 
+//  SetTargetFPS(60);
+
   // Main loop
   while(application.running())
   {
-    NS::AutoreleasePool *pPool = NS::AutoreleasePool::alloc()->init();
+    BeginDrawing();
 
+    //       ca0->setClearColor(MTL::ClearColor::Make(application.clear_color[0] * application.clear_color[3],
+    //                                               application.clear_color[1] * application.clear_color[3],
+    //                                               application.clear_color[2] * application.clear_color[3],
+    //                                               application.clear_color[3]));
+//    float clear_color[4] = {0.55f, 0.55f, 0.55f, 1.00f};
+    ClearBackground(Color{127, 127, 127, 255});
+
+    // Execute all actions requiring the ui thread
+    uiContext.processUIActions();
+
+    // Before New Frame
+    if(application.newFrame())
     {
-      // Poll and handle events (inputs, window resize, etc.)
-      // You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to tell if dear imgui wants to use your inputs.
-      // - When io.WantCaptureMouse is true, do not dispatch mouse input data to your main application, or clear/overwrite your copy of the mouse data.
-      // - When io.WantCaptureKeyboard is true, do not dispatch keyboard input data to your main application, or clear/overwrite your copy of the keyboard data.
-      // Generally you may always pass all inputs to dear imgui, and hide them from your application based on those two flags.
-      glfwPollEvents();
-
-      int width, height;
-      glfwGetFramebufferSize(window, &width, &height);
-      ImGui_ImplMetal_Layer_SetDrawableSize(layer, width, height);
-      auto drawable = ImGui_ImplMetal_Layer_GetNextDrawable(layer);
-
-      auto commandBuffer = commandQueue->commandBuffer();
-      auto ca0 = renderPassDescriptor->colorAttachments()->object(0);
-      ca0->setClearColor(MTL::ClearColor::Make(application.clear_color[0] * application.clear_color[3],
-                                               application.clear_color[1] * application.clear_color[3],
-                                               application.clear_color[2] * application.clear_color[3],
-                                               application.clear_color[3]));
-      ca0->setTexture(drawable->texture());
-      ca0->setLoadAction(MTL::LoadActionClear);
-      ca0->setStoreAction(MTL::StoreActionStore);
-      auto renderEncoder = commandBuffer->renderCommandEncoder(renderPassDescriptor);
-      renderEncoder->pushDebugGroup(NS::String::string("re-edit", NS::ASCIIStringEncoding));
-
-      // Before New Frame
-      if(application.newFrame())
+      rlImGuiBegin();
+      // Main rendering
+      if(application.render())
       {
-        // Start the Dear ImGui frame
-        ImGui_ImplMetal_NewFrame(renderPassDescriptor);
-        ImGui_ImplGlfw_NewFrame();
-        ImGui::NewFrame();
-
-        // Main rendering
-        if(application.render())
-        {
-          // Rendering
-          ImGui::Render();
-          ImGui_ImplMetal_RenderDrawData(ImGui::GetDrawData(), commandBuffer, renderEncoder);
-        }
+        // Rendering
+        rlImGuiEnd();
       }
-
-      renderEncoder->popDebugGroup();
-      renderEncoder->endEncoding();
-
-      commandBuffer->presentDrawable(drawable);
-      commandBuffer->commit();
     }
-    pPool->release();
+
+    EndDrawing();
   }
 
   // Cleanup
-  ImGui_ImplMetal_Shutdown();
-  ImGui_ImplGlfw_Shutdown();
-  ImGui::DestroyContext();
+  rlImGuiShutdown();
 
   NFD_Quit();
 
-  glfwDestroyWindow(window);
-  glfwTerminate();
+  CloseWindow();
 
   auto const res = application.hasException() ? 1 : 0;
 

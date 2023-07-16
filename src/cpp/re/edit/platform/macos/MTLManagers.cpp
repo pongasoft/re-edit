@@ -75,22 +75,6 @@ MTLTexture::MTLGPUData::~MTLGPUData()
 }
 
 //------------------------------------------------------------------------
-// MTLFontManager::createFontsTexture
-//------------------------------------------------------------------------
-void MTLFontManager::createFontsTexture()
-{
-  ImGui_ImplMetal_CreateFontsTexture(fDevice);
-}
-
-//------------------------------------------------------------------------
-// MTLFontManager::destroyFontsTexture
-//------------------------------------------------------------------------
-void MTLFontManager::destroyFontsTexture()
-{
-  ImGui_ImplMetal_DestroyFontsTexture();
-}
-
-//------------------------------------------------------------------------
 // MTLTexture::doLoadOnGPU
 //------------------------------------------------------------------------
 void MTLTexture::doLoadOnGPU(std::shared_ptr<FilmStrip> const &iFilmStrip) const

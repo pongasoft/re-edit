@@ -21,6 +21,8 @@
 #include <regex>
 #include <fstream>
 
+extern "C" const char *stbi_failure_reason(void);
+
 namespace re::edit {
 
 namespace BuiltIns {
@@ -38,9 +40,7 @@ static unsigned int stb_decompress(unsigned char* output, const unsigned char* i
 //------------------------------------------------------------------------
 FilmStrip::FilmStrip(std::shared_ptr<Source> iSource, char const *iErrorMessage) :
   fSource{std::move(iSource)},
-  fWidth{},
-  fHeight{},
-  fData{},
+  fImage{},
   fErrorMessage{iErrorMessage}
 {
 //  RE_EDIT_LOG_DEBUG("%p | Error: FilmStrip::FilmStrip(%s) : %s", this, fSource->fKey, iErrorMessage);
@@ -49,11 +49,9 @@ FilmStrip::FilmStrip(std::shared_ptr<Source> iSource, char const *iErrorMessage)
 //------------------------------------------------------------------------
 // FilmStrip::FilmStrip
 //------------------------------------------------------------------------
-FilmStrip::FilmStrip(std::shared_ptr<Source> iSource, int iWidth, int iHeight, std::shared_ptr<Data> iData) :
+FilmStrip::FilmStrip(std::shared_ptr<Source> iSource, RLImage &&iImage) :
   fSource{std::move(iSource)},
-  fWidth{iWidth},
-  fHeight{iHeight},
-  fData{std::move(iData)},
+  fImage{std::move(iImage)},
   fErrorMessage{}
 {
 //  RE_EDIT_LOG_DEBUG("%p | FilmStrip::FilmStrip(%s)", this, fSource->fKey);
@@ -65,15 +63,6 @@ FilmStrip::FilmStrip(std::shared_ptr<Source> iSource, int iWidth, int iHeight, s
 FilmStrip::~FilmStrip()
 {
 //  RE_EDIT_LOG_DEBUG("%p | ~FilmStrip::FilmStrip(%s)", this, fSource->fKey);
-}
-
-//------------------------------------------------------------------------
-// FilmStrip::Data::~Data
-//------------------------------------------------------------------------
-FilmStrip::Data::~Data()
-{
-  stbi_image_free(fData);
-  fData = nullptr;
 }
 
 namespace impl {
@@ -105,10 +94,9 @@ std::vector<unsigned char> loadCompressedBase85(char const *iCompressedBase85)
 std::unique_ptr<FilmStrip> FilmStrip::loadBuiltInCompressedBase85(std::shared_ptr<Source> const &iSource)
 {
   auto decompressedData = impl::loadCompressedBase85(iSource->getBuiltIn().fCompressedDataBase85);
-  int width, height, channels;
-  auto data = stbi_load_from_memory(decompressedData.data(), static_cast<int>(decompressedData.size()), &width, &height, &channels, 4);
-  RE_EDIT_INTERNAL_ASSERT(data != nullptr, "%s", stbi_failure_reason());
-  return std::unique_ptr<FilmStrip>(new FilmStrip(std::move(iSource), width, height, std::make_unique<Data>(data)));
+  RLImage image{LoadImageFromMemory(".png", decompressedData.data(), static_cast<int>(decompressedData.size()))};
+  RE_EDIT_INTERNAL_ASSERT(image.isValid(), "%s", stbi_failure_reason());
+  return std::unique_ptr<FilmStrip>(new FilmStrip(iSource, std::move(image)));
 }
 
 //------------------------------------------------------------------------
@@ -120,11 +108,10 @@ std::unique_ptr<FilmStrip> FilmStrip::load(std::shared_ptr<Source> const &iSourc
 
   if(iSource->hasPath())
   {
-    int width, height, channels;
-    auto data = stbi_load(iSource->getPath().string().c_str(), &width, &height, &channels, 4);
-    if(data)
+    RLImage image{LoadImage(iSource->getPath().string().c_str())};
+    if(image.isValid())
     {
-      return std::unique_ptr<FilmStrip>(new FilmStrip(iSource, width, height, std::make_unique<Data>(data)));
+      return std::unique_ptr<FilmStrip>(new FilmStrip(iSource, std::move(image)));
     }
     else
     {
@@ -154,36 +141,16 @@ FilmStripMgr::FilmStripMgr(std::vector<BuiltIns::Def> const &iBuiltIns,
   }
 }
 
-//------------------------------------------------------------------------
-// FilmStripMgr::applyColorFactor
-//------------------------------------------------------------------------
-void FilmStrip::applyColorFactor(ImVec4 const &iColorFactor)
-{
-  auto size = width() * height();
-  auto p = fData->data();
-  for(int i = 0; i < size; i++)
-  {
-    *p = static_cast<data_t>(std::clamp(static_cast<float>(*p) * iColorFactor.x, 0.0f, 255.0f));
-    p++;
-    *p = static_cast<data_t>(std::clamp(static_cast<float>(*p) * iColorFactor.y, 0.0f, 255.0f));
-    p++;
-    *p = static_cast<data_t>(std::clamp(static_cast<float>(*p) * iColorFactor.z, 0.0f, 255.0f));
-    p++;
-    *p = static_cast<data_t>(std::clamp(static_cast<float>(*p) * iColorFactor.w, 0.0f, 255.0f));
-    p++;
-  }
-}
-
-//------------------------------------------------------------------------
-// FilmStrip::clone
-//------------------------------------------------------------------------
-std::unique_ptr<FilmStrip> FilmStrip::clone() const
-{
-  auto size = width() * height() * 4 * sizeof(data_t);
-  auto data = std::make_unique<Data>(static_cast<data_t *>(malloc(size)));
-  std::memcpy(data->data(), fData->data(), size);
-  return std::unique_ptr<FilmStrip>(new FilmStrip(fSource, fWidth, fHeight, std::move(data)));
-}
+////------------------------------------------------------------------------
+//// FilmStrip::clone
+////------------------------------------------------------------------------
+//std::unique_ptr<FilmStrip> FilmStrip::clone() const
+//{
+//  auto size = width() * height() * 4 * sizeof(data_t);
+//  auto data = std::make_unique<Data>(static_cast<data_t *>(malloc(size)));
+//  std::memcpy(data->data(), fData->data(), size);
+//  return std::unique_ptr<FilmStrip>(new FilmStrip(fSource, fWidth, fHeight, std::move(data)));
+//}
 
 //------------------------------------------------------------------------
 // FilmStripMgr::overrideNumFrames

@@ -26,27 +26,35 @@
 
 namespace re::edit {
 
-class Texture
+class Texture : public std::enable_shared_from_this<Texture>
 {
 public:
   using key_t = FilmStrip::key_t;
 
 public:
-  class GPUData
+  struct RLTexture
   {
-  public:
-    GPUData(ImTextureID iImTextureID, float iHeight) : fImTextureID{iImTextureID}, fHeight{iHeight} {}
-    virtual ~GPUData() = default;
-    GPUData(const GPUData &) = delete;
-    GPUData &operator=(const GPUData &) = delete;
-    constexpr ImTextureID data() const { return fImTextureID; }
+    explicit RLTexture(::Texture iTexture) : fTexture(std::make_unique<::Texture>(iTexture)) {}
+    RLTexture(RLTexture &&iOther) noexcept : fTexture{std::move(iOther.fTexture)} {}
+    ~RLTexture();
 
-    friend class Texture;
-    friend class TextureManager;
+    inline ImTextureID asImTextureID() const { return static_cast<ImTextureID>(fTexture.get()); }
+    inline int height() const { return fTexture->height; }
 
-  protected:
-    ImTextureID fImTextureID;
-    float fHeight;
+  private:
+    std::unique_ptr<::Texture> fTexture;
+  };
+
+  struct GPUTexture
+  {
+    GPUTexture(RLTexture &&iRLTexture, int iFrameStart) : fRLTexture{std::move(iRLTexture)}, fFrameStart{iFrameStart} {}
+
+    inline ImTextureID asImTextureID() const { return fRLTexture.asImTextureID(); }
+    inline int height() const { return fRLTexture.height(); }
+
+  private:
+    RLTexture fRLTexture;
+    int fFrameStart;
   };
 
 public:
@@ -89,13 +97,13 @@ public:
     doDraw(false, iScreenPosition, iSize, iFrameNumber, iBorderColor, iTextureColor);
   }
 
-  void loadOnGPU(std::shared_ptr<FilmStrip> iFilmStrip);
+  void loadOnGPU(const std::shared_ptr<FilmStrip>& iFilmStrip);
+
+  void loadOnGPUFromUIThread(std::shared_ptr<FilmStrip> const &iFilmStrip);
 
   friend class TextureManager;
 
 protected:
-  virtual void doLoadOnGPU(std::shared_ptr<FilmStrip> const &iFilmStrip) const = 0;
-
   void doDraw(bool iAddItem,
               ImVec2 const &iScreenPosition,
               ImVec2 const &iSize,
@@ -107,7 +115,7 @@ protected:
 
 protected:
   std::shared_ptr<FilmStrip> fFilmStrip{};
-  mutable std::vector<std::unique_ptr<GPUData>> fGPUData{};
+  mutable std::vector<std::unique_ptr<GPUTexture>> fGPUTextures{};
 };
 
 struct Icon

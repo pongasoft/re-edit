@@ -20,6 +20,7 @@
 #include "TextureManager.h"
 #include "ReGui.h"
 #include "imgui_internal.h"
+#include "UIContext.h"
 
 namespace re::edit {
 
@@ -154,6 +155,15 @@ int TextureManager::overrideNumFrames(std::string const &iKey, int iNumFrames) c
 }
 
 //------------------------------------------------------------------------
+// TextureManager::createTexture
+//------------------------------------------------------------------------
+std::unique_ptr<Texture> TextureManager::createTexture() const
+{
+  // TODO remove/simplify
+  return std::make_unique<Texture>();
+}
+
+//------------------------------------------------------------------------
 // Texture::ItemFit
 //------------------------------------------------------------------------
 void Texture::ItemFit(ImVec2 const &iSize, int iFrameNumber, ImU32 iBorderColor, ImU32 iTextureColor) const
@@ -171,10 +181,25 @@ void Texture::ItemFit(ImVec2 const &iSize, int iFrameNumber, ImU32 iBorderColor,
 //------------------------------------------------------------------------
 // Texture::loadOnGPU
 //------------------------------------------------------------------------
-void Texture::loadOnGPU(std::shared_ptr<FilmStrip> iFilmStrip)
+void Texture::loadOnGPU(std::shared_ptr<FilmStrip> const &iFilmStrip)
 {
-  doLoadOnGPU(iFilmStrip);
-  fFilmStrip = std::move(iFilmStrip);
+  RE_EDIT_LOG_DEBUG("loadOnGPU: %s | %ld", iFilmStrip->key(), std::this_thread::get_id());
+  fFilmStrip = iFilmStrip;
+
+  UIContext::GetCurrent().execute([texture = shared_from_this(), filmStrip = iFilmStrip] {
+    texture->loadOnGPUFromUIThread(filmStrip);
+  });
+}
+
+//------------------------------------------------------------------------
+// Texture::loadOnGPUFromUIThread
+//------------------------------------------------------------------------
+void Texture::loadOnGPUFromUIThread(std::shared_ptr<FilmStrip> const &iFilmStrip)
+{
+  RE_EDIT_LOG_DEBUG("loadOnGPUFromUIThread: %s | %ld", iFilmStrip->key(), std::this_thread::get_id());
+  fGPUTextures.clear();
+  // TODO HIGH: punting on splitting into multiple textures
+  fGPUTextures.emplace_back(std::make_unique<GPUTexture>(RLTexture{LoadTextureFromImage(iFilmStrip->rlImage())}, 0));
 }
 
 //------------------------------------------------------------------------
@@ -190,7 +215,7 @@ void Texture::doDraw(bool iAddItem,
 //  if(fGPUData.empty())
 //    reloadOnGPU();
 //
-  if(fGPUData.empty())
+  if(fGPUTextures.empty())
     return;
 
   auto const size = ImVec2{iSize.x == 0 ? frameWidth()  : iSize.x, iSize.y == 0 ? frameHeight() : iSize.y};
@@ -211,61 +236,61 @@ void Texture::doDraw(bool iAddItem,
   const auto frameHeight = this->frameHeight();
   const auto frameY = frameHeight * static_cast<float>(iFrameNumber);
 
-  auto data = fGPUData[0].get();
+  auto data = fGPUTextures[0].get();
 
-  if(fGPUData.size() == 1)
+  if(fGPUTextures.size() == 1)
   {
     // most frequent use case
-    auto height = data->fHeight;
+    auto height = static_cast<float>(data->height());
     auto uv0 = ImVec2(0, (frameY) / height);
     auto uv1 = ImVec2(1, (frameY + frameHeight) / height);
-    drawList->AddImage(data->fImTextureID, rect.Min, rect.Max, uv0, uv1, iTextureColor);
+    drawList->AddImage(data->asImTextureID(), rect.Min, rect.Max, uv0, uv1, iTextureColor);
   }
-  else
-  {
-    // used only if a filmstrip had to be split into multiple textures due to GPU limitations (ex: on macOS/metal, the
-    // limit is 16384 pixels for a texture height)
-
-    // find which texture the frame starts in
-    int i = 1;
-    auto startY = frameY;
-    while(startY > data->fHeight)
-    {
-      startY -= data->fHeight;
-      data = fGPUData[i++].get();
-    }
-    auto height = data->fHeight;
-    auto endY = startY + frameHeight;
-    if(endY <= height)
-    {
-      // case when it starts/ends in the same texture
-      auto uv0 = ImVec2(0, startY / height);
-      auto uv1 = ImVec2(1, endY / height);
-      drawList->AddImage(data->fImTextureID, rect.Min, rect.Max, uv0, uv1, iTextureColor);
-    }
-    else
-    {
-      // case when the frame crosses the boundary of a texture (rare)
-      // Implementation note: this code is assuming that a frame will be split to at most 2 textures which seems
-      // reasonable since a texture max height should be far bigger than a 9U device. But it could be revisited in
-      // the event this assumption changes...
-      auto uv0 = ImVec2(0, startY / height);
-      auto uv1 = ImVec2(1, 1);
-      auto heightInData1 = height - startY;
-      auto heightInData2 = frameHeight - heightInData1;
-      auto fraction = heightInData1 / frameHeight;
-      auto rect1 = rect;
-      rect1.Max.y = (rect.Max.y - rect.Min.y) * fraction + rect.Min.y;
-      drawList->AddImage(data->fImTextureID, rect1.Min, rect1.Max, uv0, uv1, iTextureColor);
-      data = fGPUData[i++].get();
-      height = data->fHeight;
-      uv0 = ImVec2(0, 0);
-      uv1 = ImVec2(1, heightInData2 / height);
-      auto rect2 = rect;
-      rect2.Min.y = rect1.Max.y;
-      drawList->AddImage(data->fImTextureID, rect2.Min, rect2.Max, uv0, uv1, iTextureColor);
-    }
-  }
+//  else
+//  {
+//    // used only if a filmstrip had to be split into multiple textures due to GPU limitations (ex: on macOS/metal, the
+//    // limit is 16384 pixels for a texture height)
+//
+//    // find which texture the frame starts in
+//    int i = 1;
+//    auto startY = frameY;
+//    while(startY > data->fHeight)
+//    {
+//      startY -= data->fHeight;
+//      data = fGPUData[i++].get();
+//    }
+//    auto height = data->fHeight;
+//    auto endY = startY + frameHeight;
+//    if(endY <= height)
+//    {
+//      // case when it starts/ends in the same texture
+//      auto uv0 = ImVec2(0, startY / height);
+//      auto uv1 = ImVec2(1, endY / height);
+//      drawList->AddImage(data->fImTextureID, rect.Min, rect.Max, uv0, uv1, iTextureColor);
+//    }
+//    else
+//    {
+//      // case when the frame crosses the boundary of a texture (rare)
+//      // Implementation note: this code is assuming that a frame will be split to at most 2 textures which seems
+//      // reasonable since a texture max height should be far bigger than a 9U device. But it could be revisited in
+//      // the event this assumption changes...
+//      auto uv0 = ImVec2(0, startY / height);
+//      auto uv1 = ImVec2(1, 1);
+//      auto heightInData1 = height - startY;
+//      auto heightInData2 = frameHeight - heightInData1;
+//      auto fraction = heightInData1 / frameHeight;
+//      auto rect1 = rect;
+//      rect1.Max.y = (rect.Max.y - rect.Min.y) * fraction + rect.Min.y;
+//      drawList->AddImage(data->fImTextureID, rect1.Min, rect1.Max, uv0, uv1, iTextureColor);
+//      data = fGPUData[i++].get();
+//      height = data->fHeight;
+//      uv0 = ImVec2(0, 0);
+//      uv1 = ImVec2(1, heightInData2 / height);
+//      auto rect2 = rect;
+//      rect2.Min.y = rect1.Max.y;
+//      drawList->AddImage(data->fImTextureID, rect2.Min, rect2.Max, uv0, uv1, iTextureColor);
+//    }
+//  }
 
   // add a border?
   if(!ReGui::ColorIsTransparent(iBorderColor))
@@ -273,4 +298,12 @@ void Texture::doDraw(bool iAddItem,
 }
 
 
+//------------------------------------------------------------------------
+// Texture::RLTexture::~RLTexture
+//------------------------------------------------------------------------
+Texture::RLTexture::~RLTexture()
+{
+  if(fTexture)
+    UnloadTexture(*fTexture);
+}
 }

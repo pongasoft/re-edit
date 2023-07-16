@@ -365,7 +365,7 @@ void Application::init()
 
   fTextureManager = fContext->newTextureManager();
   fTextureManager->init(BuiltIns::kGlobalBuiltIns);
-  fFontManager = std::make_shared<FontManager>(fContext->newNativeFontManager());
+  fFontManager = std::make_shared<FontManager>();
   fNetworkManager = fContext->newNetworkManager();
 
   if(!fContext->isHeadless())

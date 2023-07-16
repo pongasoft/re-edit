@@ -48,7 +48,7 @@ public:
   void importBuiltIns(std::set<FilmStrip::key_t> const &iKeys, UserError *oErrors = nullptr);
 
 protected:
-  virtual std::unique_ptr<Texture> createTexture() const = 0;
+  std::unique_ptr<Texture> createTexture() const;
   void updateTexture(FilmStrip::key_t const &iKey);
 
 private:

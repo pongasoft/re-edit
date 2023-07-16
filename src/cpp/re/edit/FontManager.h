@@ -29,14 +29,6 @@
 
 namespace re::edit {
 
-class NativeFontManager
-{
-public:
-  virtual void createFontsTexture() {}
-  virtual void destroyFontsTexture() {}
-  virtual ~NativeFontManager() = default;
-};
-
 enum class BuiltInFont
 {
   kJetBrainsMonoRegular
@@ -66,8 +58,7 @@ class FontManager
 public:
 
 public:
-  explicit FontManager(std::shared_ptr<NativeFontManager> iNativeFontManager) : fNativeFontManager{std::move(iNativeFontManager)}
-  {}
+  FontManager() = default;
 
   inline float getCurrentDpiScaledFontSize() const { return computeDpiScaledFontSize(fCurrentFont.fSize); }
   constexpr float getCurrentFontScale() const { return fCurrentFontScale; }
@@ -95,7 +86,6 @@ private:
 
   };
 private:
-  std::shared_ptr<NativeFontManager> fNativeFontManager{};
   FontDef fCurrentFont{};
   float fCurrentFontScale{1.0f};
   float fCurrentFontDpiScale{1.0f};

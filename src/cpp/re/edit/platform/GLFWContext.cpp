@@ -17,6 +17,7 @@
  */
 
 #include "GLFWContext.h"
+#include <raylib.h>
 
 namespace re::edit::platform {
 
@@ -58,13 +59,11 @@ ImVec4 GLFWContext::getWindowPositionAndSize() const
 {
   auto scale = getScale();
   ImVec4 res{};
-  int x,y;
-  glfwGetWindowPos(fWindow, &x, &y);
-  res.x = static_cast<float>(x) / scale;
-  res.y = static_cast<float>(y) / scale;
-  glfwGetWindowSize(fWindow, &x, &y);
-  res.z = static_cast<float>(x) / scale;
-  res.w = static_cast<float>(y) / scale;
+  auto pos = GetWindowPosition();
+  res.x = static_cast<float>(pos.x) / scale;
+  res.y = static_cast<float>(pos.y) / scale;
+  res.z = static_cast<float>(GetScreenWidth()) / scale;
+  res.w = static_cast<float>(GetScreenHeight()) / scale;
   return res;
 }
 
@@ -75,9 +74,9 @@ void GLFWContext::setWindowPositionAndSize(std::optional<ImVec2> const &iPositio
 {
   auto scale = getScale();
 
-  glfwSetWindowSize(fWindow, static_cast<int>(iSize.x * scale), static_cast<int>(iSize.y * scale));
+  SetWindowSize(static_cast<int>(iSize.x * scale), static_cast<int>(iSize.y * scale));
   if(iPosition)
-    glfwSetWindowPos(fWindow, static_cast<int>(iPosition->x * scale), static_cast<int>(iPosition->y * scale));
+    SetWindowPosition(static_cast<int>(iPosition->x * scale), static_cast<int>(iPosition->y * scale));
   else
     centerWindow();
 }
@@ -87,6 +86,9 @@ void GLFWContext::setWindowPositionAndSize(std::optional<ImVec2> const &iPositio
 //------------------------------------------------------------------------
 void GLFWContext::centerWindow() const
 {
+  if(true)
+    return;
+
   int windowWidth, windowHeight;
   glfwGetWindowSize(fWindow, &windowWidth, &windowHeight);
 
@@ -110,7 +112,7 @@ void GLFWContext::centerWindow() const
 //------------------------------------------------------------------------
 void GLFWContext::setWindowTitle(std::string const &iTitle) const
 {
-  glfwSetWindowTitle(fWindow, iTitle.c_str());
+  SetWindowTitle(iTitle.c_str());
 }
 
 //------------------------------------------------------------------------
@@ -118,6 +120,9 @@ void GLFWContext::setWindowTitle(std::string const &iTitle) const
 //------------------------------------------------------------------------
 float GLFWContext::getFontDpiScale(GLFWwindow *iWindow)
 {
+  if(true)
+    return GetWindowScaleDPI().x;
+
   float dpiScale{1.0f};
 
   if(iWindow)
@@ -192,10 +197,10 @@ static void onDropCallback(GLFWwindow* iWindow, int iCount, const char** iPaths)
 //------------------------------------------------------------------------
 void GLFWContext::setupCallbacks(Application *iApplication)
 {
-  glfwSetWindowUserPointer(fWindow, iApplication);
-  glfwSetWindowContentScaleCallback(fWindow, onWindowContentScaleChange);
-  glfwSetWindowCloseCallback(fWindow, onWindowClose);
-  glfwSetDropCallback(fWindow, onDropCallback);
+//  glfwSetWindowUserPointer(fWindow, iApplication);
+//  glfwSetWindowContentScaleCallback(fWindow, onWindowContentScaleChange);
+//  glfwSetWindowCloseCallback(fWindow, onWindowClose);
+//  glfwSetDropCallback(fWindow, onDropCallback);
 }
 
 }

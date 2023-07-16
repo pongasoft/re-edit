@@ -49,7 +49,6 @@ public:
 
     virtual ~Context() = default;
     virtual std::shared_ptr<TextureManager> newTextureManager() const = 0;
-    virtual std::shared_ptr<NativeFontManager> newNativeFontManager() const = 0;
     virtual std::shared_ptr<NetworkManager> newNetworkManager() const = 0;
     virtual ImVec4 getWindowPositionAndSize() const = 0;
     virtual void setWindowPositionAndSize(std::optional<ImVec2> const &iPosition, ImVec2 const &iSize) const = 0;

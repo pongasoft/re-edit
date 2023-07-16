@@ -43,6 +43,10 @@ config::Global PreferencesManager::load(NativePreferencesManager const *iPrefere
 //------------------------------------------------------------------------
 void PreferencesManager::save(NativePreferencesManager const *iPreferencesManager, config::Global const &iConfig)
 {
+  // TODO HIGH YP: remove
+  if(true)
+    return;
+
   if(!iPreferencesManager)
     return;
 
