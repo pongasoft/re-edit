@@ -297,6 +297,13 @@ void Texture::doDraw(bool iAddItem,
     drawList->AddRect(rect.Min, rect.Max, iBorderColor, 0.0f);
 }
 
+//------------------------------------------------------------------------
+// Texture::RLTexture::RLTexture
+//------------------------------------------------------------------------
+Texture::RLTexture::RLTexture(::Texture iTexture) : fTexture(std::make_unique<::Texture>(iTexture))
+{
+  SetTextureFilter(*fTexture, TEXTURE_FILTER_BILINEAR);
+}
 
 //------------------------------------------------------------------------
 // Texture::RLTexture::~RLTexture
@@ -306,4 +313,5 @@ Texture::RLTexture::~RLTexture()
   if(fTexture)
     UnloadTexture(*fTexture);
 }
+
 }

@@ -94,7 +94,7 @@ int doMain(int argc, char **argv)
   ctx->setupCallbacks(&application);
   ctx->centerWindow();
 
-//  SetTargetFPS(60);
+  SetTargetFPS(60);
 
   // Main loop
   while(application.running())

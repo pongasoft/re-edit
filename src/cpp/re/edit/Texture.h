@@ -34,7 +34,7 @@ public:
 public:
   struct RLTexture
   {
-    explicit RLTexture(::Texture iTexture) : fTexture(std::make_unique<::Texture>(iTexture)) {}
+    explicit RLTexture(::Texture iTexture);
     RLTexture(RLTexture &&iOther) noexcept : fTexture{std::move(iOther.fTexture)} {}
     ~RLTexture();
 
