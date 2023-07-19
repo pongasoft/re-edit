@@ -183,7 +183,6 @@ void Texture::ItemFit(ImVec2 const &iSize, int iFrameNumber, ImU32 iBorderColor,
 //------------------------------------------------------------------------
 void Texture::loadOnGPU(std::shared_ptr<FilmStrip> const &iFilmStrip)
 {
-  RE_EDIT_LOG_DEBUG("loadOnGPU: %s | %ld", iFilmStrip->key(), std::this_thread::get_id());
   fFilmStrip = iFilmStrip;
 
   UIContext::GetCurrent().execute([texture = shared_from_this(), filmStrip = iFilmStrip] {
@@ -196,7 +195,6 @@ void Texture::loadOnGPU(std::shared_ptr<FilmStrip> const &iFilmStrip)
 //------------------------------------------------------------------------
 void Texture::loadOnGPUFromUIThread(std::shared_ptr<FilmStrip> const &iFilmStrip)
 {
-  RE_EDIT_LOG_DEBUG("loadOnGPUFromUIThread: %s | %ld", iFilmStrip->key(), std::this_thread::get_id());
   fGPUTextures.clear();
   // TODO HIGH: punting on splitting into multiple textures
   fGPUTextures.emplace_back(std::make_unique<GPUTexture>(RLTexture{LoadTextureFromImage(iFilmStrip->rlImage())}, 0));
