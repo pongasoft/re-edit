@@ -20,20 +20,15 @@
 #define RE_EDIT_GLFW_CONTEXT_H
 
 #include "../Application.h"
-#include <GLFW/glfw3.h>
+
+struct GLFWwindow;
 
 namespace re::edit::platform {
 
-class GLFWContext : public Application::Context
+class RLContext : public Application::Context
 {
 public:
-  GLFWContext(std::shared_ptr<re::edit::NativePreferencesManager> iPreferencesManager,
-              GLFWwindow *iWindow) :
-    Context(std::move(iPreferencesManager)),
-    fWindow{iWindow}
-    {
-      // empty
-    }
+  explicit RLContext(std::shared_ptr<re::edit::NativePreferencesManager> iPreferencesManager);
 
   ImVec4 getWindowPositionAndSize() const override;
   void setWindowPositionAndSize(std::optional<ImVec2> const &iPosition, ImVec2 const &iSize) const override;
@@ -47,7 +42,6 @@ public:
 
   float getFontDpiScale() const { return getFontDpiScale(fWindow); }
 
-  static int initGLFW();
   static float getFontDpiScale(GLFWwindow *iWindow);
 
 protected:

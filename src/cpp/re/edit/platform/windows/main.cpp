@@ -16,7 +16,7 @@
 #include "LocalSettingsManager.h"
 #include "WindowsNetworkManager.h"
 #include "WindowsMultipleInstanceManager.h"
-#include "../GLFWContext.h"
+#include "../RLContext.h"
 #include <thread>
 #include <mutex>
 

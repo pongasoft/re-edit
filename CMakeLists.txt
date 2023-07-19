@@ -72,7 +72,7 @@ endif()
 # Including raylib
 #######################################################
 # option(CUSTOMIZE_BUILD "Show options for customizing your Raylib library build." ON)
-if (APPLE)
+if (APPLE AND USE_GOOGLE_ANGLE_MAC_OS)
   set(OPENGL_VERSION "ES 2.0" CACHE STRING "Forcing ES 2.0 to use angle")
 endif()
 add_subdirectory("${CMAKE_SOURCE_DIR}/external/raysan5/raylib" raylib EXCLUDE_FROM_ALL)
@@ -139,8 +139,8 @@ set(re-edit_BUILD_SOURCES
     "${re-edit_CPP_SRC_DIR}/re/edit/lua/Device2D.cpp"
     "${re-edit_CPP_SRC_DIR}/re/edit/lua/HDGui2D.h"
     "${re-edit_CPP_SRC_DIR}/re/edit/lua/HDGui2D.cpp"
-    "${re-edit_CPP_SRC_DIR}/re/edit/platform/GLFWContext.h"
-    "${re-edit_CPP_SRC_DIR}/re/edit/platform/GLFWContext.cpp"
+    "${re-edit_CPP_SRC_DIR}/re/edit/platform/RLContext.h"
+    "${re-edit_CPP_SRC_DIR}/re/edit/platform/RLContext.cpp"
     "${re-edit_CPP_SRC_DIR}/re/edit/AppContext.h"
     "${re-edit_CPP_SRC_DIR}/re/edit/AppContext.hpp"
     "${re-edit_CPP_SRC_DIR}/re/edit/AppContext.cpp"
@@ -246,15 +246,21 @@ if(APPLE)
       MACOSX_BUNDLE_ICON_NAME "AppIcon"
       MACOSX_BUNDLE_COPYRIGHT "© 2023 pongasoft"
       MACOSX_BUNDLE_INFO_PLIST "${CMAKE_SOURCE_DIR}/cmake/MacOSXBundleInfo.plist.in"
-      INSTALL_RPATH "@executable_path/../Frameworks"
       )
+  if (USE_GOOGLE_ANGLE_MAC_OS)
+    set_target_properties(${target} PROPERTIES
+        INSTALL_RPATH "@executable_path/../Frameworks"
+        )
+  endif()
   target_sources(${target} PRIVATE "src/resources/re-edit.icns")
   set_source_files_properties("src/resources/re-edit.icns" PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
 
-  # link with google angle which implements the old/deprecated macOS OpenGL API to use metal
-  set(GOOGLE_ANGLE_DIR "${CMAKE_CURRENT_LIST_DIR}/external/google/angle")
-  list(APPEND google_angle_libs "${GOOGLE_ANGLE_DIR}/macOS/libEGL.dylib" "${GOOGLE_ANGLE_DIR}/macOS/libGLESv2.dylib")
-  target_link_libraries(${target} PRIVATE "${google_angle_libs}")
+  if (USE_GOOGLE_ANGLE_MAC_OS)
+    # link with google angle which implements the old/deprecated macOS OpenGL API to use metal
+    set(GOOGLE_ANGLE_DIR "${CMAKE_CURRENT_LIST_DIR}/external/google/angle")
+    list(APPEND google_angle_libs "${GOOGLE_ANGLE_DIR}/macOS/libEGL.dylib" "${GOOGLE_ANGLE_DIR}/macOS/libGLESv2.dylib")
+    target_link_libraries(${target} PRIVATE "${google_angle_libs}")
+  endif()
 endif()
 
 macro(cmake_option_to_python_bool cmake_opt python_opt)
@@ -281,13 +287,15 @@ install(
 )
 
 if (APPLE)
-  # installs the libraries under Content/Frameworks
-  install(
-      FILES "${google_angle_libs}"
-      DESTINATION "$<TARGET_BUNDLE_DIR_NAME:${target}>/Contents/Frameworks"
-  )
+  if (USE_GOOGLE_ANGLE_MAC_OS)
+    # installs the libraries under Content/Frameworks
+    install(
+        FILES "${google_angle_libs}"
+        DESTINATION "$<TARGET_BUNDLE_DIR_NAME:${target}>/Contents/Frameworks"
+    )
 
-  # TODO: if using the Xcode generator, the executable needs to be resigned...
+    # TODO: if using the Xcode generator, the executable needs to be resigned...
+  endif()
 
 endif()
 

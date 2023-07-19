@@ -423,10 +423,7 @@ void Application::loadProject(fs::path const &iRoot)
     try
     {
       //std::this_thread::sleep_for(std::chrono::seconds(5));
-      std::shared_ptr<AppContext> appContext{};
-      fContext->executeWithUIContext([this, &iRoot, &c, &cancellable, &appContext]() {
-        appContext = initAppContext(iRoot, c, cancellable);
-      });
+      auto appContext = initAppContext(iRoot, c, cancellable);
       return gui_action_t([this, c, ctx = std::move(appContext)]() {
         if(fState == State::kReLoading)
         {

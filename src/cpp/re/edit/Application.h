@@ -48,14 +48,13 @@ public:
     explicit Context(bool iHeadless) : fHeadless{iHeadless} {}
 
     virtual ~Context() = default;
-    virtual std::shared_ptr<TextureManager> newTextureManager() const = 0;
+    virtual std::shared_ptr<TextureManager> newTextureManager() const {  return std::make_shared<TextureManager>(); };
     virtual std::shared_ptr<NetworkManager> newNetworkManager() const = 0;
     virtual ImVec4 getWindowPositionAndSize() const = 0;
     virtual void setWindowPositionAndSize(std::optional<ImVec2> const &iPosition, ImVec2 const &iSize) const = 0;
     virtual void centerWindow() const = 0;
     virtual void setWindowTitle(std::string const &iTitle) const = 0;
     virtual void openURL(std::string const &iURL) const = 0;
-    virtual void executeWithUIContext(std::function<void()> f) const { f(); }
 
     std::shared_ptr<NativePreferencesManager> getPreferencesManager() const { return fPreferencesManager; }
 

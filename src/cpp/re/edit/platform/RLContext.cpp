@@ -16,7 +16,8 @@
  * @author Yan Pujante
  */
 
-#include "GLFWContext.h"
+#include "RLContext.h"
+#include <GLFW/glfw3.h>
 #include <raylib.h>
 
 namespace re::edit::platform {
@@ -53,9 +54,19 @@ namespace re::edit::platform {
 //}
 
 //------------------------------------------------------------------------
-// GLFWContext::getWindowPositionAndSize
+// RLContext::RLContext
 //------------------------------------------------------------------------
-ImVec4 GLFWContext::getWindowPositionAndSize() const
+RLContext::RLContext(std::shared_ptr<re::edit::NativePreferencesManager> iPreferencesManager) :
+  Context(std::move(iPreferencesManager)),
+  fWindow{glfwGetCurrentContext()}
+{
+  // empty
+}
+
+//------------------------------------------------------------------------
+// RLContext::getWindowPositionAndSize
+//------------------------------------------------------------------------
+ImVec4 RLContext::getWindowPositionAndSize() const
 {
   auto scale = getScale();
   ImVec4 res{};
@@ -68,9 +79,9 @@ ImVec4 GLFWContext::getWindowPositionAndSize() const
 }
 
 //------------------------------------------------------------------------
-// GLFWContext::setWindowPositionAndSize
+// RLContext::setWindowPositionAndSize
 //------------------------------------------------------------------------
-void GLFWContext::setWindowPositionAndSize(std::optional<ImVec2> const &iPosition, ImVec2 const &iSize) const
+void RLContext::setWindowPositionAndSize(std::optional<ImVec2> const &iPosition, ImVec2 const &iSize) const
 {
   auto scale = getScale();
 
@@ -82,15 +93,12 @@ void GLFWContext::setWindowPositionAndSize(std::optional<ImVec2> const &iPositio
 }
 
 //------------------------------------------------------------------------
-// GLFWContext::centerWindow
+// RLContext::centerWindow
 //------------------------------------------------------------------------
-void GLFWContext::centerWindow() const
+void RLContext::centerWindow() const
 {
-  if(true)
-    return;
-
-  int windowWidth, windowHeight;
-  glfwGetWindowSize(fWindow, &windowWidth, &windowHeight);
+  auto windowWidth = GetScreenWidth();
+  auto windowHeight = GetScreenHeight();
 
   auto monitor = glfwGetPrimaryMonitor();
 
@@ -103,26 +111,23 @@ void GLFWContext::centerWindow() const
   auto windowPosX = (availableWidth - windowWidth) / 2 + xpos;
   auto windowPosY = (availableHeight - windowHeight) / 2 + ypos;
 
-  glfwSetWindowPos(fWindow, windowPosX, windowPosY);
+  SetWindowPosition(windowPosX, windowPosY);
 }
 
 
 //------------------------------------------------------------------------
-// GLFWContext::setWindowTitle
+// RLContext::setWindowTitle
 //------------------------------------------------------------------------
-void GLFWContext::setWindowTitle(std::string const &iTitle) const
+void RLContext::setWindowTitle(std::string const &iTitle) const
 {
   SetWindowTitle(iTitle.c_str());
 }
 
 //------------------------------------------------------------------------
-// GLFWContext::getFontDpiScale
+// RLContext::getFontDpiScale
 //------------------------------------------------------------------------
-float GLFWContext::getFontDpiScale(GLFWwindow *iWindow)
+float RLContext::getFontDpiScale(GLFWwindow *iWindow)
 {
-  if(true)
-    return GetWindowScaleDPI().x;
-
   float dpiScale{1.0f};
 
   if(iWindow)
@@ -138,24 +143,6 @@ float GLFWContext::getFontDpiScale(GLFWwindow *iWindow)
   return dpiScale;
 }
 
-
-//------------------------------------------------------------------------
-// glfw_error_callback
-//------------------------------------------------------------------------
-static void glfw_error_callback(int error, const char *description)
-{
-  fprintf(stderr, "Glfw Error %d: %s\n", error, description);
-}
-
-//------------------------------------------------------------------------
-// GLFWContext::initGLFW
-//------------------------------------------------------------------------
-int GLFWContext::initGLFW()
-{
-  glfwSetErrorCallback(glfw_error_callback);
-  return glfwInit();
-}
-
 //------------------------------------------------------------------------
 // onWindowContentScaleChange
 //------------------------------------------------------------------------
@@ -163,17 +150,6 @@ static void onWindowContentScaleChange(GLFWwindow* iWindow, float iXscale, float
 {
   auto application = reinterpret_cast<re::edit::Application *>(glfwGetWindowUserPointer(iWindow));
   application->onNativeWindowFontScaleChange(iXscale);
-}
-
-//------------------------------------------------------------------------
-// onWindowClose
-//------------------------------------------------------------------------
-static void onWindowClose(GLFWwindow* iWindow)
-{
-  auto application = reinterpret_cast<re::edit::Application *>(glfwGetWindowUserPointer(iWindow));
-  application->maybeExit();
-  if(application->running())
-    glfwSetWindowShouldClose(iWindow, GLFW_FALSE);
 }
 
 //------------------------------------------------------------------------
@@ -193,14 +169,15 @@ static void onDropCallback(GLFWwindow* iWindow, int iCount, const char** iPaths)
 }
 
 //------------------------------------------------------------------------
-// GLFWContext::setupCallbacks
+// RLContext::setupCallbacks
 //------------------------------------------------------------------------
-void GLFWContext::setupCallbacks(Application *iApplication)
+void RLContext::setupCallbacks(Application *iApplication)
 {
-//  glfwSetWindowUserPointer(fWindow, iApplication);
-//  glfwSetWindowContentScaleCallback(fWindow, onWindowContentScaleChange);
-//  glfwSetWindowCloseCallback(fWindow, onWindowClose);
-//  glfwSetDropCallback(fWindow, onDropCallback);
+  glfwSetWindowUserPointer(fWindow, iApplication);
+  glfwSetWindowContentScaleCallback(fWindow, onWindowContentScaleChange);
+  // Implementation note: replacing raylib callback as there is no need to go through another layer
+  glfwSetDropCallback(fWindow, onDropCallback);
 }
+
 
 }

@@ -7,7 +7,7 @@
 #include <rlImGui.h>
 #include <cstdio>
 #include <cstdlib>
-#include "../GLFWContext.h"
+#include "../RLContext.h"
 #include "NSUserDefaultsManager.h"
 #include "MacOSNetworkManager.h"
 #include "MacOSMultipleInstanceManager.h"
@@ -15,20 +15,14 @@
 #include "../../UIContext.h"
 #include <version.h>
 
-class MacOsContext : public re::edit::platform::GLFWContext
+class MacOsContext : public re::edit::platform::RLContext
 {
 public:
-  explicit MacOsContext(std::shared_ptr<re::edit::NativePreferencesManager> iPreferencesManager,
-                        GLFWwindow *iWindow) :
-    GLFWContext(std::move(iPreferencesManager), iWindow)
+  explicit MacOsContext(std::shared_ptr<re::edit::NativePreferencesManager> iPreferencesManager) :
+    RLContext(std::move(iPreferencesManager))
     {
       // empty
     }
-
-  std::shared_ptr<re::edit::TextureManager> newTextureManager() const override
-  {
-    return std::make_shared<re::edit::TextureManager>();
-  }
 
   std::shared_ptr<re::edit::NetworkManager> newNetworkManager() const override
   {
@@ -72,10 +66,6 @@ int doMain(int argc, char **argv)
   io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
   io.ConfigDockingWithShift = false;
 
-//  // init glfw
-//  if(!re::edit::platform::GLFWContext::initGLFW())
-//    return 1;
-
   auto preferencesManager = std::make_shared<re::edit::NSUserDefaultsManager>();
 
   std::vector<std::string> args{};
@@ -90,7 +80,7 @@ int doMain(int argc, char **argv)
     config.fGlobalConfig.fSaveEnabled = false;
   }
 
-  auto ctx = std::make_shared<MacOsContext>(preferencesManager, nullptr);
+  auto ctx = std::make_shared<MacOsContext>(preferencesManager);
 
   re::edit::Application application{ctx, config};
 
@@ -109,6 +99,10 @@ int doMain(int argc, char **argv)
   // Main loop
   while(application.running())
   {
+    // Handle close event
+    if(WindowShouldClose())
+      application.maybeExit();
+
     BeginDrawing();
 
     //       ca0->setClearColor(MTL::ClearColor::Make(application.clear_color[0] * application.clear_color[3],
