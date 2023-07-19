@@ -1,316 +1,28 @@
-// Dear ImGui: standalone example application for GLFW + OpenGL 3, using programmable pipeline
-// (GLFW is a cross-platform general purpose library for handling windows, inputs, OpenGL/Vulkan/Metal graphics context creation, etc.)
-// If you are new to Dear ImGui, read documentation from the docs/ folder + read the top of imgui.cpp.
-// Read online: https://github.com/ocornut/imgui/tree/master/docs
-
-#include "imgui.h"
-#include "imgui_impl_glfw.h"
-#include "imgui_impl_opengl3.h"
-#include "OGL3Managers.h"
-#include <stdio.h>
-#include <shellscalingapi.h>
-#include <winuser.h>
-#include <shellapi.h>
-#include "nfd.h"
-#include <version.h>
-#include "LocalSettingsManager.h"
-#include "WindowsNetworkManager.h"
-#include "WindowsMultipleInstanceManager.h"
-#include "../RLContext.h"
-#include <thread>
-#include <mutex>
-
-#if defined(IMGUI_IMPL_OPENGL_ES2)
-#include <GLES2/gl2.h>
-#endif
-
-#include <GLFW/glfw3.h> // Will drag system OpenGL headers
-#define GLFW_EXPOSE_NATIVE_WIN32
-#define GLFW_EXPOSE_NATIVE_WGL
-#define GLFW_NATIVE_INCLUDE_NONE
-#include <GLFW/glfw3native.h>
-
-//// [Win32] Our example includes a copy of glfw3.lib pre-compiled with VS2010 to maximize ease of testing and compatibility with old VS compilers.
-//// To link with VS2010-era libraries, VS2015+ requires linking with legacy_stdio_definitions.lib, which we do using this pragma.
-//// Your own project should not be affected, as you are likely to link with a newer binary of GLFW that is adequate for your version of Visual Studio.
-//#if defined(_MSC_VER) && (_MSC_VER >= 1900) && !defined(IMGUI_DISABLE_WIN32_FUNCTIONS)
-//#pragma comment(lib, "legacy_stdio_definitions")
-//#endif
-
 /*
- * Note: how to convert a std::string to LPCWSTR
+ * Copyright (c) 2023 pongasoft
  *
- * std::string str = "foo";
- * std::wstring temp = std::wstring(str.begin(), str.end());
- * LPCWSTR wideString = temp.c_str();
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ *
+ * @author Yan Pujante
  */
 
-inline void writeToConsoleStdOut(std::string const &iMessage)
-{
-  WriteConsole(GetStdHandle(STD_OUTPUT_HANDLE), iMessage.c_str(), iMessage.size(), NULL, NULL);
-}
+#include <windows.h>
+
+#include "../main.cpp"
 
 inline void writeToConsoleStdErr(std::string const &iMessage)
 {
   WriteConsole(GetStdHandle(STD_ERROR_HANDLE), iMessage.c_str(), iMessage.size(), NULL, NULL);
-}
-
-class WindowsContext : public re::edit::platform::GLFWContext
-{
-public:
-  explicit WindowsContext(std::shared_ptr<re::edit::NativePreferencesManager> iPreferencesManager,
-                          GLFWwindow *iWindow) :
-    GLFWContext(std::move(iPreferencesManager), iWindow),
-    fGUIThreadID{std::this_thread::get_id()}
-  {
-    fMainDC = wglGetCurrentDC();
-    RE_EDIT_ASSERT(fMainDC != nullptr, "Error %lu in wglGetCurrentDC.", GetLastError());
-
-    auto currentContext = wglGetCurrentContext();
-    RE_EDIT_ASSERT(currentContext != nullptr, "Error %lu in wglGetCurrentContext.", GetLastError());
-
-    fOGL3SecondaryContext = wglCreateContext(fMainDC);
-    RE_EDIT_ASSERT(fOGL3SecondaryContext != nullptr, "Error %lu in wglCreateContext.", GetLastError());
-
-    auto res = wglShareLists(currentContext, fOGL3SecondaryContext);
-    RE_EDIT_ASSERT(res == TRUE, "Error %lu in wglShareLists.", GetLastError());
-  }
-
-  ~WindowsContext()
-  {
-    wglDeleteContext(fOGL3SecondaryContext);
-  }
-
-  std::shared_ptr<re::edit::TextureManager> newTextureManager() const override
-  {
-    return std::make_shared<re::edit::OGL3TextureManager>();
-  }
-
-  std::shared_ptr<re::edit::NativeFontManager> newNativeFontManager() const override
-  {
-    return std::make_shared<re::edit::OGL3FontManager>();
-  }
-
-  float getScale() const override
-  {
-    return getFontDpiScale();
-  }
-
-  std::shared_ptr<re::edit::NetworkManager> newNetworkManager() const override
-  {
-    return std::make_shared<re::edit::WindowsNetworkManager>();
-  }
-
-  void openURL(std::string const &iURL) const override
-  {
-    ShellExecuteA(0, nullptr, iURL.c_str(), nullptr, nullptr, SW_SHOW);
-  }
-
-  void executeWithUIContext(std::function<void()> f) const override
-  {
-    if(std::this_thread::get_id() == fGUIThreadID)
-    {
-      f();
-    }
-    else
-    {
-      // ensure that fOGL3SecondaryContext is used only by one thread at a time
-      std::lock_guard<std::mutex> lock(fOGL3Mutex);
-      wglMakeCurrent(fMainDC, fOGL3SecondaryContext);
-      auto cleanCurrentContext = re::edit::Utils::defer([]() { wglMakeCurrent(nullptr, nullptr); });
-      f();
-    }
-  }
-
-private:
-  std::thread::id fGUIThreadID;
-  HDC fMainDC;
-  HGLRC fOGL3SecondaryContext;
-  mutable std::mutex fOGL3Mutex;
-};
-
-static void printInfo(GLFWwindow *iWindow)
-{
-//  auto glfwMonitor = glfwGetWindowMonitor(iWindow);
-//  fprintf(stdout, "monitor = %s", glfwGetMonitorName(glfwMonitor));
-
-  int count;
-  GLFWmonitor** monitors = glfwGetMonitors(&count);
-
-  if(monitors)
-  {
-    for(int i = 0; i < count; i++)
-    {
-      auto monitor = monitors[i];
-      float xscale, yscale;
-      glfwGetMonitorContentScale(monitor, &xscale, &yscale);
-      fprintf(stdout, "monitor[%d] %s | xscale=%f | yscale=%f\n", i, glfwGetMonitorName(monitor), xscale, yscale);
-    }
-  }
-
-  auto monitor = MonitorFromWindow(glfwGetWin32Window(iWindow), MONITOR_DEFAULTTONULL);
-  if(!monitor)
-  {
-    fprintf(stderr, "no monitor\n");
-    return;
-  }
-
-  uint32_t dpi_x, dpi_y;
-  GetDpiForMonitor(monitor, MDT_EFFECTIVE_DPI, &dpi_x, &dpi_y);
-  fprintf(stdout, "monitor dpi x=%d y=%d\n", dpi_x, dpi_y);
-
-  int value;
-  glGetIntegerv(GL_MAX_TEXTURE_SIZE, &value);   //Returns 1 value
-  fprintf(stdout, "GL_MAX_TEXTURE_SIZE = %d\n", value);
-}
-
-int doMain(int argc, char **argv)
-{
-  AttachConsole(ATTACH_PARENT_PROCESS);
-
-  writeToConsoleStdOut(re::edit::fmt::printf("RE Edit - %s | %s\n", re::edit::kFullVersion, re::edit::kGitVersion));
-  SetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE);
-
-  const char *glsl_version = "#version 130";
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
-
-  //glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);  // 3.2+ only
-  //glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);            // 3.0+ only
-
-  // Setup Dear ImGui context
-  IMGUI_CHECKVERSION();
-  ImGui::CreateContext();
-  ImGuiIO &io = ImGui::GetIO();
-
-  // enable docking
-  io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-  io.ConfigDockingWithShift = false;
-
-  // Setup Dear ImGui style
-  ImGui::StyleColorsDark();
-  //ImGui::StyleColorsClassic();
-
-  // init glfw
-  if(!re::edit::platform::GLFWContext::initGLFW())
-    return 1;
-
-  auto preferencesManager = std::make_shared<re::edit::LocalSettingsManager>();
-
-  std::vector<std::string> args{};
-  for(int i = 1; i < argc; i++)
-    args.emplace_back(argv[i]);
-
-  auto config = re::edit::Application::parseArgs(preferencesManager.get(), std::move(args));
-
-  if(!re::edit::WindowsMultipleInstanceManager::isSingleInstance())
-  {
-    writeToConsoleStdOut("Detected multiple instances running. No preferences will be saved to avoid conflict.\n");
-    config.fGlobalConfig.fSaveEnabled = false;
-  }
-
-  // we always register as a sin
-  if(!re::edit::WindowsMultipleInstanceManager::registerInstance())
-    return 1;
-
-  auto scale = re::edit::platform::GLFWContext::getFontDpiScale(nullptr); // primary monitor
-
-  // Create window with graphics context
-  GLFWwindow *window = glfwCreateWindow(re::edit::config::kWelcomeWindowWidth * scale,
-                                        re::edit::config::kWelcomeWindowHeight * scale,
-                                        re::edit::config::kWelcomeWindowTitle,
-                                        nullptr,
-                                        nullptr);
-  if(window == nullptr)
-    return 1;
-
-  glfwMakeContextCurrent(window);
-  glfwSwapInterval(1); // Enable vsync
-
-  // Setup Platform/Renderer backends
-  ImGui_ImplGlfw_InitForOpenGL(window, true);
-  ImGui_ImplOpenGL3_Init(glsl_version);
-
-  printInfo(window);
-
-  auto ctx = std::make_shared<WindowsContext>(preferencesManager, window);
-
-  re::edit::Application application{ctx, config};
-
-  if(NFD_Init() != NFD_OKAY)
-  {
-    writeToConsoleStdErr("Error while initializing nfd");
-    return 1;
-  }
-
-  application.onNativeWindowFontDpiScaleChange(ctx->getFontDpiScale());
-  ctx->setupCallbacks(&application);
-  ctx->centerWindow();
-
-  {
-    auto logo = application.getLogo();
-    GLFWimage image{static_cast<int>(logo->frameWidth()),
-                    static_cast<int>(logo->frameHeight()),
-                    const_cast<unsigned char*>(logo->getFilmStrip()->data()) };
-
-    glfwSetWindowIcon(window, 1, &image);
-  }
-
-  // Main loop
-  while(application.running())
-  {
-    // Poll and handle events (inputs, window resize, etc.)
-    // You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to tell if dear imgui wants to use your inputs.
-    // - When io.WantCaptureMouse is true, do not dispatch mouse input data to your main application, or clear/overwrite your copy of the mouse data.
-    // - When io.WantCaptureKeyboard is true, do not dispatch keyboard input data to your main application, or clear/overwrite your copy of the keyboard data.
-    // Generally you may always pass all inputs to dear imgui, and hide them from your application based on those two flags.
-    glfwPollEvents();
-
-    // Before New Frame
-    if(application.newFrame())
-    {
-      // Start the Dear ImGui frame
-      ImGui_ImplOpenGL3_NewFrame();
-      ImGui_ImplGlfw_NewFrame();
-      ImGui::NewFrame();
-
-      int display_w, display_h;
-      glfwGetFramebufferSize(window, &display_w, &display_h);
-      glViewport(0, 0, display_w, display_h);
-      glClearColor(application.clear_color[0] * application.clear_color[3],
-                   application.clear_color[1] * application.clear_color[3],
-                   application.clear_color[2] * application.clear_color[3],
-                   application.clear_color[3]);
-      glClear(GL_COLOR_BUFFER_BIT);
-
-      // Main rendering
-      if(application.render())
-      {
-        // Rendering
-        ImGui::Render();
-        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-      }
-    }
-
-    glfwSwapBuffers(window);
-  }
-
-  // Cleanup
-  ImGui_ImplOpenGL3_Shutdown();
-  ImGui_ImplGlfw_Shutdown();
-  ImGui::DestroyContext();
-
-  NFD_Quit();
-
-  glfwDestroyWindow(window);
-  glfwTerminate();
-
-  auto const res = application.hasException() ? 1 : 0;
-
-  if(!application.shutdown(250))
-    std::_Exit(application.hasException() ? EXIT_FAILURE : EXIT_SUCCESS);
-
-  return res;
 }
 
 int main(int argc, char **argv)
@@ -326,7 +38,7 @@ int main(int argc, char **argv)
   }
 }
 
-INT WINAPI WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,
+int WINAPI WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,
                    PSTR lpCmdLine, INT nCmdShow)
 {
   std::string mainExe("re-edit.exe");

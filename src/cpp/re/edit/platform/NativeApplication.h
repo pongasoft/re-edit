@@ -16,17 +16,28 @@
  * @author Yan Pujante
  */
 
-#include "../main.cpp"
+#ifndef RE_EDIT_NATIVE_APPLICATION_H
+#define RE_EDIT_NATIVE_APPLICATION_H
 
-int main(int argc, char **argv)
+#include <memory>
+#include "RLContext.h"
+
+namespace re::edit::platform {
+
+class NativeApplication
 {
-  try
-  {
-    return doMain(argc, argv);
-  }
-  catch(...)
-  {
-    RE_EDIT_LOG_ERROR("Unrecoverable error detected... aborting: %s", re::edit::Application::what(std::current_exception()));
-    return 1;
-  }
+public:
+  static std::unique_ptr<NativeApplication> create();
+
+  virtual std::unique_ptr<RLContext> newRLContext() const = 0;
+  virtual bool isSingleInstance() const = 0;
+  virtual bool registerInstance() const = 0;
+
+  virtual ~NativeApplication() = default;
+
+protected:
+  virtual std::unique_ptr<NativePreferencesManager> newPreferencesManager() const = 0;
+};
+
 }
+#endif //RE_EDIT_NATIVE_APPLICATION_H

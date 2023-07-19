@@ -124,6 +124,23 @@ void RLContext::setWindowTitle(std::string const &iTitle) const
 }
 
 //------------------------------------------------------------------------
+// RLContext::setWindowIcon
+//------------------------------------------------------------------------
+void RLContext::setWindowIcon(Texture *iIconTexture) const
+{
+  if(!iIconTexture)
+    return;
+
+  {
+    GLFWimage image{static_cast<int>(iIconTexture->frameWidth()),
+                    static_cast<int>(iIconTexture->frameHeight()),
+                    const_cast<unsigned char*>(iIconTexture->getFilmStrip()->data()) };
+
+    glfwSetWindowIcon(fWindow, 1, &image);
+  }
+}
+
+//------------------------------------------------------------------------
 // RLContext::getFontDpiScale
 //------------------------------------------------------------------------
 float RLContext::getFontDpiScale(GLFWwindow *iWindow)

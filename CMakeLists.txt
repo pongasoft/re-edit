@@ -139,6 +139,7 @@ set(re-edit_BUILD_SOURCES
     "${re-edit_CPP_SRC_DIR}/re/edit/lua/Device2D.cpp"
     "${re-edit_CPP_SRC_DIR}/re/edit/lua/HDGui2D.h"
     "${re-edit_CPP_SRC_DIR}/re/edit/lua/HDGui2D.cpp"
+    "${re-edit_CPP_SRC_DIR}/re/edit/platform/NativeApplication.h"
     "${re-edit_CPP_SRC_DIR}/re/edit/platform/RLContext.h"
     "${re-edit_CPP_SRC_DIR}/re/edit/platform/RLContext.cpp"
     "${re-edit_CPP_SRC_DIR}/re/edit/AppContext.h"
@@ -206,6 +207,8 @@ if(APPLE)
   list(APPEND re-edit_BUILD_SOURCES
       "${re-edit_CPP_SRC_DIR}/re/edit/platform/macos/MacOSNetworkManager.mm"
       "${re-edit_CPP_SRC_DIR}/re/edit/platform/macos/MacOSMultipleInstanceManager.mm"
+      "${re-edit_CPP_SRC_DIR}/re/edit/platform/macos/MacOSNativeApplication.h"
+      "${re-edit_CPP_SRC_DIR}/re/edit/platform/macos/MacOSNativeApplication.cpp"
       "${re-edit_CPP_SRC_DIR}/re/edit/platform/macos/NSUserDefaultsManager.mm"
       )
   set(re-edit_MAIN_SRC "${re-edit_CPP_SRC_DIR}/re/edit/platform/macos/main.cpp")
@@ -216,7 +219,7 @@ elseif(WIN32)
       "${re-edit_CPP_SRC_DIR}/re/edit/platform/windows/WindowsMultipleInstanceManager.cpp"
       "${re-edit_CPP_SRC_DIR}/re/edit/platform/windows/WindowsNetworkManager.cpp"
       )
-  set(re-edit_MAIN_SRC "${re-edit_RESOURCES_DIR}/re-edit.rc")
+  set(re-edit_MAIN_SRC "${re-edit_CPP_SRC_DIR}/re/edit/platform/windows/main.cpp" "${re-edit_RESOURCES_DIR}/re-edit.rc")
   set(re-edit_LINK_LIBRARIES "winhttp")
 endif()
 

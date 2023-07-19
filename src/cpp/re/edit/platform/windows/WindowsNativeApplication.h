@@ -16,17 +16,26 @@
  * @author Yan Pujante
  */
 
-#include "../main.cpp"
+#ifndef RE_EDIT_WINDOWS_NATIVE_APPLICATION_H
+#define RE_EDIT_WINDOWS_NATIVE_APPLICATION_H
 
-int main(int argc, char **argv)
+#include "../NativeApplication.h"
+
+namespace re::edit::platform::windows {
+
+class WindowsNativeApplication : public NativeApplication
 {
-  try
-  {
-    return doMain(argc, argv);
-  }
-  catch(...)
-  {
-    RE_EDIT_LOG_ERROR("Unrecoverable error detected... aborting: %s", re::edit::Application::what(std::current_exception()));
-    return 1;
-  }
+public:
+  std::unique_ptr<RLContext> newRLContext() const override;
+
+  bool isSingleInstance() const override;
+
+  bool registerInstance() const override;
+
+protected:
+  std::unique_ptr<NativePreferencesManager> newPreferencesManager() const override;
+};
+
 }
+
+#endif //RE_EDIT_WINDOWSNATIVEAPPLICATION_H

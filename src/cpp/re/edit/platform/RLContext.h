@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 pongasoft
+ * Copyright (c) 2022-2023 pongasoft
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -33,6 +33,8 @@ public:
   ImVec4 getWindowPositionAndSize() const override;
   void setWindowPositionAndSize(std::optional<ImVec2> const &iPosition, ImVec2 const &iSize) const override;
   void setWindowTitle(std::string const &iTitle) const override;
+
+  void setWindowIcon(Texture *iIconTexture) const;
 
   void openURL(std::string const &iURL) const override;
 
