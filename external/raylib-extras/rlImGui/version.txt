@@ -1,2 +1,4 @@
-Version 8bb3aa794699222ed7f668e65b1b9869439ef5a1 (master)
-Cloned from https://github.com/raylib-extras/rlImGui on 2023/07/05
+Version fcb54869a90d84c6a6306a43127214a767d77428 (master)
+Cloned from https://github.com/raylib-extras/rlImGui on 2023/07/19
+
++ patch for https://github.com/raylib-extras/rlImGui/issues/23
