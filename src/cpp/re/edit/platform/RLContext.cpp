@@ -179,5 +179,13 @@ void RLContext::setupCallbacks(Application *iApplication)
   glfwSetDropCallback(fWindow, onDropCallback);
 }
 
+//------------------------------------------------------------------------
+// RLContext::openURL
+//------------------------------------------------------------------------
+void RLContext::openURL(std::string const &iURL) const
+{
+  OpenURL(iURL.c_str());
+}
+
 
 }

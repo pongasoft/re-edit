@@ -34,6 +34,8 @@ public:
   void setWindowPositionAndSize(std::optional<ImVec2> const &iPosition, ImVec2 const &iSize) const override;
   void setWindowTitle(std::string const &iTitle) const override;
 
+  void openURL(std::string const &iURL) const override;
+
   void centerWindow() const override;
 
   void setupCallbacks(Application *iApplication);
