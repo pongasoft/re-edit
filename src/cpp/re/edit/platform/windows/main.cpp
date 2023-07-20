@@ -17,23 +17,52 @@
  */
 
 #include <windows.h>
+#include <string>
+#include "../../Constants.h"
 
-#include "../main.cpp"
+
+int doMain(int argc, char **argv);
 
 inline void writeToConsoleStdErr(std::string const &iMessage)
 {
   WriteConsole(GetStdHandle(STD_ERROR_HANDLE), iMessage.c_str(), iMessage.size(), NULL, NULL);
 }
 
+namespace re::edit::platform::windows {
+
+std::string what(std::exception_ptr const &p)
+{
+  if(p)
+  {
+    try
+    {
+      std::rethrow_exception(p);
+    }
+    catch(std::exception &e)
+    {
+      return e.what();
+    }
+    catch(...)
+    {
+      return "Unknown exception";
+    }
+  }
+
+  return "No Error";
+}
+
+}
+
 int main(int argc, char **argv)
 {
   try
   {
+    AttachConsole(ATTACH_PARENT_PROCESS);
     return doMain(argc, argv);
   }
   catch(...)
   {
-    writeToConsoleStdErr(re::edit::fmt::printf("Unrecoverable error detected... aborting: %s", re::edit::Application::what(std::current_exception())));
+    writeToConsoleStdErr(re::edit::fmt::printf("Unrecoverable error detected... aborting: %s", re::edit::platform::windows::what(std::current_exception())));
     return 1;
   }
 }

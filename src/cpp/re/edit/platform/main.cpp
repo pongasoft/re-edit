@@ -78,9 +78,7 @@ int doMain(int argc, char **argv)
     return 1;
   }
 
-  application.onNativeWindowFontScaleChange(ctx->getFontDpiScale());
-  ctx->setupCallbacks(&application);
-  ctx->centerWindow();
+  ctx->initializeApplication(&application);
   ctx->setWindowIcon(application.getLogo().get());
 
   SetTargetFPS(60);

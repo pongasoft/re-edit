@@ -23,6 +23,9 @@
 
 namespace re::edit::platform::windows {
 
+//------------------------------------------------------------------------
+// class WindowsContext
+//------------------------------------------------------------------------
 class WindowsContext : public re::edit::platform::RLContext
 {
 public:
@@ -41,6 +44,13 @@ public:
   {
     return std::make_shared<re::edit::WindowsNetworkManager>();
   }
+
+protected:
+  void initializeScaling(re::edit::Application *iApplication) const override
+  {
+    iApplication->onNativeWindowFontDpiScaleChange(getFontDpiScale());
+  }
+
 };
 
 //------------------------------------------------------------------------

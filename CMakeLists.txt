@@ -244,12 +244,17 @@ if(APPLE)
   set(re-edit_MAIN_SRC "${re-edit_CPP_SRC_DIR}/re/edit/platform/macos/main.cpp")
 elseif(WIN32)
   list(APPEND re-edit_BUILD_SOURCES
-      "${re-edit_CPP_SRC_DIR}/re/edit/platform/windows/OGL3Managers.cpp"
       "${re-edit_CPP_SRC_DIR}/re/edit/platform/windows/LocalSettingsManager.cpp"
+      "${re-edit_CPP_SRC_DIR}/re/edit/platform/windows/WindowsNativeApplication.h"
+      "${re-edit_CPP_SRC_DIR}/re/edit/platform/windows/WindowsNativeApplication.cpp"
       "${re-edit_CPP_SRC_DIR}/re/edit/platform/windows/WindowsMultipleInstanceManager.cpp"
       "${re-edit_CPP_SRC_DIR}/re/edit/platform/windows/WindowsNetworkManager.cpp"
       )
-  set(re-edit_MAIN_SRC "${re-edit_CPP_SRC_DIR}/re/edit/platform/windows/main.cpp" "${re-edit_RESOURCES_DIR}/re-edit.rc")
+  set(re-edit_MAIN_SRC
+      "${re-edit_CPP_SRC_DIR}/re/edit/platform/main.cpp"
+      "${re-edit_CPP_SRC_DIR}/re/edit/platform/windows/main.cpp"
+      "${re-edit_RESOURCES_DIR}/re-edit.rc"
+      )
   set(re-edit_LINK_LIBRARIES "winhttp")
 endif()
 

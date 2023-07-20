@@ -40,13 +40,17 @@ public:
 
   void centerWindow() const override;
 
-  void setupCallbacks(Application *iApplication);
+  void initializeApplication(Application *iApplication);
 
   virtual float getScale() const = 0;
 
   float getFontDpiScale() const { return getFontDpiScale(fWindow); }
 
   static float getFontDpiScale(GLFWwindow *iWindow);
+
+protected:
+  virtual void initializeScaling(Application *iApplication) const = 0;
+  void setupCallbacks(Application *iApplication);
 
 protected:
   GLFWwindow *fWindow;

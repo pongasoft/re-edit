@@ -41,6 +41,12 @@ public:
   {
     return 1.0;
   }
+
+protected:
+  void initializeScaling(re::edit::Application *iApplication) const override
+  {
+    iApplication->onNativeWindowFontScaleChange(getFontDpiScale());
+  }
 };
 
 //------------------------------------------------------------------------

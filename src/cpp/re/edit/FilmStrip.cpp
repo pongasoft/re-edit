@@ -115,8 +115,10 @@ std::unique_ptr<FilmStrip> FilmStrip::load(std::shared_ptr<Source> const &iSourc
     }
     else
     {
-      RE_EDIT_LOG_ERROR("Error loading file [%s] | %s", iSource->getPath().u8string(), stbi_failure_reason());
-      return std::unique_ptr<FilmStrip>(new FilmStrip(iSource, stbi_failure_reason()));
+      auto reason = stbi_failure_reason();
+      auto error = reason ? std::string(reason) : fmt::printf("File not found %s", iSource->getPath().string());
+      RE_EDIT_LOG_ERROR("Error loading file [%s] | %s", iSource->getPath().u8string(), error);
+      return std::unique_ptr<FilmStrip>(new FilmStrip(iSource, error.c_str()));
     }
   }
   else
@@ -338,14 +340,14 @@ std::vector<FilmStrip::Source> FilmStripMgr::scanDirectory(fs::path const &iDire
         }
         else
         {
-          RE_EDIT_LOG_ERROR("Error with file [%s]: (%d | %s)", ent.path().c_str(), errorCode.value(), errorCode.message());
+          RE_EDIT_LOG_ERROR("Error with file [%s]: (%d | %s)", ent.path().string().c_str(), errorCode.value(), errorCode.message());
         }
       }
     }
   }
   else
   {
-    RE_EDIT_LOG_ERROR("Could not scan directory [%s]: (%d | %s)", iDirectory.c_str(), errorCode.value(), errorCode.message());
+    RE_EDIT_LOG_ERROR("Could not scan directory [%s]: (%d | %s)", iDirectory.string().c_str(), errorCode.value(), errorCode.message());
   }
   return res;
 }
@@ -467,7 +469,7 @@ FilmStrip::Source FilmStrip::Source::from(key_t const &iKey, fs::path const &iDi
   }
   else
   {
-    RE_EDIT_LOG_ERROR("Error with file [%s]: (%d | %s)", path, errorCode.value(), errorCode.message());
+    RE_EDIT_LOG_ERROR("Error with file [%s]: (%d | %s)", path.string(), errorCode.value(), errorCode.message());
     return {path, iKey, 0, inferredNumFrames};
   }
 }

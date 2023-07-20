@@ -248,6 +248,11 @@ Application::Application(std::shared_ptr<Context> iContext, Application::Config 
   fConfig{iConfig.fGlobalConfig}
 {
   init();
+  // we resize the window once the scale is set/known
+  deferNextFrame([this]{
+    fContext->setWindowPositionAndSize(std::nullopt, ImVec2{config::kWelcomeWindowWidth,
+                                                            config::kWelcomeWindowHeight});
+  });
   if(iConfig.fProjectRoot)
     loadProjectDeferred(*iConfig.fProjectRoot);
 }
@@ -521,7 +526,6 @@ void Application::maybeSaveProject(gui_action_t const &iNextAction)
           .button("Yes (save)", [action] { action(); })
           .button("No (don't save)", [iNextAction] { impl::maybeInvoke(iNextAction); })
           .button("Cancel", {});
-          ;
       }
       else
         action();
