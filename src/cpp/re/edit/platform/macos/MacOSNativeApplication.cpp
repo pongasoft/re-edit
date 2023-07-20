@@ -47,6 +47,11 @@ protected:
   {
     iApplication->onNativeWindowFontScaleChange(getFontDpiScale());
   }
+
+  bool isWindowIconAllowed() const override
+  {
+    return false;
+  }
 };
 
 //------------------------------------------------------------------------

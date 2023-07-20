@@ -49,6 +49,7 @@ public:
   static float getFontDpiScale(GLFWwindow *iWindow);
 
 protected:
+  virtual bool isWindowIconAllowed() const = 0;
   virtual void initializeScaling(Application *iApplication) const = 0;
   void setupCallbacks(Application *iApplication);
 

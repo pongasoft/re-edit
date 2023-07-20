@@ -81,7 +81,6 @@ int doMain(int argc, char **argv)
   }
 
   ctx->setup(&application);
-  ctx->setWindowIcon(application.getLogo().get());
 
   SetTargetFPS(60);
 

@@ -19,6 +19,7 @@
 #include "RLContext.h"
 #include <GLFW/glfw3.h>
 #include <raylib.h>
+#include "../LoggingManager.h"
 
 namespace re::edit::platform {
 
@@ -52,6 +53,49 @@ namespace re::edit::platform {
 //   */
 //
 //}
+
+//------------------------------------------------------------------------
+// RLContextLogBridge
+//------------------------------------------------------------------------
+static void RLContextLogBridge(int logType, const char *text, va_list args)
+{
+  if(!text)
+    return;
+
+  int size_s = stbsp_vsnprintf(nullptr, 0, text, args) + 1; // Extra space for '\0'
+  if(size_s <= 0)
+  {
+    RE_EDIT_LOG_WARNING("RLContextLogBridge issue (skipping)");
+    return;
+  }
+  auto size = static_cast<size_t>( size_s );
+  auto buf = std::make_unique<char[]>(size);
+  stbsp_vsnprintf(buf.get(), size_s, text, args);
+  std::string message(buf.get(), buf.get() + size - 1); // We don't want the '\0' inside
+
+  switch(logType)
+  {
+    case LOG_TRACE:
+    case LOG_DEBUG:
+    case LOG_INFO:
+      LoggingManager::instance()->logInfo(message);
+      break;
+    case LOG_WARNING:
+      LoggingManager::instance()->logWarning(message);
+      LoggingManager::instance()->showLog();
+      break;
+    case LOG_ERROR:
+    case LOG_FATAL:
+      LoggingManager::instance()->logError(message);
+      LoggingManager::instance()->showLog();
+      break;
+    default:
+      break;
+  }
+
+  if(logType == LOG_FATAL)
+    throw std::runtime_error("Fatal error in raylib.");
+}
 
 //------------------------------------------------------------------------
 // RLContext::RLContext
@@ -131,10 +175,11 @@ void RLContext::setWindowIcon(Texture *iIconTexture) const
   if(!iIconTexture)
     return;
 
+  if(isWindowIconAllowed())
   {
     GLFWimage image{static_cast<int>(iIconTexture->frameWidth()),
                     static_cast<int>(iIconTexture->frameHeight()),
-                    const_cast<unsigned char*>(iIconTexture->getFilmStrip()->data()) };
+                    const_cast<unsigned char *>(iIconTexture->getFilmStrip()->data())};
 
     glfwSetWindowIcon(fWindow, 1, &image);
   }
@@ -163,7 +208,7 @@ float RLContext::getFontDpiScale(GLFWwindow *iWindow)
 //------------------------------------------------------------------------
 // onWindowContentScaleChange
 //------------------------------------------------------------------------
-static void onWindowContentScaleChange(GLFWwindow* iWindow, float iXscale, float iYscale)
+static void onWindowContentScaleChange(GLFWwindow *iWindow, float iXscale, float iYscale)
 {
   auto application = reinterpret_cast<re::edit::Application *>(glfwGetWindowUserPointer(iWindow));
   application->onNativeWindowFontScaleChange(iXscale);
@@ -172,7 +217,7 @@ static void onWindowContentScaleChange(GLFWwindow* iWindow, float iXscale, float
 //------------------------------------------------------------------------
 // onDropCallback
 //------------------------------------------------------------------------
-static void onDropCallback(GLFWwindow* iWindow, int iCount, const char** iPaths)
+static void onDropCallback(GLFWwindow *iWindow, int iCount, const char **iPaths)
 {
   if(iCount > 0)
   {
@@ -192,6 +237,7 @@ void RLContext::setup(Application *iApplication)
 {
   initializeScaling(iApplication);
   setupCallbacks(iApplication);
+  setWindowIcon(iApplication->getLogo().get());
 }
 
 //------------------------------------------------------------------------
@@ -203,6 +249,7 @@ void RLContext::setupCallbacks(Application *iApplication)
   glfwSetWindowContentScaleCallback(fWindow, onWindowContentScaleChange);
   // Implementation note: replacing raylib callback as there is no need to go through another layer
   glfwSetDropCallback(fWindow, onDropCallback);
+  SetTraceLogCallback(&RLContextLogBridge);
 }
 
 //------------------------------------------------------------------------
