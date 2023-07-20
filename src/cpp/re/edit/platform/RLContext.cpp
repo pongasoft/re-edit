@@ -186,9 +186,9 @@ static void onDropCallback(GLFWwindow* iWindow, int iCount, const char** iPaths)
 }
 
 //------------------------------------------------------------------------
-// RLContext::initializeApplication
+// RLContext::setup
 //------------------------------------------------------------------------
-void RLContext::initializeApplication(Application *iApplication)
+void RLContext::setup(Application *iApplication)
 {
   initializeScaling(iApplication);
   setupCallbacks(iApplication);

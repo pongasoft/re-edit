@@ -16,7 +16,9 @@
  * @author Yan Pujante
  */
 
-#include "../main.cpp"
+#include "../../Application.h"
+
+int doMain(int argc, char **argv);
 
 int main(int argc, char **argv)
 {

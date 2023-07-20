@@ -42,6 +42,8 @@ int doMain(int argc, char **argv)
              re::edit::config::kWelcomeWindowHeight,
              re::edit::config::kWelcomeWindowTitle);
 
+  SetTraceLogLevel(LOG_WARNING);
+
   SetWindowState(FLAG_WINDOW_RESIZABLE);
 
   rlImGuiSetup(true); // true is for Dark Style
@@ -78,7 +80,7 @@ int doMain(int argc, char **argv)
     return 1;
   }
 
-  ctx->initializeApplication(&application);
+  ctx->setup(&application);
   ctx->setWindowIcon(application.getLogo().get());
 
   SetTargetFPS(60);

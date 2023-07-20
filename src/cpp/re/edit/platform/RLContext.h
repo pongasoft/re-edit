@@ -40,7 +40,7 @@ public:
 
   void centerWindow() const override;
 
-  void initializeApplication(Application *iApplication);
+  void setup(Application *iApplication);
 
   virtual float getScale() const = 0;
 

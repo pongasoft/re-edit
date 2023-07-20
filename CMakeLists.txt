@@ -67,41 +67,41 @@ option(USE_GOOGLE_ANGLE_MAC_OS "Whether to use Google Angle or not on macOS." OF
 #######################################################
 # Including raylib
 #######################################################
-# option(CUSTOMIZE_BUILD "Show options for customizing your Raylib library build." ON)
-option(USE_AUDIO OFF)
-option(SUPPORT_MODULE_RSHAPES OFF)
-option(SUPPORT_MODULE_RTEXT OFF)
-option(SUPPORT_MODULE_RMODELS OFF)
-option(SUPPORT_MODULE_RAUDIO OFF)
-option(SUPPORT_CAMERA_SYSTEM OFF)
-option(SUPPORT_GESTURES_SYSTEM OFF)
-option(SUPPORT_MOUSE_GESTURES OFF)
-option(SUPPORT_DEFAULT_FONT OFF)
-option(SUPPORT_SCREEN_CAPTURE OFF)
-option(SUPPORT_GIF_RECORDING OFF)
-option(SUPPORT_QUADS_DRAW_MODE OFF)
-option(SUPPORT_IMAGE_EXPORT OFF)
-option(SUPPORT_IMAGE_GENERATION OFF)
-option(SUPPORT_IMAGE_MANIPULATION OFF)
-option(SUPPORT_FILEFORMAT_DDS OFF)
-option(SUPPORT_FILEFORMAT_HDR OFF)
-option(SUPPORT_FILEFORMAT_PNM OFF)
-option(SUPPORT_FILEFORMAT_KTX OFF)
-option(SUPPORT_FILEFORMAT_ASTC OFF)
-option(SUPPORT_FILEFORMAT_FNT OFF)
-option(SUPPORT_FILEFORMAT_TTF OFF)
-option(SUPPORT_TEXT_MANIPULATION OFF)
-option(SUPPORT_MESH_GENERATION OFF)
-option(SUPPORT_FILEFORMAT_OBJ OFF)
-option(SUPPORT_FILEFORMAT_MTL OFF)
-option(SUPPORT_FILEFORMAT_IQM OFF)
-option(SUPPORT_FILEFORMAT_GLTF OFF)
-option(SUPPORT_FILEFORMAT_VOX OFF)
-option(SUPPORT_FILEFORMAT_WAV OFF)
-option(SUPPORT_FILEFORMAT_OGG OFF)
-option(SUPPORT_FILEFORMAT_XM OFF)
-option(SUPPORT_FILEFORMAT_MOD OFF)
-option(SUPPORT_FILEFORMAT_MP3 OFF)
+option(CUSTOMIZE_BUILD "" ON)
+option(USE_AUDIO "" OFF)
+option(SUPPORT_MODULE_RSHAPES "" OFF)
+option(SUPPORT_MODULE_RTEXT "" OFF)
+option(SUPPORT_MODULE_RMODELS "" OFF)
+option(SUPPORT_MODULE_RAUDIO "" OFF)
+option(SUPPORT_CAMERA_SYSTEM "" OFF)
+option(SUPPORT_GESTURES_SYSTEM "" OFF)
+option(SUPPORT_MOUSE_GESTURES "" OFF)
+option(SUPPORT_DEFAULT_FONT "" OFF)
+option(SUPPORT_SCREEN_CAPTURE "" OFF)
+option(SUPPORT_GIF_RECORDING "" OFF)
+option(SUPPORT_QUADS_DRAW_MODE "" OFF)
+option(SUPPORT_IMAGE_EXPORT "" OFF)
+option(SUPPORT_IMAGE_GENERATION "" OFF)
+option(SUPPORT_IMAGE_MANIPULATION "" OFF)
+option(SUPPORT_FILEFORMAT_DDS "" OFF)
+option(SUPPORT_FILEFORMAT_HDR "" OFF)
+option(SUPPORT_FILEFORMAT_PNM "" OFF)
+option(SUPPORT_FILEFORMAT_KTX "" OFF)
+option(SUPPORT_FILEFORMAT_ASTC "" OFF)
+option(SUPPORT_FILEFORMAT_FNT "" OFF)
+option(SUPPORT_FILEFORMAT_TTF "" OFF)
+option(SUPPORT_TEXT_MANIPULATION "" OFF)
+option(SUPPORT_MESH_GENERATION "" OFF)
+option(SUPPORT_FILEFORMAT_OBJ "" OFF)
+option(SUPPORT_FILEFORMAT_MTL "" OFF)
+option(SUPPORT_FILEFORMAT_IQM "" OFF)
+option(SUPPORT_FILEFORMAT_GLTF "" OFF)
+option(SUPPORT_FILEFORMAT_VOX "" OFF)
+option(SUPPORT_FILEFORMAT_WAV "" OFF)
+option(SUPPORT_FILEFORMAT_OGG "" OFF)
+option(SUPPORT_FILEFORMAT_XM "" OFF)
+option(SUPPORT_FILEFORMAT_MOD "" OFF)
+option(SUPPORT_FILEFORMAT_MP3 "" OFF)
 if (APPLE AND USE_GOOGLE_ANGLE_MAC_OS)
   set(OPENGL_VERSION "ES 2.0" CACHE STRING "Forcing ES 2.0 to use angle")
 endif()
@@ -232,6 +232,8 @@ configure_file("${CMAKE_CURRENT_LIST_DIR}/src/cpp/re/edit/version.h.in" "${VERSI
 # Fonts
 set(RE_EDIT_FONTS_DIR "${CMAKE_CURRENT_LIST_DIR}/external/fonts")
 
+set(re-edit_MAIN_SRC "${re-edit_CPP_SRC_DIR}/re/edit/platform/main.cpp")
+
 # Defines the macos main
 if(APPLE)
   list(APPEND re-edit_BUILD_SOURCES
@@ -241,7 +243,7 @@ if(APPLE)
       "${re-edit_CPP_SRC_DIR}/re/edit/platform/macos/MacOSNativeApplication.cpp"
       "${re-edit_CPP_SRC_DIR}/re/edit/platform/macos/NSUserDefaultsManager.mm"
       )
-  set(re-edit_MAIN_SRC "${re-edit_CPP_SRC_DIR}/re/edit/platform/macos/main.cpp")
+  list(APPEND re-edit_MAIN_SRC "${re-edit_CPP_SRC_DIR}/re/edit/platform/macos/main.cpp")
 elseif(WIN32)
   list(APPEND re-edit_BUILD_SOURCES
       "${re-edit_CPP_SRC_DIR}/re/edit/platform/windows/LocalSettingsManager.cpp"
@@ -250,8 +252,7 @@ elseif(WIN32)
       "${re-edit_CPP_SRC_DIR}/re/edit/platform/windows/WindowsMultipleInstanceManager.cpp"
       "${re-edit_CPP_SRC_DIR}/re/edit/platform/windows/WindowsNetworkManager.cpp"
       )
-  set(re-edit_MAIN_SRC
-      "${re-edit_CPP_SRC_DIR}/re/edit/platform/main.cpp"
+  list(APPEND re-edit_MAIN_SRC
       "${re-edit_CPP_SRC_DIR}/re/edit/platform/windows/main.cpp"
       "${re-edit_RESOURCES_DIR}/re-edit.rc"
       )
