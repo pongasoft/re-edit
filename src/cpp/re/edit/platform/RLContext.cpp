@@ -19,7 +19,6 @@
 #include "RLContext.h"
 #include <GLFW/glfw3.h>
 #include <raylib.h>
-#include "../LoggingManager.h"
 
 namespace re::edit::platform {
 

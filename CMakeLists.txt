@@ -60,11 +60,6 @@ if(WIN32)
 endif()
 
 #######################################################
-# Option to turn on/off Google Angle on macOS
-#######################################################
-option(USE_GOOGLE_ANGLE_MAC_OS "Whether to use Google Angle or not on macOS." OFF)
-
-#######################################################
 # Including raylib
 #######################################################
 option(CUSTOMIZE_BUILD "" ON)
@@ -102,10 +97,9 @@ option(SUPPORT_FILEFORMAT_OGG "" OFF)
 option(SUPPORT_FILEFORMAT_XM "" OFF)
 option(SUPPORT_FILEFORMAT_MOD "" OFF)
 option(SUPPORT_FILEFORMAT_MP3 "" OFF)
-if (APPLE AND USE_GOOGLE_ANGLE_MAC_OS)
-  set(OPENGL_VERSION "ES 2.0" CACHE STRING "Forcing ES 2.0 to use angle")
-endif()
 add_subdirectory("${CMAKE_SOURCE_DIR}/external/raysan5/raylib" raylib EXCLUDE_FROM_ALL)
+# code assumes it is an embedded device with low memory...
+target_compile_definitions(raylib PRIVATE "-DRL_DEFAULT_BATCH_BUFFER_ELEMENTS=8192")
 
 #######################################################
 # Including Dear ImGui
@@ -286,20 +280,11 @@ if(APPLE)
       MACOSX_BUNDLE_COPYRIGHT "© 2023 pongasoft"
       MACOSX_BUNDLE_INFO_PLIST "${CMAKE_SOURCE_DIR}/cmake/MacOSXBundleInfo.plist.in"
       )
-  if (USE_GOOGLE_ANGLE_MAC_OS)
-    set_target_properties(${target} PROPERTIES
-        INSTALL_RPATH "@executable_path/../Frameworks"
-        )
-  endif()
+  target_compile_definitions("${target}_lib" PUBLIC GL_SILENCE_DEPRECATION)
+
   target_sources(${target} PRIVATE "src/resources/re-edit.icns")
   set_source_files_properties("src/resources/re-edit.icns" PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
 
-  if (USE_GOOGLE_ANGLE_MAC_OS)
-    # link with google angle which implements the old/deprecated macOS OpenGL API to use metal
-    set(GOOGLE_ANGLE_DIR "${CMAKE_CURRENT_LIST_DIR}/external/google/angle")
-    list(APPEND google_angle_libs "${GOOGLE_ANGLE_DIR}/macOS/libEGL.dylib" "${GOOGLE_ANGLE_DIR}/macOS/libGLESv2.dylib")
-    target_link_libraries(${target} PRIVATE "${google_angle_libs}")
-  endif()
 endif()
 
 macro(cmake_option_to_python_bool cmake_opt python_opt)
@@ -324,19 +309,6 @@ install(
     TARGETS "${target}"
     DESTINATION "."
 )
-
-if (APPLE)
-  if (USE_GOOGLE_ANGLE_MAC_OS)
-    # installs the libraries under Content/Frameworks
-    install(
-        FILES "${google_angle_libs}"
-        DESTINATION "$<TARGET_BUNDLE_DIR_NAME:${target}>/Contents/Frameworks"
-    )
-
-    # TODO: if using the Xcode generator, the executable needs to be resigned...
-  endif()
-
-endif()
 
 #######################################################
 # Archive

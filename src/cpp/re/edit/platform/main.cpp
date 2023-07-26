@@ -23,6 +23,7 @@
 #include "NativeApplication.h"
 #include "nfd.h"
 #include "../UIContext.h"
+#include "GLFW/glfw3.h"
 #include <version.h>
 
 using namespace re::edit::platform;
@@ -32,9 +33,6 @@ int doMain(int argc, char **argv)
   fprintf(stdout, "RE Edit - %s | %s\n", re::edit::kFullVersion, re::edit::kGitVersion);
 
   auto nativeApplication = NativeApplication::create();
-
-  re::edit::UIContext uiContext{};
-  re::edit::UIContext::kCurrent = &uiContext;
 
   SetWindowState(FLAG_WINDOW_HIGHDPI);
 
@@ -47,6 +45,12 @@ int doMain(int argc, char **argv)
   SetWindowState(FLAG_WINDOW_RESIZABLE);
 
   rlImGuiSetup(true); // true is for Dark Style
+
+  GLint maxTextureSize = 0;
+  glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxTextureSize);
+
+  re::edit::UIContext uiContext{maxTextureSize};
+  re::edit::UIContext::kCurrent = &uiContext;
 
   ImGuiIO &io = ImGui::GetIO();
 

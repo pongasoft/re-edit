@@ -45,18 +45,6 @@ public:
     std::unique_ptr<::Texture> fTexture;
   };
 
-  struct GPUTexture
-  {
-    GPUTexture(RLTexture &&iRLTexture, int iFrameStart) : fRLTexture{std::move(iRLTexture)}, fFrameStart{iFrameStart} {}
-
-    inline ImTextureID asImTextureID() const { return fRLTexture.asImTextureID(); }
-    inline int height() const { return fRLTexture.height(); }
-
-  private:
-    RLTexture fRLTexture;
-    int fFrameStart;
-  };
-
 public:
   Texture() = default;
   virtual ~Texture() = default;
@@ -115,7 +103,7 @@ protected:
 
 protected:
   std::shared_ptr<FilmStrip> fFilmStrip{};
-  mutable std::vector<std::unique_ptr<GPUTexture>> fGPUTextures{};
+  mutable std::vector<std::unique_ptr<RLTexture>> fGPUTextures{};
 };
 
 struct Icon

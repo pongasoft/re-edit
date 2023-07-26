@@ -33,7 +33,9 @@ public:
   using ui_action_t = std::function<void()>;
 
 public:
-  explicit UIContext(std::thread::id iUIThreadId = std::this_thread::get_id()) : fUIThreadId{iUIThreadId} {}
+  explicit UIContext(int iMaxTextureSize, std::thread::id iUIThreadId = std::this_thread::get_id()) :
+    fMaxTextureSize{iMaxTextureSize},
+    fUIThreadId{iUIThreadId} {}
 
   static UIContext &GetCurrent() { RE_EDIT_INTERNAL_ASSERT(kCurrent != nullptr); return *kCurrent; }
 
@@ -44,9 +46,12 @@ public:
 
   void processUIActions();
 
+  constexpr int maxTextureSize() const { return fMaxTextureSize; }
+
   inline static UIContext *kCurrent{};
 
 private:
+  int fMaxTextureSize;
   std::thread::id fUIThreadId;
   mutable std::mutex fMutex;
   std::vector<ui_action_t> fUIActions{};
