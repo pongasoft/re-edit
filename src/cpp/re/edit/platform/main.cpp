@@ -28,21 +28,28 @@
 
 using namespace re::edit::platform;
 
+struct RLWindow
+{
+  RLWindow(int width, int height, const char *title)
+  {
+    SetWindowState(FLAG_WINDOW_HIGHDPI);
+    InitWindow(width, height, title);
+    SetTraceLogLevel(LOG_WARNING);
+    SetWindowState(FLAG_WINDOW_RESIZABLE);
+  }
+
+  ~RLWindow() { CloseWindow(); }
+};
+
 int doMain(int argc, char **argv)
 {
   fprintf(stdout, "RE Edit - %s | %s\n", re::edit::kFullVersion, re::edit::kGitVersion);
 
   auto nativeApplication = NativeApplication::create();
 
-  SetWindowState(FLAG_WINDOW_HIGHDPI);
-
-  InitWindow(re::edit::config::kWelcomeWindowWidth,
-             re::edit::config::kWelcomeWindowHeight,
-             re::edit::config::kWelcomeWindowTitle);
-
-  SetTraceLogLevel(LOG_WARNING);
-
-  SetWindowState(FLAG_WINDOW_RESIZABLE);
+  RLWindow window{re::edit::config::kWelcomeWindowWidth,
+                  re::edit::config::kWelcomeWindowHeight,
+                  re::edit::config::kWelcomeWindowTitle};
 
   rlImGuiSetup(true); // true is for Dark Style
 
@@ -126,8 +133,6 @@ int doMain(int argc, char **argv)
   rlImGuiShutdown();
 
   NFD_Quit();
-
-  CloseWindow();
 
   auto const res = application.hasException() ? 1 : 0;
 
