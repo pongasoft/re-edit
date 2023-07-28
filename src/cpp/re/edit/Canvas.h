@@ -54,12 +54,13 @@ public:
   using canvas_size_t = ImVec2;
 
 public:
-  void begin(ImVec2 const &iContentSize, Zoom iZoom);
+  void begin(ImVec2 const &iContentSize, Zoom iZoom, ImVec4 const &iBackgroundColor);
 
   void begin(screen_pos_t const &iCanvasPos,
              screen_size_t const &iCanvasSize,
              canvas_size_t const &iContentSize,
-             Zoom iZoom);
+             Zoom iZoom,
+             ImVec4 const &iBackgroundColor);
 
 
   Zoom end();
@@ -70,21 +71,27 @@ public:
                   canvas_pos_t const &iPos = {0,0},
                   int iFrameNumber = 0,
                   ImU32 iBorderColor = ReGui::kTransparentColorU32,
-                  ImU32 iTextureColor = ReGui::kWhiteColorU32) const;
+                  ImU32 iTextureColor = ReGui::kWhiteColorU32,
+                  ImU32 iTintColor = kDefaultTintColor,
+                  float iBrightness = kDefaultBrightness) const;
 
   void addResizedTexture(Texture const *iTexture,
                          ImVec2 const &iTextureSize,
                          canvas_pos_t const &iPos = {0,0},
                          int iFrameNumber = 0,
                          ImU32 iBorderColor = ReGui::kTransparentColorU32,
-                         ImU32 iTextureColor = ReGui::kWhiteColorU32) const;
+                         ImU32 iTextureColor = ReGui::kWhiteColorU32,
+                         ImU32 iTintColor = kDefaultTintColor,
+                         float iBrightness = kDefaultBrightness) const;
 
   void addScaledTexture(Texture const *iTexture,
                         ImVec2 const &iScale,
                         canvas_pos_t const &iPos = {0,0},
                         int iFrameNumber = 0,
                         ImU32 iBorderColor = ReGui::kTransparentColorU32,
-                        ImU32 iTextureColor = ReGui::kWhiteColorU32) const;
+                        ImU32 iTextureColor = ReGui::kWhiteColorU32,
+                        ImU32 iTintColor = kDefaultTintColor,
+                        float iBrightness = kDefaultBrightness) const;
 
   void addRectFilled(canvas_pos_t const &iPos, canvas_size_t const &iSize, ImU32 iCol = ReGui::kWhiteColorU32) const;
 

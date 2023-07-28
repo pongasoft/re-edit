@@ -64,7 +64,7 @@ endif()
 #######################################################
 option(CUSTOMIZE_BUILD "" ON)
 option(USE_AUDIO "" OFF)
-option(SUPPORT_MODULE_RSHAPES "" OFF)
+option(SUPPORT_MODULE_RSHAPES "" ON)
 option(SUPPORT_MODULE_RTEXT "" OFF)
 option(SUPPORT_MODULE_RMODELS "" OFF)
 option(SUPPORT_MODULE_RAUDIO "" OFF)

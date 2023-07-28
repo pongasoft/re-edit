@@ -20,6 +20,7 @@
 #define RE_EDIT_RE_GUI_H
 
 #include <imgui.h>
+#include <raylib.h>
 #include <cmath>
 #include "Color.h"
 #include "Constants.h"
@@ -87,6 +88,26 @@ constexpr ImU32 GetColorU32(ImVec4 const &iColor)
 }
 
 //------------------------------------------------------------------------
+// ReGui::GetRLColor
+//------------------------------------------------------------------------
+constexpr Color GetRLColor(ImU32 iColor) {
+  return Color {
+    static_cast<unsigned char>((iColor >> IM_COL32_R_SHIFT) & 0xFF),
+    static_cast<unsigned char>((iColor >> IM_COL32_G_SHIFT) & 0xFF),
+    static_cast<unsigned char>((iColor >> IM_COL32_B_SHIFT) & 0xFF),
+    static_cast<unsigned char>((iColor >> IM_COL32_A_SHIFT) & 0xFF)
+  };
+}
+
+//------------------------------------------------------------------------
+// ReGui::GetRLColor
+//------------------------------------------------------------------------
+constexpr Color GetRLColor(ImVec4 const &iColor) {
+  return GetRLColor(GetColorU32(iColor));
+}
+
+
+//------------------------------------------------------------------------
 // ReGui::GetColorU32
 // Applies provided alpha (copied from ImGui)
 //------------------------------------------------------------------------
@@ -119,6 +140,30 @@ constexpr ImVec4 GetColorImVec4(ImU32 iColor)
 constexpr ImVec4 GetColorImVec4(JboxColor3 const &iColor)
 {
   return toFloatColor(iColor.fRed, iColor.fGreen, iColor.fBlue);
+}
+
+//------------------------------------------------------------------------
+// ReGui::GetColorImU32
+//------------------------------------------------------------------------
+constexpr ImU32 GetColorImU32(JboxColor3 const &iColor)
+{
+  ImU32 out = ((ImU32)iColor.fRed) << IM_COL32_R_SHIFT;
+  out |= ((ImU32)iColor.fGreen) << IM_COL32_G_SHIFT;
+  out |= ((ImU32)iColor.fBlue) << IM_COL32_B_SHIFT;
+  out |= ((ImU32)255) << IM_COL32_A_SHIFT;
+  return out;
+}
+
+//------------------------------------------------------------------------
+// ReGui::GetJboxColor3
+//------------------------------------------------------------------------
+constexpr JboxColor3 GetJboxColor3(ImU32 iColor)
+{
+  return {
+    static_cast<int>((iColor >> IM_COL32_R_SHIFT) & 0xFF),
+    static_cast<int>((iColor >> IM_COL32_G_SHIFT) & 0xFF),
+    static_cast<int>((iColor >> IM_COL32_B_SHIFT) & 0xFF)
+  };
 }
 
 //------------------------------------------------------------------------

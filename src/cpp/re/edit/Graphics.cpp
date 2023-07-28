@@ -169,14 +169,6 @@ constexpr ImU32 computeTextureColor(bool iXRay)
          ReGui::GetColorU32(kWhiteColor);
 }
 
-//------------------------------------------------------------------------
-// impl::computeTextureColor
-//------------------------------------------------------------------------
-constexpr ImU32 computeTextureColor(ImVec4 const &iTintColor, bool iXRay)
-{
-  return iXRay ? ReGui::GetColorU32(iTintColor * kXRayColor) : ReGui::GetColorU32(iTintColor);
-}
-
 }
 
 //------------------------------------------------------------------------
@@ -188,11 +180,9 @@ void Graphics::draw(AppContext &iCtx, ReGui::Canvas &iCanvas, ImU32 iBorderColor
   if(texture && texture->isValid())
   {
     if(fSizeOverride)
-      iCanvas.addResizedTexture(texture, *fSizeOverride, fPosition, fFrameNumber, iBorderColor,
-                                hasTint() ? impl::computeTextureColor(fTint, iXRay) : impl::computeTextureColor(iXRay));
+      iCanvas.addResizedTexture(texture, *fSizeOverride, fPosition, fFrameNumber, iBorderColor, impl::computeTextureColor(iXRay), fTint);
     else
-      iCanvas.addTexture(texture, fPosition, fFrameNumber, iBorderColor,
-                         hasTint() ? impl::computeTextureColor(fTint, iXRay) : impl::computeTextureColor(iXRay));
+      iCanvas.addTexture(texture, fPosition, fFrameNumber, iBorderColor, impl::computeTextureColor(iXRay), fTint);
   }
   else
   {
@@ -243,7 +233,7 @@ void Graphics::editView(AppContext &iCtx,
                         FilmStrip::Filter const &iFilter,
                         std::function<void(std::string const &)> const &iOnTextureUpdate,
                         std::function<void(ImVec2 const &)> const &iOnSizeUpdate,
-                        std::function<void(ImVec4 const &)> const &iOnTintUpdate)
+                        std::function<void(ImU32)> const &iOnTintUpdate)
 {
   if(ReGui::MenuButton())
     ImGui::OpenPopup("Menu");
@@ -277,7 +267,7 @@ void Graphics::editView(AppContext &iCtx,
     ImGui::BeginDisabled(hasSize());
     ImGui::MenuItem("Edit tint", nullptr, &fEditingTint);
     if(ImGui::MenuItem("Reset Tint"))
-      iOnTintUpdate(kNoTintColor);
+      iOnTintUpdate(kDefaultTintColor);
     if(ImGui::MenuItem("Reset Size"))
     {
       if(hasSize())
@@ -339,10 +329,10 @@ void Graphics::editView(AppContext &iCtx,
 
   if(isEditingTint())
   {
-    ImVec4 tint = fTint;
+    ImVec4 tint = ReGui::GetColorImVec4(fTint);
     if(ImGui::ColorEdit3("tint", &tint.x))
     {
-      iOnTintUpdate(tint);
+      iOnTintUpdate(ReGui::GetColorU32(tint));
     }
   }
 
@@ -456,8 +446,8 @@ void Graphics::editView(AppContext &iCtx)
                     fmt::printf(fmt::printf("Change %s size", getParent()->getName())),
                     MergeKey::from(&fSizeOverride));
            },
-           [this](auto &tint) {
-             update([this, &tint] {
+           [this](auto tint) {
+             update([this, tint] {
                       fTint = tint;
                     },
                     fmt::printf(fmt::printf("Change %s tint", getParent()->getName())),
@@ -515,7 +505,7 @@ void Graphics::reset()
   fDNZTexture = nullptr;
   fHitBoundaries = {};
   fEdited = true;
-  fTint = kNoTintColor;
+  fTint = kDefaultTintColor;
   fEditingTint = false;
   fSizeOverride = std::nullopt;
 }
@@ -626,10 +616,11 @@ std::string Graphics::device2D() const
   if(hasTexture())
   {
     auto texture = getTexture();
+    auto tint = ReGui::GetJboxColor3(fTint);
     path = re::mock::fmt::printf("path = \"%s\"%s%s%s",
                                  texture->key(),
                                  texture->numFrames() > 1 ?  re::mock::fmt::printf(", frames = %d", texture->numFrames()) : "",
-                                 hasTint() ?  re::mock::fmt::printf(", re_edit_tint = { %d, %d, %d }", toIntColor(fTint.x), toIntColor(fTint.y), toIntColor(fTint.z)) : "",
+                                 hasTint() ?  re::mock::fmt::printf(", re_edit_tint = { %d, %d, %d }", tint.fRed, tint.fGreen, tint.fBlue) : "",
                                  fSizeOverride && fSizeOverride != texture->frameSize() ?  re::mock::fmt::printf(", re_edit_size = { %d, %d }", stl::roundToInt(fSizeOverride->x),  stl::roundToInt(fSizeOverride->y)) : ""
                                  );
 
@@ -697,7 +688,7 @@ void Graphics::setTextureKey(Texture::key_t const &iTextureKey)
   fTexture = iTextureKey;
   fDNZTexture = AppContext::GetCurrent().getTexture(iTextureKey);
   fSizeOverride = std::nullopt;
-  fTint = kNoTintColor;
+  fTint = kDefaultTintColor;
   fEdited = true;
 }
 
@@ -706,7 +697,7 @@ void Graphics::setTextureKey(Texture::key_t const &iTextureKey)
 //------------------------------------------------------------------------
 void Graphics::initTextureKey(Texture::key_t const &iTextureKey,
                               std::optional<ImVec2> const &iSize,
-                              std::optional<ImVec4> const &iTint)
+                              std::optional<ImU32> const &iTint)
 {
   fTexture = iTextureKey;
   fDNZTexture = AppContext::GetCurrent().getTexture(iTextureKey);
@@ -727,7 +718,7 @@ void Graphics::setSize(ImVec2 const &iSize)
   fTexture = iSize;
   fDNZTexture.reset();
   fSizeOverride = std::nullopt;
-  fTint = kNoTintColor;
+  fTint = kDefaultTintColor;
   fEdited = true;
 }
 

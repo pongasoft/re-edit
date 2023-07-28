@@ -25,6 +25,9 @@
 #include <mutex>
 #include <thread>
 
+struct ImVec4;
+struct Shader;
+
 namespace re::edit {
 
 class UIContext
@@ -33,9 +36,9 @@ public:
   using ui_action_t = std::function<void()>;
 
 public:
-  explicit UIContext(int iMaxTextureSize, std::thread::id iUIThreadId = std::this_thread::get_id()) :
-    fMaxTextureSize{iMaxTextureSize},
-    fUIThreadId{iUIThreadId} {}
+  explicit UIContext(int iMaxTextureSize, std::thread::id iUIThreadId = std::this_thread::get_id());
+
+  void init();
 
   static UIContext &GetCurrent() { RE_EDIT_INTERNAL_ASSERT(kCurrent != nullptr); return *kCurrent; }
 
@@ -46,14 +49,36 @@ public:
 
   void processUIActions();
 
+  void beginFXShader(ImVec4 const &iTint, float iBrightness);
+  void endFXShader();
+
   constexpr int maxTextureSize() const { return fMaxTextureSize; }
 
   inline static UIContext *kCurrent{};
 
 private:
+  struct RLShader
+  {
+    RLShader();
+    RLShader(char const *iVertexShader, char const *iFragmentShader);
+    RLShader(RLShader &&iOther) noexcept;
+    ~RLShader();
+
+    RLShader &operator=(RLShader &&iOther) noexcept;
+
+    constexpr ::Shader *getShader() const { return fShader.get(); }
+
+  private:
+    std::unique_ptr<::Shader> fShader;
+  };
+
+private:
   int fMaxTextureSize;
   std::thread::id fUIThreadId;
   mutable std::mutex fMutex;
+  RLShader fFXShader{};
+  int fShaderTintLocation{};
+  int fShaderBrightnessLocation{};
   std::vector<ui_action_t> fUIActions{};
 };
 

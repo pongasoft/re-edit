@@ -57,6 +57,7 @@ int doMain(int argc, char **argv)
   glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxTextureSize);
 
   re::edit::UIContext uiContext{maxTextureSize};
+  uiContext.init();
   re::edit::UIContext::kCurrent = &uiContext;
 
   ImGuiIO &io = ImGui::GetIO();

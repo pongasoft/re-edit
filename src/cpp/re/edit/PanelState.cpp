@@ -19,6 +19,7 @@
 #include "PanelState.h"
 #include "Errors.h"
 #include "Application.h"
+#include "UIContext.h"
 #include <set>
 
 namespace re::edit {
@@ -108,7 +109,7 @@ void PanelState::initPanel(AppContext &iCtx,
           iCtx.loadTexture(key, node->fNumFrames);
           widget->initTextureKey(key,
                                  node->fOverrideSize,
-                                 node->fOverrideTint ? std::optional<ImVec4>(ReGui::GetColorImVec4(*node->fOverrideTint)) : std::nullopt);
+                                 node->fOverrideTint ? std::optional<ImU32>(ReGui::GetColorImU32(*node->fOverrideTint)) : std::nullopt);
         }
         else
           RE_EDIT_LOG_WARNING("Empty node path for widget %s", node->fName);
@@ -141,7 +142,7 @@ void PanelState::initPanel(AppContext &iCtx,
         iCtx.loadTexture(key, node.fNumFrames);
         widget->initTextureKey(key,
                                node.fOverrideSize,
-                               node.fOverrideTint ? std::optional<ImVec4>(ReGui::GetColorImVec4(*node.fOverrideTint)) : std::nullopt);
+                               node.fOverrideTint ? std::optional<ImU32>(ReGui::GetColorImU32(*node.fOverrideTint)) : std::nullopt);
       }
       else
         RE_EDIT_LOG_WARNING("Empty node path for decal %s", name);
@@ -209,12 +210,15 @@ void PanelState::renderWidgets(AppContext &iCtx)
 void PanelState::renderPanel(AppContext &iCtx)
 {
   auto windowPadding = ImGui::GetStyle().WindowPadding;
+  auto windowBg = ImGui::GetStyleColorVec4(ImGuiStyleVar_WindowPadding);
   ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{});
   if(auto l = iCtx.fPanelWindow.begin())
   {
     auto &canvas = iCtx.getPanelCanvas();
     auto dpiScale = Application::GetCurrent().getCurrentFontDpiScale();
-    canvas.begin(fPanel.getSize(), {iCtx.getZoom(), iCtx.isZoomFitContent(), Panel::kZoomMin * dpiScale, Panel::kZoomMax * dpiScale});
+    canvas.begin(fPanel.getSize(),
+                 {iCtx.getZoom(), iCtx.isZoomFitContent(), Panel::kZoomMin * dpiScale, Panel::kZoomMax * dpiScale},
+                 windowBg);
     fPanel.draw(iCtx, canvas, windowPadding);
     iCtx.setZoom(canvas.end());
   }

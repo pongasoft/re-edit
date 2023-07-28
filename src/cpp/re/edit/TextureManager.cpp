@@ -226,24 +226,23 @@ void Texture::doDraw(bool iAddItem,
                      ImVec2 const &iSize,
                      int iFrameNumber,
                      ImU32 iBorderColor,
-                     ImU32 iTextureColor) const
+                     ImU32 iTextureColor,
+                     ImU32 iTintColor,
+                     float iBrightness) const
 {
-//  if(fGPUData.empty())
-//    reloadOnGPU();
-//
   if(fGPUTextures.empty())
     return;
 
   auto const size = ImVec2{iSize.x == 0 ? frameWidth()  : iSize.x, iSize.y == 0 ? frameHeight() : iSize.y};
 
-  const ImRect rect{iScreenPosition, iScreenPosition + size};
+   const ReGui::Rect dest{iScreenPosition, iScreenPosition + size};
 
   // do we treat the texture as a ImGui item (clickable, etc...)
   if(iAddItem)
   {
     ImGui::SetCursorScreenPos(iScreenPosition);
-    ImGui::ItemSize(rect);
-    if(!ImGui::ItemAdd(rect, 0))
+    ImGui::ItemSize(ImRect{dest.Min, dest.Max});
+    if(!ImGui::ItemAdd(ImRect{dest.Min, dest.Max}, 0))
       return;
   }
 
@@ -257,10 +256,8 @@ void Texture::doDraw(bool iAddItem,
   if(fGPUTextures.size() == 1)
   {
     // most frequent use case
-    auto height = static_cast<float>(data->height());
-    auto uv0 = ImVec2(0, (frameY) / height);
-    auto uv1 = ImVec2(1, (frameY + frameHeight) / height);
-    drawList->AddImage(data->asImTextureID(), rect.Min, rect.Max, uv0, uv1, iTextureColor);
+    ReGui::Rect source{0, frameY, 0 + frameWidth(), frameY + frameHeight};
+    data->draw(!iAddItem, source, dest, iTextureColor, iTintColor, iBrightness);
   }
   else
   {
@@ -273,16 +270,14 @@ void Texture::doDraw(bool iAddItem,
     while(startY > static_cast<float>(data->height()))
     {
       startY -= static_cast<float>(data->height());
-      data = fGPUTextures[i++].get();
+      data = fGPUTextures.at(i++).get();
     }
     auto height = static_cast<float>(data->height());
     auto endY = startY + frameHeight;
     if(endY <= height)
     {
-      // case when it starts/ends in the same texture
-      auto uv0 = ImVec2(0, startY / height);
-      auto uv1 = ImVec2(1, endY / height);
-      drawList->AddImage(data->asImTextureID(), rect.Min, rect.Max, uv0, uv1, iTextureColor);
+      ReGui::Rect source{0, startY, 0 + frameWidth(), endY};
+      data->draw(!iAddItem, source, dest, iTextureColor, iTintColor, iBrightness);
     }
     else
     {
@@ -290,27 +285,29 @@ void Texture::doDraw(bool iAddItem,
       // Implementation note: this code is assuming that a frame will be split to at most 2 textures which seems
       // reasonable since a texture max height should be far bigger than a 9U device. But it could be revisited in
       // the event this assumption changes...
-      auto uv0 = ImVec2(0, startY / height);
-      auto uv1 = ImVec2(1, 1);
       auto heightInData1 = height - startY;
       auto heightInData2 = frameHeight - heightInData1;
       auto fraction = heightInData1 / frameHeight;
-      auto rect1 = rect;
-      rect1.Max.y = (rect.Max.y - rect.Min.y) * fraction + rect.Min.y;
-      drawList->AddImage(data->asImTextureID(), rect1.Min, rect1.Max, uv0, uv1, iTextureColor);
-      data = fGPUTextures[i++].get();
-      height = static_cast<float>(data->height());
-      uv0 = ImVec2(0, 0);
-      uv1 = ImVec2(1, heightInData2 / height);
-      auto rect2 = rect;
-      rect2.Min.y = rect1.Max.y;
-      drawList->AddImage(data->asImTextureID(), rect2.Min, rect2.Max, uv0, uv1, iTextureColor);
+      auto dest1 = dest;
+      dest1.Max.y = (dest.Max.y - dest.Min.y) * fraction + dest.Min.y;
+      {
+        ReGui::Rect source{0, startY, frameWidth(), height};
+        data->draw(!iAddItem, source, dest1, iTextureColor, iTintColor, iBrightness);
+      }
+
+      data = fGPUTextures.at(i++).get();
+      {
+        ReGui::Rect source{0, 0, frameWidth(), heightInData2};
+        auto dest2 = dest;
+        dest2.Min.y = dest1.Max.y;
+        data->draw(!iAddItem, source, dest2, iTextureColor, iTintColor, iBrightness);
+      }
     }
   }
 
   // add a border?
   if(!ReGui::ColorIsTransparent(iBorderColor))
-    drawList->AddRect(rect.Min, rect.Max, iBorderColor, 0.0f);
+    drawList->AddRect(dest.Min, dest.Max, iBorderColor, 0.0f);
 }
 
 //------------------------------------------------------------------------
@@ -319,6 +316,7 @@ void Texture::doDraw(bool iAddItem,
 Texture::RLTexture::RLTexture(::Texture iTexture) : fTexture(std::make_unique<::Texture>(iTexture))
 {
   SetTextureFilter(*fTexture, TEXTURE_FILTER_BILINEAR);
+  SetTextureWrap(*fTexture, TEXTURE_WRAP_CLAMP);
 }
 
 //------------------------------------------------------------------------
@@ -328,6 +326,53 @@ Texture::RLTexture::~RLTexture()
 {
   if(fTexture)
     UnloadTexture(*fTexture);
+}
+
+//------------------------------------------------------------------------
+// Texture::RLTexture::draw
+//------------------------------------------------------------------------
+void Texture::RLTexture::draw(bool iUseRLDraw,
+                              ReGui::Rect const &iSource,
+                              ReGui::Rect const &iDestination,
+                              ImU32 iTextureColor,
+                              ImU32 iTintColor,
+                              float iBrightness) const
+{
+
+  if(iUseRLDraw)
+  {
+    Rectangle source {
+      iSource.Min.x,
+      iSource.Min.y,
+      iSource.GetWidth(),
+      iSource.GetHeight()
+    };
+    Rectangle destination {
+      iDestination.Min.x,
+      iDestination.Min.y,
+      iDestination.GetWidth(),
+      iDestination.GetHeight()
+    };
+    bool useFXShader = false;
+
+    if(iTintColor != kDefaultTintColor || iBrightness != kDefaultBrightness)
+    {
+      UIContext::GetCurrent().beginFXShader(ReGui::GetColorImVec4(iTintColor), iBrightness);
+      useFXShader = true;
+    }
+
+    DrawTexturePro(asRLTexture(), source, destination, {}, 0, ReGui::GetRLColor(iTextureColor));
+
+    if(useFXShader)
+      UIContext::GetCurrent().endFXShader();
+  }
+  else
+  {
+    auto uv0 = ImVec2(0, iSource.Min.y / static_cast<float>(height()));
+    auto uv1 = ImVec2(1, iSource.Max.y / static_cast<float>(height()));
+    ImGui::GetWindowDrawList()->AddImage(asImTextureID(), iDestination.Min, iDestination.Max, uv0, uv1, iTextureColor);
+  }
+
 }
 
 }

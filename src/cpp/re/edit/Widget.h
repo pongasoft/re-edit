@@ -96,7 +96,7 @@ public:
   inline void setTextureKey(Texture::key_t const &iTextureKey) { fGraphics->setTextureKey(iTextureKey); fEdited |= fGraphics->isEdited(); }
   inline void initTextureKey(Texture::key_t const &iTextureKey,
                              std::optional<ImVec2> const &iSize,
-                             std::optional<ImVec4> const &iTint) {
+                             std::optional<ImU32> const &iTint) {
     fGraphics->initTextureKey(iTextureKey, iSize, iTint); fEdited |= fGraphics->isEdited();
   }
   inline void setSize(ImVec2 const &iSize) { fGraphics->setSize(iSize); fEdited |= fGraphics->isEdited(); }

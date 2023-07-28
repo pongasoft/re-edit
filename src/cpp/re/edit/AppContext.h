@@ -297,7 +297,7 @@ protected:
   float fDpiAdjustedZoom{fUserZoom};
   bool fZoomFitContent{true};
   std::optional<std::string> fReEditVersion{};
-  ReGui::Window fPanelWindow{"Panel", true, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoCollapse};
+  ReGui::Window fPanelWindow{"Panel", true, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoBackground};
   ReGui::Window fPanelWidgetsWindow{"Panel Widgets", true, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoCollapse};
   ReGui::Window fWidgetsWindow{"Widgets", true, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoCollapse};
   ReGui::Window fPropertiesWindow{"Properties", true, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoCollapse};

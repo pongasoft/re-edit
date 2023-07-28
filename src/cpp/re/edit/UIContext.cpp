@@ -17,11 +17,55 @@
  */
 
 #include "UIContext.h"
+#include <imgui.h>
+#include <raylib.h>
 
 namespace re::edit {
 
+static constexpr char const *kFXFragmentShader = R"ogl33(
+#version 330
+in vec2 fragTexCoord;
+in vec4 fragColor;
+out vec4 finalColor;
+uniform sampler2D texture0;
+uniform vec4 colTint;
+uniform float colBrightness;
+void main()
+{
+    vec4 texelColor = texture(texture0, fragTexCoord);
+    finalColor = texelColor*fragColor*colTint + vec4(colBrightness, colBrightness, colBrightness, 0);
+}
+)ogl33";
+
 //------------------------------------------------------------------------
-// GPUContext::execute
+// UIContext::UIContext
+//------------------------------------------------------------------------
+UIContext::RLShader::RLShader() : fShader{}
+{
+
+}
+
+//------------------------------------------------------------------------
+// UIContext::UIContext
+//------------------------------------------------------------------------
+UIContext::UIContext(int iMaxTextureSize, std::thread::id iUIThreadId) :
+  fMaxTextureSize{iMaxTextureSize},
+  fUIThreadId{iUIThreadId}
+{
+}
+
+//------------------------------------------------------------------------
+// UIContext::init
+//------------------------------------------------------------------------
+void UIContext::init()
+{
+  fFXShader = std::move(RLShader{nullptr, kFXFragmentShader});
+  fShaderTintLocation = GetShaderLocation(*fFXShader.getShader(), "colTint");
+  fShaderBrightnessLocation = GetShaderLocation(*fFXShader.getShader(), "colBrightness");
+}
+
+//------------------------------------------------------------------------
+// UIContext::execute
 //------------------------------------------------------------------------
 void UIContext::execute(ui_action_t iAction)
 {
@@ -35,7 +79,7 @@ void UIContext::execute(ui_action_t iAction)
 }
 
 //------------------------------------------------------------------------
-// GPUContext::processUIActions
+// UIContext::processUIActions
 //------------------------------------------------------------------------
 void UIContext::processUIActions()
 {
@@ -46,5 +90,64 @@ void UIContext::processUIActions()
   for(auto &action: actions)
     action();
 }
+
+//------------------------------------------------------------------------
+// UIContext::beginFXShader
+//------------------------------------------------------------------------
+void UIContext::beginFXShader(ImVec4 const &iTint, float iBrightness)
+{
+  auto shader = fFXShader.getShader();
+  if(shader)
+  {
+    BeginShaderMode(*shader);
+    SetShaderValue(*shader, fShaderBrightnessLocation, &iBrightness, SHADER_UNIFORM_FLOAT);
+    SetShaderValue(*shader, fShaderTintLocation, &iTint.x, SHADER_UNIFORM_VEC4);
+  }
+}
+
+//------------------------------------------------------------------------
+// UIContext::endFXShader
+//------------------------------------------------------------------------
+void UIContext::endFXShader()
+{
+  auto shader = fFXShader.getShader();
+  if(shader)
+  {
+    EndShaderMode();
+  }
+}
+
+//------------------------------------------------------------------------
+// UIContext::RLShader::RLShader(&&)
+//------------------------------------------------------------------------
+UIContext::RLShader::RLShader(UIContext::RLShader &&iOther) noexcept: fShader{std::move(iOther.fShader)} {}
+
+//------------------------------------------------------------------------
+// UIContext::RLShader::RLShader(char const *)
+//------------------------------------------------------------------------
+UIContext::RLShader::RLShader(char const *iVertexShader, char const *iFragmentShader) :
+  fShader{std::make_unique<::Shader>(LoadShaderFromMemory(iVertexShader, iFragmentShader))}
+{
+}
+
+//------------------------------------------------------------------------
+// UIContext::RLShader::~RLShader
+//------------------------------------------------------------------------
+UIContext::RLShader::~RLShader()
+{
+  if(fShader)
+    UnloadShader(*fShader);
+}
+
+//------------------------------------------------------------------------
+// UIContext::RLShader::operator=
+//------------------------------------------------------------------------
+UIContext::RLShader &UIContext::RLShader::operator=(UIContext::RLShader &&iOther) noexcept
+{
+  fShader = std::move(iOther.fShader);
+  return *this;
+}
+
+
 
 }

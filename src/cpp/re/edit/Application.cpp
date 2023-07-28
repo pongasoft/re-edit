@@ -1145,7 +1145,9 @@ void Application::renderAppContext()
   renderMainMenu();
   fAppContext->renderMainMenu();
 
-  ImGui::DockSpaceOverViewport(ImGui::GetMainViewport());
+  ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4{});
+  ImGui::DockSpaceOverViewport(ImGui::GetMainViewport(), ImGuiDockNodeFlags_PassthruCentralNode);
+  ImGui::PopStyleColor();
 
   fAppContext->render();
 

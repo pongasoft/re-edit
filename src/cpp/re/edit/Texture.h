@@ -39,7 +39,15 @@ public:
     ~RLTexture();
 
     inline ImTextureID asImTextureID() const { return static_cast<ImTextureID>(fTexture.get()); }
+    inline ::Texture asRLTexture() const { return *fTexture; }
     inline int height() const { return fTexture->height; }
+
+    void draw(bool iUseRLDraw,
+              ReGui::Rect const &iSource,
+              ReGui::Rect const &iDestination,
+              ImU32 iTextureColor,
+              ImU32 iTintColor,
+              float iBrightness) const;
 
   private:
     std::unique_ptr<::Texture> fTexture;
@@ -68,7 +76,7 @@ public:
                    ImU32 iBorderColor = ReGui::kTransparentColorU32,
                    ImU32 iTextureColor = ReGui::kWhiteColorU32) const
   {
-    doDraw(true, ImGui::GetCursorScreenPos(), iSize, iFrameNumber, iBorderColor, iTextureColor);
+    doDraw(true, ImGui::GetCursorScreenPos(), iSize, iFrameNumber, iBorderColor, iTextureColor, kDefaultTintColor, kDefaultBrightness);
   }
 
   void ItemFit(ImVec2 const &iSize,
@@ -80,9 +88,11 @@ public:
                    ImVec2 const &iSize = {},
                    int iFrameNumber = 0,
                    ImU32 iBorderColor = ReGui::kTransparentColorU32,
-                   ImU32 iTextureColor = ReGui::kWhiteColorU32) const
+                   ImU32 iTextureColor = ReGui::kWhiteColorU32,
+                   ImU32 iTintColor = kDefaultTintColor,
+                   float iBrightness = kDefaultBrightness) const
   {
-    doDraw(false, iScreenPosition, iSize, iFrameNumber, iBorderColor, iTextureColor);
+    doDraw(false, iScreenPosition, iSize, iFrameNumber, iBorderColor, iTextureColor, iTintColor, iBrightness);
   }
 
   void loadOnGPU(const std::shared_ptr<FilmStrip>& iFilmStrip);
@@ -97,7 +107,9 @@ protected:
               ImVec2 const &iSize,
               int iFrameNumber,
               ImU32 iBorderColor,
-              ImU32 iTextureColor) const;
+              ImU32 iTextureColor,
+              ImU32 iTintColor,
+              float iBrightness) const;
 
 //  void reloadOnGPU() const { doLoadOnGPU(fFilmStrip); }
 

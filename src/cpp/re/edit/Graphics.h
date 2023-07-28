@@ -133,13 +133,13 @@ public:
   constexpr bool hasTexture() const { return std::holds_alternative<Texture::key_t>(fTexture); }
   constexpr bool hasSize() const { return std::holds_alternative<ImVec2>(fTexture); }
   constexpr bool hasSizeOverride() const { return fSizeOverride.has_value(); }
-  constexpr bool hasTint() const { return fTint != kNoTintColor; }
+  constexpr bool hasTint() const { return fTint != kDefaultTintColor; }
   constexpr bool isEditingTint() const { return fEditingTint; }
 
   inline Texture const *getTexture() const { RE_EDIT_INTERNAL_ASSERT(fDNZTexture != nullptr); return fDNZTexture.get(); }
   inline Texture::key_t getTextureKey() const { return std::get<Texture::key_t>(fTexture); }
   void setTextureKey(Texture::key_t const &iTextureKey);
-  void initTextureKey(Texture::key_t const &iTextureKey, std::optional<ImVec2> const &iSize, std::optional<ImVec4> const &iTint);
+  void initTextureKey(Texture::key_t const &iTextureKey, std::optional<ImVec2> const &iSize, std::optional<ImU32> const &iTint);
   void setSize(ImVec2 const &iSize);
 
   void reset() override;
@@ -152,7 +152,7 @@ public:
                 FilmStrip::Filter const &iFilter,
                 std::function<void(std::string const &)> const &iOnTextureUpdate,
                 std::function<void(ImVec2 const &)> const &iOnSizeUpdate,
-                std::function<void(ImVec4 const &)> const &iOnTintUpdate);
+                std::function<void(ImU32)> const &iOnTintUpdate);
 
   void findErrors(AppContext &iCtx, UserError &oErrors) const override;
 
@@ -190,7 +190,7 @@ public:
   int fFrameNumber{};
 
   bool fEditingTint{false};
-  ImVec4 fTint{kNoTintColor};
+  ImU32 fTint{kDefaultTintColor};
   std::optional<ImVec2> fSizeOverride{};
 };
 
