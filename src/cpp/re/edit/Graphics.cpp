@@ -179,10 +179,7 @@ void Graphics::draw(AppContext &iCtx, ReGui::Canvas &iCanvas, ImU32 iBorderColor
   auto texture = hasTexture() ? getTexture() : nullptr;
   if(texture && texture->isValid())
   {
-    if(fSizeOverride)
-      iCanvas.addResizedTexture(texture, *fSizeOverride, fPosition, fFrameNumber, iBorderColor, impl::computeTextureColor(iXRay), fTint);
-    else
-      iCanvas.addTexture(texture, fPosition, fFrameNumber, iBorderColor, impl::computeTextureColor(iXRay), fTint);
+    iCanvas.addTexture(texture, fPosition, fFrameNumber, iBorderColor, impl::computeTextureColor(iXRay), fEffects);
   }
   else
   {
@@ -233,7 +230,7 @@ void Graphics::editView(AppContext &iCtx,
                         FilmStrip::Filter const &iFilter,
                         std::function<void(std::string const &)> const &iOnTextureUpdate,
                         std::function<void(ImVec2 const &)> const &iOnSizeUpdate,
-                        std::function<void(ImU32)> const &iOnTintUpdate)
+                        std::function<void(char const *iName, texture::FX const &fx, MergeKey const &iMergeKey)> const &iOnFXUpdate)
 {
   if(ReGui::MenuButton())
     ImGui::OpenPopup("Menu");
@@ -262,19 +259,11 @@ void Graphics::editView(AppContext &iCtx,
         iOnTextureUpdate(*textureKey);
     }
 
-    ImGui::SeparatorText("Editing");
+    ImGui::SeparatorText("Effects");
 
     ImGui::BeginDisabled(hasSize());
-    ImGui::MenuItem("Edit tint", nullptr, &fEditingTint);
-    if(ImGui::MenuItem("Reset Tint"))
-      iOnTintUpdate(kDefaultTintColor);
-    if(ImGui::MenuItem("Reset Size"))
-    {
-      if(hasSize())
-        iOnSizeUpdate(kNoGraphics);
-      else
-        iOnSizeUpdate(getTexture()->frameSize());
-    }
+    if(ImGui::MenuItem("Reset All Effects"))
+      iOnFXUpdate("all effects (reset)", texture::kDefaultFX, MergeKey::from(&fEffects));
     ImGui::EndDisabled();
 
     ImGui::EndPopup();
@@ -299,7 +288,7 @@ void Graphics::editView(AppContext &iCtx,
 
   ImGui::SameLine();
 
-  ImGui::BeginGroup();
+  auto offset = ImGui::GetCursorPosX();
 
   auto key = hasTexture() ? getTextureKey() : "";
   if(ImGui::BeginCombo(fName, key.c_str()))
@@ -327,43 +316,149 @@ void Graphics::editView(AppContext &iCtx,
     iCtx.textureTooltip(getTextureKey());
   }
 
-  if(isEditingTint())
-  {
-    ImVec4 tint = ReGui::GetColorImVec4(fTint);
-    if(ImGui::ColorEdit3("tint", &tint.x))
-    {
-      iOnTintUpdate(ReGui::GetColorU32(tint));
-    }
-  }
+  ImGui::SetCursorPosX(offset);
+  auto const itemWidth = AppContext::GetCurrent().fItemWidth;
+
+  ImGui::BeginGroup();
 
   static bool kLinkWidthAndHeight{true};
 
   auto size = getSize();
-  if(ReGui::InputInt("w", &size.x, 1, static_cast<int>(iCtx.fGrid.width())))
+  ImGui::PushID("width");
   {
-    size.x = std::max(1.0f, size.x);
-    if(kLinkWidthAndHeight)
+    if(ReGui::ResetButton())
     {
-      auto originalSize = getOriginalSize();
-      size.y = std::max(1.0f, originalSize.y * (size.x / std::max(1.0f, originalSize.x)));
+      if(kLinkWidthAndHeight)
+        iOnSizeUpdate(getOriginalSize());
+      else
+      {
+        size.x = getOriginalSize().x;
+        iOnSizeUpdate(size);
+      }
     }
-    iOnSizeUpdate(size);
+    ImGui::SameLine();
+    ImGui::PushItemWidth(itemWidth - (ImGui::GetCursorPosX() - offset));
+    if(ReGui::InputInt("w", &size.x, 1, static_cast<int>(iCtx.fGrid.width())))
+    {
+      size.x = std::max(1.0f, size.x);
+      if(kLinkWidthAndHeight)
+      {
+        auto originalSize = getOriginalSize();
+        size.y = std::max(1.0f, originalSize.y * (size.x / std::max(1.0f, originalSize.x)));
+      }
+      iOnSizeUpdate(size);
+    }
+    ImGui::PopItemWidth();
   }
+  ImGui::PopID();
 
-  if(ReGui::InputInt("h", &size.y, 1, static_cast<int>(iCtx.fGrid.height())))
+  ImGui::PushID("height");
   {
-    size.y = std::max(1.0f, size.y);
-    if(kLinkWidthAndHeight)
+    if(ReGui::ResetButton())
     {
-      auto originalSize = getOriginalSize();
-      size.x = std::max(1.0f, originalSize.x * (size.y / std::max(1.0f, originalSize.y)));
+      if(kLinkWidthAndHeight)
+        iOnSizeUpdate(getOriginalSize());
+      else
+      {
+        size.y = getOriginalSize().y;
+        iOnSizeUpdate(size);
+      }
     }
-    iOnSizeUpdate(size);
+    ImGui::SameLine();
+    ImGui::PushItemWidth(itemWidth - (ImGui::GetCursorPosX() - offset));
+    if(ReGui::InputInt("h", &size.y, 1, static_cast<int>(iCtx.fGrid.height())))
+    {
+      size.y = std::max(1.0f, size.y);
+      if(kLinkWidthAndHeight)
+      {
+        auto originalSize = getOriginalSize();
+        size.x = std::max(1.0f, originalSize.x * (size.y / std::max(1.0f, originalSize.y)));
+      }
+      iOnSizeUpdate(size);
+    }
+    ImGui::PopItemWidth();
+
+    ImGui::SameLine();
+
+    ImGui::Checkbox("Link", &kLinkWidthAndHeight);
   }
+  ImGui::PopID();
 
-  ImGui::SameLine();
+  if(hasTexture())
+  {
+    // tint
+    ImGui::PushID("tint");
+    {
+      if(ReGui::ResetButton())
+      {
+        auto fx = fEffects;
+        fx.fTint = kDefaultTintColor;
+        iOnFXUpdate("tint", fx, MergeKey::from(&fEffects.fTint));
+      }
+      ImGui::SameLine();
+      ImGui::PushItemWidth(itemWidth - (ImGui::GetCursorPosX() - offset));
+      ImVec4 tint = ReGui::GetColorImVec4(fEffects.fTint);
+      if(ImGui::ColorEdit3("tint", &tint.x))
+      {
+        auto fx = fEffects;
+        fx.fTint = ReGui::GetColorU32(tint);
+        iOnFXUpdate("tint", fx, MergeKey::from(&fEffects.fTint));
+      }
+      ImGui::PopItemWidth();
+    }
+    ImGui::PopID();
 
-  ImGui::Checkbox("Link", &kLinkWidthAndHeight);
+    // brightness
+    ImGui::PushID("brightness");
+    {
+      if(ReGui::ResetButton())
+      {
+        auto fx = fEffects;
+        fx.fBrightness = kDefaultBrightness;
+        iOnFXUpdate("brightness", fx, MergeKey::from(&fEffects.fBrightness));
+      }
+      ImGui::SameLine();
+      ImGui::PushItemWidth(itemWidth - (ImGui::GetCursorPosX() - offset));
+      auto brightness = fEffects.fBrightness;
+      if(ImGui::SliderFloat("brightness", &brightness, -1.0f, 1.0f))
+      {
+        auto fx = fEffects;
+        fx.fBrightness = std::clamp(brightness, -1.0f, 1.0f);
+        iOnFXUpdate("brightness", fx, MergeKey::from(&fEffects.fBrightness));
+      }
+      ImGui::PopItemWidth();
+    }
+    ImGui::PopID();
+
+    // flip
+    ImGui::PushID("flip");
+    {
+      if(ReGui::ResetButton())
+      {
+        auto fx = fEffects;
+        fx.fFlipX = false;
+        fx.fFlipY = false;
+        iOnFXUpdate("flip", fx, MergeKey::from(&fEffects.fFlipX));
+      }
+      ImGui::SameLine();
+      auto flipX = fEffects.fFlipX;
+      if(ImGui::Checkbox("horizontal flip", &flipX))
+      {
+        auto fx = fEffects;
+        fx.fFlipX = flipX;
+        iOnFXUpdate("horizontal flip", fx, MergeKey::from(&fEffects.fFlipX));
+      }
+      ImGui::SameLine();
+      auto flipY = fEffects.fFlipY;
+      if(ImGui::Checkbox("vertical flip", &flipY))
+      {
+        auto fx = fEffects;
+        fx.fFlipY = flipY;
+        iOnFXUpdate("vertical flip", fx, MergeKey::from(&fEffects.fFlipY));
+      }
+    }
+    ImGui::PopID();
+  }
 
   ImGui::EndGroup();
 }
@@ -439,19 +534,21 @@ void Graphics::editView(AppContext &iCtx)
            [this](auto &s) {
              update([this, &s] {
                       if(hasTexture())
-                        fSizeOverride = s;
+                      {
+                        fEffects.fSizeOverride = s != getOriginalSize() ? std::optional<ImVec2>(s) : std::nullopt;
+                      }
                       else
                         fTexture = s;
                     },
                     fmt::printf(fmt::printf("Change %s size", getParent()->getName())),
-                    MergeKey::from(&fSizeOverride));
+                    MergeKey::from(&fEffects.fSizeOverride));
            },
-           [this](auto tint) {
-             update([this, tint] {
-                      fTint = tint;
+           [this](char const *iName, texture::FX const &fx, MergeKey const &iMergeKey) {
+             update([this, &fx] {
+                      fEffects = fx;
                     },
-                    fmt::printf(fmt::printf("Change %s tint", getParent()->getName())),
-                    MergeKey::from(&fTint));
+                    fmt::printf(fmt::printf("Change %s %s", getParent()->getName(), iName)),
+                    iMergeKey);
            }
   );
   ImGui::Indent();
@@ -496,8 +593,8 @@ void Graphics::editHitBoundariesView(AppContext &iCtx)
 void Graphics::reset()
 {
   fTexture = kNoGraphics;
-  if(fSizeOverride)
-    fTexture = *fSizeOverride;
+  if(fEffects.hasSizeOverride())
+    fTexture = *fEffects.fSizeOverride;
   else if(fDNZTexture && fDNZTexture->isValid())
   {
     fTexture = fDNZTexture->frameSize();
@@ -505,9 +602,7 @@ void Graphics::reset()
   fDNZTexture = nullptr;
   fHitBoundaries = {};
   fEdited = true;
-  fTint = kDefaultTintColor;
-  fEditingTint = false;
-  fSizeOverride = std::nullopt;
+  fEffects = texture::kDefaultFX;
 }
 
 //------------------------------------------------------------------------
@@ -616,14 +711,33 @@ std::string Graphics::device2D() const
   if(hasTexture())
   {
     auto texture = getTexture();
-    auto tint = ReGui::GetJboxColor3(fTint);
-    path = re::mock::fmt::printf("path = \"%s\"%s%s%s",
-                                 texture->key(),
-                                 texture->numFrames() > 1 ?  re::mock::fmt::printf(", frames = %d", texture->numFrames()) : "",
-                                 hasTint() ?  re::mock::fmt::printf(", re_edit_tint = { %d, %d, %d }", tint.fRed, tint.fGreen, tint.fBlue) : "",
-                                 fSizeOverride && fSizeOverride != texture->frameSize() ?  re::mock::fmt::printf(", re_edit_size = { %d, %d }", stl::roundToInt(fSizeOverride->x),  stl::roundToInt(fSizeOverride->y)) : ""
-                                 );
+    if(fEffects.hasAny())
+    {
+      auto tint = ReGui::GetJboxColor3(fEffects.fTint);
+      auto sizeOverride =
+        fEffects.hasSizeOverride() && fEffects.fSizeOverride != texture->frameSize() ?
+        re::mock::fmt::printf(", re_edit_size = { %d, %d }",
+                              stl::roundToInt(fEffects.fSizeOverride->x),
+                              stl::roundToInt(fEffects.fSizeOverride->y)) :
+        "";
 
+      path = re::mock::fmt::printf(R"(path = "%s"%s, re_edit_path = "%s"%s%s%s%s%s)",
+                                   texture->computeKey(fEffects),
+                                   texture->numFrames() > 1 ?  re::mock::fmt::printf(", frames = %d", texture->numFrames()) : "",
+                                   texture->key(),
+                                   fEffects.hasTint() ? re::mock::fmt::printf(", re_edit_tint = { %d, %d, %d }", tint.fRed, tint.fGreen, tint.fBlue) : "",
+                                   fEffects.hasBrightness() ? re::mock::fmt::printf(", re_edit_brightness = %f", fEffects.fBrightness) : "",
+                                   fEffects.isFlippedX() ? ", re_edit_flip_x = true" : "",
+                                   fEffects.isFlippedY() ? ", re_edit_flip_y = true" : "",
+                                   sizeOverride
+      );
+    }
+    else
+    {
+      path = re::mock::fmt::printf(R"(path = "%s"%s)",
+                                   texture->key(),
+                                   texture->numFrames() > 1 ?  re::mock::fmt::printf(", frames = %d", texture->numFrames()) : "");
+    }
   }
   else
   {
@@ -670,9 +784,7 @@ bool Graphics::copyFromAction(Attribute const *iFromAttribute)
     fHitBoundaries = fromAttribute->fHitBoundaries;
     fTexture = fromAttribute->fTexture;
     fDNZTexture = fromAttribute->fDNZTexture;
-    fTint = fromAttribute->fTint;
-    fEditingTint = fromAttribute->fEditingTint;
-    fSizeOverride = fromAttribute->fSizeOverride;
+    fEffects = fromAttribute->fEffects;
     fEdited = true;
     return true;
   }
@@ -687,26 +799,18 @@ void Graphics::setTextureKey(Texture::key_t const &iTextureKey)
 {
   fTexture = iTextureKey;
   fDNZTexture = AppContext::GetCurrent().getTexture(iTextureKey);
-  fSizeOverride = std::nullopt;
-  fTint = kDefaultTintColor;
+  fEffects = texture::kDefaultFX;
   fEdited = true;
 }
 
 //------------------------------------------------------------------------
 // Graphics::initTextureKey
 //------------------------------------------------------------------------
-void Graphics::initTextureKey(Texture::key_t const &iTextureKey,
-                              std::optional<ImVec2> const &iSize,
-                              std::optional<ImU32> const &iTint)
+void Graphics::initTextureKey(Texture::key_t const &iTextureKey, texture::FX const &iEffects)
 {
   fTexture = iTextureKey;
   fDNZTexture = AppContext::GetCurrent().getTexture(iTextureKey);
-  fSizeOverride = iSize;
-  if(iTint)
-  {
-    fTint = *iTint;
-    fEditingTint = true;
-  }
+  fEffects = iEffects;
   fEdited = true;
 }
 
@@ -717,8 +821,7 @@ void Graphics::setSize(ImVec2 const &iSize)
 {
   fTexture = iSize;
   fDNZTexture.reset();
-  fSizeOverride = std::nullopt;
-  fTint = kDefaultTintColor;
+  fEffects = texture::kDefaultFX;
   fEdited = true;
 }
 
@@ -736,8 +839,9 @@ bool Background::draw(AppContext &iCtx, ReGui::Canvas &iCanvas, Graphics const *
         auto texture = iCtx.findTexture(fValue);
         if(texture && texture->isValid())
         {
-          auto scale = iParent->getSize() / texture->frameSize();
-          iCanvas.addScaledTexture(texture.get(), scale, iParent->fPosition, 0, iBorderColor, impl::computeTextureColor(xRay));
+          auto fx = texture::kDefaultFX;
+          fx.fSizeOverride = iParent->getSize();
+          iCanvas.addTexture(texture.get(), iParent->fPosition, 0, iBorderColor, impl::computeTextureColor(xRay), fx);
           return true;
         }
         break;

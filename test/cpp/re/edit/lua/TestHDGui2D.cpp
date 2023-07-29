@@ -354,28 +354,9 @@ inline constexpr auto HasValueTemplates = [](std::optional<std::vector<char cons
     return AttributeToString<ValueTemplates>("value_templates", R"(value_templates={{},false})");
 };
 
-class MockTexture : public Texture
-{
-
-};
-
-class MockTextureManager : public TextureManager
-{
-protected:
-  std::unique_ptr<Texture> createTexture() const override
-  {
-    return std::make_unique<MockTexture>();
-  }
-
-  void populateTexture(std::shared_ptr<Texture> const &iTexture) const override
-  {
-
-  }
-};
-
 TEST(HDGui2D, All)
 {
-  auto textureMgr = std::make_shared<MockTextureManager>();
+  auto textureMgr = std::make_shared<TextureManager>();
   textureMgr->init(BuiltIns::kDeviceBuiltIns);
 
   AppContext ctx(getResourceFile("."), textureMgr);

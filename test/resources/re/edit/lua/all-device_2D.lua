@@ -28,6 +28,7 @@ front = {
     }
   }
  },
+
  -- Issue #1 (nested decals)
  {
    {
@@ -44,6 +45,20 @@ front = {
      }
    }
  }
+}
+
+-- testing effects
+front["fx"] = {
+  offset = {300, 200},
+  {
+    path = "path_fx",
+    re_edit_path = "path_fx_original",
+    re_edit_tint = { 100, 128, 145 },
+    re_edit_brightness = -0.7,
+    re_edit_size = { 90, 120 },
+    re_edit_flip_x = true,
+    re_edit_flip_y = true,
+  }
 }
 
 re_edit = re_edit or {}

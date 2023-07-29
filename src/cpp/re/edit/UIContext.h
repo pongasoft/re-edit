@@ -41,6 +41,7 @@ public:
   void init();
 
   static UIContext &GetCurrent() { RE_EDIT_INTERNAL_ASSERT(kCurrent != nullptr); return *kCurrent; }
+  static bool HasCurrent() { return kCurrent != nullptr; }
 
   /**
    * Execute the provided action on the UI thread. If the current thread is the UI thread, then `iAction` is executed

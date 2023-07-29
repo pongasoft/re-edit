@@ -641,7 +641,7 @@ void SingleAttribute<T>::reset()
 }
 
 //------------------------------------------------------------------------
-// SingleAttribute<T>::resetView
+// SingleAttribute<T>::menuView
 //------------------------------------------------------------------------
 template<typename T>
 void SingleAttribute<T>::menuView(AppContext &iCtx)

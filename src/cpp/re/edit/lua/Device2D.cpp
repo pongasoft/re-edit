@@ -152,28 +152,53 @@ std::optional<gfx_node> Device2D::getMaybeNodeOnTopOfStack()
       node.fKeyOrSize = getImVec2();
     lua_pop(L, 1);
 
-    // check for path
-    auto path = L.getTableValueAsOptionalString("path");
-    if(path)
-      node.fKeyOrSize = path.value();
+    // check for path override (when there are effects)
+    auto pathOverride = L.getTableValueAsOptionalString("re_edit_path");
+    if(pathOverride)
+    {
+      node.fKeyOrSize = pathOverride.value();
+    }
+    else
+    {
+      // check for path
+      auto path = L.getTableValueAsOptionalString("path");
+      if(path)
+        node.fKeyOrSize = path.value();
+    }
 
     auto frames = L.getTableValueAsOptionalInteger("frames");
     if(frames)
       node.fNumFrames = static_cast<int>(frames.value());
 
-    // check for re_edit_size
+    // re_edit_size
     lua_getfield(L, -1, "re_edit_size");
     if(lua_type(L, -1) == LUA_TTABLE)
-      node.fOverrideSize = getImVec2();
+      node.fEffects.fSizeOverride = getImVec2();
     lua_pop(L, 1);
 
+    // re_edit_tint
     JboxColor3 tint;
     if(withField(-1, "re_edit_tint", LUA_TTABLE, [this, &tint]() {
       tint.fRed = static_cast<int>(L.getArrayValueAsInteger(1));
       tint.fGreen = static_cast<int>(L.getArrayValueAsInteger(2));
       tint.fBlue = static_cast<int>(L.getArrayValueAsInteger(3));
     }))
-      node.fOverrideTint = tint;
+    {
+      node.fEffects.fTint = ReGui::GetColorImU32(tint);
+    }
+
+    // re_edit_brightness
+    auto brightness = L.getTableValueAsOptionalNumber("re_edit_brightness");
+    if(brightness)
+      node.fEffects.fBrightness = static_cast<float>(brightness.value());
+
+    // re_edit_flip_x
+    if(L.getTableValueAsBoolean("re_edit_flip_x"))
+      node.fEffects.fFlipX = true;
+
+    // re_edit_flip_y
+    if(L.getTableValueAsBoolean("re_edit_flip_y"))
+      node.fEffects.fFlipY = true;
 
     if(node.hasKey() || node.hasSize())
     {

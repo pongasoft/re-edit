@@ -186,9 +186,12 @@ void Texture::loadOnGPU(std::shared_ptr<FilmStrip> const &iFilmStrip)
 {
   fFilmStrip = iFilmStrip;
 
-  UIContext::GetCurrent().execute([texture = shared_from_this(), filmStrip = iFilmStrip] {
-    texture->loadOnGPUFromUIThread(filmStrip);
-  });
+  if(UIContext::HasCurrent())
+  {
+    UIContext::GetCurrent().execute([texture = shared_from_this(), filmStrip = iFilmStrip] {
+      texture->loadOnGPUFromUIThread(filmStrip);
+    });
+  }
 }
 
 //------------------------------------------------------------------------
@@ -227,8 +230,7 @@ void Texture::doDraw(bool iAddItem,
                      int iFrameNumber,
                      ImU32 iBorderColor,
                      ImU32 iTextureColor,
-                     ImU32 iTintColor,
-                     float iBrightness) const
+                     texture::FX const &iTextureFX) const
 {
   if(fGPUTextures.empty())
     return;
@@ -257,7 +259,7 @@ void Texture::doDraw(bool iAddItem,
   {
     // most frequent use case
     ReGui::Rect source{0, frameY, 0 + frameWidth(), frameY + frameHeight};
-    data->draw(!iAddItem, source, dest, iTextureColor, iTintColor, iBrightness);
+    data->draw(!iAddItem, source, dest, iTextureColor, iTextureFX);
   }
   else
   {
@@ -277,7 +279,7 @@ void Texture::doDraw(bool iAddItem,
     if(endY <= height)
     {
       ReGui::Rect source{0, startY, 0 + frameWidth(), endY};
-      data->draw(!iAddItem, source, dest, iTextureColor, iTintColor, iBrightness);
+      data->draw(!iAddItem, source, dest, iTextureColor, iTextureFX);
     }
     else
     {
@@ -292,7 +294,7 @@ void Texture::doDraw(bool iAddItem,
       dest1.Max.y = (dest.Max.y - dest.Min.y) * fraction + dest.Min.y;
       {
         ReGui::Rect source{0, startY, frameWidth(), height};
-        data->draw(!iAddItem, source, dest1, iTextureColor, iTintColor, iBrightness);
+        data->draw(!iAddItem, source, dest1, iTextureColor, iTextureFX);
       }
 
       data = fGPUTextures.at(i++).get();
@@ -300,7 +302,7 @@ void Texture::doDraw(bool iAddItem,
         ReGui::Rect source{0, 0, frameWidth(), heightInData2};
         auto dest2 = dest;
         dest2.Min.y = dest1.Max.y;
-        data->draw(!iAddItem, source, dest2, iTextureColor, iTintColor, iBrightness);
+        data->draw(!iAddItem, source, dest2, iTextureColor, iTextureFX);
       }
     }
   }
@@ -335,8 +337,7 @@ void Texture::RLTexture::draw(bool iUseRLDraw,
                               ReGui::Rect const &iSource,
                               ReGui::Rect const &iDestination,
                               ImU32 iTextureColor,
-                              ImU32 iTintColor,
-                              float iBrightness) const
+                              texture::FX const &iTextureFX) const
 {
 
   if(iUseRLDraw)
@@ -355,9 +356,15 @@ void Texture::RLTexture::draw(bool iUseRLDraw,
     };
     bool useFXShader = false;
 
-    if(iTintColor != kDefaultTintColor || iBrightness != kDefaultBrightness)
+    if(iTextureFX.isFlippedX())
+      source.width = -source.width;
+
+    if(iTextureFX.isFlippedY())
+      source.height = -source.height;
+
+    if(iTextureFX.hasShaderFX())
     {
-      UIContext::GetCurrent().beginFXShader(ReGui::GetColorImVec4(iTintColor), iBrightness);
+      UIContext::GetCurrent().beginFXShader(ReGui::GetColorImVec4(iTextureFX.fTint), iTextureFX.fBrightness);
       useFXShader = true;
     }
 

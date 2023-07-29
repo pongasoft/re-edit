@@ -133,58 +133,14 @@ void Canvas::addTexture(Texture const *iTexture,
                         int iFrameNumber,
                         ImU32 iBorderColor,
                         ImU32 iTextureColor,
-                        ImU32 iTintColor,
-                        float iBrightness) const
+                        texture::FX const &iTextureFX) const
 {
   iTexture->draw(toScreenPos(iPos),
-                 iTexture->frameSize() * fZoom.value(),
+                 (iTextureFX.hasSizeOverride() ? *iTextureFX.fSizeOverride : iTexture->frameSize()) * fZoom.value(),
                  iFrameNumber,
                  iBorderColor,
                  iTextureColor,
-                 iTintColor,
-                 iBrightness);
-}
-
-//------------------------------------------------------------------------
-// Canvas::addResizedTexture
-//------------------------------------------------------------------------
-void Canvas::addResizedTexture(Texture const *iTexture,
-                               ImVec2 const &iTextureSize,
-                               Canvas::canvas_pos_t const &iPos,
-                               int iFrameNumber,
-                               ImU32 iBorderColor,
-                               ImU32 iTextureColor,
-                               ImU32 iTintColor,
-                               float iBrightness) const
-{
-  iTexture->draw(toScreenPos(iPos),
-                 iTextureSize * fZoom.value(),
-                 iFrameNumber,
-                 iBorderColor,
-                 iTextureColor,
-                 iTintColor,
-                 iBrightness);
-}
-
-//------------------------------------------------------------------------
-// Canvas::addScaledTexture
-//------------------------------------------------------------------------
-void Canvas::addScaledTexture(Texture const *iTexture,
-                              ImVec2 const &iScale,
-                              Canvas::canvas_pos_t const &iPos,
-                              int iFrameNumber,
-                              ImU32 iBorderColor,
-                              ImU32 iTextureColor,
-                              ImU32 iTintColor,
-                              float iBrightness) const
-{
-  iTexture->draw(toScreenPos(iPos),
-                 iTexture->frameSize() * fZoom.value() * iScale,
-                 iFrameNumber,
-                 iBorderColor,
-                 iTextureColor,
-                 iTintColor,
-                 iBrightness);
+                 iTextureFX);
 }
 
 //------------------------------------------------------------------------

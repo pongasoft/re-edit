@@ -31,6 +31,7 @@
 #include <raylib.h>
 #include "Constants.h"
 #include "Errors.h"
+#include "fx.h"
 
 namespace re::edit {
 
@@ -188,6 +189,10 @@ public:
   constexpr bool hasPath() const { return fSource->hasPath(); }
   inline fs::path const &path() const { return fSource->getPath(); };
   constexpr bool hasBuiltIn() const { return fSource->hasBuiltIn(); }
+
+  inline key_t computeKey(texture::FX const &iEffects) const { return computeKey(key(), iEffects); }
+
+  static key_t computeKey(key_t const &iKey, texture::FX const &iEffects);
 
   constexpr std::string const &errorMessage() const { return fErrorMessage; };
 

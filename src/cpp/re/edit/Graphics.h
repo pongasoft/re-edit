@@ -20,6 +20,7 @@
 #define RE_EDIT_GRAPHICS_NODE_H
 
 #include "WidgetAttribute.h"
+#include "fx.h"
 #include <optional>
 #include <variant>
 
@@ -118,7 +119,7 @@ public:
   }
 
   inline ImVec2 getSize() const { return hasSize() ? std::get<ImVec2>(fTexture) :
-                                         fSizeOverride ? *fSizeOverride : getTexture()->frameSize(); }
+                                         fEffects.hasSizeOverride() ? *fEffects.fSizeOverride : getTexture()->frameSize(); }
   constexpr ImVec2 getPosition() const { return fPosition; }
   constexpr ImVec2 getTopLeft() const { return fPosition; }
   constexpr ImVec2 getBottomRight() const { return fPosition + getSize(); }
@@ -132,14 +133,11 @@ public:
 
   constexpr bool hasTexture() const { return std::holds_alternative<Texture::key_t>(fTexture); }
   constexpr bool hasSize() const { return std::holds_alternative<ImVec2>(fTexture); }
-  constexpr bool hasSizeOverride() const { return fSizeOverride.has_value(); }
-  constexpr bool hasTint() const { return fTint != kDefaultTintColor; }
-  constexpr bool isEditingTint() const { return fEditingTint; }
 
   inline Texture const *getTexture() const { RE_EDIT_INTERNAL_ASSERT(fDNZTexture != nullptr); return fDNZTexture.get(); }
   inline Texture::key_t getTextureKey() const { return std::get<Texture::key_t>(fTexture); }
   void setTextureKey(Texture::key_t const &iTextureKey);
-  void initTextureKey(Texture::key_t const &iTextureKey, std::optional<ImVec2> const &iSize, std::optional<ImU32> const &iTint);
+  void initTextureKey(Texture::key_t const &iTextureKey, texture::FX const &iEffects);
   void setSize(ImVec2 const &iSize);
 
   void reset() override;
@@ -152,7 +150,7 @@ public:
                 FilmStrip::Filter const &iFilter,
                 std::function<void(std::string const &)> const &iOnTextureUpdate,
                 std::function<void(ImVec2 const &)> const &iOnSizeUpdate,
-                std::function<void(ImU32)> const &iOnTintUpdate);
+                std::function<void(char const *iName, texture::FX const &fx, MergeKey const &iMergeKey)> const &iOnFXUpdate);
 
   void findErrors(AppContext &iCtx, UserError &oErrors) const override;
 
@@ -168,8 +166,7 @@ public:
       return l->fPosition == r->fPosition &&
              l->fHitBoundaries == r->fHitBoundaries &&
              l->fTexture == r->fTexture &&
-             l->fSizeOverride == r->fSizeOverride &&
-             l->fTint == r->fTint;
+             l->fEffects == r->fEffects;
     });
   }
 
@@ -189,9 +186,7 @@ public:
   FilmStrip::Filter fFilter{};
   int fFrameNumber{};
 
-  bool fEditingTint{false};
-  ImU32 fTint{kDefaultTintColor};
-  std::optional<ImVec2> fSizeOverride{};
+  texture::FX fEffects{};
 };
 
 class Background : public String

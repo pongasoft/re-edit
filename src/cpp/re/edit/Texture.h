@@ -23,6 +23,7 @@
 #include "FilmStrip.h"
 #include "ReGui.h"
 #include "Errors.h"
+#include "fx.h"
 
 namespace re::edit {
 
@@ -46,8 +47,7 @@ public:
               ReGui::Rect const &iSource,
               ReGui::Rect const &iDestination,
               ImU32 iTextureColor,
-              ImU32 iTintColor,
-              float iBrightness) const;
+              texture::FX const &iTextureFX) const;
 
   private:
     std::unique_ptr<::Texture> fTexture;
@@ -58,6 +58,7 @@ public:
   virtual ~Texture() = default;
 
   inline key_t const &key() const { return fFilmStrip->key(); };
+  key_t computeKey(texture::FX const &iEffects) const { return fFilmStrip->computeKey(iEffects); }
 
   inline bool isValid() const { return fFilmStrip->isValid(); }
 
@@ -76,7 +77,7 @@ public:
                    ImU32 iBorderColor = ReGui::kTransparentColorU32,
                    ImU32 iTextureColor = ReGui::kWhiteColorU32) const
   {
-    doDraw(true, ImGui::GetCursorScreenPos(), iSize, iFrameNumber, iBorderColor, iTextureColor, kDefaultTintColor, kDefaultBrightness);
+    doDraw(true, ImGui::GetCursorScreenPos(), iSize, iFrameNumber, iBorderColor, iTextureColor, texture::kDefaultFX);
   }
 
   void ItemFit(ImVec2 const &iSize,
@@ -85,14 +86,13 @@ public:
                ImU32 iTextureColor = ReGui::kWhiteColorU32) const;
 
   inline void draw(ImVec2 const &iScreenPosition,
-                   ImVec2 const &iSize = {},
-                   int iFrameNumber = 0,
-                   ImU32 iBorderColor = ReGui::kTransparentColorU32,
-                   ImU32 iTextureColor = ReGui::kWhiteColorU32,
-                   ImU32 iTintColor = kDefaultTintColor,
-                   float iBrightness = kDefaultBrightness) const
+                   ImVec2 const &iSize,
+                   int iFrameNumber,
+                   ImU32 iBorderColor,
+                   ImU32 iTextureColor,
+                   texture::FX const &iTextureFX) const
   {
-    doDraw(false, iScreenPosition, iSize, iFrameNumber, iBorderColor, iTextureColor, iTintColor, iBrightness);
+    doDraw(false, iScreenPosition, iSize, iFrameNumber, iBorderColor, iTextureColor, iTextureFX);
   }
 
   void loadOnGPU(const std::shared_ptr<FilmStrip>& iFilmStrip);
@@ -108,8 +108,7 @@ protected:
               int iFrameNumber,
               ImU32 iBorderColor,
               ImU32 iTextureColor,
-              ImU32 iTintColor,
-              float iBrightness) const;
+              texture::FX const &iTextureFX) const;
 
 //  void reloadOnGPU() const { doLoadOnGPU(fFilmStrip); }
 

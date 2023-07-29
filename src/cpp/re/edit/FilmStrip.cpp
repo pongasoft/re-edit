@@ -168,6 +168,25 @@ int FilmStrip::overrideNumFrames(int iNumFrames)
 }
 
 //------------------------------------------------------------------------
+// FilmStrip::computeKey
+//------------------------------------------------------------------------
+FilmStrip::key_t FilmStrip::computeKey(FilmStrip::key_t const &iKey, texture::FX const &iEffects)
+{
+  static const std::regex kKeyRegex{"(([0-9]+)_?frames)?$", std::regex_constants::icase};
+
+  std::cmatch m;
+  if(std::regex_search(iKey.c_str(), m, kKeyRegex))
+  {
+    if(m[2].matched)
+    {
+      auto numFramesStr = m[1].str();
+    }
+  }
+
+  return fmt::printf("%s_tbd_fx", iKey);
+}
+
+//------------------------------------------------------------------------
 // FilmStripMgr::findFilmStrip
 //------------------------------------------------------------------------
 std::shared_ptr<FilmStrip> FilmStripMgr::findFilmStrip(FilmStrip::key_t const &iKey) const

@@ -20,6 +20,7 @@
 #define RE_EDIT_CANVAS_H
 
 #include "ReGui.h"
+#include "fx.h"
 #include <optional>
 
 namespace re::edit {
@@ -72,26 +73,7 @@ public:
                   int iFrameNumber = 0,
                   ImU32 iBorderColor = ReGui::kTransparentColorU32,
                   ImU32 iTextureColor = ReGui::kWhiteColorU32,
-                  ImU32 iTintColor = kDefaultTintColor,
-                  float iBrightness = kDefaultBrightness) const;
-
-  void addResizedTexture(Texture const *iTexture,
-                         ImVec2 const &iTextureSize,
-                         canvas_pos_t const &iPos = {0,0},
-                         int iFrameNumber = 0,
-                         ImU32 iBorderColor = ReGui::kTransparentColorU32,
-                         ImU32 iTextureColor = ReGui::kWhiteColorU32,
-                         ImU32 iTintColor = kDefaultTintColor,
-                         float iBrightness = kDefaultBrightness) const;
-
-  void addScaledTexture(Texture const *iTexture,
-                        ImVec2 const &iScale,
-                        canvas_pos_t const &iPos = {0,0},
-                        int iFrameNumber = 0,
-                        ImU32 iBorderColor = ReGui::kTransparentColorU32,
-                        ImU32 iTextureColor = ReGui::kWhiteColorU32,
-                        ImU32 iTintColor = kDefaultTintColor,
-                        float iBrightness = kDefaultBrightness) const;
+                  texture::FX const &iTextureFX = texture::kDefaultFX) const;
 
   void addRectFilled(canvas_pos_t const &iPos, canvas_size_t const &iSize, ImU32 iCol = ReGui::kWhiteColorU32) const;
 

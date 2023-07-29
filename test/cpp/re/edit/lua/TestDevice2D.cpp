@@ -44,7 +44,7 @@ TEST(Device2D, All)
 
   auto front = d2d->front();
 
-  ASSERT_EQ(9, front->fNodes.size());
+  ASSERT_EQ(10, front->fNodes.size());
 
   std::set<std::string> widgetNames{};
 
@@ -151,9 +151,25 @@ TEST(Device2D, All)
     ASSERT_EQ(2, *n.fNumFrames);
   }
 
+  // fx
+  {
+    auto &n = front->fNodes.at("fx");
+    widgetNames.emplace(n.fName);
+    ASSERT_TRUE(Eq(ImVec2{300, 200}, n.fPosition));
+    ASSERT_EQ("fx", n.fName);
+    ASSERT_EQ("path_fx_original", std::get<std::string>(n.fKeyOrSize));
+    ASSERT_EQ(std::nullopt, n.fNumFrames);
+    ASSERT_EQ(ReGui::GetColorImU32({100, 128, 145}), n.fEffects.fTint);
+    ASSERT_FLOAT_EQ(-0.7, n.fEffects.fBrightness);
+    ASSERT_TRUE(Eq(ImVec2{90, 120}, n.fEffects.fSizeOverride.value()));
+    ASSERT_TRUE(n.fEffects.fFlipX);
+    ASSERT_TRUE(n.fEffects.fFlipY);
+  }
+
   std::vector<std::string> expectedDecalNames{{"decal1", "decal2", "label_for_Knob4"}};
   ASSERT_EQ(expectedDecalNames, front->getDecalNames(widgetNames));
 
+  ////// foldedBack
   auto foldedBack = d2d->folded_back();
   offset = {};
 
