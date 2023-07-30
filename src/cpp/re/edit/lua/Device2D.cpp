@@ -192,6 +192,11 @@ std::optional<gfx_node> Device2D::getMaybeNodeOnTopOfStack()
     if(brightness)
       node.fEffects.fBrightness = static_cast<int>(brightness.value());
 
+    // re_edit_contrast
+    auto contrast = L.getTableValueAsOptionalInteger("re_edit_contrast");
+    if(contrast)
+      node.fEffects.fContrast = static_cast<int>(contrast.value());
+
     // re_edit_flip_x
     if(L.getTableValueAsBoolean("re_edit_flip_x"))
       node.fEffects.fFlipX = true;

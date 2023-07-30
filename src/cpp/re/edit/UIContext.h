@@ -50,7 +50,7 @@ public:
 
   void processUIActions();
 
-  void beginFXShader(ImVec4 const &iTint, float iBrightness);
+  void beginFXShader(ImVec4 const &iTint, float iBrightness, float iContrast);
   void endFXShader();
 
   constexpr int maxTextureSize() const { return fMaxTextureSize; }
@@ -80,6 +80,7 @@ private:
   RLShader fFXShader{};
   int fShaderTintLocation{};
   int fShaderBrightnessLocation{};
+  int fShaderContrastLocation{};
   std::vector<ui_action_t> fUIActions{};
 };
 

@@ -430,6 +430,28 @@ void Graphics::editView(AppContext &iCtx,
     }
     ImGui::PopID();
 
+    // contrast
+    ImGui::PushID("contrast");
+    {
+      if(ReGui::ResetButton())
+      {
+        auto fx = fEffects;
+        fx.fContrast = kDefaultContrast;
+        iOnFXUpdate("contrast", fx, MergeKey::from(&fEffects.fContrast));
+      }
+      ImGui::SameLine();
+      ImGui::PushItemWidth(itemWidth - (ImGui::GetCursorPosX() - offset));
+      auto contrast = fEffects.fContrast;
+      if(ImGui::SliderInt("contrast", &contrast, -100, 100))
+      {
+        auto fx = fEffects;
+        fx.fContrast = std::clamp(contrast, -100, 100);
+        iOnFXUpdate("contrast", fx, MergeKey::from(&fEffects.fContrast));
+      }
+      ImGui::PopItemWidth();
+    }
+    ImGui::PopID();
+
     // flip
     ImGui::PushID("flip");
     {

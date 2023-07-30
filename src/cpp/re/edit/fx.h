@@ -28,13 +28,15 @@ struct FX
 {
   ImU32 fTint{kDefaultTintColor};
   int fBrightness{kDefaultBrightness};
+  int fContrast{};
   bool fFlipX{};
   bool fFlipY{};
   std::optional<ImVec2> fSizeOverride{};
 
   constexpr bool hasTint() const noexcept { return fTint != kDefaultTintColor; }
   constexpr bool hasBrightness() const noexcept { return fBrightness != kDefaultBrightness; }
-  constexpr bool hasShaderFX() const noexcept { return hasTint() || hasBrightness(); }
+  constexpr bool hasContrast() const noexcept { return fContrast != kDefaultContrast; }
+  constexpr bool hasShaderFX() const noexcept { return hasTint() || hasBrightness() || hasContrast(); }
   constexpr bool isFlippedX() const noexcept { return fFlipX; }
   constexpr bool isFlippedY() const noexcept { return fFlipY; }
   constexpr bool hasSizeOverride() const noexcept { return fSizeOverride.has_value(); }
@@ -42,6 +44,7 @@ struct FX
   constexpr bool hasAny() const noexcept { return
       hasTint() ||
       hasBrightness() ||
+      hasContrast() ||
       isFlippedX() ||
       isFlippedY() ||
       hasSizeOverride()
@@ -52,6 +55,7 @@ struct FX
   {
     return fTint == rhs.fTint &&
            fBrightness == rhs.fBrightness &&
+           fContrast == rhs.fContrast &&
            fFlipX == rhs.fFlipX &&
            fFlipY == rhs.fFlipY &&
            fSizeOverride == rhs.fSizeOverride;

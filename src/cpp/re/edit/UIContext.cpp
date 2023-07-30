@@ -30,10 +30,18 @@ out vec4 finalColor;
 uniform sampler2D texture0;
 uniform vec4 colTint;
 uniform float colBrightness;
+uniform float colContrast;
 void main()
 {
     vec4 texelColor = texture(texture0, fragTexCoord);
-    finalColor = texelColor*fragColor*colTint + vec4(colBrightness, colBrightness, colBrightness, 0);
+    vec4 c = texelColor*fragColor*colTint + vec4(colBrightness, colBrightness, colBrightness, 0);
+    if(colContrast != 0)
+    {
+      c = c - vec4(0.5, 0.5, 0.5, 0);
+      c = c * vec4(colContrast, colContrast, colContrast, 1.0);
+      c = c + vec4(0.5, 0.5, 0.5, 0);
+    }
+    finalColor = c;
 }
 )ogl33";
 
@@ -62,6 +70,7 @@ void UIContext::init()
   fFXShader = std::move(RLShader{nullptr, kFXFragmentShader});
   fShaderTintLocation = GetShaderLocation(*fFXShader.getShader(), "colTint");
   fShaderBrightnessLocation = GetShaderLocation(*fFXShader.getShader(), "colBrightness");
+  fShaderContrastLocation = GetShaderLocation(*fFXShader.getShader(), "colContrast");
 }
 
 //------------------------------------------------------------------------
@@ -94,14 +103,15 @@ void UIContext::processUIActions()
 //------------------------------------------------------------------------
 // UIContext::beginFXShader
 //------------------------------------------------------------------------
-void UIContext::beginFXShader(ImVec4 const &iTint, float iBrightness)
+void UIContext::beginFXShader(ImVec4 const &iTint, float iBrightness, float iContrast)
 {
   auto shader = fFXShader.getShader();
   if(shader)
   {
     BeginShaderMode(*shader);
-    SetShaderValue(*shader, fShaderBrightnessLocation, &iBrightness, SHADER_UNIFORM_FLOAT);
     SetShaderValue(*shader, fShaderTintLocation, &iTint.x, SHADER_UNIFORM_VEC4);
+    SetShaderValue(*shader, fShaderBrightnessLocation, &iBrightness, SHADER_UNIFORM_FLOAT);
+    SetShaderValue(*shader, fShaderContrastLocation, &iContrast, SHADER_UNIFORM_FLOAT);
   }
 }
 

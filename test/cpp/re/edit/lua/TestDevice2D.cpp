@@ -161,6 +161,7 @@ TEST(Device2D, All)
     ASSERT_EQ(std::nullopt, n.fNumFrames);
     ASSERT_EQ(ReGui::GetColorImU32({100, 128, 145}), n.fEffects.fTint);
     ASSERT_EQ(-7, n.fEffects.fBrightness);
+    ASSERT_EQ(60, n.fEffects.fContrast);
     ASSERT_TRUE(Eq(ImVec2{90, 120}, n.fEffects.fSizeOverride.value()));
     ASSERT_TRUE(n.fEffects.fFlipX);
     ASSERT_TRUE(n.fEffects.fFlipY);

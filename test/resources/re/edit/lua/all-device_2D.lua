@@ -55,6 +55,7 @@ front["fx"] = {
     re_edit_path = "path_fx_original",
     re_edit_tint = { 100, 128, 145 },
     re_edit_brightness = -7,
+    re_edit_contrast = 60,
     re_edit_size = { 90, 120 },
     re_edit_flip_x = true,
     re_edit_flip_y = true,
