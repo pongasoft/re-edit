@@ -126,7 +126,7 @@ constexpr auto kErrorColor = ImVec4{1,0,0,1};
 constexpr auto kTipColor = toFloatColor(92, 184, 92);
 constexpr auto kXRayColor = ImVec4{1, 1, 1, 0.4};
 constexpr auto kDefaultTintColor = IM_COL32_WHITE;
-constexpr float kDefaultBrightness = 0;
+constexpr int kDefaultBrightness = 0;
 
 constexpr int toPixelHeight(int iDeviceHeightRU)
 {

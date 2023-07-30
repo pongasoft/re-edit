@@ -420,10 +420,10 @@ void Graphics::editView(AppContext &iCtx,
       ImGui::SameLine();
       ImGui::PushItemWidth(itemWidth - (ImGui::GetCursorPosX() - offset));
       auto brightness = fEffects.fBrightness;
-      if(ImGui::SliderFloat("brightness", &brightness, -1.0f, 1.0f))
+      if(ImGui::SliderInt("brightness", &brightness, -255, 255))
       {
         auto fx = fEffects;
-        fx.fBrightness = std::clamp(brightness, -1.0f, 1.0f);
+        fx.fBrightness = std::clamp(brightness, -255, 255);
         iOnFXUpdate("brightness", fx, MergeKey::from(&fEffects.fBrightness));
       }
       ImGui::PopItemWidth();
@@ -726,7 +726,7 @@ std::string Graphics::device2D() const
                                    texture->numFrames() > 1 ?  re::mock::fmt::printf(", frames = %d", texture->numFrames()) : "",
                                    texture->key(),
                                    fEffects.hasTint() ? re::mock::fmt::printf(", re_edit_tint = { %d, %d, %d }", tint.fRed, tint.fGreen, tint.fBlue) : "",
-                                   fEffects.hasBrightness() ? re::mock::fmt::printf(", re_edit_brightness = %f", fEffects.fBrightness) : "",
+                                   fEffects.hasBrightness() ? re::mock::fmt::printf(", re_edit_brightness = %d", fEffects.fBrightness) : "",
                                    fEffects.isFlippedX() ? ", re_edit_flip_x = true" : "",
                                    fEffects.isFlippedY() ? ", re_edit_flip_y = true" : "",
                                    sizeOverride

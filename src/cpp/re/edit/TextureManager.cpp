@@ -364,7 +364,7 @@ void Texture::RLTexture::draw(bool iUseRLDraw,
 
     if(iTextureFX.hasShaderFX())
     {
-      UIContext::GetCurrent().beginFXShader(ReGui::GetColorImVec4(iTextureFX.fTint), iTextureFX.fBrightness);
+      UIContext::GetCurrent().beginFXShader(ReGui::GetColorImVec4(iTextureFX.fTint), static_cast<float>(iTextureFX.fBrightness) / 255.0f);
       useFXShader = true;
     }
 

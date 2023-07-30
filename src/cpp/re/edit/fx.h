@@ -27,7 +27,7 @@ namespace re::edit::texture {
 struct FX
 {
   ImU32 fTint{kDefaultTintColor};
-  float fBrightness{kDefaultBrightness};
+  int fBrightness{kDefaultBrightness};
   bool fFlipX{};
   bool fFlipY{};
   std::optional<ImVec2> fSizeOverride{};
