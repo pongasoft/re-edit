@@ -365,13 +365,8 @@ void Texture::RLTexture::draw(bool iUseRLDraw,
     if(iTextureFX.hasShaderFX())
     {
       auto contrast = static_cast<float>(iTextureFX.fContrast);
-      if(contrast != 0)
-      {
-        if(contrast == -100.f)
-          contrast = -99.f; // otherwise the formular returns 0...
-        contrast = (100.0f + contrast) / 100.0f;
-        contrast *= contrast;
-      }
+      contrast = (100.0f + contrast) / 100.0f;
+      contrast *= contrast;
       UIContext::GetCurrent().beginFXShader(ReGui::GetColorImVec4(iTextureFX.fTint),
                                             static_cast<float>(iTextureFX.fBrightness) / 255.0f,
                                             contrast);

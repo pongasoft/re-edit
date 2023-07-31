@@ -35,7 +35,7 @@ void main()
 {
     vec4 texelColor = texture(texture0, fragTexCoord);
     vec4 c = texelColor*fragColor*colTint + vec4(colBrightness, colBrightness, colBrightness, 0);
-    if(colContrast != 0)
+    if(colContrast != 1.0)
     {
       c = c - vec4(0.5, 0.5, 0.5, 0);
       c = c * vec4(colContrast, colContrast, colContrast, 1.0);
