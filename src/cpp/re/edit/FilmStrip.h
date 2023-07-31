@@ -190,9 +190,9 @@ public:
   inline fs::path const &path() const { return fSource->getPath(); };
   constexpr bool hasBuiltIn() const { return fSource->hasBuiltIn(); }
 
-  inline key_t computeKey(texture::FX const &iEffects) const { return computeKey(key(), iEffects); }
+  inline key_t computeKey(texture::FX const &iEffects) const { return computeKey(key(), numFrames(), iEffects); }
 
-  static key_t computeKey(key_t const &iKey, texture::FX const &iEffects);
+  static key_t computeKey(key_t const &iKey, int iNumFrames, texture::FX const &iEffects);
 
   constexpr std::string const &errorMessage() const { return fErrorMessage; };
 

@@ -20,6 +20,7 @@
 #include "Errors.h"
 #include <regex>
 #include <fstream>
+#include <sstream>
 
 extern "C" const char *stbi_failure_reason(void);
 
@@ -168,22 +169,83 @@ int FilmStrip::overrideNumFrames(int iNumFrames)
 }
 
 //------------------------------------------------------------------------
+// operator<< JboxColor3
+//------------------------------------------------------------------------
+static inline std::ostream &operator<<(std::ostream &o, JboxColor3 const &h)
+{
+  auto flags = o.flags();
+  o << std::hex << std::uppercase << std::setfill('0') << std::setw(2) << h.fRed << std::setw(2) << h.fGreen << std::setw(2) << h.fBlue;
+  o.flags(flags);
+  return o;
+}
+
+
+//------------------------------------------------------------------------
 // FilmStrip::computeKey
 //------------------------------------------------------------------------
-FilmStrip::key_t FilmStrip::computeKey(FilmStrip::key_t const &iKey, texture::FX const &iEffects)
+FilmStrip::key_t FilmStrip::computeKey(FilmStrip::key_t const &iKey, int iNumFrames, texture::FX const &iEffects)
 {
-  static const std::regex kKeyRegex{"(([0-9]+)_?frames)?$", std::regex_constants::icase};
+  static const std::regex kKeyRegex{"(_?([0-9]+)_?frames)?$", std::regex_constants::icase};
+
+  std::string_view base = iKey;
 
   std::cmatch m;
   if(std::regex_search(iKey.c_str(), m, kKeyRegex))
   {
     if(m[2].matched)
     {
-      auto numFramesStr = m[1].str();
+      auto numFrames = m[1].str();
+      base.remove_suffix(numFrames.size());
     }
   }
 
-  return fmt::printf("%s_tbd_fx", iKey);
+  std::ostringstream s{};
+
+  s << base;
+
+  if(iEffects.hasAny())
+  {
+    if(iEffects.hasTint())
+    {
+      s << "_T" << ReGui::GetJboxColor3(iEffects.fTint);
+    }
+
+    if(iEffects.hasBrightness())
+    {
+      if(iEffects.fBrightness < 0)
+        s << "_b" << -iEffects.fBrightness;
+      else
+        s << "_B" << iEffects.fBrightness;
+    }
+
+    if(iEffects.hasContrast())
+    {
+      if(iEffects.fContrast < 0)
+        s << "_c" << -iEffects.fContrast;
+      else
+        s << "_C" << iEffects.fContrast;
+    }
+
+    if(iEffects.isFlippedX())
+      s << "_X";
+
+    if(iEffects.isFlippedY())
+      s << "_Y";
+
+    if(iEffects.hasSizeOverride())
+    {
+      s << "_S"
+        << static_cast<int>(std::roundf(iEffects.fSizeOverride->x))
+        << "x"
+        << static_cast<int>(std::roundf(iEffects.fSizeOverride->y));
+    }
+  }
+
+  s << "_"
+    << iNumFrames
+    << "frames";
+
+  return s.str();
 }
 
 //------------------------------------------------------------------------
