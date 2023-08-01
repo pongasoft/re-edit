@@ -81,7 +81,7 @@ std::shared_ptr<Texture> TextureManager::findTexture(std::string const &iKey) co
     return iter->second;
 
   auto filmStrip = fFilmStripMgr->findFilmStrip(iKey);
-  if(filmStrip)
+  if(filmStrip && filmStrip->isValid())
   {
     std::shared_ptr<Texture> texture = createTexture();
     texture->loadOnGPU(fFilmStripMgr->getFilmStrip(iKey));
@@ -186,12 +186,14 @@ void Texture::loadOnGPU(std::shared_ptr<FilmStrip> const &iFilmStrip)
 {
   fFilmStrip = iFilmStrip;
 
-  if(UIContext::HasCurrent())
+  if(fFilmStrip->isValid() && UIContext::HasCurrent())
   {
     UIContext::GetCurrent().execute([texture = shared_from_this(), filmStrip = iFilmStrip] {
       texture->loadOnGPUFromUIThread(filmStrip);
     });
   }
+  else
+    fGPUTextures.clear();
 }
 
 //------------------------------------------------------------------------

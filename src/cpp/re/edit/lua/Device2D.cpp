@@ -153,18 +153,12 @@ std::optional<gfx_node> Device2D::getMaybeNodeOnTopOfStack()
     lua_pop(L, 1);
 
     // check for path override (when there are effects)
-    auto pathOverride = L.getTableValueAsOptionalString("re_edit_path");
-    if(pathOverride)
-    {
-      node.fKeyOrSize = pathOverride.value();
-    }
-    else
-    {
-      // check for path
-      auto path = L.getTableValueAsOptionalString("path");
-      if(path)
-        node.fKeyOrSize = path.value();
-    }
+    node.fOriginalPath = L.getTableValueAsOptionalString("re_edit_path");
+
+    // check for path
+    auto path = L.getTableValueAsOptionalString("path");
+    if(path)
+      node.fKeyOrSize = path.value();
 
     auto frames = L.getTableValueAsOptionalInteger("frames");
     if(frames)

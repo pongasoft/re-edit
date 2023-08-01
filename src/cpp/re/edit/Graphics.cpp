@@ -828,11 +828,32 @@ void Graphics::setTextureKey(Texture::key_t const &iTextureKey)
 //------------------------------------------------------------------------
 // Graphics::initTextureKey
 //------------------------------------------------------------------------
-void Graphics::initTextureKey(Texture::key_t const &iTextureKey, texture::FX const &iEffects)
+void Graphics::initTextureKey(Texture::key_t const &iTextureKey,
+                              std::optional<Texture::key_t> const &iOriginalTextureKey,
+                              texture::FX const &iEffects)
 {
-  fTexture = iTextureKey;
-  fDNZTexture = AppContext::GetCurrent().getTexture(iTextureKey);
-  fEffects = iEffects;
+  if(iOriginalTextureKey)
+  {
+    fDNZTexture = AppContext::GetCurrent().findTexture(*iOriginalTextureKey);
+    if(!fDNZTexture || !fDNZTexture->isValid())
+    {
+      if(iEffects.hasAny())
+        RE_EDIT_LOG_WARNING("Could not locate texture %s to apply effects.", *iOriginalTextureKey);
+
+      fTexture = iTextureKey;
+      fDNZTexture = AppContext::GetCurrent().getTexture(iTextureKey);
+    }
+    else
+    {
+      fTexture = *iOriginalTextureKey;
+      fEffects = iEffects;
+    }
+  }
+  else
+  {
+    fTexture = iTextureKey;
+    fDNZTexture = AppContext::GetCurrent().getTexture(iTextureKey);
+  }
   fEdited = true;
 }
 

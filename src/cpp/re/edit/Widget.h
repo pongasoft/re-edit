@@ -94,8 +94,8 @@ public:
   constexpr void disableHitBoundaries() { fGraphics->fHitBoundariesEnabled = false; }
 
   inline void setTextureKey(Texture::key_t const &iTextureKey) { fGraphics->setTextureKey(iTextureKey); fEdited |= fGraphics->isEdited(); }
-  inline void initTextureKey(Texture::key_t const &iTextureKey, texture::FX const &iEffects) {
-    fGraphics->initTextureKey(iTextureKey, iEffects); fEdited |= fGraphics->isEdited();
+  inline void initTextureKey(Texture::key_t const &iTextureKey, std::optional<Texture::key_t> const &iOriginalTextureKey, texture::FX const &iEffects) {
+    fGraphics->initTextureKey(iTextureKey, iOriginalTextureKey, iEffects); fEdited |= fGraphics->isEdited();
   }
   inline void setSize(ImVec2 const &iSize) { fGraphics->setSize(iSize); fEdited |= fGraphics->isEdited(); }
   void collectUsedTexturePaths(std::set<fs::path> &oPaths) const;

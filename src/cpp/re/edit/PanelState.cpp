@@ -107,7 +107,9 @@ void PanelState::initPanel(AppContext &iCtx,
         if(!key.empty())
         {
           iCtx.loadTexture(key, node->fNumFrames);
-          widget->initTextureKey(key, node->fEffects);
+          if(node->fOriginalPath)
+            iCtx.loadTexture(*node->fOriginalPath, node->fNumFrames);
+          widget->initTextureKey(key, node->fOriginalPath, node->fEffects);
         }
         else
           RE_EDIT_LOG_WARNING("Empty node path for widget %s", node->fName);
@@ -138,7 +140,9 @@ void PanelState::initPanel(AppContext &iCtx,
       if(!key.empty())
       {
         iCtx.loadTexture(key, node.fNumFrames);
-        widget->initTextureKey(key, node.fEffects);
+        if(node.fOriginalPath)
+          iCtx.loadTexture(*node.fOriginalPath, node.fNumFrames);
+        widget->initTextureKey(key, node.fOriginalPath, node.fEffects);
       }
       else
         RE_EDIT_LOG_WARNING("Empty node path for decal %s", name);

@@ -31,7 +31,7 @@ struct gfx_node
   ImVec2 fPosition{};
   std::variant<std::monostate, std::string, ImVec2> fKeyOrSize{};
   std::optional<int> fNumFrames{};
-  std::optional<std::string> fPathOverride{};
+  std::optional<std::string> fOriginalPath{};
   texture::FX fEffects{};
 
   bool hasKey() const { return std::holds_alternative<std::string>(fKeyOrSize); }

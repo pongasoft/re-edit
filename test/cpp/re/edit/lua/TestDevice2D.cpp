@@ -157,7 +157,8 @@ TEST(Device2D, All)
     widgetNames.emplace(n.fName);
     ASSERT_TRUE(Eq(ImVec2{300, 200}, n.fPosition));
     ASSERT_EQ("fx", n.fName);
-    ASSERT_EQ("path_fx_original", std::get<std::string>(n.fKeyOrSize));
+    ASSERT_EQ("path_fx", std::get<std::string>(n.fKeyOrSize));
+    ASSERT_EQ("path_fx_original", n.fOriginalPath);
     ASSERT_EQ(std::nullopt, n.fNumFrames);
     ASSERT_EQ(ReGui::GetColorImU32({100, 128, 145}), n.fEffects.fTint);
     ASSERT_EQ(-7, n.fEffects.fBrightness);
