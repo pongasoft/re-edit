@@ -46,6 +46,7 @@ public:
   int overrideNumFrames(std::string const &iKey, int iNumFrames) const;
   std::optional<FilmStrip::key_t> importTexture(fs::path const &iTexturePath);
   void importBuiltIns(std::set<FilmStrip::key_t> const &iKeys, UserError *oErrors = nullptr);
+  void applyEffects(std::vector<FilmStripFX> const &iEffects, UserError *oErrors = nullptr) { fFilmStripMgr->applyEffects(iEffects, oErrors); }
 
 protected:
   std::unique_ptr<Texture> createTexture() const;

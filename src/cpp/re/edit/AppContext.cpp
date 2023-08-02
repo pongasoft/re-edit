@@ -976,6 +976,7 @@ void AppContext::save()
   UserError errors{};
   auto GUI2D = fRoot / "GUI2D";
   importBuiltIns(&errors); // convert built ins into actual images first (so that cmake() can see them)
+  applyEffects(&errors);
   Application::saveFile(GUI2D / "device_2D.lua", device2D(), &errors);
   Application::saveFile(GUI2D / "hdgui_2D.lua", hdgui2D(), &errors);
   if(fs::exists(fRoot / "CMakeLists.txt"))
@@ -1206,6 +1207,24 @@ void AppContext::importBuiltIns(UserError *oErrors)
 
   if(!keys.empty())
     fTextureManager->importBuiltIns(keys, oErrors);
+}
+
+//------------------------------------------------------------------------
+// AppContext::applyEffects
+//------------------------------------------------------------------------
+void AppContext::applyEffects(UserError *oErrors)
+{
+  std::vector<FilmStripFX> effects{};
+  fFrontPanel->fPanel.collectFilmStripEffects(effects);
+  fBackPanel->fPanel.collectFilmStripEffects(effects);
+  if(fHasFoldedPanels)
+  {
+    fFoldedFrontPanel->fPanel.collectFilmStripEffects(effects);
+    fFoldedBackPanel->fPanel.collectFilmStripEffects(effects);
+  }
+
+  if(!effects.empty())
+    fTextureManager->applyEffects(effects, oErrors);
 }
 
 //------------------------------------------------------------------------

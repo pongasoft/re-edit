@@ -249,6 +249,21 @@ FilmStrip::key_t FilmStrip::computeKey(FilmStrip::key_t const &iKey, int iNumFra
 }
 
 //------------------------------------------------------------------------
+// FilmStrip::applyEffects
+//------------------------------------------------------------------------
+std::unique_ptr<FilmStrip> FilmStrip::applyEffects(texture::FX const &iEffects) const
+{
+  auto image = fImage.clone();
+
+  if(iEffects.hasTint())
+  {
+    ImageColorTint(image.rlImagePtr(), ReGui::GetRLColor(iEffects.fTint));
+  }
+
+  return std::unique_ptr<FilmStrip>(new FilmStrip(nullptr, std::move(image)));;
+}
+
+//------------------------------------------------------------------------
 // FilmStripMgr::findFilmStrip
 //------------------------------------------------------------------------
 std::shared_ptr<FilmStrip> FilmStripMgr::findFilmStrip(FilmStrip::key_t const &iKey) const
@@ -515,6 +530,54 @@ std::set<FilmStrip::key_t> FilmStripMgr::importBuiltIns(std::set<FilmStrip::key_
   return modifiedKeys;
 }
 
+
+//------------------------------------------------------------------------
+// FilmStripMgr::applyEffects
+//------------------------------------------------------------------------
+std::shared_ptr<FilmStrip> FilmStripMgr::applyEffects(FilmStrip::key_t const &iKey,
+                                                      texture::FX const &iEffects,
+                                                      UserError *oErrors)
+{
+  auto filmStrip = findFilmStrip(iKey);
+  if(filmStrip && filmStrip->isValid())
+  {
+    // no effects => return
+    if(!iEffects.hasAny())
+      return filmStrip;
+
+    auto keyFX = FilmStrip::computeKey(iKey, filmStrip->numFrames(), iEffects);
+
+    // do we already know about this?
+    auto filmStripFX = findFilmStrip(keyFX);
+    if(filmStripFX && filmStripFX->isValid())
+      return filmStripFX;
+    else
+    {
+      // no we don't so save and add to map
+      filmStripFX = save(keyFX, filmStrip->applyEffects(iEffects));
+      if(filmStripFX)
+        fFilmStrips[keyFX] = filmStripFX;
+      else
+      {
+        if(oErrors && fDirectory)
+          oErrors->add("Error saving file [%s.png]", (*fDirectory / keyFX).string());
+      }
+      return filmStripFX;
+    }
+  }
+  else
+    return nullptr;
+}
+
+//------------------------------------------------------------------------
+// FilmStripMgr::applyEffects
+//------------------------------------------------------------------------
+void FilmStripMgr::applyEffects(std::vector<FilmStripFX> const &iEffects, UserError *oErrors)
+{
+  for(auto const &e: iEffects)
+    applyEffects(e.fKey, e.fEffects, oErrors);
+}
+
 //------------------------------------------------------------------------
 // FilmStripMgr::toSource
 //------------------------------------------------------------------------
@@ -528,6 +591,28 @@ std::shared_ptr<FilmStrip::Source> FilmStripMgr::toSource(FilmStrip::key_t const
   });
 }
 
+//------------------------------------------------------------------------
+// FilmStripMgr::save
+//------------------------------------------------------------------------
+std::unique_ptr<FilmStrip> FilmStripMgr::save(FilmStrip::key_t const &iKey, std::unique_ptr<FilmStrip> iFilmStrip)
+{
+  if(!fDirectory)
+    return nullptr;
+
+  auto path = *fDirectory / fmt::printf("%s.png", iKey);
+
+  if(!ExportImage(iFilmStrip->rlImage(), path.c_str()))
+  {
+    RE_EDIT_LOG_WARNING("Error while saving file [%s]", path.string());
+    return nullptr;
+  }
+
+  auto source = std::make_shared<FilmStrip::Source>(FilmStrip::Source::from(iKey, *fDirectory));
+  fSources[iKey] = source;
+  iFilmStrip->updateSource(source);
+
+  return std::move(iFilmStrip);
+}
 
 //------------------------------------------------------------------------
 // FilmStripMgr::from
@@ -553,6 +638,14 @@ FilmStrip::Source FilmStrip::Source::from(key_t const &iKey, fs::path const &iDi
     RE_EDIT_LOG_ERROR("Error with file [%s]: (%d | %s)", path.string(), errorCode.value(), errorCode.message());
     return {path, iKey, 0, inferredNumFrames};
   }
+}
+
+//------------------------------------------------------------------------
+// RLImage::clone
+//------------------------------------------------------------------------
+RLImage RLImage::clone() const
+{
+  return RLImage{ ImageCopy(fImage) };
 }
 
 namespace impl

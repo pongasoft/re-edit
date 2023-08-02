@@ -1870,6 +1870,15 @@ void Panel::collectUsedTextureBuiltIns(std::set<FilmStrip::key_t> &oKeys) const
 }
 
 //------------------------------------------------------------------------
+// Panel::collectFilmStripEffects
+//------------------------------------------------------------------------
+void Panel::collectFilmStripEffects(std::vector<FilmStripFX> &oEffects) const
+{
+  for(auto &[id, w]: fWidgets)
+    w->collectFilmStripEffects(oEffects);
+}
+
+//------------------------------------------------------------------------
 // Panel::setDeviceHeightRU
 //------------------------------------------------------------------------
 void Panel::setDeviceHeightRU(int iDeviceHeightRU)

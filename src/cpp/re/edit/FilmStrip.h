@@ -51,7 +51,7 @@ struct RLImage
   ~RLImage() { UnloadImage(fImage); }
 
 
-  explicit RLImage(RLImage &&iOther) noexcept : fImage{iOther.fImage}
+  RLImage(RLImage &&iOther) noexcept : fImage{iOther.fImage}
   {
     iOther.fImage.data = nullptr;
     ensureProperFormat();
@@ -73,8 +73,10 @@ struct RLImage
   constexpr int height() const { return fImage.height; }
   constexpr data_t *data() const { return static_cast<data_t *>(fImage.data); }
 
-  // TODO remove this
-  constexpr Image const &rlImage() const { return fImage; }
+  constexpr Image const &rlImageRef() const { return fImage; }
+  constexpr Image *rlImagePtr() { return &fImage; }
+
+  RLImage clone() const;
 
 private:
   void ensureProperFormat() { ImageFormat(&fImage, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8); }
@@ -207,10 +209,11 @@ public:
 
   constexpr RLImage::data_t const *data() const { return fImage.data(); }
 
-  // TODO remove this
-  constexpr Image const &rlImage() const { return fImage.rlImage(); }
+  constexpr Image const &rlImage() const { return fImage.rlImageRef(); }
 
   int overrideNumFrames(int iNumFrames);
+
+  std::unique_ptr<FilmStrip> applyEffects(texture::FX const &iEffects) const;
 
   static std::unique_ptr<FilmStrip> load(std::shared_ptr<Source> const &iSource);
 
@@ -277,6 +280,8 @@ private:
   FilmStrip(std::shared_ptr<Source> iSource, char const *iErrorMessage);
   FilmStrip(std::shared_ptr<Source> iSource, RLImage &&iImage);
 
+  void updateSource(std::shared_ptr<Source> iSource) { fSource = std::move(iSource); }
+
   static std::unique_ptr<FilmStrip> loadBuiltInCompressedBase85(std::shared_ptr<Source> const &iSource);
 
 private:
@@ -286,6 +291,14 @@ private:
 
   std::string fErrorMessage;
 };
+
+struct FilmStripFX
+{
+  FilmStrip::key_t fKey{};
+  texture::FX fEffects{};
+};
+
+
 
 class FilmStripMgr
 {
@@ -301,11 +314,15 @@ public:
   std::optional<FilmStrip::key_t> importTexture(fs::path const &iTexturePath);
   std::set<FilmStrip::key_t> importBuiltIns(std::set<FilmStrip::key_t> const &iKeys, UserError *oErrors = nullptr);
 
+  std::shared_ptr<FilmStrip> applyEffects(FilmStrip::key_t const &iKey, texture::FX const &iEffects, UserError *oErrors = nullptr);
+  void applyEffects(std::vector<FilmStripFX> const &iEffects, UserError *oErrors = nullptr);
+
   static std::vector<FilmStrip::Source> scanDirectory(fs::path const &iDirectory);
   static bool isValidTexturePath(fs::path const &iPath);
 
 private:
   static std::shared_ptr<FilmStrip::Source> toSource(FilmStrip::key_t const &iKey, BuiltIn const &iBuiltIn);
+  std::unique_ptr<FilmStrip> save(FilmStrip::key_t const &iKey, std::unique_ptr<FilmStrip> iFilmStrip);
 
 private:
   std::map<FilmStrip::key_t, BuiltIn> fBuiltIns{};

@@ -707,7 +707,27 @@ void Graphics::collectUsedTexturePaths(std::set<fs::path> &oPaths) const
   {
     auto filmStrip = getTexture()->getFilmStrip();
     if(filmStrip->hasPath())
-      oPaths.emplace(filmStrip->path());
+    {
+      if(fEffects.hasAny())
+      {
+        auto texture = AppContext::GetCurrent().findTexture(filmStrip->computeKey(fEffects));
+        if(texture && texture->getFilmStrip() && texture->getFilmStrip()->hasPath())
+          oPaths.emplace(texture->getFilmStrip()->path());
+      }
+      else
+        oPaths.emplace(filmStrip->path());
+    }
+  }
+}
+
+//------------------------------------------------------------------------
+// Graphics::collectFilmStripEffects
+//------------------------------------------------------------------------
+void Graphics::collectFilmStripEffects(std::vector<FilmStripFX> &oEffects) const
+{
+  if(hasTexture() && fEffects.hasAny())
+  {
+    oEffects.emplace_back(FilmStripFX{getTexture()->key(), fEffects});
   }
 }
 

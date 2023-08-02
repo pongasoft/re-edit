@@ -98,6 +98,7 @@ public:
     fGraphics->initTextureKey(iTextureKey, iOriginalTextureKey, iEffects); fEdited |= fGraphics->isEdited();
   }
   inline void setSize(ImVec2 const &iSize) { fGraphics->setSize(iSize); fEdited |= fGraphics->isEdited(); }
+  void collectFilmStripEffects(std::vector<FilmStripFX> &oEffects) const;
   void collectUsedTexturePaths(std::set<fs::path> &oPaths) const;
   void collectUsedTextureBuiltIns(std::set<FilmStrip::key_t> &oKeys) const;
 

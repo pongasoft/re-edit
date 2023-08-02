@@ -144,6 +144,7 @@ public:
   std::string device2D() const;
   void collectUsedTexturePaths(std::set<fs::path> &oPaths) const;
   void collectUsedTextureBuiltIns(std::set<FilmStrip::key_t> &oKeys) const;
+  void collectFilmStripEffects(std::vector<FilmStripFX> &oEffects) const;
 
   friend class PanelState;
 

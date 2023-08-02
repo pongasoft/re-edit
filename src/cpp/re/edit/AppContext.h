@@ -255,6 +255,7 @@ protected:
   void reloadDevice();
   void save();
   void importBuiltIns(UserError *oErrors = nullptr);
+  void applyEffects(UserError *oErrors = nullptr);
   std::string hdgui2D() const;
   std::string device2D() const;
   std::string cmake() const;
