@@ -22,6 +22,9 @@
 
 namespace re::edit {
 
+/**
+ * `fragColor` is part of raylib and re-edit uses it only for X-Ray (alpha only)
+ * `colTint`, `colBrightness` and `colContrast` are the effects parameters */
 static constexpr char const *kFXFragmentShader = R"ogl33(
 #version 330
 in vec2 fragTexCoord;
@@ -34,14 +37,14 @@ uniform float colContrast;
 void main()
 {
     vec4 texelColor = texture(texture0, fragTexCoord);
-    vec4 c = texelColor*fragColor*colTint + vec4(colBrightness, colBrightness, colBrightness, 0);
+    vec4 c = texelColor*colTint + vec4(colBrightness, colBrightness, colBrightness, 0);
     if(colContrast != 1.0)
     {
       c = c - vec4(0.5, 0.5, 0.5, 0);
       c = c * vec4(colContrast, colContrast, colContrast, 1.0);
       c = c + vec4(0.5, 0.5, 0.5, 0);
     }
-    finalColor = c;
+    finalColor = c * fragColor;
 }
 )ogl33";
 
