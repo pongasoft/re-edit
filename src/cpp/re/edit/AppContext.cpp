@@ -994,6 +994,8 @@ void AppContext::save()
   fNeedsSaving = false;
   fLastSavedUndoAction = fUndoManager->getLastUndoAction();
   ImGui::GetIO().WantSaveIniSettings = false;
+
+  computeErrors(); // applyEffects can fix some issues so we need to check
 }
 
 //------------------------------------------------------------------------

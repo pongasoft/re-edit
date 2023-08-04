@@ -134,6 +134,14 @@ void TextureManager::importBuiltIns(std::set<FilmStrip::key_t> const &iKeys, Use
   std::for_each(keys.begin(), keys.end(), [this](auto const &k) { updateTexture(k); });
 }
 
+//------------------------------------------------------------------------
+// TextureManager::applyEffects
+//------------------------------------------------------------------------
+void TextureManager::applyEffects(std::vector<FilmStripFX> const &iEffects, UserError *oErrors)
+{
+  auto keys = fFilmStripMgr->applyEffects(iEffects, oErrors);
+  std::for_each(keys.begin(), keys.end(), [this](auto const &k) { updateTexture(k); });
+}
 
 //------------------------------------------------------------------------
 // TextureManager::updateTexture

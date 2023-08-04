@@ -350,8 +350,8 @@ public:
   std::optional<FilmStrip::key_t> importTexture(fs::path const &iTexturePath);
   std::set<FilmStrip::key_t> importBuiltIns(std::set<FilmStrip::key_t> const &iKeys, UserError *oErrors = nullptr);
 
-  std::shared_ptr<FilmStrip> applyEffects(FilmStrip::key_t const &iKey, texture::FX const &iEffects, UserError *oErrors = nullptr);
-  void applyEffects(std::vector<FilmStripFX> const &iEffects, UserError *oErrors = nullptr);
+  std::optional<FilmStrip::key_t> applyEffects(FilmStrip::key_t const &iKey, texture::FX const &iEffects, UserError *oErrors = nullptr);
+  std::set<FilmStrip::key_t> applyEffects(std::vector<FilmStripFX> const &iEffects, UserError *oErrors = nullptr);
 
   static std::vector<FilmStrip::Source> scanDirectory(fs::path const &iDirectory);
   static bool isValidTexturePath(fs::path const &iPath);
