@@ -18,6 +18,7 @@
 
 #include "FilmStrip.h"
 #include "Errors.h"
+#include "external/stb_image_resize.h"
 #include <regex>
 #include <fstream>
 #include <sstream>
@@ -144,17 +145,6 @@ FilmStripMgr::FilmStripMgr(std::vector<BuiltIns::Def> const &iBuiltIns,
   }
 }
 
-////------------------------------------------------------------------------
-//// FilmStrip::clone
-////------------------------------------------------------------------------
-//std::unique_ptr<FilmStrip> FilmStrip::clone() const
-//{
-//  auto size = width() * height() * 4 * sizeof(data_t);
-//  auto data = std::make_unique<Data>(static_cast<data_t *>(malloc(size)));
-//  std::memcpy(data->data(), fData->data(), size);
-//  return std::unique_ptr<FilmStrip>(new FilmStrip(fSource, fWidth, fHeight, std::move(data)));
-//}
-
 //------------------------------------------------------------------------
 // FilmStripMgr::overrideNumFrames
 //------------------------------------------------------------------------
@@ -248,6 +238,38 @@ FilmStrip::key_t FilmStrip::computeKey(FilmStrip::key_t const &iKey, int iNumFra
   return s.str();
 }
 
+namespace impl {
+
+/**
+ * This version, not part of raylib, resizes the image into a new image already pre-allocated */
+void ImageResize(Image image, Image newImage)
+{
+  RE_EDIT_ASSERT(image.format == PIXELFORMAT_UNCOMPRESSED_R8G8B8A8);
+  stbir_resize_uint8(static_cast<unsigned char *>(image.data), image.width, image.height, 0,
+                     static_cast<unsigned char *>(newImage.data), newImage.width, newImage.height, 0, 4);
+}
+
+/**
+ * This version, not part of raylib, flips the image into a new image already pre-allocated */
+void ImageFlip(Image image, Image newImage)
+{
+  RE_EDIT_ASSERT(image.format == PIXELFORMAT_UNCOMPRESSED_R8G8B8A8);
+  RE_EDIT_ASSERT(image.width == newImage.width && image.height == newImage.height);
+
+  auto bytesPerPixel = GetPixelDataSize(1, 1, image.format);
+  auto widthInBytes = image.width * bytesPerPixel;
+
+  for (int i = (image.height - 1), offsetSize = 0; i >= 0; i--)
+  {
+    memcpy(static_cast<unsigned char *>(newImage.data) + offsetSize,
+           static_cast<unsigned char *>(image.data) + i * widthInBytes,
+           widthInBytes);
+    offsetSize += widthInBytes;
+  }
+}
+
+}
+
 //------------------------------------------------------------------------
 // FilmStrip::applyEffects
 //------------------------------------------------------------------------
@@ -256,8 +278,63 @@ std::unique_ptr<FilmStrip> FilmStrip::applyEffects(texture::FX const &iEffects) 
   auto image = fImage.clone();
 
   if(iEffects.hasTint())
-  {
     ImageColorTint(image.rlImagePtr(), ReGui::GetRLColor(iEffects.fTint));
+
+  if(iEffects.hasBrightness())
+    ImageColorBrightness(image.rlImagePtr(), iEffects.fBrightness);
+
+  if(iEffects.hasContrast())
+    ImageColorContrast(image.rlImagePtr(), static_cast<float>(iEffects.fContrast));
+
+  if(iEffects.isFlippedX())
+    ImageFlipHorizontal(image.rlImagePtr());
+
+  if(iEffects.isFlippedY())
+  {
+    if(numFrames() == 1)
+      ImageFlipVertical(image.rlImagePtr());
+    else
+    {
+      // Implementation note: we need to flip each frame. Using a more efficient API than raylib
+      RLImage newImage{GenImageColor(image.width(), image.height(), {})};
+
+      FrameIterator newFrame{newImage.rlImageRef(), numFrames()};
+
+      for(auto frame = beginFrame(); frame != endFrame(); ++frame, ++newFrame)
+      {
+        impl::ImageFlip(*frame, *newFrame);
+      }
+
+      image = std::move(newImage);
+    }
+
+  }
+
+  if(iEffects.hasSizeOverride())
+  {
+    auto newWidth = static_cast<int>(iEffects.fSizeOverride->x);
+    auto newFrameHeight = static_cast<int>(iEffects.fSizeOverride->y);
+
+    if(numFrames() == 1)
+    {
+      ImageResize(image.rlImagePtr(), newWidth, newFrameHeight);
+    }
+    else
+    {
+      // Implementation note: resizing the entire image when there are multiple frames would lead to bleeding between
+      // frames. So we need to resize each frame separately. The raylib apis would be very inefficient in this instance,
+      // thus going down one level and using stbi directly
+      RLImage newImage{GenImageColor(newWidth, newFrameHeight * numFrames(), {})};
+
+      FrameIterator newFrame{newImage.rlImageRef(), numFrames()};
+
+      for(auto frame = beginFrame(); frame != endFrame(); ++frame, ++newFrame)
+      {
+        impl::ImageResize(*frame, *newFrame);
+      }
+
+      image = std::move(newImage);
+    }
   }
 
   return std::unique_ptr<FilmStrip>(new FilmStrip(nullptr, std::move(image)));;
@@ -639,6 +716,44 @@ FilmStrip::Source FilmStrip::Source::from(key_t const &iKey, fs::path const &iDi
     return {path, iKey, 0, inferredNumFrames};
   }
 }
+
+//------------------------------------------------------------------------
+// FilmStrip::FrameIterator::FrameIterator
+//------------------------------------------------------------------------
+FilmStrip::FrameIterator::FrameIterator(Image iImage, int iNumFrames, int iCurrentFrame) :
+  fImage{iImage}, fNumFrames{iNumFrames}, fCurrentFrame{iCurrentFrame}
+{
+  RE_EDIT_ASSERT(fImage.format == PIXELFORMAT_UNCOMPRESSED_R8G8B8A8);
+  fImage.height = fImage.height / iNumFrames;
+  computeCurrentImage();
+}
+
+//------------------------------------------------------------------------
+// FilmStrip::FrameIterator::computeCurrentImage
+//------------------------------------------------------------------------
+void FilmStrip::FrameIterator::computeCurrentImage()
+{
+  if(fCurrentFrame < fNumFrames)
+  {
+    fCurrentImage = fImage;
+    fCurrentImage.data = static_cast<unsigned char *>(fImage.data) + (fImage.width * fImage.height * 4 * fCurrentFrame);
+  }
+  else
+  {
+    fCurrentImage = {};
+  }
+}
+
+//------------------------------------------------------------------------
+// FilmStrip::FrameIterator::operator==
+//------------------------------------------------------------------------
+bool FilmStrip::FrameIterator::operator==(FilmStrip::FrameIterator const &rhs) const
+{
+  return fImage == rhs.fImage &&
+         fNumFrames == rhs.fNumFrames &&
+         fCurrentFrame == rhs.fCurrentFrame;
+}
+
 
 //------------------------------------------------------------------------
 // RLImage::clone

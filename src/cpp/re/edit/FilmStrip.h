@@ -33,6 +33,18 @@
 #include "Errors.h"
 #include "fx.h"
 
+//------------------------------------------------------------------------
+// Comparing 2 raylib Image
+//------------------------------------------------------------------------
+inline bool operator==(Image const &lhs, Image const &rhs)
+{
+  return lhs.data == rhs.data &&
+         lhs.width == rhs.width &&
+         lhs.height == rhs.height &&
+         lhs.mipmaps == rhs.mipmaps &&
+         lhs.format == rhs.format;
+}
+
 namespace re::edit {
 
 struct RLImage
@@ -277,10 +289,34 @@ public:
   friend class FilmStripMgr;
 
 private:
+  struct FrameIterator
+  {
+    FrameIterator(Image iImage, int iNumFrames, int iCurrentFrame = 0);
+    Image operator*() const { return fCurrentImage; }
+    Image const *operator->() const { return &fCurrentImage; }
+    FrameIterator &operator++() { fCurrentFrame++; computeCurrentImage(); return *this; }
+    bool operator==(FrameIterator const &rhs) const;
+    inline bool operator!=(FrameIterator const &rhs) const { return !(rhs == *this); }
+
+  private:
+    void computeCurrentImage();
+
+  private:
+    Image fImage;
+    int fNumFrames;
+    int fCurrentFrame;
+    Image fCurrentImage;
+  };
+
+
+private:
   FilmStrip(std::shared_ptr<Source> iSource, char const *iErrorMessage);
   FilmStrip(std::shared_ptr<Source> iSource, RLImage &&iImage);
 
   void updateSource(std::shared_ptr<Source> iSource) { fSource = std::move(iSource); }
+
+  FrameIterator beginFrame() const { return {rlImage(), numFrames()}; }
+  FrameIterator endFrame() const { return {rlImage(), numFrames(), numFrames()}; }
 
   static std::unique_ptr<FilmStrip> loadBuiltInCompressedBase85(std::shared_ptr<Source> const &iSource);
 
