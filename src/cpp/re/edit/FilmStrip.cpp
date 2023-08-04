@@ -383,9 +383,9 @@ std::vector<FilmStrip::key_t> FilmStripMgr::findKeys(FilmStrip::Filter const &iF
 //------------------------------------------------------------------------
 bool FilmStripMgr::checkKeyMatchesFilter(FilmStrip::key_t const &iKey, FilmStrip::Filter const &iFilter) const
 {
-  for(auto const &[k, source]: fSources)
+  if(fSources.find(iKey) != fSources.end())
   {
-    auto fs = getFilmStrip(k);
+    auto fs = getFilmStrip(iKey);
     if(fs && fs->isValid() && iFilter(*fs))
       return true;
   }
