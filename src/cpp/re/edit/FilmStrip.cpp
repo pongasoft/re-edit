@@ -51,7 +51,7 @@ FilmStrip::FilmStrip(std::shared_ptr<Source> iSource, char const *iErrorMessage)
 //------------------------------------------------------------------------
 // FilmStrip::FilmStrip
 //------------------------------------------------------------------------
-FilmStrip::FilmStrip(std::shared_ptr<Source> iSource, RLImage &&iImage) :
+FilmStrip::FilmStrip(std::shared_ptr<Source> iSource, RLImageRGBA8 &&iImage) :
   fSource{std::move(iSource)},
   fImage{std::move(iImage)},
   fErrorMessage{}
@@ -96,7 +96,7 @@ std::vector<unsigned char> loadCompressedBase85(char const *iCompressedBase85)
 std::unique_ptr<FilmStrip> FilmStrip::loadBuiltInCompressedBase85(std::shared_ptr<Source> const &iSource)
 {
   auto decompressedData = impl::loadCompressedBase85(iSource->getBuiltIn().fCompressedDataBase85);
-  RLImage image{LoadImageFromMemory(".png", decompressedData.data(), static_cast<int>(decompressedData.size()))};
+  RLImageRGBA8 image{LoadImageFromMemory(".png", decompressedData.data(), static_cast<int>(decompressedData.size()))};
   RE_EDIT_INTERNAL_ASSERT(image.isValid(), "%s", stbi_failure_reason());
   return std::unique_ptr<FilmStrip>(new FilmStrip(iSource, std::move(image)));
 }
@@ -110,7 +110,7 @@ std::unique_ptr<FilmStrip> FilmStrip::load(std::shared_ptr<Source> const &iSourc
 
   if(iSource->hasPath())
   {
-    RLImage image{LoadImage(iSource->getPath().string().c_str())};
+    RLImageRGBA8 image{LoadImage(iSource->getPath().string().c_str())};
     if(image.isValid())
     {
       return std::unique_ptr<FilmStrip>(new FilmStrip(iSource, std::move(image)));
@@ -241,23 +241,35 @@ FilmStrip::key_t FilmStrip::computeKey(FilmStrip::key_t const &iKey, int iNumFra
 namespace impl {
 
 /**
- * This version, not part of raylib, resizes the image into a new image already pre-allocated */
-void ImageResize(Image image, Image newImage)
+ * Creates a new image (allocates size) but does not initialize it */
+Image NewImageRGBA8(int width, int height)
 {
-  RE_EDIT_ASSERT(image.format == PIXELFORMAT_UNCOMPRESSED_R8G8B8A8);
+  return {
+    .data    = RL_CALLOC(width * height, sizeof(Color)),
+    .width   = width,
+    .height  = height,
+    .mipmaps = 1,
+    .format  = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8
+  };
+}
+
+/**
+ * This version, not part of raylib, resizes the image into a new image already pre-allocated */
+void ImageRGBA8Resize(Image image, Image newImage)
+{
+  RE_EDIT_ASSERT(image.format == RLImageRGBA8::kPixelFormat);
   stbir_resize_uint8(static_cast<unsigned char *>(image.data), image.width, image.height, 0,
                      static_cast<unsigned char *>(newImage.data), newImage.width, newImage.height, 0, 4);
 }
 
 /**
  * This version, not part of raylib, flips the image into a new image already pre-allocated */
-void ImageFlip(Image image, Image newImage)
+void ImageRGBA8Flip(Image image, Image newImage)
 {
-  RE_EDIT_ASSERT(image.format == PIXELFORMAT_UNCOMPRESSED_R8G8B8A8);
+  RE_EDIT_ASSERT(image.format == RLImageRGBA8::kPixelFormat);
   RE_EDIT_ASSERT(image.width == newImage.width && image.height == newImage.height);
 
-  auto bytesPerPixel = GetPixelDataSize(1, 1, image.format);
-  auto widthInBytes = image.width * bytesPerPixel;
+  auto widthInBytes = image.width * RLImageRGBA8::kBytesPerPixel;
 
   for (int i = (image.height - 1), offsetSize = 0; i >= 0; i--)
   {
@@ -275,6 +287,8 @@ void ImageFlip(Image image, Image newImage)
 //------------------------------------------------------------------------
 std::unique_ptr<FilmStrip> FilmStrip::applyEffects(texture::FX const &iEffects) const
 {
+  RE_EDIT_ASSERT(fImage.isValid());
+
   auto image = fImage.clone();
 
   if(iEffects.hasTint())
@@ -296,13 +310,16 @@ std::unique_ptr<FilmStrip> FilmStrip::applyEffects(texture::FX const &iEffects) 
     else
     {
       // Implementation note: we need to flip each frame. Using a more efficient API than raylib
-      RLImage newImage{GenImageColor(image.width(), image.height(), {})};
+      RLImageRGBA8 newImage{image.width(), image.height()};
 
-      FrameIterator newFrame{newImage.rlImageRef(), numFrames()};
+      auto frameRange = FrameRGBA8Range::create(image, numFrames());
+      auto newFrameRange = FrameRGBA8Range::create(newImage, numFrames());
 
-      for(auto frame = beginFrame(); frame != endFrame(); ++frame, ++newFrame)
+      for(auto frame = frameRange.begin(), newFrame = newFrameRange.begin();
+          frame != frameRange.end() && newFrame != newFrameRange.end();
+          ++frame, ++newFrame)
       {
-        impl::ImageFlip(*frame, *newFrame);
+        impl::ImageRGBA8Flip(*frame, *newFrame);
       }
 
       image = std::move(newImage);
@@ -324,13 +341,16 @@ std::unique_ptr<FilmStrip> FilmStrip::applyEffects(texture::FX const &iEffects) 
       // Implementation note: resizing the entire image when there are multiple frames would lead to bleeding between
       // frames. So we need to resize each frame separately. The raylib apis would be very inefficient in this instance,
       // thus going down one level and using stbi directly
-      RLImage newImage{GenImageColor(newWidth, newFrameHeight * numFrames(), {})};
+      RLImageRGBA8 newImage{newWidth, newFrameHeight * numFrames()};
 
-      FrameIterator newFrame{newImage.rlImageRef(), numFrames()};
+      auto frameRange = FrameRGBA8Range::create(image, numFrames());
+      auto newFrameRange = FrameRGBA8Range::create(newImage, numFrames());
 
-      for(auto frame = beginFrame(); frame != endFrame(); ++frame, ++newFrame)
+      for(auto frame = frameRange.begin(), newFrame = newFrameRange.begin();
+          frame != frameRange.end() && newFrame != newFrameRange.end();
+          ++frame, ++newFrame)
       {
-        impl::ImageResize(*frame, *newFrame);
+        impl::ImageRGBA8Resize(*frame, *newFrame);
       }
 
       image = std::move(newImage);
@@ -730,10 +750,10 @@ FilmStrip::Source FilmStrip::Source::from(key_t const &iKey, fs::path const &iDi
 //------------------------------------------------------------------------
 // FilmStrip::FrameIterator::FrameIterator
 //------------------------------------------------------------------------
-FilmStrip::FrameIterator::FrameIterator(Image iImage, int iNumFrames, int iCurrentFrame) :
+FilmStrip::FrameRGBA8Iterator::FrameRGBA8Iterator(Image iImage, int iNumFrames, int iCurrentFrame) :
   fImage{iImage}, fNumFrames{iNumFrames}, fCurrentFrame{iCurrentFrame}
 {
-  RE_EDIT_ASSERT(fImage.format == PIXELFORMAT_UNCOMPRESSED_R8G8B8A8);
+  RE_EDIT_ASSERT(iImage.data != nullptr && fImage.format == RLImageRGBA8::kPixelFormat);
   fImage.height = fImage.height / iNumFrames;
   computeCurrentImage();
 }
@@ -741,12 +761,12 @@ FilmStrip::FrameIterator::FrameIterator(Image iImage, int iNumFrames, int iCurre
 //------------------------------------------------------------------------
 // FilmStrip::FrameIterator::computeCurrentImage
 //------------------------------------------------------------------------
-void FilmStrip::FrameIterator::computeCurrentImage()
+void FilmStrip::FrameRGBA8Iterator::computeCurrentImage()
 {
   if(fCurrentFrame < fNumFrames)
   {
     fCurrentImage = fImage;
-    fCurrentImage.data = static_cast<unsigned char *>(fImage.data) + (fImage.width * fImage.height * 4 * fCurrentFrame);
+    fCurrentImage.data = static_cast<unsigned char *>(fImage.data) + (fImage.width * fImage.height * RLImageRGBA8::kBytesPerPixel * fCurrentFrame);
   }
   else
   {
@@ -757,20 +777,40 @@ void FilmStrip::FrameIterator::computeCurrentImage()
 //------------------------------------------------------------------------
 // FilmStrip::FrameIterator::operator==
 //------------------------------------------------------------------------
-bool FilmStrip::FrameIterator::operator==(FilmStrip::FrameIterator const &rhs) const
+bool FilmStrip::FrameRGBA8Iterator::operator==(FilmStrip::FrameRGBA8Iterator const &rhs) const
 {
   return fImage == rhs.fImage &&
          fNumFrames == rhs.fNumFrames &&
          fCurrentFrame == rhs.fCurrentFrame;
 }
 
+//------------------------------------------------------------------------
+// RLImageRGBA8::RLImageRGBA8
+//------------------------------------------------------------------------
+RLImageRGBA8::RLImageRGBA8(int iWidth, int iHeight) : fImage{impl::NewImageRGBA8(iWidth, iHeight)}
+{
+  ensureProperFormat();
+}
 
 //------------------------------------------------------------------------
-// RLImage::clone
+// RLImageRGBA8::RLImageRGBA8
 //------------------------------------------------------------------------
-RLImage RLImage::clone() const
+RLImageRGBA8::RLImageRGBA8() : fImage{
+  .data    = nullptr,
+  .width   = 100,
+  .height  = 100,
+  .mipmaps = 1,
+  .format  = 0 // not a valid format on purpose
+}
 {
-  return RLImage{ ImageCopy(fImage) };
+}
+
+//------------------------------------------------------------------------
+// RLImageRGBA8::clone
+//------------------------------------------------------------------------
+RLImageRGBA8 RLImageRGBA8::clone() const
+{
+  return RLImageRGBA8{ImageCopy(fImage) };
 }
 
 namespace impl

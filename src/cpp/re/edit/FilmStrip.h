@@ -47,32 +47,35 @@ inline bool operator==(Image const &lhs, Image const &rhs)
 
 namespace re::edit {
 
-struct RLImage
+struct RLImageRGBA8
 {
   using data_t = unsigned char;
 
-  RLImage() : fImage{
-    nullptr,
-    100,
-    100,
-    PIXELFORMAT_UNCOMPRESSED_R8G8B8A8
-  } {}
+  static inline constexpr PixelFormat kPixelFormat = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
+  static inline constexpr int kBytesPerPixel = 4;
 
-  explicit RLImage(Image iImage) : fImage{iImage} { ensureProperFormat(); }
+  //! Create an invalid 100x100 image (to be used only when there is no image)
+  RLImageRGBA8();
 
-  ~RLImage() { UnloadImage(fImage); }
+  //! Creates an uninitialized image of the provided size
+  RLImageRGBA8(int iWidth, int iHeight);
+
+  //! Assumes ownership of the provided image
+  explicit RLImageRGBA8(Image iImage) : fImage{iImage} { ensureProperFormat(); }
+
+  ~RLImageRGBA8() { UnloadImage(fImage); }
 
 
-  RLImage(RLImage &&iOther) noexcept : fImage{iOther.fImage}
+  RLImageRGBA8(RLImageRGBA8 &&iOther) noexcept : fImage{iOther.fImage}
   {
     iOther.fImage.data = nullptr;
     ensureProperFormat();
   };
 
-  RLImage(RLImage const &) = delete;
-  RLImage &operator=(RLImage const &) = delete;
+  RLImageRGBA8(RLImageRGBA8 const &) = delete;
+  RLImageRGBA8 &operator=(RLImageRGBA8 const &) = delete;
 
-  RLImage &operator=(RLImage &&iOther) noexcept
+  RLImageRGBA8 &operator=(RLImageRGBA8 &&iOther) noexcept
   {
     fImage = iOther.fImage;
     iOther.fImage.data = nullptr;
@@ -88,10 +91,10 @@ struct RLImage
   constexpr Image const &rlImageRef() const { return fImage; }
   constexpr Image *rlImagePtr() { return &fImage; }
 
-  RLImage clone() const;
+  RLImageRGBA8 clone() const;
 
 private:
-  void ensureProperFormat() { ImageFormat(&fImage, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8); }
+  void ensureProperFormat() { ImageFormat(&fImage, RLImageRGBA8::kPixelFormat); }
 
 private:
   Image fImage;
@@ -219,7 +222,7 @@ public:
   constexpr int frameWidth() const { return width(); }
   constexpr int frameHeight() const { return height() / numFrames(); }
 
-  constexpr RLImage::data_t const *data() const { return fImage.data(); }
+  constexpr RLImageRGBA8::data_t const *data() const { return fImage.data(); }
 
   constexpr Image const &rlImage() const { return fImage.rlImageRef(); }
 
@@ -289,14 +292,15 @@ public:
   friend class FilmStripMgr;
 
 private:
-  struct FrameIterator
+  struct FrameRGBA8Iterator
   {
-    FrameIterator(Image iImage, int iNumFrames, int iCurrentFrame = 0);
+    FrameRGBA8Iterator(Image iImage, int iNumFrames, int iCurrentFrame = 0);
     Image operator*() const { return fCurrentImage; }
     Image const *operator->() const { return &fCurrentImage; }
-    FrameIterator &operator++() { fCurrentFrame++; computeCurrentImage(); return *this; }
-    bool operator==(FrameIterator const &rhs) const;
-    inline bool operator!=(FrameIterator const &rhs) const { return !(rhs == *this); }
+    FrameRGBA8Iterator &operator++() { fCurrentFrame++; computeCurrentImage(); return *this; }
+    bool operator==(FrameRGBA8Iterator const &rhs) const;
+    inline bool operator!=(FrameRGBA8Iterator const &rhs) const { return !(rhs == *this); }
+
 
   private:
     void computeCurrentImage();
@@ -308,21 +312,34 @@ private:
     Image fCurrentImage;
   };
 
+  struct FrameRGBA8Range
+  {
+    FrameRGBA8Iterator fBegin;
+    FrameRGBA8Iterator fEnd;
+
+    inline static FrameRGBA8Range create(RLImageRGBA8 const &iImage, int iNumFrames)
+    {
+      return {
+        FrameRGBA8Iterator{iImage.rlImageRef(), iNumFrames},            // begin
+        FrameRGBA8Iterator{iImage.rlImageRef(), iNumFrames, iNumFrames} // end
+      };
+    }
+
+    constexpr FrameRGBA8Iterator const &begin() const { return fBegin; }
+    constexpr FrameRGBA8Iterator const &end() const { return fEnd; }
+  };
 
 private:
   FilmStrip(std::shared_ptr<Source> iSource, char const *iErrorMessage);
-  FilmStrip(std::shared_ptr<Source> iSource, RLImage &&iImage);
+  FilmStrip(std::shared_ptr<Source> iSource, RLImageRGBA8 &&iImage);
 
   void updateSource(std::shared_ptr<Source> iSource) { fSource = std::move(iSource); }
-
-  FrameIterator beginFrame() const { return {rlImage(), numFrames()}; }
-  FrameIterator endFrame() const { return {rlImage(), numFrames(), numFrames()}; }
 
   static std::unique_ptr<FilmStrip> loadBuiltInCompressedBase85(std::shared_ptr<Source> const &iSource);
 
 private:
   std::shared_ptr<Source> fSource;
-  RLImage fImage;
+  RLImageRGBA8 fImage;
   int fNumFrames{0};
 
   std::string fErrorMessage;
