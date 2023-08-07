@@ -210,7 +210,7 @@ void PanelState::renderWidgets(AppContext &iCtx)
 void PanelState::renderPanel(AppContext &iCtx)
 {
   auto windowPadding = ImGui::GetStyle().WindowPadding;
-  auto windowBg = ImGui::GetStyleColorVec4(ImGuiStyleVar_WindowPadding);
+  auto windowBg = ImGui::GetStyleColorVec4(ImGuiCol_WindowBg);
   ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{});
   if(auto l = iCtx.fPanelWindow.begin())
   {
