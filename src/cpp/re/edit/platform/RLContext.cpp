@@ -259,6 +259,8 @@ void RLContext::setup(Application *iApplication)
   initializeScaling(iApplication);
   setupCallbacks(iApplication);
   setWindowIcon(iApplication->getLogo().get());
+  setTargetFrameRate(iApplication->getTargetFrameRate());
+  setVSyncEnabled(iApplication->isVSyncEnabled());
 }
 
 //------------------------------------------------------------------------
@@ -281,6 +283,21 @@ void RLContext::openURL(std::string const &iURL) const
   OpenURL(iURL.c_str());
 }
 
+//------------------------------------------------------------------------
+// RLContext::setFrameRate
+//------------------------------------------------------------------------
+void RLContext::setTargetFrameRate(int iFrameRate) const
+{
+  SetTargetFPS(iFrameRate);
+}
+
+//------------------------------------------------------------------------
+// RLContext::setVSyncEnabled
+//------------------------------------------------------------------------
+void RLContext::setVSyncEnabled(bool iEnabled) const
+{
+  glfwSwapInterval(iEnabled ? 1 : 0);
+}
 
 
 }

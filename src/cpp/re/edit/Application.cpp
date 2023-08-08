@@ -1199,6 +1199,30 @@ void Application::renderApplicationMenuItems()
     }
     ImGui::EndMenu();
   }
+  if(ImGui::BeginMenu("Performance"))
+  {
+    if(ImGui::BeginMenu("Frame Rate"))
+    {
+      auto targetFrameRate = getTargetFrameRate();
+      if(ImGui::MenuItem("60", nullptr, targetFrameRate == 60))
+        targetFrameRate = 60;
+      if(ImGui::MenuItem("120", nullptr, targetFrameRate == 120))
+        targetFrameRate = 120;
+      if(ImGui::MenuItem("Unlocked", nullptr, targetFrameRate == 0))
+        targetFrameRate = 0;
+      if(targetFrameRate != getTargetFrameRate())
+      {
+        fConfig.fTargetFrameRate = targetFrameRate;
+        fContext->setTargetFrameRate(targetFrameRate);
+      }
+      ImGui::EndMenu();
+    }
+    if(ImGui::MenuItem("V-Sync Enabled", nullptr, &fConfig.fVSyncEnabled))
+    {
+      fContext->setVSyncEnabled(fConfig.fVSyncEnabled);
+    }
+    ImGui::EndMenu();
+  }
   if(ImGui::MenuItem("Check For Updates...", nullptr, false, !hasAsyncAction(kCheckForUpdatesKey)))
   {
     asyncCheckForUpdates();

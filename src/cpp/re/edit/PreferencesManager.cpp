@@ -43,10 +43,6 @@ config::Global PreferencesManager::load(NativePreferencesManager const *iPrefere
 //------------------------------------------------------------------------
 void PreferencesManager::save(NativePreferencesManager const *iPreferencesManager, config::Global const &iConfig)
 {
-  // TODO HIGH YP: remove
-  if(true)
-    return;
-
   if(!iPreferencesManager)
     return;
 
@@ -65,6 +61,8 @@ std::string PreferencesManager::getAsLua(config::Global const &iConfig)
 
   s << fmt::printf("global_config[\"font_size\"] = %d\n", static_cast<int>(iConfig.fFontSize));
   s << fmt::printf("global_config[\"style\"] = \"%s\"\n", config::to_string(iConfig.fStyle));
+  s << fmt::printf("global_config[\"target_frame_rate\"] = %d\n", iConfig.fTargetFrameRate);
+  s << fmt::printf("global_config[\"vsync_enabled\"] = %s\n", fmt::Bool::to_chars(iConfig.fVSyncEnabled));
 
   auto const &history = iConfig.fDeviceHistory;
   if(!history.empty())

@@ -41,6 +41,8 @@ config::Global GlobalConfigParser::getConfig()
   if(lua_getglobal(L, "global_config") == LUA_TTABLE)
   {
     withOptionalValue(L.getTableValueAsOptionalNumber("font_size"), [&c](auto v) { c.fFontSize = v; });
+    withOptionalValue(L.getTableValueAsOptionalInteger("target_frame_rate"), [&c](auto v) { c.fTargetFrameRate = v; });
+    withOptionalValue(L.getTableValueAsOptionalBoolean("vsync_enabled"), [&c](auto v) { c.fVSyncEnabled = v; });
     withOptionalValue(L.getTableValueAsOptionalString("style"), [&c](auto v) {
       v = Utils::str_tolower(v);
       if(v == "light")

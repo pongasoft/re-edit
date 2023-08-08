@@ -228,6 +228,8 @@ struct Global
   float fFontSize{kDefaultFontSize};
   Style fStyle{kDefaultStyle};
   bool fSaveEnabled{true};
+  int fTargetFrameRate{60};
+  bool fVSyncEnabled{false};
 
   std::vector<Device> fDeviceHistory{};
 

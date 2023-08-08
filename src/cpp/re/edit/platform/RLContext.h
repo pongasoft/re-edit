@@ -45,6 +45,10 @@ public:
 
   virtual float getScale() const = 0;
 
+  void setTargetFrameRate(int iFrameRate) const override;
+
+  void setVSyncEnabled(bool iEnabled) const override;
+
   float getFontDpiScale() const { return getFontDpiScale(fWindow); }
 
   static float getFontDpiScale(GLFWwindow *iWindow);

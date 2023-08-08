@@ -56,6 +56,8 @@ public:
     virtual void centerWindow() const = 0;
     virtual void setWindowTitle(std::string const &iTitle) const = 0;
     virtual void openURL(std::string const &iURL) const = 0;
+    virtual void setTargetFrameRate(int iFrameRate) const = 0;
+    virtual void setVSyncEnabled(bool iEnabled) const = 0;
 
     std::shared_ptr<NativePreferencesManager> getPreferencesManager() const { return fPreferencesManager; }
 
@@ -101,6 +103,9 @@ public:
   inline std::shared_ptr<Texture> getTexture(FilmStrip::key_t const &iKey) const { return fTextureManager->getTexture(iKey); }
   Icon getDeviceTypeIcon(config::Device const &iDevice) const;
   inline ImVec2 getRenderScale() const { return fContext->getRenderScale(); };
+
+  constexpr int getTargetFrameRate() const { return fConfig.fTargetFrameRate; }
+  constexpr bool isVSyncEnabled() const { return fConfig.fVSyncEnabled; }
 
   void onNativeWindowFontDpiScaleChange(float iFontDpiScale);
   void onNativeWindowFontScaleChange(float iFontScale);

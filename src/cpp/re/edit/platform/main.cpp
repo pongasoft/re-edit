@@ -94,8 +94,6 @@ int doMain(int argc, char **argv)
 
   ctx->setup(&application);
 
-  SetTargetFPS(60);
-
   // Main loop
   while(application.running())
   {
