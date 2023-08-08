@@ -19,7 +19,6 @@
 #include "PanelState.h"
 #include "Errors.h"
 #include "Application.h"
-#include "UIContext.h"
 #include <set>
 
 namespace re::edit {
@@ -214,13 +213,38 @@ void PanelState::renderPanel(AppContext &iCtx)
   ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{});
   if(auto l = iCtx.fPanelWindow.begin())
   {
+    auto const regionSize = ImGui::GetContentRegionAvail();
+    auto &renderTexture = iCtx.getPanelCanvasRenderTexture(regionSize);
+    auto const renderRegionSize = renderTexture.renderSize();
+    auto const textureSize = renderTexture.rlTextureSize();
+
+    // Implementation notes:
+    // * the canvas renders into renderTexture (from {0,0} to {renderRegionSize.x, renderRegionSize.y})
+    // * renderTexture is potentially much bigger (textureSize) because we don't shrink it for efficiency reasons (it
+    //   gets reused every frame (iCtx.getPanelCanvasRenderTexture(regionSize))), hence the division
+    // * renderTexture is flipped vertically hence the Y shenanigans
+    // * it seems out of order because first, we write the Image (since it needs to be below everything), and then
+    //   we generate its content. But it works because, ImGui::Image only enqueues the fact that the image associated
+    //   to the texture must be rendered and, by the time the action takes place, the texture has been populated
+
+    constexpr auto uv0 = ImVec2{0, 1};
+    auto uv1 = renderRegionSize / textureSize;
+    uv1.y = 1 - uv1.y; // need to flip Y
+
+    auto cp = ImGui::GetCursorScreenPos();
+    ImGui::Image(renderTexture.asImTextureID(), regionSize, uv0, uv1);
+    ImGui::SetCursorScreenPos(cp); // restore cursor position (Image moves it)
+
     auto &canvas = iCtx.getPanelCanvas();
     auto dpiScale = Application::GetCurrent().getCurrentFontDpiScale();
+    BeginTextureMode(renderTexture.asRLRenderTexture()); // all raylib calls will render into renderTexture
     canvas.begin(fPanel.getSize(),
+                 renderTexture.scale(),
                  {iCtx.getZoom(), iCtx.isZoomFitContent(), Panel::kZoomMin * dpiScale, Panel::kZoomMax * dpiScale},
                  windowBg);
     fPanel.draw(iCtx, canvas, windowPadding);
     iCtx.setZoom(canvas.end());
+    EndTextureMode(); // finished rendering into renderTexture
   }
   ImGui::PopStyleVar();
 }

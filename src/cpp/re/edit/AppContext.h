@@ -171,6 +171,8 @@ public: // Texture
   std::size_t importTexturesBlocking();
   template<typename F>
   bool textureMenu(FilmStrip::Filter const &iFilter, F &&f);
+  ImVec2 getRenderScale() const;
+  Texture::RenderTexture const &getPanelCanvasRenderTexture(ImVec2 const &iSize);
 
 public: // Undo
   constexpr bool isUndoEnabled() const { return fUndoManager->isEnabled(); }
@@ -298,7 +300,7 @@ protected:
   float fDpiAdjustedZoom{fUserZoom};
   bool fZoomFitContent{true};
   std::optional<std::string> fReEditVersion{};
-  ReGui::Window fPanelWindow{"Panel", true, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoBackground};
+  ReGui::Window fPanelWindow{"Panel", true, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoCollapse};
   ReGui::Window fPanelWidgetsWindow{"Panel Widgets", true, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoCollapse};
   ReGui::Window fWidgetsWindow{"Widgets", true, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoCollapse};
   ReGui::Window fPropertiesWindow{"Properties", true, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoCollapse};
@@ -307,6 +309,7 @@ protected:
   PanelState *fCurrentPanelState{};
   PanelState *fPreviousPanelState{};
   ReGui::Canvas fPanelCanvas{};
+  Texture::RenderTexture fPanelCanvasRenderTexture{};
   Clipboard fClipboard{};
   bool fNeedsSaving{};
   void *fLastSavedUndoAction{};

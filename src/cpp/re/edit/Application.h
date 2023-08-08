@@ -52,6 +52,7 @@ public:
     virtual std::shared_ptr<NetworkManager> newNetworkManager() const = 0;
     virtual ImVec4 getWindowPositionAndSize() const = 0;
     virtual void setWindowPositionAndSize(std::optional<ImVec2> const &iPosition, ImVec2 const &iSize) const = 0;
+    virtual ImVec2 getRenderScale() const = 0;
     virtual void centerWindow() const = 0;
     virtual void setWindowTitle(std::string const &iTitle) const = 0;
     virtual void openURL(std::string const &iURL) const = 0;
@@ -99,6 +100,7 @@ public:
   std::shared_ptr<Texture> getLogo() const;
   inline std::shared_ptr<Texture> getTexture(FilmStrip::key_t const &iKey) const { return fTextureManager->getTexture(iKey); }
   Icon getDeviceTypeIcon(config::Device const &iDevice) const;
+  inline ImVec2 getRenderScale() const { return fContext->getRenderScale(); };
 
   void onNativeWindowFontDpiScaleChange(float iFontDpiScale);
   void onNativeWindowFontScaleChange(float iFontScale);

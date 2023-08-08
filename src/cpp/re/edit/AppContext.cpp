@@ -1348,6 +1348,23 @@ std::shared_ptr<Texture> AppContext::getBuiltInTexture(FilmStrip::key_t const &i
 
 
 //------------------------------------------------------------------------
+// AppContext::getRenderScale
+//------------------------------------------------------------------------
+ImVec2 AppContext::getRenderScale() const
+{
+  return Application::GetCurrent().getRenderScale();
+}
+
+//------------------------------------------------------------------------
+// AppContext::getPanelCanvasRenderTexture
+//------------------------------------------------------------------------
+Texture::RenderTexture const &AppContext::getPanelCanvasRenderTexture(ImVec2 const &iSize)
+{
+  fPanelCanvasRenderTexture.resize(iSize, getRenderScale());
+  return fPanelCanvasRenderTexture;
+}
+
+//------------------------------------------------------------------------
 // AppContext::textureTooltip
 //------------------------------------------------------------------------
 void AppContext::textureTooltip(FilmStrip::key_t const &iKey) const

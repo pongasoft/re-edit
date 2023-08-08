@@ -55,11 +55,12 @@ public:
   using canvas_size_t = ImVec2;
 
 public:
-  void begin(ImVec2 const &iContentSize, Zoom iZoom, ImVec4 const &iBackgroundColor);
+  void begin(ImVec2 const &iContentSize, ImVec2 const &iRenderScale, Zoom iZoom, ImVec4 const &iBackgroundColor);
 
   void begin(screen_pos_t const &iCanvasPos,
              screen_size_t const &iCanvasSize,
              canvas_size_t const &iContentSize,
+             ImVec2 const &iRenderScale,
              Zoom iZoom,
              ImVec4 const &iBackgroundColor);
 
@@ -102,6 +103,7 @@ public:
 
 protected:
   constexpr screen_pos_t toScreenPos(canvas_pos_t const &iPos) const { return fCanvasPos + fOffset + iPos * fZoom.value(); }
+  constexpr screen_pos_t toRenderScreenPos(canvas_pos_t const &iPos) const { return (fOffset + iPos * fZoom.value()) * fRenderScale; }
   constexpr canvas_pos_t fromScreenPos(screen_pos_t const &iPos) const { return (iPos - fCanvasPos - fOffset) / fZoom.value(); }
 
   void updateZoom(Zoom iZoom, std::optional<canvas_pos_t> const &iFocus);
@@ -114,6 +116,7 @@ private:
   canvas_size_t fContentSize{}; // original / NOT zoomed
   std::optional<canvas_pos_t> fFocus{};
   Zoom fZoom{1.0f, true, 1.0f, 1.0f};
+  ImVec2 fRenderScale{1.0f, 1.0f};
 
   bool fIsActive{};
   bool fIsHovered{};

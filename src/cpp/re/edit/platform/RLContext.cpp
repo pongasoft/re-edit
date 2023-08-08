@@ -136,6 +136,28 @@ void RLContext::setWindowPositionAndSize(std::optional<ImVec2> const &iPosition,
 }
 
 //------------------------------------------------------------------------
+// RLContext::getRenderScale
+//------------------------------------------------------------------------
+ImVec2 RLContext::getRenderScale() const
+{
+  if(fWindow)
+  {
+    int renderWidth;
+    int renderHeight;
+    int windowWidth;
+    int windowHeight;
+
+    glfwGetFramebufferSize(fWindow, &renderWidth, &renderHeight);
+    glfwGetWindowSize(fWindow, &windowWidth, &windowHeight);
+
+    return {static_cast<float>(renderWidth) / static_cast<float>(windowWidth),
+            static_cast<float>(renderHeight) / static_cast<float>(windowHeight)};
+  }
+  else
+    return {1,1};
+}
+
+//------------------------------------------------------------------------
 // RLContext::centerWindow
 //------------------------------------------------------------------------
 void RLContext::centerWindow() const
@@ -258,6 +280,7 @@ void RLContext::openURL(std::string const &iURL) const
 {
   OpenURL(iURL.c_str());
 }
+
 
 
 }

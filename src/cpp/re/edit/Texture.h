@@ -53,6 +53,53 @@ public:
     std::unique_ptr<::Texture> fTexture;
   };
 
+  struct RLRenderTexture
+  {
+    RLRenderTexture() = default;
+    RLRenderTexture(int iWidth, int iHeight);
+    RLRenderTexture(RLRenderTexture &&iOther) noexcept = default;
+    ~RLRenderTexture();
+    RLRenderTexture &operator=(RLRenderTexture &&iOther) noexcept = default;
+
+    inline ImTextureID asImTextureID() const { return static_cast<ImTextureID>(&fTexture->texture); }
+    inline ::RenderTexture asRLRenderTexture() const { return *fTexture; }
+
+    inline int width() const { return fTexture->texture.width; }
+    inline int height() const { return fTexture->texture.height; }
+
+    inline bool isValid() const { return fTexture != nullptr; }
+
+  private:
+    std::unique_ptr<::RenderTexture> fTexture;
+  };
+
+  struct RenderTexture
+  {
+    RenderTexture() = default;
+
+    inline bool isValid() const { return fRLRenderTexture.isValid(); }
+    constexpr ImVec2 const &size() const {  return fSize; }
+    constexpr ImVec2 const &scale() const {  return fScale; }
+
+    inline ImVec2 renderSize() const { return fSize * fScale; }
+
+    inline ImVec2 rlTextureSize() const { return {static_cast<float>(rlTextureWidth()), static_cast<float>(rlTextureHeight())}; }
+
+    void resize(ImVec2 const &iSize, ImVec2 const &iScale);
+
+    inline ImTextureID asImTextureID() const { return fRLRenderTexture.asImTextureID(); }
+    inline ::RenderTexture asRLRenderTexture() const { return fRLRenderTexture.asRLRenderTexture(); }
+
+  private:
+    inline int rlTextureWidth() const { return fRLRenderTexture.width(); }
+    inline int rlTextureHeight() const { return fRLRenderTexture.height(); }
+
+  private:
+    RLRenderTexture fRLRenderTexture;
+    ImVec2 fSize;
+    ImVec2 fScale;
+  };
+
 public:
   Texture() = default;
   virtual ~Texture() = default;

@@ -319,7 +319,14 @@ void Texture::doDraw(bool iAddItem,
 
   // add a border?
   if(!ReGui::ColorIsTransparent(iBorderColor))
-    drawList->AddRect(dest.Min, dest.Max, iBorderColor, 0.0f);
+  {
+    if(iAddItem)
+      drawList->AddRect(dest.Min, dest.Max, iBorderColor, 0.0f);
+    else
+      DrawRectangleLines(static_cast<int>(dest.Min.x), static_cast<int>(dest.Min.y),
+                         static_cast<int>(dest.GetWidth()), static_cast<int>(dest.GetHeight()),
+                         ReGui::GetRLColor(iBorderColor));
+  }
 }
 
 //------------------------------------------------------------------------
@@ -395,6 +402,47 @@ void Texture::RLTexture::draw(bool iUseRLDraw,
     ImGui::GetWindowDrawList()->AddImage(asImTextureID(), iDestination.Min, iDestination.Max, uv0, uv1, iTextureColor);
   }
 
+}
+
+//------------------------------------------------------------------------
+// Texture::RLRenderTexture::RLRenderTexture
+//------------------------------------------------------------------------
+Texture::RLRenderTexture::RLRenderTexture(int iWidth, int iHeight) :
+  fTexture{std::make_unique<::RenderTexture>(LoadRenderTexture(iWidth, iHeight))}
+{
+//  SetTextureFilter(fTexture->texture, TEXTURE_FILTER_BILINEAR);
+//  SetTextureWrap(fTexture->texture, TEXTURE_WRAP_CLAMP);
+}
+
+//------------------------------------------------------------------------
+// Texture::RLRenderTexture::~RLRenderTexture
+//------------------------------------------------------------------------
+Texture::RLRenderTexture::~RLRenderTexture()
+{
+  if(isValid())
+    UnloadRenderTexture(*fTexture);
+}
+
+//------------------------------------------------------------------------
+// Texture::RenderTexture::resize
+//------------------------------------------------------------------------
+void Texture::RenderTexture::resize(ImVec2 const &iSize, ImVec2 const &iScale)
+{
+  if(isValid())
+  {
+    auto newSize = iSize * iScale;
+    if(newSize.x <= static_cast<float>(rlTextureWidth()) && newSize.y <= static_cast<float>(rlTextureHeight()))
+    {
+      fSize = iSize;
+      fScale = iScale;
+      return;
+    }
+  }
+
+  // we create a new texture
+  fRLRenderTexture = RLRenderTexture(static_cast<int>(iSize.x * iScale.x), static_cast<int>(iSize.y * iScale.y));
+  fSize = iSize;
+  fScale = iScale;
 }
 
 }

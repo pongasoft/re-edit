@@ -29,30 +29,27 @@ namespace re::edit::ReGui {
 void Canvas::begin(screen_pos_t const &iCanvasPos,
                    screen_size_t const &iCanvasSize,
                    canvas_size_t const &iContentSize,
+                   ImVec2 const &iRenderScale,
                    Zoom iZoom,
                    ImVec4 const &iBackgroundColor)
 {
   fCanvasPos = iCanvasPos;
   fCanvasSize = {std::max(1.0f, iCanvasSize.x), std::max(1.0f, iCanvasSize.y)};
   fContentSize = iContentSize;
+  fRenderScale = iRenderScale;
   updateZoom(iZoom, fFocus);
-  BeginScissorMode(static_cast<int>(fCanvasPos.x),
-                   static_cast<int>(fCanvasPos.y),
-                   static_cast<int>(fCanvasSize.x),
-                   static_cast<int>(fCanvasSize.y));
-  DrawRectangle(static_cast<int>(fCanvasPos.x),
-                static_cast<int>(fCanvasPos.y),
-                static_cast<int>(fCanvasSize.x),
-                static_cast<int>(fCanvasSize.y),
+  DrawRectangle(0, 0,
+                static_cast<int>(fCanvasSize.x * fRenderScale.x),
+                static_cast<int>(fCanvasSize.y * fRenderScale.y),
                 ReGui::GetRLColor(iBackgroundColor));
 }
 
 //------------------------------------------------------------------------
 // Canvas::begin
 //------------------------------------------------------------------------
-void Canvas::begin(ImVec2 const &iContentSize, Zoom iZoom, ImVec4 const &iBackgroundColor)
+void Canvas::begin(ImVec2 const &iContentSize, ImVec2 const &iRenderScale, Zoom iZoom, ImVec4 const &iBackgroundColor)
 {
-  begin(ImGui::GetCursorScreenPos(), ImGui::GetContentRegionAvail(), iContentSize, iZoom, iBackgroundColor);
+  begin(ImGui::GetCursorScreenPos(), ImGui::GetContentRegionAvail(), iContentSize, iRenderScale, iZoom, iBackgroundColor);
 }
 
 //------------------------------------------------------------------------
@@ -60,7 +57,6 @@ void Canvas::begin(ImVec2 const &iContentSize, Zoom iZoom, ImVec4 const &iBackgr
 //------------------------------------------------------------------------
 Canvas::Zoom Canvas::end()
 {
-  EndScissorMode();
   fIsActive = false;
   fIsHovered = false;
   return fZoom;
@@ -135,8 +131,8 @@ void Canvas::addTexture(Texture const *iTexture,
                         ImU32 iTextureColor,
                         texture::FX const &iTextureFX) const
 {
-  iTexture->draw(toScreenPos(iPos),
-                 (iTextureFX.hasSizeOverride() ? *iTextureFX.fSizeOverride : iTexture->frameSize()) * fZoom.value(),
+  iTexture->draw(toRenderScreenPos(iPos),
+                 (iTextureFX.hasSizeOverride() ? *iTextureFX.fSizeOverride : iTexture->frameSize()) * fZoom.value() * fRenderScale,
                  iFrameNumber,
                  iBorderColor,
                  iTextureColor,
