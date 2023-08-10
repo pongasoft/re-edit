@@ -908,8 +908,32 @@ Texture::key_t Panel::setBackgroundKeyAction(Texture::key_t const &iTextureKey)
 {
   auto res = fGraphics.getTextureKey();
   fGraphics.setTextureKey(iTextureKey);
+  fGraphics.setEffects({});
   fEdited = true;
   return res;
+}
+
+
+//------------------------------------------------------------------------
+// Panel::setBackgroundEffectAction
+//------------------------------------------------------------------------
+texture::FX Panel::setBackgroundEffectAction(texture::FX const &iEffects)
+{
+  auto res = fGraphics.fEffects;
+  fGraphics.setEffects(iEffects);
+  fEdited = true;
+  return res;
+}
+
+//------------------------------------------------------------------------
+// Panel::initBackgroundKey
+//------------------------------------------------------------------------
+void Panel::initBackgroundKey(Texture::key_t const &iTextureKey,
+                              std::optional<Texture::key_t> const &iOriginalTextureKey,
+                              texture::FX const &iEffects)
+{
+  fGraphics.initTextureKey(iTextureKey, iOriginalTextureKey, iEffects);
+  fEdited = true;
 }
 
 //------------------------------------------------------------------------
@@ -923,6 +947,19 @@ void Panel::setBackgroundKey(Texture::key_t const &iTextureKey)
                                                   iTextureKey,
                                                   "Change background graphics",
                                                   MergeKey::from(&fGraphics.fTextureKey));
+}
+
+//------------------------------------------------------------------------
+// Panel::setBackgroundEffect
+//------------------------------------------------------------------------
+void Panel::setBackgroundEffect(char const *iName, texture::FX const &fx, MergeKey const &iMergeKey)
+{
+  executeAction<PanelValueAction<texture::FX>>([](Panel *iPanel, auto iValue) {
+                                                 return iPanel->setBackgroundEffectAction(iValue);
+                                               },
+                                               fx,
+                                               fmt::printf("Change background %s", iName),
+                                               iMergeKey);
 }
 
 

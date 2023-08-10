@@ -53,6 +53,13 @@ public:
   inline Texture const *getTexture() const { RE_EDIT_INTERNAL_ASSERT(fDNZTexture != nullptr); return fDNZTexture.get(); }
   inline Texture::key_t getTextureKey() const { return fTextureKey; }
   void setTextureKey(Texture::key_t const &iTextureKey) { fTextureKey = iTextureKey; fDNZTexture = AppContext::GetCurrent().getTexture(iTextureKey); fEdited = true; }
+  void initTextureKey(Texture::key_t const &iTextureKey, std::optional<Texture::key_t> const &iOriginalTextureKey, texture::FX const &iEffects);
+  void setEffects(texture::FX const &iEffects) { fEffects = iEffects; fEdited = true; }
+  bool isSizeValid() const;
+
+  void collectFilmStripEffects(std::vector<FilmStripFX> &oEffects) const;
+  void collectUsedTexturePaths(std::set<fs::path> &oPaths) const;
+  void collectAllUsedTextureKeys(std::set<FilmStrip::key_t> &oKeys) const;
 
   void reset();
   void editView(AppContext &iCtx);
@@ -64,6 +71,7 @@ public:
   Texture::key_t fTextureKey{};
   std::shared_ptr<Texture> fDNZTexture{};
   FilmStrip::Filter fFilter{};
+  texture::FX fEffects{};
 
 private:
   explicit Graphics(Panel *iParent) : fParent{iParent} {}
@@ -134,6 +142,7 @@ public:
   constexpr void move(ImVec2 const &iDelta) { fPosition = fPosition + iDelta; fEdited = true; }
 
   constexpr bool hasTexture() const { return std::holds_alternative<Texture::key_t>(fTexture); }
+  inline bool hasValidTexture() const { return hasTexture() && getTexture()->isValid(); }
   constexpr bool hasSize() const { return std::holds_alternative<ImVec2>(fTexture); }
 
   inline Texture const *getTexture() const { RE_EDIT_INTERNAL_ASSERT(fDNZTexture != nullptr); return fDNZTexture.get(); }

@@ -111,6 +111,7 @@ public:
   bool checkForErrors(AppContext &iCtx) override;
 
   void setBackgroundKey(Texture::key_t const &iTextureKey);
+  void setBackgroundEffect(char const *iName, texture::FX const &fx, MergeKey const &iMergeKey);
   void setOptions(std::vector<std::string> const &iOptions);
   int addWidget(AppContext &iCtx, std::unique_ptr<Widget> iWidget, bool iMakeSingleSelected, char const *iUndoActionName = "Add");
   void addWidget(AppContext &iCtx, WidgetDef const &iDef, ImVec2 const &iPosition);
@@ -163,6 +164,8 @@ public:
   bool unselectWidgetsAction(std::set<int> const &iWidgetIds);
   bool setPanelOptionsAction(bool iDisableSampleDropOnPanel);
   Texture::key_t setBackgroundKeyAction(Texture::key_t const &iTextureKey);
+  texture::FX setBackgroundEffectAction(texture::FX const &iEffects);
+  void initBackgroundKey(Texture::key_t const &iTextureKey, std::optional<Texture::key_t> const &iOriginalTextureKey, texture::FX const &iEffects);
 
 protected:
   void editNoSelectionView(AppContext &iCtx);

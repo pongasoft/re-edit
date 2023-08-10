@@ -246,7 +246,7 @@ void Panel::drawPanel(AppContext const &iCtx, ReGui::Canvas const &iCanvas) cons
       auto textureColor = iCtx.fPanelRendering == AppContext::EPanelRendering::kXRay ?
                           ReGui::GetColorU32(kXRayColor) :
                           ReGui::GetColorU32(kWhiteColor);
-      iCanvas.addTexture(texture, {}, 0, ReGui::kTransparentColorU32, textureColor);
+      iCanvas.addTexture(texture, {}, 0, ReGui::kTransparentColorU32, textureColor, fGraphics.fEffects);
     }
     else
       iCanvas.addRectFilled(ImVec2{}, getSize(), iCtx.getUserPreferences().fWidgetErrorColor);
@@ -1853,8 +1853,7 @@ std::string Panel::device2D() const
 //------------------------------------------------------------------------
 void Panel::collectUsedTexturePaths(std::set<fs::path> &oPaths) const
 {
-  if(fGraphics.hasTexture())
-    oPaths.emplace(fGraphics.getTexture()->getFilmStrip()->path());
+  fGraphics.collectUsedTexturePaths(oPaths);
 
   for(auto &[id, w]: fWidgets)
     w->collectUsedTexturePaths(oPaths);
@@ -1865,8 +1864,7 @@ void Panel::collectUsedTexturePaths(std::set<fs::path> &oPaths) const
 //------------------------------------------------------------------------
 void Panel::collectAllUsedTextureKeys(std::set<FilmStrip::key_t> &oKeys) const
 {
-  if(fGraphics.hasTexture())
-    oKeys.emplace(fGraphics.getTexture()->getFilmStrip()->key());
+  fGraphics.collectAllUsedTextureKeys(oKeys);
 
   for(auto &[id, w]: fWidgets)
     w->collectAllUsedTextureKeys(oKeys);
@@ -1886,6 +1884,8 @@ void Panel::collectUsedTextureBuiltIns(std::set<FilmStrip::key_t> &oKeys) const
 //------------------------------------------------------------------------
 void Panel::collectFilmStripEffects(std::vector<FilmStripFX> &oEffects) const
 {
+  fGraphics.collectFilmStripEffects(oEffects);
+
   for(auto &[id, w]: fWidgets)
     w->collectFilmStripEffects(oEffects);
 }

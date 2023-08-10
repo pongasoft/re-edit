@@ -60,7 +60,18 @@ void PanelState::initPanel(AppContext &iCtx,
     {
       widgetNames.emplace(node->fName);
       if(node->hasKey())
-        fPanel.setBackgroundKeyAction(node->getKey());
+      {
+        auto key = node->getKey();
+        if(!key.empty())
+        {
+          iCtx.loadTexture(key, node->fNumFrames);
+          if(node->fOriginalPath)
+            iCtx.loadTexture(*node->fOriginalPath, node->fNumFrames);
+          fPanel.initBackgroundKey(key, node->fOriginalPath, node->fEffects);
+        }
+        else
+          RE_EDIT_LOG_WARNING("Empty node path for panel %s", node->fName);
+      }
     }
   }
 
