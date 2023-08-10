@@ -261,6 +261,7 @@ protected:
   std::string hdgui2D() const;
   std::string device2D() const;
   std::string cmake() const;
+  std::set<FilmStrip::key_t> computeUnusedTextures() const;
   std::optional<std::string> getReEditVersion() const { return fReEditVersion; }
 
   void initPanels(fs::path const &iDevice2DFile,
@@ -279,6 +280,7 @@ protected:
   void requestZoomToFit() { fZoomFitContent = true; }
   void incrementZoom();
   void decrementZoom();
+  void handleUnusedTextures();
   constexpr bool needsSaving() const { return fNeedsSaving; }
 
   void enableFileWatcher();

@@ -100,6 +100,7 @@ public:
   inline void setSize(ImVec2 const &iSize) { fGraphics->setSize(iSize); fEdited |= fGraphics->isEdited(); }
   void collectFilmStripEffects(std::vector<FilmStripFX> &oEffects) const;
   void collectUsedTexturePaths(std::set<fs::path> &oPaths) const;
+  void collectAllUsedTextureKeys(std::set<FilmStrip::key_t> &oKeys) const;
   void collectUsedTextureBuiltIns(std::set<FilmStrip::key_t> &oKeys) const;
 
   constexpr int getFrameNumber() const { return fGraphics->fFrameNumber; }

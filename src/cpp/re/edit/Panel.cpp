@@ -1861,6 +1861,18 @@ void Panel::collectUsedTexturePaths(std::set<fs::path> &oPaths) const
 }
 
 //------------------------------------------------------------------------
+// Panel::collectAllUsedTextureKeys
+//------------------------------------------------------------------------
+void Panel::collectAllUsedTextureKeys(std::set<FilmStrip::key_t> &oKeys) const
+{
+  if(fGraphics.hasTexture())
+    oKeys.emplace(fGraphics.getTexture()->getFilmStrip()->key());
+
+  for(auto &[id, w]: fWidgets)
+    w->collectAllUsedTextureKeys(oKeys);
+}
+
+//------------------------------------------------------------------------
 // Panel::collectUsedTextureBuiltIns
 //------------------------------------------------------------------------
 void Panel::collectUsedTextureBuiltIns(std::set<FilmStrip::key_t> &oKeys) const

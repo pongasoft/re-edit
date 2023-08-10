@@ -722,6 +722,34 @@ std::unique_ptr<FilmStrip> FilmStripMgr::save(FilmStrip::key_t const &iKey, std:
 }
 
 //------------------------------------------------------------------------
+// FilmStripMgr::remove
+//------------------------------------------------------------------------
+bool FilmStripMgr::remove(FilmStrip::key_t const &iKey)
+{
+  auto iterFS = fFilmStrips.find(iKey);
+  if(iterFS != fFilmStrips.end())
+  {
+    auto filmstrip = iterFS->second;
+    if(filmstrip->hasPath())
+    {
+      std::error_code errorCode;
+      fs::remove(filmstrip->path(), errorCode);
+      if(!errorCode)
+      {
+        fFilmStrips.erase(iKey);
+        fSources.erase(iKey);
+        return true;
+      }
+      else
+      {
+        RE_EDIT_LOG_ERROR("Error while deleting [%s]: (%d | %s)", filmstrip->path().string(), errorCode.value(), errorCode.message());
+      }
+    }
+  }
+  return false;
+}
+
+//------------------------------------------------------------------------
 // FilmStripMgr::from
 //------------------------------------------------------------------------
 FilmStrip::Source FilmStrip::Source::from(key_t const &iKey, fs::path const &iDirectory)

@@ -95,6 +95,7 @@ public:
   virtual void hdgui2D(attribute_list_t &oAttributes) const {}
   virtual void collectFilmStripEffects(std::vector<FilmStripFX> &oEffects) const {};
   virtual void collectUsedTexturePaths(std::set<fs::path> &oPaths) const {}
+  virtual void collectAllUsedTextureKeys(std::set<FilmStrip::key_t> &oKeys) const {};
   virtual void collectUsedTextureBuiltIns(std::set<FilmStrip::key_t> &oKeys) const {}
 //  virtual Kind getKind() const = 0;
 

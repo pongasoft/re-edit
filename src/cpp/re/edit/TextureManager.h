@@ -47,6 +47,7 @@ public:
   std::optional<FilmStrip::key_t> importTexture(fs::path const &iTexturePath);
   void importBuiltIns(std::set<FilmStrip::key_t> const &iKeys, UserError *oErrors = nullptr);
   void applyEffects(std::vector<FilmStripFX> const &iEffects, UserError *oErrors = nullptr);
+  bool remove(FilmStrip::key_t const &iKey) { return fFilmStripMgr->remove(iKey); }
 
 protected:
   std::unique_ptr<Texture> createTexture() const;

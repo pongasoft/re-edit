@@ -97,6 +97,7 @@ public:
   void hdgui2D(std::string const &iNodeName, attribute_list_t &oAttributes) const;
   void collectFilmStripEffects(std::vector<FilmStripFX> &oEffects) const override;
   void collectUsedTexturePaths(std::set<fs::path> &oPaths) const override;
+  void collectAllUsedTextureKeys(std::set<FilmStrip::key_t> &oKeys) const override;
   void collectUsedTextureBuiltIns(std::set<FilmStrip::key_t> &oKeys) const override;
 
   std::string device2D() const;

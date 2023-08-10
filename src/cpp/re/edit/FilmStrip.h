@@ -366,6 +366,7 @@ public:
   bool checkKeyMatchesFilter(FilmStrip::key_t const &iKey, FilmStrip::Filter const &iFilter) const;
   std::optional<FilmStrip::key_t> importTexture(fs::path const &iTexturePath);
   std::set<FilmStrip::key_t> importBuiltIns(std::set<FilmStrip::key_t> const &iKeys, UserError *oErrors = nullptr);
+  bool remove(FilmStrip::key_t const &iKey);
 
   std::optional<FilmStrip::key_t> applyEffects(FilmStrip::key_t const &iKey, texture::FX const &iEffects, UserError *oErrors = nullptr);
   std::set<FilmStrip::key_t> applyEffects(std::vector<FilmStripFX> const &iEffects, UserError *oErrors = nullptr);

@@ -300,6 +300,15 @@ void Widget::collectUsedTexturePaths(std::set<fs::path> &oPaths) const
 }
 
 //------------------------------------------------------------------------
+// Widget::collectAllUsedTextureKeys
+//------------------------------------------------------------------------
+void Widget::collectAllUsedTextureKeys(std::set<FilmStrip::key_t> &oKeys) const
+{
+  for(auto &att: fAttributes)
+    att->collectAllUsedTextureKeys(oKeys);
+}
+
+//------------------------------------------------------------------------
 // Widget::collectFilmStripEffects
 //------------------------------------------------------------------------
 void Widget::collectFilmStripEffects(std::vector<FilmStripFX> &oEffects) const

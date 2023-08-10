@@ -703,19 +703,51 @@ void Graphics::hdgui2D(std::string const &iNodeName, attribute_list_t &oAttribut
 //------------------------------------------------------------------------
 void Graphics::collectUsedTexturePaths(std::set<fs::path> &oPaths) const
 {
+  // Implementation note: this API is used to generate cmake includes. When there is an effect
+  // applied, we do not include the original image
   if(hasTexture())
   {
     auto filmStrip = getTexture()->getFilmStrip();
-    if(filmStrip->hasPath())
+    if(filmStrip)
     {
       if(fEffects.hasAny())
       {
         auto texture = AppContext::GetCurrent().findTexture(filmStrip->computeKey(fEffects));
-        if(texture && texture->getFilmStrip() && texture->getFilmStrip()->hasPath())
-          oPaths.emplace(texture->getFilmStrip()->path());
+        if(texture)
+          filmStrip = texture->getFilmStrip();
       }
-      else
+
+      if(filmStrip && filmStrip->isValid() && filmStrip->hasPath())
         oPaths.emplace(filmStrip->path());
+    }
+  }
+}
+
+//------------------------------------------------------------------------
+// Graphics::collectAllUsedTextureKeys
+//------------------------------------------------------------------------
+void Graphics::collectAllUsedTextureKeys(std::set<FilmStrip::key_t> &oKeys) const
+{
+  // Implementation note: this API is used to determine which textures are unused. As a result we include both
+  // the image with effect and the original image (where there is an effect applied)
+  if(hasTexture())
+  {
+    auto filmStrip = getTexture()->getFilmStrip();
+    if(filmStrip)
+    {
+      if(filmStrip->isValid() && filmStrip->hasPath())
+        oKeys.emplace(filmStrip->key());
+
+      if(fEffects.hasAny())
+      {
+        auto texture = AppContext::GetCurrent().findTexture(filmStrip->computeKey(fEffects));
+        if(texture)
+        {
+          filmStrip = texture->getFilmStrip();
+          if(filmStrip && filmStrip->isValid() && filmStrip->hasPath())
+            oKeys.emplace(filmStrip->key());
+        }
+      }
     }
   }
 }

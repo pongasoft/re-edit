@@ -840,7 +840,11 @@ void AppContext::renderMainMenu()
         ImGui::SameLine();
         ImGui::TextUnformatted("\u00b7");
       }
-
+      ImGui::Separator();
+      if(ImGui::MenuItem("Delete unused images"))
+      {
+        handleUnusedTextures();
+      }
       ImGui::EndMenu();
     }
 
@@ -870,6 +874,49 @@ void AppContext::renderMainMenu()
       ImGui::EndMenu();
     }
     ImGui::EndMainMenuBar();
+  }
+}
+
+
+//------------------------------------------------------------------------
+// AppContext::handleUnusedTextures
+//------------------------------------------------------------------------
+void AppContext::handleUnusedTextures()
+{
+  auto unusedTextures = computeUnusedTextures();
+  auto &dialog = Application::GetCurrent().newDialog("Delete unused images");
+  if(unusedTextures.empty())
+  {
+    dialog.text("There are no unused images");
+    dialog.buttonOk();
+  }
+  else
+  {
+    struct Item{ FilmStrip::key_t fKey; bool fDelete; };
+    auto items = std::make_shared<std::vector<Item>>();
+    items->reserve(unusedTextures.size());
+    for(auto &t: unusedTextures)
+      items->emplace_back(Item{t, {}});
+    dialog.preContentMessage(fmt::printf("%ld images are currently not being used", unusedTextures.size()));
+    dialog.lambda([items] {
+      if(ImGui::Button("Select All"))
+      {
+        for(auto &item: *items)
+          item.fDelete = true;
+      }
+      for(auto &item: *items)
+        ImGui::Checkbox(item.fKey.c_str(), &item.fDelete);
+    });
+    dialog.button("Delete selected images", [items, this] {
+      disableFileWatcher();
+      auto deferred = Utils::defer([this] { enableFileWatcher(); });
+      for(auto &item: *items)
+      {
+        if(item.fDelete)
+          fTextureManager->remove(item.fKey);
+      }
+    });
+    dialog.buttonCancel("Cancel (keep all)", true);
   }
 }
 
@@ -1084,6 +1131,36 @@ std::string AppContext::cmake() const
   }
   s << "    )";
   return s.str();
+}
+
+//------------------------------------------------------------------------
+// AppContext::computeUnusedTextures
+//------------------------------------------------------------------------
+std::set<FilmStrip::key_t> AppContext::computeUnusedTextures() const
+{
+  std::set<FilmStrip::key_t> textureKeys{};
+  fFrontPanel->fPanel.collectAllUsedTextureKeys(textureKeys);
+  fBackPanel->fPanel.collectAllUsedTextureKeys(textureKeys);
+  if(fHasFoldedPanels)
+  {
+    fFoldedFrontPanel->fPanel.collectAllUsedTextureKeys(textureKeys);
+    fFoldedBackPanel->fPanel.collectAllUsedTextureKeys(textureKeys);
+  }
+
+  // note that it returns only VALID textures
+  auto allTextures = fTextureManager->findTextureKeys({[] (FilmStrip const &iFilmStrip) { return iFilmStrip.hasPath(); }, "Match path only textures"});
+
+  std::set<FilmStrip::key_t> unusedTextures{};
+
+  for(auto &textureKey: allTextures)
+  {
+    if(textureKeys.find(textureKey) == textureKeys.end())
+    {
+      unusedTextures.emplace(textureKey);
+    }
+  }
+
+  return unusedTextures;
 }
 
 //------------------------------------------------------------------------

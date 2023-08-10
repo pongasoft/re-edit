@@ -143,6 +143,7 @@ public:
   std::string hdgui2D() const;
   std::string device2D() const;
   void collectUsedTexturePaths(std::set<fs::path> &oPaths) const;
+  void collectAllUsedTextureKeys(std::set<FilmStrip::key_t> &oKeys) const;
   void collectUsedTextureBuiltIns(std::set<FilmStrip::key_t> &oKeys) const;
   void collectFilmStripEffects(std::vector<FilmStripFX> &oEffects) const;
 
