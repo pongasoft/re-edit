@@ -44,6 +44,209 @@ bool operator!=(HitBoundaries const &lhs, HitBoundaries const &rhs)
   return !(rhs == lhs);
 }
 
+namespace impl {
+
+//------------------------------------------------------------------------
+// graphics_device2D_path
+//------------------------------------------------------------------------
+std::string graphics_device2D_path(Texture const *iTexture, texture::FX const &iEffects)
+{
+  std::string path{};
+
+  if(iTexture)
+  {
+    if(iEffects.hasAny())
+    {
+      auto tint = ReGui::GetJboxColor3(iEffects.fTint);
+      auto sizeOverride =
+        iEffects.hasSizeOverride() && iEffects.fSizeOverride != iTexture->frameSize() ?
+        re::mock::fmt::printf(", re_edit_size = { %d, %d }",
+                              stl::roundToInt(iEffects.fSizeOverride->x),
+                              stl::roundToInt(iEffects.fSizeOverride->y)) :
+        "";
+
+      path = re::mock::fmt::printf(R"(path = "%s"%s, re_edit_path = "%s"%s%s%s%s%s)",
+                                   iTexture->computeKey(iEffects),
+                                   iTexture->numFrames() > 1 ?  re::mock::fmt::printf(", frames = %d", iTexture->numFrames()) : "",
+                                   iTexture->key(),
+                                   iEffects.hasTint() ? re::mock::fmt::printf(", re_edit_tint = { %d, %d, %d }", tint.fRed, tint.fGreen, tint.fBlue) : "",
+                                   iEffects.hasBrightness() ? re::mock::fmt::printf(", re_edit_brightness = %d", iEffects.fBrightness) : "",
+                                   iEffects.isFlippedX() ? ", re_edit_flip_x = true" : "",
+                                   iEffects.isFlippedY() ? ", re_edit_flip_y = true" : "",
+                                   sizeOverride
+      );
+    }
+    else
+    {
+      path = re::mock::fmt::printf(R"(path = "%s"%s)",
+                                   iTexture->key(),
+                                   iTexture->numFrames() > 1 ?  re::mock::fmt::printf(", frames = %d", iTexture->numFrames()) : "");
+    }
+  }
+
+  return path;
+}
+
+//------------------------------------------------------------------------
+// collectUsedTexturePaths
+//------------------------------------------------------------------------
+static void collectUsedTexturePaths(Texture const *iTexture, texture::FX const &iEffects, std::set<fs::path> &oPaths)
+{
+  // Implementation note: this API is used to generate cmake includes. When there is an effect
+  // applied, we do not include the original image
+  if(iTexture)
+  {
+    auto filmStrip = iTexture->getFilmStrip();
+    if(filmStrip)
+    {
+      if(iEffects.hasAny())
+      {
+        auto texture = AppContext::GetCurrent().findTexture(filmStrip->computeKey(iEffects));
+        if(texture)
+          filmStrip = texture->getFilmStrip();
+      }
+
+      if(filmStrip && filmStrip->isValid() && filmStrip->hasPath())
+        oPaths.emplace(filmStrip->path());
+    }
+  }
+}
+
+//------------------------------------------------------------------------
+// collectAllUsedTextureKeys
+//------------------------------------------------------------------------
+static void collectAllUsedTextureKeys(Texture const *iTexture, texture::FX const &iEffects, std::set<FilmStrip::key_t> &oKeys)
+{
+  // Implementation note: this API is used to determine which textures are unused. As a result we include both
+  // the image with effect and the original image (where there is an effect applied)
+  if(iTexture)
+  {
+    auto filmStrip = iTexture->getFilmStrip();
+    if(filmStrip)
+    {
+      if(filmStrip->isValid() && filmStrip->hasPath())
+        oKeys.emplace(filmStrip->key());
+
+      if(iEffects.hasAny())
+      {
+        auto texture = AppContext::GetCurrent().findTexture(filmStrip->computeKey(iEffects));
+        if(texture)
+        {
+          filmStrip = texture->getFilmStrip();
+          if(filmStrip && filmStrip->isValid() && filmStrip->hasPath())
+            oKeys.emplace(filmStrip->key());
+        }
+      }
+    }
+  }
+}
+
+//------------------------------------------------------------------------
+// editEffects
+//------------------------------------------------------------------------
+static void editEffects(texture::FX &iEffects,
+                        float iItemWidth,
+                        float iOffset,
+                        std::function<void(char const *iName, texture::FX const &fx, MergeKey const &iMergeKey)> const &iOnFXUpdate)
+{
+  // tint
+  ImGui::PushID("tint");
+  {
+    if(ReGui::ResetButton())
+    {
+      auto fx = iEffects;
+      fx.fTint = kDefaultTintColor;
+      iOnFXUpdate("tint", fx, MergeKey::from(&iEffects.fTint));
+    }
+    ImGui::SameLine();
+    ImGui::PushItemWidth(iItemWidth - (ImGui::GetCursorPosX() - iOffset));
+    ImVec4 tint = ReGui::GetColorImVec4(iEffects.fTint);
+    if(ImGui::ColorEdit3("tint", &tint.x))
+    {
+      auto fx = iEffects;
+      fx.fTint = ReGui::GetColorU32(tint);
+      iOnFXUpdate("tint", fx, MergeKey::from(&iEffects.fTint));
+    }
+    ImGui::PopItemWidth();
+  }
+  ImGui::PopID();
+
+  // brightness
+  ImGui::PushID("brightness");
+  {
+    if(ReGui::ResetButton())
+    {
+      auto fx = iEffects;
+      fx.fBrightness = kDefaultBrightness;
+      iOnFXUpdate("brightness", fx, MergeKey::from(&iEffects.fBrightness));
+    }
+    ImGui::SameLine();
+    ImGui::PushItemWidth(iItemWidth - (ImGui::GetCursorPosX() - iOffset));
+    auto brightness = iEffects.fBrightness;
+    if(ImGui::SliderInt("brightness", &brightness, -255, 255))
+    {
+      auto fx = iEffects;
+      fx.fBrightness = std::clamp(brightness, -255, 255);
+      iOnFXUpdate("brightness", fx, MergeKey::from(&iEffects.fBrightness));
+    }
+    ImGui::PopItemWidth();
+  }
+  ImGui::PopID();
+
+  // contrast
+  ImGui::PushID("contrast");
+  {
+    if(ReGui::ResetButton())
+    {
+      auto fx = iEffects;
+      fx.fContrast = kDefaultContrast;
+      iOnFXUpdate("contrast", fx, MergeKey::from(&iEffects.fContrast));
+    }
+    ImGui::SameLine();
+    ImGui::PushItemWidth(iItemWidth - (ImGui::GetCursorPosX() - iOffset));
+    auto contrast = iEffects.fContrast;
+    if(ImGui::SliderInt("contrast", &contrast, -100, 100))
+    {
+      auto fx = iEffects;
+      fx.fContrast = std::clamp(contrast, -100, 100);
+      iOnFXUpdate("contrast", fx, MergeKey::from(&iEffects.fContrast));
+    }
+    ImGui::PopItemWidth();
+  }
+  ImGui::PopID();
+
+  // flip
+  ImGui::PushID("flip");
+  {
+    if(ReGui::ResetButton())
+    {
+      auto fx = iEffects;
+      fx.fFlipX = false;
+      fx.fFlipY = false;
+      iOnFXUpdate("flip", fx, MergeKey::from(&iEffects.fFlipX));
+    }
+    ImGui::SameLine();
+    auto flipX = iEffects.fFlipX;
+    if(ImGui::Checkbox("horizontal flip", &flipX))
+    {
+      auto fx = iEffects;
+      fx.fFlipX = flipX;
+      iOnFXUpdate("horizontal flip", fx, MergeKey::from(&iEffects.fFlipX));
+    }
+    ImGui::SameLine();
+    auto flipY = iEffects.fFlipY;
+    if(ImGui::Checkbox("vertical flip", &flipY))
+    {
+      auto fx = iEffects;
+      fx.fFlipY = flipY;
+      iOnFXUpdate("vertical flip", fx, MergeKey::from(&iEffects.fFlipY));
+    }
+  }
+  ImGui::PopID();
+}
+
+}
+
 }
 
 namespace re::edit::panel {
@@ -54,33 +257,10 @@ namespace re::edit::panel {
 std::string Graphics::device2D() const
 {
   std::string path{};
+
   if(hasTexture())
   {
-    auto texture = getTexture();
-    if(fEffects.hasAny())
-    {
-      auto tint = ReGui::GetJboxColor3(fEffects.fTint);
-      auto sizeOverride =
-        fEffects.hasSizeOverride() && fEffects.fSizeOverride != texture->frameSize() ?
-        re::mock::fmt::printf(", re_edit_size = { %d, %d }",
-                              stl::roundToInt(fEffects.fSizeOverride->x),
-                              stl::roundToInt(fEffects.fSizeOverride->y)) :
-        "";
-
-      path = re::mock::fmt::printf(R"(path = "%s", re_edit_path = "%s"%s%s%s%s%s)",
-                                   texture->computeKey(fEffects),
-                                   texture->key(),
-                                   fEffects.hasTint() ? re::mock::fmt::printf(", re_edit_tint = { %d, %d, %d }", tint.fRed, tint.fGreen, tint.fBlue) : "",
-                                   fEffects.hasBrightness() ? re::mock::fmt::printf(", re_edit_brightness = %d", fEffects.fBrightness) : "",
-                                   fEffects.isFlippedX() ? ", re_edit_flip_x = true" : "",
-                                   fEffects.isFlippedY() ? ", re_edit_flip_y = true" : "",
-                                   sizeOverride
-      );
-    }
-    else
-    {
-      path = re::mock::fmt::printf(R"(path = "%s")", texture->key());
-    }
+    path = impl::graphics_device2D_path(fDNZTexture.get(), fEffects);
   }
 
   return fmt::printf("{ { %s } }", path);
@@ -183,100 +363,10 @@ void Graphics::editView(AppContext &iCtx)
 
     if(hasTexture())
     {
-      // tint
-      ImGui::PushID("tint");
-      {
-        if(ReGui::ResetButton())
-        {
-          auto fx = fEffects;
-          fx.fTint = kDefaultTintColor;
-          fParent->setBackgroundEffect("tint", fx, MergeKey::from(&fEffects.fTint));
-        }
-        ImGui::SameLine();
-        ImGui::PushItemWidth(itemWidth - (ImGui::GetCursorPosX() - offset));
-        ImVec4 tint = ReGui::GetColorImVec4(fEffects.fTint);
-        if(ImGui::ColorEdit3("tint", &tint.x))
-        {
-          auto fx = fEffects;
-          fx.fTint = ReGui::GetColorU32(tint);
-          fParent->setBackgroundEffect("tint", fx, MergeKey::from(&fEffects.fTint));
-        }
-        ImGui::PopItemWidth();
-      }
-      ImGui::PopID();
-
-      // brightness
-      ImGui::PushID("brightness");
-      {
-        if(ReGui::ResetButton())
-        {
-          auto fx = fEffects;
-          fx.fBrightness = kDefaultBrightness;
-          fParent->setBackgroundEffect("brightness", fx, MergeKey::from(&fEffects.fBrightness));
-        }
-        ImGui::SameLine();
-        ImGui::PushItemWidth(itemWidth - (ImGui::GetCursorPosX() - offset));
-        auto brightness = fEffects.fBrightness;
-        if(ImGui::SliderInt("brightness", &brightness, -255, 255))
-        {
-          auto fx = fEffects;
-          fx.fBrightness = std::clamp(brightness, -255, 255);
-          fParent->setBackgroundEffect("brightness", fx, MergeKey::from(&fEffects.fBrightness));
-        }
-        ImGui::PopItemWidth();
-      }
-      ImGui::PopID();
-
-      // contrast
-      ImGui::PushID("contrast");
-      {
-        if(ReGui::ResetButton())
-        {
-          auto fx = fEffects;
-          fx.fContrast = kDefaultContrast;
-          fParent->setBackgroundEffect("contrast", fx, MergeKey::from(&fEffects.fContrast));
-        }
-        ImGui::SameLine();
-        ImGui::PushItemWidth(itemWidth - (ImGui::GetCursorPosX() - offset));
-        auto contrast = fEffects.fContrast;
-        if(ImGui::SliderInt("contrast", &contrast, -100, 100))
-        {
-          auto fx = fEffects;
-          fx.fContrast = std::clamp(contrast, -100, 100);
-          fParent->setBackgroundEffect("contrast", fx, MergeKey::from(&fEffects.fContrast));
-        }
-        ImGui::PopItemWidth();
-      }
-      ImGui::PopID();
-
-      // flip
-      ImGui::PushID("flip");
-      {
-        if(ReGui::ResetButton())
-        {
-          auto fx = fEffects;
-          fx.fFlipX = false;
-          fx.fFlipY = false;
-          fParent->setBackgroundEffect("flip", fx, MergeKey::from(&fEffects.fFlipX));
-        }
-        ImGui::SameLine();
-        auto flipX = fEffects.fFlipX;
-        if(ImGui::Checkbox("horizontal flip", &flipX))
-        {
-          auto fx = fEffects;
-          fx.fFlipX = flipX;
-          fParent->setBackgroundEffect("horizontal flip", fx, MergeKey::from(&fEffects.fFlipX));
-        }
-        ImGui::SameLine();
-        auto flipY = fEffects.fFlipY;
-        if(ImGui::Checkbox("vertical flip", &flipY))
-        {
-          auto fx = fEffects;
-          fx.fFlipY = flipY;
-          fParent->setBackgroundEffect("vertical flip", fx, MergeKey::from(&fEffects.fFlipY));
-        }
-      }
-      ImGui::PopID();
+      re::edit::impl::editEffects(fEffects, itemWidth, offset,
+                                  [parent = fParent](char const *iName, texture::FX const &fx, MergeKey const &iMergeKey) {
+        parent->setBackgroundEffect(iName, fx, iMergeKey);
+      });
     }
 
     ImGui::EndGroup();
@@ -358,24 +448,7 @@ void Graphics::findErrors(AppContext &iCtx, UserError &oErrors) const
 //------------------------------------------------------------------------
 void Graphics::collectUsedTexturePaths(std::set<fs::path> &oPaths) const
 {
-  // Implementation note: this API is used to generate cmake includes. When there is an effect
-  // applied, we do not include the original image
-  if(hasTexture())
-  {
-    auto filmStrip = getTexture()->getFilmStrip();
-    if(filmStrip)
-    {
-      if(fEffects.hasAny())
-      {
-        auto texture = AppContext::GetCurrent().findTexture(filmStrip->computeKey(fEffects));
-        if(texture)
-          filmStrip = texture->getFilmStrip();
-      }
-
-      if(filmStrip && filmStrip->isValid() && filmStrip->hasPath())
-        oPaths.emplace(filmStrip->path());
-    }
-  }
+  impl::collectUsedTexturePaths(fDNZTexture.get(), fEffects, oPaths);
 }
 
 //------------------------------------------------------------------------
@@ -383,28 +456,7 @@ void Graphics::collectUsedTexturePaths(std::set<fs::path> &oPaths) const
 //------------------------------------------------------------------------
 void Graphics::collectAllUsedTextureKeys(std::set<FilmStrip::key_t> &oKeys) const
 {
-  // Implementation note: this API is used to determine which textures are unused. As a result we include both
-  // the image with effect and the original image (where there is an effect applied)
-  if(hasTexture())
-  {
-    auto filmStrip = getTexture()->getFilmStrip();
-    if(filmStrip)
-    {
-      if(filmStrip->isValid() && filmStrip->hasPath())
-        oKeys.emplace(filmStrip->key());
-
-      if(fEffects.hasAny())
-      {
-        auto texture = AppContext::GetCurrent().findTexture(filmStrip->computeKey(fEffects));
-        if(texture)
-        {
-          filmStrip = texture->getFilmStrip();
-          if(filmStrip && filmStrip->isValid() && filmStrip->hasPath())
-            oKeys.emplace(filmStrip->key());
-        }
-      }
-    }
-  }
+  impl::collectAllUsedTextureKeys(fDNZTexture.get(), fEffects, oKeys);
 }
 
 //------------------------------------------------------------------------
@@ -652,100 +704,7 @@ void Graphics::editView(AppContext &iCtx,
 
   if(hasTexture())
   {
-    // tint
-    ImGui::PushID("tint");
-    {
-      if(ReGui::ResetButton())
-      {
-        auto fx = fEffects;
-        fx.fTint = kDefaultTintColor;
-        iOnFXUpdate("tint", fx, MergeKey::from(&fEffects.fTint));
-      }
-      ImGui::SameLine();
-      ImGui::PushItemWidth(itemWidth - (ImGui::GetCursorPosX() - offset));
-      ImVec4 tint = ReGui::GetColorImVec4(fEffects.fTint);
-      if(ImGui::ColorEdit3("tint", &tint.x))
-      {
-        auto fx = fEffects;
-        fx.fTint = ReGui::GetColorU32(tint);
-        iOnFXUpdate("tint", fx, MergeKey::from(&fEffects.fTint));
-      }
-      ImGui::PopItemWidth();
-    }
-    ImGui::PopID();
-
-    // brightness
-    ImGui::PushID("brightness");
-    {
-      if(ReGui::ResetButton())
-      {
-        auto fx = fEffects;
-        fx.fBrightness = kDefaultBrightness;
-        iOnFXUpdate("brightness", fx, MergeKey::from(&fEffects.fBrightness));
-      }
-      ImGui::SameLine();
-      ImGui::PushItemWidth(itemWidth - (ImGui::GetCursorPosX() - offset));
-      auto brightness = fEffects.fBrightness;
-      if(ImGui::SliderInt("brightness", &brightness, -255, 255))
-      {
-        auto fx = fEffects;
-        fx.fBrightness = std::clamp(brightness, -255, 255);
-        iOnFXUpdate("brightness", fx, MergeKey::from(&fEffects.fBrightness));
-      }
-      ImGui::PopItemWidth();
-    }
-    ImGui::PopID();
-
-    // contrast
-    ImGui::PushID("contrast");
-    {
-      if(ReGui::ResetButton())
-      {
-        auto fx = fEffects;
-        fx.fContrast = kDefaultContrast;
-        iOnFXUpdate("contrast", fx, MergeKey::from(&fEffects.fContrast));
-      }
-      ImGui::SameLine();
-      ImGui::PushItemWidth(itemWidth - (ImGui::GetCursorPosX() - offset));
-      auto contrast = fEffects.fContrast;
-      if(ImGui::SliderInt("contrast", &contrast, -100, 100))
-      {
-        auto fx = fEffects;
-        fx.fContrast = std::clamp(contrast, -100, 100);
-        iOnFXUpdate("contrast", fx, MergeKey::from(&fEffects.fContrast));
-      }
-      ImGui::PopItemWidth();
-    }
-    ImGui::PopID();
-
-    // flip
-    ImGui::PushID("flip");
-    {
-      if(ReGui::ResetButton())
-      {
-        auto fx = fEffects;
-        fx.fFlipX = false;
-        fx.fFlipY = false;
-        iOnFXUpdate("flip", fx, MergeKey::from(&fEffects.fFlipX));
-      }
-      ImGui::SameLine();
-      auto flipX = fEffects.fFlipX;
-      if(ImGui::Checkbox("horizontal flip", &flipX))
-      {
-        auto fx = fEffects;
-        fx.fFlipX = flipX;
-        iOnFXUpdate("horizontal flip", fx, MergeKey::from(&fEffects.fFlipX));
-      }
-      ImGui::SameLine();
-      auto flipY = fEffects.fFlipY;
-      if(ImGui::Checkbox("vertical flip", &flipY))
-      {
-        auto fx = fEffects;
-        fx.fFlipY = flipY;
-        iOnFXUpdate("vertical flip", fx, MergeKey::from(&fEffects.fFlipY));
-      }
-    }
-    ImGui::PopID();
+    re::edit::impl::editEffects(fEffects, itemWidth, offset, iOnFXUpdate);
   }
 
   ImGui::EndGroup();
@@ -969,24 +928,8 @@ void Graphics::hdgui2D(std::string const &iNodeName, attribute_list_t &oAttribut
 //------------------------------------------------------------------------
 void Graphics::collectUsedTexturePaths(std::set<fs::path> &oPaths) const
 {
-  // Implementation note: this API is used to generate cmake includes. When there is an effect
-  // applied, we do not include the original image
   if(hasTexture())
-  {
-    auto filmStrip = getTexture()->getFilmStrip();
-    if(filmStrip)
-    {
-      if(fEffects.hasAny())
-      {
-        auto texture = AppContext::GetCurrent().findTexture(filmStrip->computeKey(fEffects));
-        if(texture)
-          filmStrip = texture->getFilmStrip();
-      }
-
-      if(filmStrip && filmStrip->isValid() && filmStrip->hasPath())
-        oPaths.emplace(filmStrip->path());
-    }
-  }
+    re::edit::impl::collectUsedTexturePaths(fDNZTexture.get(), fEffects, oPaths);
 }
 
 //------------------------------------------------------------------------
@@ -994,28 +937,8 @@ void Graphics::collectUsedTexturePaths(std::set<fs::path> &oPaths) const
 //------------------------------------------------------------------------
 void Graphics::collectAllUsedTextureKeys(std::set<FilmStrip::key_t> &oKeys) const
 {
-  // Implementation note: this API is used to determine which textures are unused. As a result we include both
-  // the image with effect and the original image (where there is an effect applied)
   if(hasTexture())
-  {
-    auto filmStrip = getTexture()->getFilmStrip();
-    if(filmStrip)
-    {
-      if(filmStrip->isValid() && filmStrip->hasPath())
-        oKeys.emplace(filmStrip->key());
-
-      if(fEffects.hasAny())
-      {
-        auto texture = AppContext::GetCurrent().findTexture(filmStrip->computeKey(fEffects));
-        if(texture)
-        {
-          filmStrip = texture->getFilmStrip();
-          if(filmStrip && filmStrip->isValid() && filmStrip->hasPath())
-            oKeys.emplace(filmStrip->key());
-        }
-      }
-    }
-  }
+    re::edit::impl::collectAllUsedTextureKeys(fDNZTexture.get(), fEffects, oKeys);
 }
 
 //------------------------------------------------------------------------
@@ -1050,34 +973,7 @@ std::string Graphics::device2D() const
   std::string path;
   if(hasTexture())
   {
-    auto texture = getTexture();
-    if(fEffects.hasAny())
-    {
-      auto tint = ReGui::GetJboxColor3(fEffects.fTint);
-      auto sizeOverride =
-        fEffects.hasSizeOverride() && fEffects.fSizeOverride != texture->frameSize() ?
-        re::mock::fmt::printf(", re_edit_size = { %d, %d }",
-                              stl::roundToInt(fEffects.fSizeOverride->x),
-                              stl::roundToInt(fEffects.fSizeOverride->y)) :
-        "";
-
-      path = re::mock::fmt::printf(R"(path = "%s"%s, re_edit_path = "%s"%s%s%s%s%s)",
-                                   texture->computeKey(fEffects),
-                                   texture->numFrames() > 1 ?  re::mock::fmt::printf(", frames = %d", texture->numFrames()) : "",
-                                   texture->key(),
-                                   fEffects.hasTint() ? re::mock::fmt::printf(", re_edit_tint = { %d, %d, %d }", tint.fRed, tint.fGreen, tint.fBlue) : "",
-                                   fEffects.hasBrightness() ? re::mock::fmt::printf(", re_edit_brightness = %d", fEffects.fBrightness) : "",
-                                   fEffects.isFlippedX() ? ", re_edit_flip_x = true" : "",
-                                   fEffects.isFlippedY() ? ", re_edit_flip_y = true" : "",
-                                   sizeOverride
-      );
-    }
-    else
-    {
-      path = re::mock::fmt::printf(R"(path = "%s"%s)",
-                                   texture->key(),
-                                   texture->numFrames() > 1 ?  re::mock::fmt::printf(", frames = %d", texture->numFrames()) : "");
-    }
+    path = re::edit::impl::graphics_device2D_path(fDNZTexture.get(), fEffects);
   }
   else
   {
