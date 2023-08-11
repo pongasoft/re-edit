@@ -898,14 +898,18 @@ void AppContext::handleUnusedTextures()
     for(auto &t: unusedTextures)
       items->emplace_back(Item{t, {}});
     dialog.preContentMessage(fmt::printf("%ld images are currently not being used", unusedTextures.size()));
-    dialog.lambda([items] {
+    dialog.lambda([items, this] {
       if(ImGui::Button("Select All"))
       {
         for(auto &item: *items)
           item.fDelete = true;
       }
       for(auto &item: *items)
+      {
         ImGui::Checkbox(item.fKey.c_str(), &item.fDelete);
+        if(ReGui::ShowQuickView())
+          textureTooltip(item.fKey);
+      }
     });
     dialog.button("Delete selected images", [items, this] {
       disableFileWatcher();
