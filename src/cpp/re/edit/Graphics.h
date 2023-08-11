@@ -209,6 +209,7 @@ public:
 
   std::string getValueAsLua() const override;
   void collectUsedTexturePaths(std::set<fs::path> &oPaths) const override;
+  void collectAllUsedTextureKeys(std::set<FilmStrip::key_t> &oKeys) const override;
 
   std::string toValueString() const override { return fmt::printf("%s = \"%s\"", fName, fValue); }
 

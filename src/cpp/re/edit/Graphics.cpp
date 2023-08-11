@@ -1249,6 +1249,29 @@ void Background::collectUsedTexturePaths(std::set<fs::path> &oPaths) const
   }
 }
 
+//------------------------------------------------------------------------
+// Background::collectUsedTexturePaths
+//------------------------------------------------------------------------
+void Background::collectAllUsedTextureKeys(std::set<FilmStrip::key_t> &oKeys) const
+{
+  auto &app = AppContext::GetCurrent();
+
+  auto texture = app.findTexture(fValue);
+  if(texture && texture->isValid())
+  {
+    auto filmStrip = texture->getFilmStrip();
+    if(filmStrip->hasPath())
+      oKeys.emplace(filmStrip->key());
+  }
+  auto hdTexture = app.findHDTexture(fValue);
+  if(hdTexture && hdTexture->isValid())
+  {
+    auto filmStrip = hdTexture->getFilmStrip();
+    if(filmStrip->hasPath())
+      oKeys.emplace(filmStrip->key());
+  }
+}
+
 namespace impl {
 
 inline bool ends_with(std::string const &s, std::string const &iSuffix)
