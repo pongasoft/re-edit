@@ -28,6 +28,8 @@ TEST(ConfigParser, All) {
 global_config = {}
 global_config["font_size"] = 20
 global_config["style"] = "Dark"
+global_config["target_frame_rate"] = 60
+global_config["vsync_enabled"] = false
 global_config["device_history"] = {}
 global_config["device_history"][1] = {
   name = "CVA-7 CV Analyzer",
