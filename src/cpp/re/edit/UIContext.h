@@ -67,7 +67,7 @@ private:
 
     RLShader &operator=(RLShader &&iOther) noexcept;
 
-    constexpr ::Shader *getShader() const { return fShader.get(); }
+    inline ::Shader *getShader() const { return fShader.get(); }
 
   private:
     std::unique_ptr<::Shader> fShader;

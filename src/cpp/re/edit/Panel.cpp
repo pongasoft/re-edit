@@ -384,9 +384,8 @@ void Panel::handleMoveCanvasAction(AppContext &iCtx, ReGui::Canvas &iCanvas)
   {
     fMoveCanvasAction->fCurrentPosition = ImGui::GetMousePos();
     iCanvas.moveByDeltaScreenPos(fMoveCanvasAction->fCurrentPosition - fMoveCanvasAction->fLastUpdatePosition);
+    fMoveCanvasAction->fLastUpdatePosition = fMoveCanvasAction->fCurrentPosition;
   }
-
-  fMoveCanvasAction->fLastUpdatePosition = fMoveCanvasAction->fCurrentPosition;
 }
 
 //------------------------------------------------------------------------

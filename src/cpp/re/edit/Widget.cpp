@@ -55,18 +55,26 @@ Widget::Widget(Widget const &iOther) :
     auto graphics = dynamic_cast<widget::attribute::Graphics *>(newAttribute.get());
     if(graphics)
     {
+#if __clang__
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "LocalValueEscapesScope"
+#endif
       fGraphics = graphics;
+#if __clang__
 #pragma clang diagnostic pop
+#endif
     }
     auto visibility = dynamic_cast<widget::attribute::Visibility *>(newAttribute.get());
     if(visibility)
     {
+#if __clang__
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "LocalValueEscapesScope"
+#endif
       fVisibilityAttribute = visibility;
+#if __clang__
 #pragma clang diagnostic pop
+#endif
     }
     addAttribute(std::move(newAttribute));
   }
@@ -366,10 +374,14 @@ Widget *Widget::socket(re::mock::JboxObjectType iSocketType, Object::Filter iSoc
 Widget *Widget::visibility()
 {
   auto visibility = std::make_unique<widget::attribute::Visibility>();
+#if __clang__
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "LocalValueEscapesScope"
+#endif
   fVisibilityAttribute = visibility.get();
+#if __clang__
 #pragma clang diagnostic pop
+#endif
   return addAttribute(std::move(visibility));
 }
 

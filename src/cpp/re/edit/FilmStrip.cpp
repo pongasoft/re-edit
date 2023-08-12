@@ -110,7 +110,7 @@ std::unique_ptr<FilmStrip> FilmStrip::load(std::shared_ptr<Source> const &iSourc
 
   if(iSource->hasPath())
   {
-    RLImageRGBA8 image{LoadImage(iSource->getPath().string().c_str())};
+    RLImageRGBA8 image{LoadImage(iSource->getPath().u8string().c_str())};
     if(image.isValid())
     {
       return std::unique_ptr<FilmStrip>(new FilmStrip(iSource, std::move(image)));
@@ -118,7 +118,7 @@ std::unique_ptr<FilmStrip> FilmStrip::load(std::shared_ptr<Source> const &iSourc
     else
     {
       auto reason = stbi_failure_reason();
-      auto error = reason ? std::string(reason) : fmt::printf("File not found %s", iSource->getPath().string());
+      auto error = reason ? std::string(reason) : fmt::printf("File not found %s", iSource->getPath().u8string());
       RE_EDIT_LOG_ERROR("Error loading file [%s] | %s", iSource->getPath().u8string(), error);
       return std::unique_ptr<FilmStrip>(new FilmStrip(iSource, error.c_str()));
     }
@@ -245,11 +245,11 @@ namespace impl {
 Image NewImageRGBA8(int width, int height)
 {
   return {
-    .data    = RL_CALLOC(width * height, sizeof(Color)),
-    .width   = width,
-    .height  = height,
-    .mipmaps = 1,
-    .format  = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8
+    /* .data    = */ RL_CALLOC(width * height, sizeof(Color)),
+    /* .width   = */ width,
+    /* .height  = */ height,
+    /* .mipmaps = */ 1,
+    /* .format  = */ PIXELFORMAT_UNCOMPRESSED_R8G8B8A8
   };
 }
 
@@ -533,14 +533,14 @@ std::vector<FilmStrip::Source> FilmStripMgr::scanDirectory(fs::path const &iDire
         }
         else
         {
-          RE_EDIT_LOG_ERROR("Error with file [%s]: (%d | %s)", ent.path().string().c_str(), errorCode.value(), errorCode.message());
+          RE_EDIT_LOG_ERROR("Error with file [%s]: (%d | %s)", ent.path().u8string().c_str(), errorCode.value(), errorCode.message());
         }
       }
     }
   }
   else
   {
-    RE_EDIT_LOG_ERROR("Could not scan directory [%s]: (%d | %s)", iDirectory.string().c_str(), errorCode.value(), errorCode.message());
+    RE_EDIT_LOG_ERROR("Could not scan directory [%s]: (%d | %s)", iDirectory.u8string().c_str(), errorCode.value(), errorCode.message());
   }
   return res;
 }
@@ -660,7 +660,7 @@ std::optional<FilmStrip::key_t> FilmStripMgr::applyEffects(FilmStrip::key_t cons
       else
       {
         if(oErrors && fDirectory)
-          oErrors->add("Error saving file [%s.png]", (*fDirectory / keyFX).string());
+          oErrors->add("Error saving file [%s.png]", (*fDirectory / keyFX).u8string());
       }
     }
   }
@@ -708,9 +708,9 @@ std::unique_ptr<FilmStrip> FilmStripMgr::save(FilmStrip::key_t const &iKey, std:
 
   auto path = *fDirectory / fmt::printf("%s.png", iKey);
 
-  if(!ExportImage(iFilmStrip->rlImage(), path.c_str()))
+  if(!ExportImage(iFilmStrip->rlImage(), path.u8string().c_str()))
   {
-    RE_EDIT_LOG_WARNING("Error while saving file [%s]", path.string());
+    RE_EDIT_LOG_WARNING("Error while saving file [%s]", path.u8string());
     return nullptr;
   }
 
@@ -742,7 +742,7 @@ bool FilmStripMgr::remove(FilmStrip::key_t const &iKey)
       }
       else
       {
-        RE_EDIT_LOG_ERROR("Error while deleting [%s]: (%d | %s)", filmstrip->path().string(), errorCode.value(), errorCode.message());
+        RE_EDIT_LOG_ERROR("Error while deleting [%s]: (%d | %s)", filmstrip->path().u8string(), errorCode.value(), errorCode.message());
       }
     }
   }
@@ -770,7 +770,7 @@ FilmStrip::Source FilmStrip::Source::from(key_t const &iKey, fs::path const &iDi
   }
   else
   {
-    RE_EDIT_LOG_ERROR("Error with file [%s]: (%d | %s)", path.string(), errorCode.value(), errorCode.message());
+    RE_EDIT_LOG_ERROR("Error with file [%s]: (%d | %s)", path.u8string(), errorCode.value(), errorCode.message());
     return {path, iKey, 0, inferredNumFrames};
   }
 }
@@ -824,11 +824,11 @@ RLImageRGBA8::RLImageRGBA8(int iWidth, int iHeight) : fImage{impl::NewImageRGBA8
 // RLImageRGBA8::RLImageRGBA8
 //------------------------------------------------------------------------
 RLImageRGBA8::RLImageRGBA8() : fImage{
-  .data    = nullptr,
-  .width   = 100,
-  .height  = 100,
-  .mipmaps = 1,
-  .format  = 0 // not a valid format on purpose
+  /* .data    = */ nullptr,
+  /* .width   = */ 100,
+  /* .height  = */ 100,
+  /* .mipmaps = */ 1,
+  /* .format  = */ 0 // not a valid format on purpose
 }
 {
 }
