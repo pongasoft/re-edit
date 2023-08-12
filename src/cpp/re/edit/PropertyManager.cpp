@@ -158,6 +158,21 @@ std::vector<Object const *> PropertyManager::findObjects(Object::Filter const &i
   return res;
 }
 
+
+//------------------------------------------------------------------------
+// PropertyManager::findAllObjects
+//------------------------------------------------------------------------
+std::vector<Object const *> PropertyManager::findAllObjects() const
+{
+  std::vector<Object const *> res{};
+  res.reserve(fObjects.size());
+  for(auto const &[name, object]: fObjects)
+  {
+    res.emplace_back(&object);
+  }
+  return res;
+}
+
 //------------------------------------------------------------------------
 // PropertyManager::findObject
 //------------------------------------------------------------------------
@@ -183,6 +198,21 @@ std::vector<Property const *> PropertyManager::findProperties(Property::Filter c
       if(iFilter(property))
         res.emplace_back(&property);
     }
+  }
+  return res;
+}
+
+
+//------------------------------------------------------------------------
+// PropertyManager::findAllProperties
+//------------------------------------------------------------------------
+std::vector<Property const *> PropertyManager::findAllProperties() const
+{
+  std::vector<Property const *> res{};
+  res.reserve(fProperties.size());
+  for(auto const &[name, property]: fProperties)
+  {
+    res.emplace_back(&property);
   }
   return res;
 }

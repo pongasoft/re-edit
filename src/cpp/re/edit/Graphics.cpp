@@ -323,7 +323,7 @@ void Graphics::editView(AppContext &iCtx)
   auto key = getTextureKey();
   if(ImGui::BeginCombo("graphics", key.c_str()))
   {
-    auto textureKeys = (fFilter && !ReGui::IsKeyAlt()) ? iCtx.findTextureKeys(fFilter) : iCtx.getTextureKeys();
+    auto textureKeys = (fFilter && ReGui::IsFilterEnabled()) ? iCtx.findTextureKeys(fFilter) : iCtx.getTextureKeys();
     for(auto &p: textureKeys)
     {
       auto const isSelected = p == key;
@@ -611,7 +611,7 @@ void Graphics::editView(AppContext &iCtx,
   auto key = hasTexture() ? getTextureKey() : "";
   if(ImGui::BeginCombo(fName, key.c_str()))
   {
-    auto textureKeys = iFilter ? iCtx.findTextureKeys(iFilter) : iCtx.getTextureKeys();
+    auto textureKeys = (iFilter && ReGui::IsFilterEnabled()) ? iCtx.findTextureKeys(iFilter) : iCtx.getTextureKeys();
     for(auto &p: textureKeys)
     {
       auto const isSelected = p == key;
@@ -1191,7 +1191,7 @@ void Background::editView(AppContext &iCtx)
 
   if(ImGui::BeginCombo(fName, fValue.c_str()))
   {
-    auto textureKeys = iCtx.findTextureKeys(kBackgroundFilter);
+    auto textureKeys = ReGui::IsFilterEnabled() ? iCtx.findTextureKeys(kBackgroundFilter) : iCtx.getTextureKeys();
     for(auto const &p: textureKeys)
     {
       auto key = p;

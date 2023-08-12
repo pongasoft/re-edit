@@ -45,7 +45,6 @@ Build
 -----
 
 * The project is a CMake based project and requires CMake 3.24+ to be installed.
-* The Rack Extension SDK must be installed. Please follow the instructions provided with [re-mock](https://github.com/pongasoft/re-mock) for details.
 * If you want to build the archive on Windows, you must install Wix (v3)
 * All other dependencies are fetched automatically
 

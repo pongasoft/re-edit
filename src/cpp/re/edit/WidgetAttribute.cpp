@@ -885,7 +885,7 @@ void PropertyPath::editView(AppContext &iCtx,
 
   if(ImGui::BeginCombo(fName, fValue.c_str()))
   {
-    auto properties = iCtx.findProperties(fFilter);
+    auto properties = ReGui::IsFilterEnabled() ? iCtx.findProperties(fFilter) : iCtx.findAllProperties();
     for(auto &p: properties)
     {
       auto const isSelected = p->path() == fValue;
@@ -1035,7 +1035,7 @@ void ObjectPath::editView(AppContext &iCtx)
 
   if(ImGui::BeginCombo(fName, fValue.c_str()))
   {
-    auto objects = iCtx.findObjects(fFilter);
+    auto objects = ReGui::IsFilterEnabled() ? iCtx.findObjects(fFilter) : iCtx.findAllObjects();
     for(auto &o: objects)
     {
       auto const isSelected = o->path() == fValue;
@@ -1119,7 +1119,7 @@ void PropertyPathList::editStaticListView(AppContext &iCtx,
     auto &value = fValue[i];
     if(ImGui::BeginCombo(re::mock::fmt::printf("%s [%d]", fName, i).c_str(), value.c_str()))
     {
-      auto properties = iCtx.findProperties(iFilter);
+      auto properties = ReGui::IsFilterEnabled() ? iCtx.findProperties(iFilter) : iCtx.findAllProperties();
       for(auto &p: properties)
       {
         auto const isSelected = p->path() == value;

@@ -61,9 +61,11 @@ public:
   re::mock::Info const &getDeviceInfo() const;
 
   std::vector<Object const *> findObjects(Object::Filter const &iFilter) const;
+  std::vector<Object const *> findAllObjects() const;
   Object const *findObject(std::string const &iObjectPath) const;
 
   std::vector<Property const *> findProperties(Property::Filter const &iFilter) const;
+  std::vector<Property const *> findAllProperties() const;
   std::vector<std::string> findPropertyNames(Property::Filter const &iFilter) const;
   void sortProperties(std::vector<std::string> &ioProperties, Property::Comparator const &iComparator) const;
   Property const *findProperty(std::string const &iPropertyPath) const;
