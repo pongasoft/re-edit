@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.24)
 
 set(re-edit_VERSION_MAJOR 1)
-set(re-edit_VERSION_MINOR 5)
+set(re-edit_VERSION_MINOR 6)
 set(re-edit_VERSION_PATCH 0)
 set(re-edit_VERSION "${re-edit_VERSION_MAJOR}.${re-edit_VERSION_MINOR}.${re-edit_VERSION_PATCH}")
 

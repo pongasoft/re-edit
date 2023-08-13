@@ -1597,6 +1597,8 @@ void Application::about() const
     {"nlohmann/json                 ", "MIT License", "https://github.com/nlohmann/json/blob/develop/LICENSE.MIT"},
     {"nothings/stb                  ", "Public Domain", "https://github.com/nothings/stb/blob/master/docs/why_public_domain.md"},
     {"pongasoft/re-mock             ", "Apache 2.0", "https://github.com/pongasoft/re-mock/blob/master/LICENSE.txt"},
+    {"raylib                        ", "ZLIB License", "https://github.com/raysan5/raylib/blob/master/LICENSE"},
+    {"raylib-extras/rlImGui         ", "ZLIB License", "https://github.com/raylib-extras/rlImGui/blob/main/LICENSE"},
     {"SpartanJ/efsw                 ", "MIT License", "https://github.com/SpartanJ/efsw/blob/master/LICENSE"},
   };
 

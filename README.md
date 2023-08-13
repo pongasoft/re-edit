@@ -49,7 +49,7 @@ Build
 * All other dependencies are fetched automatically
 
 > #### Note
-> * It successfully builds on macOS 11.7.2/Xcode 13.2.1(Intel only) as well as macOS 13.0.1/Xcode 14.1 (universal build).
+> * It successfully builds on macOS 11.7.2/Xcode 13.2.1 (Intel only) as well as macOS 13.0.1/Xcode 14.1 (universal build).
 > * It successfully builds on Windows 10 with Visual Studio 16 2019 build tools.
 
 
@@ -92,6 +92,21 @@ pongasoft produces a variety of high quality and free/open source software. If y
 
 Release Notes
 -------------
+
+* #### 1.6.0 - 2023/08/13
+
+- Added "light" image editing/effects: resize, tint, brightness, contrast and flip (horizontal and vertical)
+  * all effects are done live on the GPU
+  * when the project is saved a new image with the effects applied is generated
+  * `device_2D.lua` uses this image so that it works with Render2D
+  * `device_2D.lua` also stores which original image + effects were used so that when reloaded in RE Edit, it works as well
+- Added a menu entry "File/Delete unused images" to figure out which images (under GUI2D) are used by the project and which ones are not
+- Added a performance menu to tweak the frame rate
+- Use `Alt` key to disable most filters (used when selecting images or properties in drop down lists)
+- Internally, massive refactoring of the code to use raylib as the backend for ImGui:
+  * much more common code between Windows and macOS
+  * using custom OpenGL shader (for effects on GPU)
+  * generate the panel (using raylib + custom shader) into a texture to be rendered as an image in ImGui
 
 * #### 1.5.0 - 2023/05/22
 
@@ -204,6 +219,8 @@ This project uses the following open source projects (some of them are embedded 
 | [nlohmann/json](https://github.com/nlohmann/json)                                                           | [MIT License](https://github.com/nlohmann/json/blob/develop/LICENSE.MIT)                           |
 | [nothings/stb](https://github.com/nothings/stb)                                                             | [Public Domain](https://github.com/nothings/stb/blob/master/docs/why_public_domain.md)             |
 | [pongasoft/re-mock](https://github.com/pongasoft/re-mock)                                                   | [Apache 2.0](https://github.com/pongasoft/re-mock/blob/master/LICENSE.txt)                         |
+| [raylib](https://www.raylib.com/)                                                                           | [ZLIB License](https://github.com/raysan5/raylib/blob/master/LICENSE)                              |
+| [raylib-extras/rlImGui](https://github.com/raylib-extras/rlImGui)                                           | [ZLIB License](https://github.com/raylib-extras/rlImGui/blob/main/LICENSE)                         |
 | [SpartanJ/efsw](https://github.com/SpartanJ/efsw)                                                           | [MIT License](https://github.com/SpartanJ/efsw/blob/master/LICENSE)                                |
 
 Licensing
