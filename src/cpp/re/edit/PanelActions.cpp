@@ -902,25 +902,13 @@ void Panel::setPanelOptions(bool iDisableSampleDropOnPanel)
 }
 
 //------------------------------------------------------------------------
-// Panel::setBackgroundKeyAction
+// Panel::setGraphicsAction
 //------------------------------------------------------------------------
-Texture::key_t Panel::setBackgroundKeyAction(Texture::key_t const &iTextureKey)
+std::shared_ptr<panel::Graphics> Panel::setGraphicsAction(std::shared_ptr<panel::Graphics> const &iGraphics)
 {
-  auto res = fGraphics.getTextureKey();
-  fGraphics.setTextureKey(iTextureKey);
-  fGraphics.setEffects({});
-  fEdited = true;
-  return res;
-}
-
-
-//------------------------------------------------------------------------
-// Panel::setBackgroundEffectAction
-//------------------------------------------------------------------------
-texture::FX Panel::setBackgroundEffectAction(texture::FX const &iEffects)
-{
-  auto res = fGraphics.fEffects;
-  fGraphics.setEffects(iEffects);
+  std::shared_ptr<panel::Graphics> res = fGraphics.clone();
+  fGraphics = *iGraphics;
+  fGraphics.fEdited = true;
   fEdited = true;
   return res;
 }
@@ -941,12 +929,15 @@ void Panel::initBackgroundKey(Texture::key_t const &iTextureKey,
 //------------------------------------------------------------------------
 void Panel::setBackgroundKey(Texture::key_t const &iTextureKey)
 {
-  executeAction<PanelValueAction<Texture::key_t>>([](Panel *iPanel, auto iValue) {
-                                                    return iPanel->setBackgroundKeyAction(iValue);
-                                                  },
-                                                  iTextureKey,
-                                                  "Change background graphics",
-                                                  MergeKey::from(&fGraphics.fTextureKey));
+  std::shared_ptr<panel::Graphics> graphics = fGraphics.clone();
+  graphics->setTextureKey(iTextureKey);
+  graphics->fEffects = {};
+  executeAction<PanelValueAction<std::shared_ptr<panel::Graphics>>>([](Panel *iPanel, auto iValue) {
+                                                                      return iPanel->setGraphicsAction(iValue);
+                                                                    },
+                                                                    std::move(graphics),
+                                                                    "Change background graphics",
+                                                                    MergeKey::from(&fGraphics.fTextureKey));
 }
 
 //------------------------------------------------------------------------
@@ -954,12 +945,14 @@ void Panel::setBackgroundKey(Texture::key_t const &iTextureKey)
 //------------------------------------------------------------------------
 void Panel::setBackgroundEffect(char const *iName, texture::FX const &fx, MergeKey const &iMergeKey)
 {
-  executeAction<PanelValueAction<texture::FX>>([](Panel *iPanel, auto iValue) {
-                                                 return iPanel->setBackgroundEffectAction(iValue);
-                                               },
-                                               fx,
-                                               fmt::printf("Change background %s", iName),
-                                               iMergeKey);
+  std::shared_ptr<panel::Graphics> graphics = fGraphics.clone();
+  graphics->fEffects = fx;
+  executeAction<PanelValueAction<std::shared_ptr<panel::Graphics>>>([](Panel *iPanel, auto iValue) {
+                                                                      return iPanel->setGraphicsAction(iValue);
+                                                                    },
+                                                                    std::move(graphics),
+                                                                    fmt::printf("Change background %s", iName),
+                                                                    iMergeKey);
 }
 
 

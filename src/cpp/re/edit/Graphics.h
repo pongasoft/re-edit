@@ -65,6 +65,19 @@ public:
   void editView(AppContext &iCtx);
   void findErrors(AppContext &iCtx, UserError &oErrors) const override;
 
+  std::unique_ptr<Graphics> clone() const { return std::make_unique<Graphics>(Graphics(*this)); }
+
+  bool operator==(Graphics const &rhs) const
+  {
+    return fTextureKey == rhs.fTextureKey &&
+           fEffects == rhs.fEffects;
+  }
+
+  bool operator!=(Graphics const &rhs) const
+  {
+    return !(rhs == *this);
+  }
+
   friend class re::edit::Panel;
 
 public:

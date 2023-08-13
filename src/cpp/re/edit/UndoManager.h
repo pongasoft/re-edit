@@ -22,6 +22,7 @@
 #include <string>
 #include <functional>
 #include <vector>
+#include "stl.h"
 #include "Constants.h"
 
 namespace re::edit {
@@ -164,7 +165,10 @@ protected:
     if(typeid(*this) != typeid(*iAction))
       return false;
     auto action = dynamic_cast<ValueAction const *>(iAction);
-    return action && action->fPreviousValue == fValue;
+    if constexpr(stl::is_shared_ptr<T>::value)
+      return action && *action->fPreviousValue == *fValue;
+    else
+      return action && action->fPreviousValue == fValue;
   }
 
   std::unique_ptr<Action> doMerge(std::unique_ptr<Action> iAction) override

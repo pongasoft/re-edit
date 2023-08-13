@@ -47,15 +47,26 @@ public:
 
   void undo() override
   {
-    getWidget()->copyFromAction(fPreviousValue.get());
+    copyFromAction(fPreviousValue.get());
   }
 
   void redo() override
   {
-    getWidget()->copyFromAction(fValue.get());
+    copyFromAction(fValue.get());
   }
 
 protected:
+  void copyFromAction(widget::Attribute const *iAttribute)
+  {
+    auto widget = getWidget();
+    if(widget)
+    {
+      widget->copyFromAction(iAttribute);
+      if(widget->isEdited())
+        getPanel()->markEdited();
+    }
+  }
+
   Widget *getWidget() const
   {
     return getPanel()->findWidget(fWidgetId);

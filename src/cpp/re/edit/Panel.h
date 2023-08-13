@@ -163,14 +163,15 @@ public:
   bool selectWidgetsAction(std::set<int> const &iWidgetIds) const;
   bool unselectWidgetsAction(std::set<int> const &iWidgetIds);
   bool setPanelOptionsAction(bool iDisableSampleDropOnPanel);
-  Texture::key_t setBackgroundKeyAction(Texture::key_t const &iTextureKey);
-  texture::FX setBackgroundEffectAction(texture::FX const &iEffects);
+
   void initBackgroundKey(Texture::key_t const &iTextureKey, std::optional<Texture::key_t> const &iOriginalTextureKey, texture::FX const &iEffects);
 
 protected:
   void editNoSelectionView(AppContext &iCtx);
   void editSingleSelectionView(AppContext &iCtx, Widget *iWidget);
   void editMultiSelectionView(AppContext &iCtx);
+
+  std::shared_ptr<panel::Graphics> setGraphicsAction(std::shared_ptr<panel::Graphics> const &iGraphics);
 
 private:
   bool selectWidget(AppContext &iCtx, ImVec2 const &iPosition, bool iMultiSelectKey);

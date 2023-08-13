@@ -74,6 +74,14 @@ inline int roundToInt(T iValue)
   return round<T, int>(iValue);
 }
 
+//------------------------------------------------------------------------
+// stl::is_shared_ptr | determine at compilation time if it is a shared_ptr
+//------------------------------------------------------------------------
+template<class T>
+struct is_shared_ptr : std::false_type {};
+template<class T>
+struct is_shared_ptr<std::shared_ptr<T>> : std::true_type {};
+
 }
 
 #endif //RE_EDIT_STL_H
