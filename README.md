@@ -13,8 +13,9 @@ Features implemented by the code
 --------------------------------
 
 - CMake based Dear ImGui application
-- Uses glfw/metal on macOS (uses `metal-cpp` so that `main.cpp` is a cpp file, not Objective-C like in the example provided by Dear ImGui)
-- Uses glfw/OpenGL3 on Windows
+- Uses raylib for the ImGui backend
+- Uses custom shader for live image editing
+- Render to texture for merging raylib + custom shader and ImGui
 - Uses Dear ImGui docking branch to allow to dock windows (offer quick way to toggle between horizontal/vertical layouts)
 - Clickable, zoomable "panel" where widgets can be freely moved around (100% ImGui code with rendered textures and mouse event handling)
 - Uses a "Welcome" window which occupies the entire available space and properly resizes as the (native) window is resized 
@@ -36,10 +37,10 @@ Look & Feel
 -----------
 
 #### Dark Style
-![RE Edit - Dark](https://github.com/pongasoft/re-edit/releases/download/v1.4.0/re-edit-dark.png)
+![RE Edit - Dark](https://github.com/pongasoft/re-edit/releases/download/v1.6.0/re-edit-dark.png)
 
 #### Light Style
-![RE Edit - Light](https://github.com/pongasoft/re-edit/releases/download/v1.4.0/re-edit-light.png)
+![RE Edit - Light](https://github.com/pongasoft/re-edit/releases/download/v1.6.0/re-edit-light.png)
 
 Build
 -----
@@ -100,6 +101,7 @@ Release Notes
   * when the project is saved a new image with the effects applied is generated
   * `device_2D.lua` uses this image so that it works with Render2D
   * `device_2D.lua` also stores which original image + effects were used so that when reloaded in RE Edit, it works as well
+  * Check it in action on [YouTube](https://youtu.be/r4xpHIiJcKM)
 - Added a menu entry "File/Delete unused images" to figure out which images (under GUI2D) are used by the project and which ones are not
 - Added a performance menu to tweak the frame rate
 - Use `Alt` key to disable most filters (used when selecting images or properties in drop down lists)
