@@ -301,15 +301,6 @@ void Graphics::editView(AppContext &iCtx)
 
     ImGui::SeparatorText("Effects");
 
-    ImGui::BeginDisabled(isSizeValid());
-    if(ImGui::MenuItem("Resize to fit panel"))
-    {
-      auto fx = fEffects;
-      fx.fSizeOverride = fParent->getSize();
-      fParent->setBackgroundEffect("size", fx, MergeKey::from(&fEffects.fSizeOverride));
-    }
-    ImGui::EndDisabled();
-
     if(ImGui::MenuItem("Reset All Effects"))
       fParent->setBackgroundEffect("all effects (reset)", texture::kDefaultFX, MergeKey::from(&fEffects));
 
@@ -361,13 +352,20 @@ void Graphics::editView(AppContext &iCtx)
 
     ImGui::BeginGroup();
 
-    if(hasTexture())
+    if(!isSizeValid())
     {
-      re::edit::impl::editEffects(fEffects, itemWidth, offset,
-                                  [parent = fParent](char const *iName, texture::FX const &fx, MergeKey const &iMergeKey) {
-        parent->setBackgroundEffect(iName, fx, iMergeKey);
-      });
+      if(ImGui::Button("Resize to fit panel", ImVec2{itemWidth, 0}))
+      {
+        auto fx = fEffects;
+        fx.fSizeOverride = fParent->getSize();
+        fParent->setBackgroundEffect("size", fx, MergeKey::from(&fEffects.fSizeOverride));
+      }
     }
+
+    re::edit::impl::editEffects(fEffects, itemWidth, offset,
+                                [parent = fParent](char const *iName, texture::FX const &fx, MergeKey const &iMergeKey) {
+                                  parent->setBackgroundEffect(iName, fx, iMergeKey);
+                                });
 
     ImGui::EndGroup();
   }

@@ -1642,6 +1642,7 @@ void Application::help() const
     {"CMD Shift Z", "Ctrl + Shift + Z", {"Redo"} },
     {"CMD S", "Ctrl + S", {"Save"} },
     {"CMD Q", "Ctrl + Q", {"Quit"} },
+    {"Ctrl + Mouse Click", "Ctrl + Mouse Click", {R"(Increases (resp. decreases) by the grid size when clicking on "+" (resp. "-") for position and size)"} },
     {"Alt", "Alt", { "Disable the grid temporarily while being held",
                      "Display alternate menu entries (ex: \"Select All\" includes hidden widgets)",
                      "Disable filtering (ex: when selecting a property or a graphics)",
