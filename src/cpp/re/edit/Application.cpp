@@ -1221,6 +1221,7 @@ void Application::renderApplicationMenuItems()
     {
       fContext->setVSyncEnabled(fConfig.fVSyncEnabled);
     }
+    ImGui::MenuItem("Show Performance", nullptr, &fConfig.fShowPerformance);
     ImGui::EndMenu();
   }
   if(ImGui::MenuItem("Check For Updates...", nullptr, false, !hasAsyncAction(kCheckForUpdatesKey)))

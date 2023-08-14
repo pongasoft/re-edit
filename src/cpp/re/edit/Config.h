@@ -230,6 +230,7 @@ struct Global
   bool fSaveEnabled{true};
   int fTargetFrameRate{60};
   bool fVSyncEnabled{false};
+  bool fShowPerformance{false};
 
   std::vector<Device> fDeviceHistory{};
 

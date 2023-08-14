@@ -43,6 +43,7 @@ config::Global GlobalConfigParser::getConfig()
     withOptionalValue(L.getTableValueAsOptionalNumber("font_size"), [&c](auto v) { c.fFontSize = v; });
     withOptionalValue(L.getTableValueAsOptionalInteger("target_frame_rate"), [&c](auto v) { c.fTargetFrameRate = v; });
     withOptionalValue(L.getTableValueAsOptionalBoolean("vsync_enabled"), [&c](auto v) { c.fVSyncEnabled = v; });
+    withOptionalValue(L.getTableValueAsOptionalBoolean("show_performance"), [&c](auto v) { c.fShowPerformance = v; });
     withOptionalValue(L.getTableValueAsOptionalString("style"), [&c](auto v) {
       v = Utils::str_tolower(v);
       if(v == "light")

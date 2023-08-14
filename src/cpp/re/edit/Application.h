@@ -106,6 +106,7 @@ public:
 
   constexpr int getTargetFrameRate() const { return fConfig.fTargetFrameRate; }
   constexpr bool isVSyncEnabled() const { return fConfig.fVSyncEnabled; }
+  constexpr bool isShowPerformance() const { return fConfig.fShowPerformance; }
 
   void onNativeWindowFontDpiScaleChange(float iFontDpiScale);
   void onNativeWindowFontScaleChange(float iFontScale);

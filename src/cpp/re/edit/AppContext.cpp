@@ -393,6 +393,7 @@ void AppContext::render()
 
     ImGui::PopID(); // Rendering
 
+    // Clipboard
     ImGui::SeparatorText("Clipboard");
     if(ReGui::ResetButton())
     {
@@ -401,11 +402,13 @@ void AppContext::render()
     ImGui::SameLine();
     ImGui::TextUnformatted(fClipboard.getData()->getDescription().c_str());
 
-#ifndef NDEBUG
-    ImGui::Separator();
-    ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate,
-                ImGui::GetIO().Framerate);
-#endif
+    // Performance
+    if(Application::GetCurrent().isShowPerformance())
+    {
+      ImGui::SeparatorText("Performance");
+      ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate,
+                  ImGui::GetIO().Framerate);
+    }
   }
 
   fCurrentPanelState->render(*this);

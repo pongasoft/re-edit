@@ -63,6 +63,7 @@ std::string PreferencesManager::getAsLua(config::Global const &iConfig)
   s << fmt::printf("global_config[\"style\"] = \"%s\"\n", config::to_string(iConfig.fStyle));
   s << fmt::printf("global_config[\"target_frame_rate\"] = %d\n", iConfig.fTargetFrameRate);
   s << fmt::printf("global_config[\"vsync_enabled\"] = %s\n", fmt::Bool::to_chars(iConfig.fVSyncEnabled));
+  s << fmt::printf("global_config[\"show_performance\"] = %s\n", fmt::Bool::to_chars(iConfig.fShowPerformance));
 
   auto const &history = iConfig.fDeviceHistory;
   if(!history.empty())
