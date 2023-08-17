@@ -8,4 +8,5 @@ To add new icons:
 * Run `python3 gen-re-edit-font.py`
 * Move generated `IconsFAReEdit.h` to `external/fonts/includes`
 * Make sure `binary_to_compressed_c` is built (build it if not using the CMake target)
-* Run `/usr/local/mnt/vault/deployment/build/re-edit/Debug/external/ocornut/imgui/binary_to_compressed_c -base85 /Volumes/Development/github/org.pongasoft/re-edit/external/fontawesome/src/re-edit-icons/webfonts/fa-solid-900.ttf IconsFAReEdit > /Volumes/Development/github/org.pongasoft/re-edit/external/fonts/src/IconsFAReEdit.cpp`
+* Run `/Volumes/Vault/deployment/build/re-edit/Debug/external/ocornut/imgui/binary_to_compressed_c -base85 /Volumes/Development/github/org.pongasoft/re-edit/external/fontawesome/src/re-edit-icons/webfonts/fa-solid-900.ttf IconsFAReEdit > /Volumes/Development/github/org.pongasoft/re-edit/external/fonts/src/IconsFAReEdit.cpp`
+* Run `/Volumes/Vault/deployment/build/re-edit/Debug/external/ocornut/imgui/binary_to_compressed_c -base85 /Volumes/Development/github/org.pongasoft/re-edit/external/fontawesome/src/re-edit-icons/webfonts/custom-icons.ttf IconsFAReEditCustom > /Volumes/Development/github/org.pongasoft/re-edit/external/fonts/src/IconsFAReEditCustom.cpp`

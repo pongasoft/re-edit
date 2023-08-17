@@ -1,0 +1,16 @@
+eye-user:
+  styles:
+    - solid
+  unicode: e001
+folder-image-circle-plus:
+  styles:
+    - solid
+  unicode: e002
+folder-image-rotate:
+  styles:
+    - solid
+  unicode: e003
+microchip-rotate:
+  styles:
+    - solid
+  unicode: e004

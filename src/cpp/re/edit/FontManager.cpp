@@ -18,10 +18,12 @@
 
 #include "FontManager.h"
 #include <IconsFAReEdit.h>
+#include <IconsFAReEditCustom.h>
 #include "Errors.h"
 #include <rlImGui.h>
 
 #include <IconsFAReEdit.cpp>
+#include <IconsFAReEditCustom.cpp>
 #include <JetBrainsMono-Regular.cpp>
 
 namespace re::edit {
@@ -35,6 +37,7 @@ static void mergeFontAwesome(float iSize)
 {
   auto &io = ImGui::GetIO();
   static const ImWchar icons_ranges[] = {fa::kMin, fa::kMax16, 0};
+  static const ImWchar custom_icons_ranges[] = {fac::kMin, fac::kMax16, 0};
   ImFontConfig icons_config;
   icons_config.GlyphOffset = {0, 1};
   icons_config.MergeMode = true;
@@ -47,6 +50,11 @@ static void mergeFontAwesome(float iSize)
                                                  iSize,
                                                  &icons_config,
                                                  icons_ranges);
+
+  io.Fonts->AddFontFromMemoryCompressedBase85TTF(IconsFAReEditCustom_compressed_data_base85,
+                                                 iSize,
+                                                 &icons_config,
+                                                 custom_icons_ranges);
 
 //  io.Fonts->AddFontFromFileTTF("/Volumes/Vault/Downloads/fontawesome-pro-6.2.0-web/webfonts/fa-solid-900.ttf",
 //                               iSize,

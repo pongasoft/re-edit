@@ -25,6 +25,7 @@
 #include "Color.h"
 #include "Constants.h"
 #include <IconsFAReEdit.h>
+#include <IconsFAReEditCustom.h>
 #include <optional>
 #include <functional>
 
@@ -332,9 +333,9 @@ constexpr auto kMenuIcon = fa::kBars;
 #define ReGui_Icon_Redo ICON_FA_ArrowRotateRight
 #define ReGui_Icon_Open ICON_FA_FolderOpen
 #define ReGui_Icon_Save ICON_FA_FloppyDisk
-#define ReGui_Icon_RescanImages ICON_FA_FolderImage
-#define ReGui_Icon_ImportImages ICON_FA_FolderImage
-#define ReGui_Icon_ReloadMotherboard ICON_FA_Microchip
+#define ReGui_Icon_RescanImages ICON_FAC_FolderImageRotate
+#define ReGui_Icon_ImportImages ICON_FAC_FolderImageCirclePlus
+#define ReGui_Icon_ReloadMotherboard ICON_FAC_MicrochipRotate
 #define ReGui_Icon_Sort ICON_FA_ArrowUpArrowDown
 #define ReGui_Icon_Copy ICON_FA_Clipboard
 #define ReGui_Icon_Hidden_Widget ICON_FA_EyeSlash

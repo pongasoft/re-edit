@@ -108,12 +108,16 @@ class FontReEdit( FontFA5 ):        # Font Awesome version 5 Pro - Light, Regula
     ttfs = [
         [ 'FAS', 'fa-solid-900.ttf', './re-edit-icons/webfonts/fa-solid-900.ttf' ]
     ]
-    # font_data = '/Volumes/Vault/Downloads/fontawesome-pro-6.2.0-web/metadata/icons.yml'
-    # ttfs = [
-    #     [ 'FAS', 'fa-solid-900.ttf', '/Volumes/Vault/Downloads/fontawesome-pro-6.2.0-web/webfonts/fa-solid-900.ttf' ]
-    # ]
     font_fa_style = [ 'solid' ]
 
+class FontReEditCustom( FontFA5 ):        # Font Awesome version 5 Pro - Light, Regular and Solid styles
+    font_name = 'FAReEditCustom'
+    font_abbr = 'fac'
+    font_data = './re-edit-icons/metadata/custom-icons.yml'
+    ttfs = [
+        [ 'FAC', 'custom-icons.ttf', './re-edit-icons/webfonts/custom-icons.ttf' ]
+    ]
+    font_fa_style = [ 'solid' ]
 
 
 # Languages
@@ -262,7 +266,7 @@ class LanguageC( Language ):
 
 
 # Main
-fonts = [ FontReEdit ]
+fonts = [ FontReEdit, FontReEditCustom ]
 languages = [ LanguageC ]
 ttf2headerC = False # convert ttf files to C and C++ headers
 
