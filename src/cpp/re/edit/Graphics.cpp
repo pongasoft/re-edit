@@ -301,7 +301,7 @@ void Graphics::editView(AppContext &iCtx)
 
     ImGui::SeparatorText("Effects");
 
-    if(ImGui::MenuItem("Reset All Effects"))
+    if(ImGui::MenuItem(ReGui_Prefix(ReGui_Icon_ResetAllEffects, "Reset All Effects")))
       fParent->setBackgroundEffect("all effects (reset)", texture::kDefaultFX, MergeKey::from(&fEffects));
 
     ImGui::EndPopup();
@@ -564,7 +564,7 @@ void Graphics::editView(AppContext &iCtx,
     copyToClipboardMenuItem(iCtx);
 
     ImGui::BeginDisabled(hasSize());
-    if(ImGui::MenuItem(ReGui_Prefix(ReGui_Icon_Frames, "Change number of frames")))
+    if(ImGui::MenuItem(ReGui_Prefix(ReGui_Icon_Frames_Edit, "Change number of frames")))
       ImGui::OpenPopup(numFramesPopup);
     ImGui::EndDisabled();
 
@@ -578,7 +578,7 @@ void Graphics::editView(AppContext &iCtx,
     ImGui::SeparatorText("Effects");
 
     ImGui::BeginDisabled(hasSize());
-    if(ImGui::MenuItem("Reset All Effects"))
+    if(ImGui::MenuItem(ReGui_Prefix(ReGui_Icon_ResetAllEffects, "Reset All Effects")))
       iOnFXUpdate("all effects (reset)", texture::kDefaultFX, MergeKey::from(&fEffects));
     ImGui::EndDisabled();
 
@@ -998,7 +998,11 @@ std::string Graphics::toValueString() const
   if(hasTexture())
   {
     auto texture = getTexture();
-    return fmt::printf("graphics = \"%s\"", texture->key());
+    if(fEffects.hasAny())
+      return fmt::printf("graphics = \"%s\" (" ReGui_Icon_Effects ")", texture->key());
+    else
+      return fmt::printf("graphics = \"%s\"", texture->key());
+
   }
   else
   {

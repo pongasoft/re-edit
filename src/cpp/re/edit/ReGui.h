@@ -339,10 +339,14 @@ constexpr auto kMenuIcon = fa::kBars;
 #define ReGui_Icon_Sort ICON_FA_ArrowUpArrowDown
 #define ReGui_Icon_Copy ICON_FA_Clipboard
 #define ReGui_Icon_Hidden_Widget ICON_FA_EyeSlash
-#define ReGui_Icon_Visibility_Widget ICON_FA_Eye
+#define ReGui_Icon_Visibility_ByProperty_Widget ICON_FA_Eye
+#define ReGui_Icon_Visibility_Manual_Widget ICON_FAC_EyeUser
 #define ReGui_Icon_Duplicate ICON_FA_Clone
 #define ReGui_Icon_Tip ICON_FA_Lightbulb
 #define ReGui_Icon_Frames ICON_FA_Film
+#define ReGui_Icon_Frames_Edit ICON_FAC_FilmGear
+#define ReGui_Icon_ResetAllEffects ICON_FAC_SparklesCircleXmark
+#define ReGui_Icon_Effects ICON_FA_Sparkles
 
 #if WIN32
 #define ReGui_Icon_KeySuper "Ctrl"
@@ -386,19 +390,25 @@ inline void SpacingY()
 //------------------------------------------------------------------------
 // ReGui::VisibilityButton
 //------------------------------------------------------------------------
-inline bool VisibilityButton(bool isHidden, bool isSelected)
+inline bool VisibilityButton(bool isHidden, bool iByProperty, bool isSelected)
 {
-  bool res;
+  static ImVec2 kButtonSize{};
+  static ImGuiOnceUponAFrame kOaf{};
+
+  if(kOaf)
+    kButtonSize = ImGui::CalcTextSize(ReGui_Icon_Visibility_ByProperty_Widget);
+
   if(isHidden)
-  {
     ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().DisabledAlpha / 2.0f);
-    res = ImGui::Selectable(ReGui_Icon_Visibility_Widget, isSelected, 0, ImGui::CalcTextSize(ReGui_Icon_Visibility_Widget));
+
+  auto res = ImGui::Selectable(iByProperty ? ReGui_Icon_Visibility_ByProperty_Widget : ReGui_Icon_Visibility_Manual_Widget,
+                               isSelected,
+                               0,
+                               kButtonSize);
+
+  if(isHidden)
     ImGui::PopStyleVar();
-  }
-  else
-  {
-    res = ImGui::Selectable(ReGui_Icon_Visibility_Widget, isSelected, 0, ImGui::CalcTextSize(ReGui_Icon_Visibility_Widget));
-  }
+
   return res;
 }
 

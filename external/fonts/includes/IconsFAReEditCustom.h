@@ -6,8 +6,8 @@
 namespace fac {
 
 constexpr auto kMin = 0xe001;
-constexpr auto kMax16 = 0xe004;
-constexpr auto kMax = 0xe004;
+constexpr auto kMax16 = 0xe006;
+constexpr auto kMax = 0xe006;
 #define ICON_FAC_EyeUser "\xee\x80\x81"	// U+e001
 constexpr auto kEyeUser = "\xee\x80\x81";	// U+e001
 #define ICON_FAC_FolderImageCirclePlus "\xee\x80\x82"	// U+e002
@@ -16,4 +16,8 @@ constexpr auto kFolderImageCirclePlus = "\xee\x80\x82";	// U+e002
 constexpr auto kFolderImageRotate = "\xee\x80\x83";	// U+e003
 #define ICON_FAC_MicrochipRotate "\xee\x80\x84"	// U+e004
 constexpr auto kMicrochipRotate = "\xee\x80\x84";	// U+e004
+#define ICON_FAC_SparklesCircleXmark "\xee\x80\x85"	// U+e005
+constexpr auto kSparklesCircleXmark = "\xee\x80\x85";	// U+e005
+#define ICON_FAC_FilmGear "\xee\x80\x86"	// U+e006
+constexpr auto kFilmGear = "\xee\x80\x86";	// U+e006
 }

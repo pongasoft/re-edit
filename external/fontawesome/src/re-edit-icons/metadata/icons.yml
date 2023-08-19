@@ -359,3 +359,37 @@ triangle-exclamation:
     - solid
   unicode: f071
   voted: false
+sparkles:
+  aliases:
+    unicodes:
+      composite:
+        - '2728'
+      secondary:
+        - 10f890
+  changes:
+    - 5.9.0
+    - 6.0.0-beta1
+    - 6.0.0
+    - 6.2.0
+    - 6.3.0
+    - 6.4.0
+  label: Sparkles
+  search:
+    terms:
+      - '*'
+      - glitter
+      - magic
+      - new
+      - sparkle
+      - sparkles
+      - special
+      - star
+      - twinkle
+  styles:
+    - solid
+    - regular
+    - light
+    - thin
+    - duotone
+  unicode: f890
+  voted: false

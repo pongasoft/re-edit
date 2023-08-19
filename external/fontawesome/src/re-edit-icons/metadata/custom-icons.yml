@@ -14,3 +14,11 @@ microchip-rotate:
   styles:
     - solid
   unicode: e004
+sparkles-circle-xmark:
+  styles:
+    - solid
+  unicode: e005
+film-gear:
+  styles:
+    - solid
+  unicode: e006

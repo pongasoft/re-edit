@@ -1152,7 +1152,7 @@ void Widget::renderVisibilityMenu(AppContext &iCtx)
 //------------------------------------------------------------------------
 void Widget::renderVisibilityToggle(AppContext &iCtx)
 {
-  if(ReGui::VisibilityButton(isHidden(), isSelected()))
+  if(ReGui::VisibilityButton(isHidden(), fVisibility == widget::Visibility::kByProperty, isSelected()))
     toggleVisibility();
 
   // no point at the moment...

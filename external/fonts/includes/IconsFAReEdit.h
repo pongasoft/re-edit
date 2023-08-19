@@ -6,8 +6,8 @@
 namespace fa {
 
 constexpr auto kMin = 0xe099;
-constexpr auto kMax16 = 0xf328;
-constexpr auto kMax = 0xf328;
+constexpr auto kMax16 = 0xf890;
+constexpr auto kMax = 0xf890;
 #define ICON_FA_ArrowRotateLeft "\xef\x83\xa2"	// U+f0e2
 constexpr auto kArrowRotateLeft = "\xef\x83\xa2";	// U+f0e2
 #define ICON_FA_ArrowRotateRight "\xef\x80\x9e"	// U+f01e
@@ -48,4 +48,6 @@ constexpr auto kPaste = "\xef\x83\xaa";	// U+f0ea
 constexpr auto kPencil = "\xef\x8c\x83";	// U+f303
 #define ICON_FA_TriangleExclamation "\xef\x81\xb1"	// U+f071
 constexpr auto kTriangleExclamation = "\xef\x81\xb1";	// U+f071
+#define ICON_FA_Sparkles "\xef\xa2\x90"	// U+f890
+constexpr auto kSparkles = "\xef\xa2\x90";	// U+f890
 }
