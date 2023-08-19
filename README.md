@@ -93,6 +93,12 @@ pongasoft produces a variety of high quality and free/open source software. If y
 
 Release Notes
 -------------
+* #### 1.6.1 - 2023/08/20
+
+- Use a button (rather than a menu) for resizing the panel
+- Added "Show Performance" menu entry to always show (resp. hide) the performance
+- Added new icons, especially for widget visibility to make it clear that the user has manually changed it
+- Fixed "Escape key" closes the application
 
 * #### 1.6.0 - 2023/08/13
 
