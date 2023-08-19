@@ -51,6 +51,8 @@ int doMain(int argc, char **argv)
                   re::edit::config::kWelcomeWindowHeight,
                   re::edit::config::kWelcomeWindowTitle};
 
+  SetExitKey(-1); // prevent ESC to close the application
+
   rlImGuiSetup(true); // true is for Dark Style
 
   GLint maxTextureSize = 0;
