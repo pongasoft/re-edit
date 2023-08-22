@@ -346,6 +346,7 @@ constexpr auto kMenuIcon = fa::kBars;
 #define ReGui_Icon_Frames ICON_FA_Film
 #define ReGui_Icon_Frames_Edit ICON_FAC_FilmGear
 #define ReGui_Icon_ResetAllEffects ICON_FAC_SparklesCircleXmark
+#define ReGui_Icon_CommitAllEffects ICON_FAC_SparklesCircleCheck
 #define ReGui_Icon_Effects ICON_FA_Sparkles
 
 #if WIN32

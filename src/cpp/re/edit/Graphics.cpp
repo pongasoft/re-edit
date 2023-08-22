@@ -19,7 +19,6 @@
 #include "Graphics.h"
 #include "WidgetAttribute.hpp"
 #include "Errors.h"
-#include "Panel.h"
 #include "AppContext.hpp"
 #include "stl.h"
 
@@ -301,8 +300,19 @@ void Graphics::editView(AppContext &iCtx)
 
     ImGui::SeparatorText("Effects");
 
+    ImGui::BeginDisabled(!fEffects.hasAny());
     if(ImGui::MenuItem(ReGui_Prefix(ReGui_Icon_ResetAllEffects, "Reset All Effects")))
       fParent->setBackgroundEffect("all effects (reset)", texture::kDefaultFX, MergeKey::from(&fEffects));
+    if(ImGui::MenuItem(ReGui_Prefix(ICON_FAC_SparklesCircleCheck, "Commit All Effects")))
+    {
+      if(hasTexture())
+      {
+        auto newKey = iCtx.applyTextureEffects(getTextureKey(), fEffects);
+        if(newKey)
+          fParent->setBackgroundKey(*newKey);
+      }
+    }
+    ImGui::EndDisabled();
 
     ImGui::EndPopup();
   }
@@ -577,9 +587,18 @@ void Graphics::editView(AppContext &iCtx,
 
     ImGui::SeparatorText("Effects");
 
-    ImGui::BeginDisabled(hasSize());
+    ImGui::BeginDisabled(hasSize() || !fEffects.hasAny());
     if(ImGui::MenuItem(ReGui_Prefix(ReGui_Icon_ResetAllEffects, "Reset All Effects")))
       iOnFXUpdate("all effects (reset)", texture::kDefaultFX, MergeKey::from(&fEffects));
+    if(ImGui::MenuItem(ReGui_Prefix(ICON_FAC_SparklesCircleCheck, "Commit All Effects")))
+    {
+      if(hasTexture())
+      {
+        auto newKey = iCtx.applyTextureEffects(getTextureKey(), fEffects);
+        if(newKey)
+          iOnTextureUpdate(*newKey);
+      }
+    }
     ImGui::EndDisabled();
 
     ImGui::EndPopup();

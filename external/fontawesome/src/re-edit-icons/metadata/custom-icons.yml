@@ -22,3 +22,7 @@ film-gear:
   styles:
     - solid
   unicode: e006
+sparkles-circle-check:
+  styles:
+    - solid
+  unicode: e007

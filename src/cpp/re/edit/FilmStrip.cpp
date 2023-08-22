@@ -641,8 +641,8 @@ std::set<FilmStrip::key_t> FilmStripMgr::importBuiltIns(std::set<FilmStrip::key_
 // FilmStripMgr::applyEffects
 //------------------------------------------------------------------------
 std::optional<FilmStrip::key_t> FilmStripMgr::applyEffects(FilmStrip::key_t const &iKey,
-                                                      texture::FX const &iEffects,
-                                                      UserError *oErrors)
+                                                           texture::FX const &iEffects,
+                                                           UserError *oErrors)
 {
   auto filmStrip = findFilmStrip(iKey);
   if(filmStrip && filmStrip->isValid())

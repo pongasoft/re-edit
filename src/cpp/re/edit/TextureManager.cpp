@@ -143,6 +143,20 @@ void TextureManager::applyEffects(std::vector<FilmStripFX> const &iEffects, User
   std::for_each(keys.begin(), keys.end(), [this](auto const &k) { updateTexture(k); });
 }
 
+
+//------------------------------------------------------------------------
+// TextureManager::applyEffects
+//------------------------------------------------------------------------
+std::optional<FilmStrip::key_t> TextureManager::applyEffects(FilmStrip::key_t const &iKey,
+                                                             texture::FX const &iEffects,
+                                                             UserError *oErrors)
+{
+  auto key = fFilmStripMgr->applyEffects(iKey, iEffects, oErrors);
+  if(key)
+    updateTexture(*key);
+  return key;
+}
+
 //------------------------------------------------------------------------
 // TextureManager::updateTexture
 //------------------------------------------------------------------------
