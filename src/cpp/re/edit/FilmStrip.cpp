@@ -361,6 +361,15 @@ std::unique_ptr<FilmStrip> FilmStrip::applyEffects(texture::FX const &iEffects) 
 }
 
 //------------------------------------------------------------------------
+// FilmStrip::markDeleted
+//------------------------------------------------------------------------
+void FilmStrip::markDeleted()
+{
+  fImage = {};
+  fErrorMessage = "File has been deleted";
+}
+
+//------------------------------------------------------------------------
 // FilmStripMgr::findFilmStrip
 //------------------------------------------------------------------------
 std::shared_ptr<FilmStrip> FilmStripMgr::findFilmStrip(FilmStrip::key_t const &iKey) const
@@ -736,6 +745,7 @@ bool FilmStripMgr::remove(FilmStrip::key_t const &iKey)
       fs::remove(filmstrip->path(), errorCode);
       if(!errorCode)
       {
+        filmstrip->markDeleted();
         fFilmStrips.erase(iKey);
         fSources.erase(iKey);
         return true;

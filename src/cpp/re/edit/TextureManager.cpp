@@ -173,6 +173,24 @@ std::unique_ptr<Texture> TextureManager::createTexture() const
 }
 
 //------------------------------------------------------------------------
+// TextureManager::remove
+//------------------------------------------------------------------------
+bool TextureManager::remove(FilmStrip::key_t const &iKey)
+{
+  auto const deleted = fFilmStripMgr->remove(iKey);
+  if(deleted)
+  {
+    auto iter = fTextures.find(iKey);
+    if(iter != fTextures.end())
+    {
+      iter->second->unloadFromGPU();
+    }
+    fTextures.erase(iKey);
+  }
+  return deleted;
+}
+
+//------------------------------------------------------------------------
 // Texture::ItemFit
 //------------------------------------------------------------------------
 void Texture::ItemFit(ImVec2 const &iSize, int iFrameNumber, ImU32 iBorderColor, ImU32 iTextureColor) const
@@ -201,7 +219,7 @@ void Texture::loadOnGPU(std::shared_ptr<FilmStrip> const &iFilmStrip)
     });
   }
   else
-    fGPUTextures.clear();
+    unloadFromGPU();
 }
 
 //------------------------------------------------------------------------

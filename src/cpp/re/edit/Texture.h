@@ -146,6 +146,8 @@ public:
 
   void loadOnGPUFromUIThread(std::shared_ptr<FilmStrip> const &iFilmStrip);
 
+  void unloadFromGPU() { fGPUTextures.clear(); }
+
   friend class TextureManager;
 
 protected:

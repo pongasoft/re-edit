@@ -334,6 +334,7 @@ private:
   FilmStrip(std::shared_ptr<Source> iSource, RLImageRGBA8 &&iImage);
 
   void updateSource(std::shared_ptr<Source> iSource) { fSource = std::move(iSource); }
+  void markDeleted();
 
   static std::unique_ptr<FilmStrip> loadBuiltInCompressedBase85(std::shared_ptr<Source> const &iSource);
 
