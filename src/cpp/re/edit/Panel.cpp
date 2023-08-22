@@ -1011,6 +1011,18 @@ std::string Panel::computeUniqueWidgetNameForCopy(std::string const &iOriginalNa
 }
 
 //------------------------------------------------------------------------
+// Panel::ensureUniqueName
+//------------------------------------------------------------------------
+std::unique_ptr<Widget> Panel::ensureUniqueName(std::unique_ptr<Widget> iWidget) const
+{
+  while(fWidgetNameHashes.find(iWidget->getNameHash()) != fWidgetNameHashes.end())
+  {
+    iWidget->setNameAction(Widget::computeDefaultWidgetName(iWidget->getType()));
+  }
+  return iWidget;
+}
+
+//------------------------------------------------------------------------
 // Panel::editView
 //------------------------------------------------------------------------
 void Panel::editView(AppContext &iCtx)

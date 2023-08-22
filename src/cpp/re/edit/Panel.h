@@ -206,6 +206,7 @@ private:
   void handleMoveCanvasAction(AppContext &iCtx, ReGui::Canvas &iCanvas);
   void handleCanvasInputs(AppContext &iCtx, ReGui::Canvas &iCanvas);
   std::string computeUniqueWidgetNameForCopy(std::string const &iOriginalName) const;
+  std::unique_ptr<Widget> ensureUniqueName(std::unique_ptr<Widget> iWidget) const;
   inline std::unique_ptr<Widget> copy(Widget const *iWidget) const { return iWidget->copy(computeUniqueWidgetNameForCopy(iWidget->getName())); }
 
   template<class T, class... Args >

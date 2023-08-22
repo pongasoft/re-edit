@@ -217,6 +217,8 @@ protected:
   Widget *socket(re::mock::JboxObjectType iSocketType, Object::Filter iSocketFilter);
 
 private:
+  static std::string computeDefaultWidgetName(WidgetType iType);
+
   std::string computeDefaultWidgetName() const;
   Widget(Widget const &iOther);
   void init(Panel *iParent, int id);

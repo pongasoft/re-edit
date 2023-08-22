@@ -271,6 +271,7 @@ private:
 int Panel::addWidget(AppContext &iCtx, std::unique_ptr<Widget> iWidget, bool iMakeSingleSelected, char const *iUndoActionName)
 {
   RE_EDIT_INTERNAL_ASSERT(iWidget != nullptr);
+  iWidget = ensureUniqueName(std::move(iWidget));
   if(iMakeSingleSelected)
   {
     iCtx.beginUndoTx(fmt::printf(fmt::printf("%s %s", iUndoActionName, re::edit::toString(iWidget->getType()))));

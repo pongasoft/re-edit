@@ -473,9 +473,18 @@ Widget *Widget::horizontal_justification()
 //------------------------------------------------------------------------
 // Widget::computeDefaultWidgetName
 //------------------------------------------------------------------------
+std::string Widget::computeDefaultWidgetName(WidgetType iType)
+{
+  return re::mock::fmt::printf("%s_%ld", toString(iType), fWidgetIota++);
+}
+
+
+//------------------------------------------------------------------------
+// Widget::computeDefaultWidgetName
+//------------------------------------------------------------------------
 std::string Widget::computeDefaultWidgetName() const
 {
-  return re::mock::fmt::printf("%s_%ld", toString(fType), fWidgetIota++);
+  return computeDefaultWidgetName(fType);
 }
 
 //------------------------------------------------------------------------
