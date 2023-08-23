@@ -113,6 +113,7 @@ public:
   void init(AppContext &iCtx);
   void draw(AppContext &iCtx, ReGui::Canvas &iCanvas);
   void editView(AppContext &iCtx);
+  void commitTextureEffects(AppContext &iCtx);
   bool checkForErrors(AppContext &iCtx) override;
   void markEdited() override;
 

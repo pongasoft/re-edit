@@ -942,6 +942,31 @@ void Panel::setBackgroundKey(Texture::key_t const &iTextureKey)
 }
 
 //------------------------------------------------------------------------
+// Panel::commitBackgroundEffects
+//------------------------------------------------------------------------
+void Panel::commitBackgroundEffects(AppContext &iCtx)
+{
+  if(fGraphics.hasTexture() && fGraphics.fEffects.hasAny())
+  {
+    auto newKey = iCtx.applyTextureEffects(fGraphics.getTextureKey(), fGraphics.fEffects);
+    if(newKey)
+      setBackgroundKey(*newKey);
+  }
+}
+
+//------------------------------------------------------------------------
+// Panel::commitTextureEffects
+//------------------------------------------------------------------------
+void Panel::commitTextureEffects(AppContext &iCtx)
+{
+  iCtx.beginUndoTx(fmt::printf("Commit image effects (%s)", getName()));
+  commitBackgroundEffects(iCtx);
+  for(auto &[id, w]: fWidgets)
+    w->commitTextureEffects(iCtx);
+  iCtx.commitUndoTx();
+}
+
+//------------------------------------------------------------------------
 // Panel::setBackgroundEffect
 //------------------------------------------------------------------------
 void Panel::setBackgroundEffect(char const *iName, texture::FX const &fx, MergeKey const &iMergeKey)

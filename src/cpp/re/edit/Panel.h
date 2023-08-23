@@ -111,6 +111,8 @@ public:
   bool checkForErrors(AppContext &iCtx) override;
 
   void setBackgroundKey(Texture::key_t const &iTextureKey);
+  void commitBackgroundEffects(AppContext &iCtx);
+  void commitTextureEffects(AppContext &iCtx);
   void setBackgroundEffect(char const *iName, texture::FX const &fx, MergeKey const &iMergeKey);
   void setOptions(std::vector<std::string> const &iOptions);
   int addWidget(AppContext &iCtx, std::unique_ptr<Widget> iWidget, bool iMakeSingleSelected, char const *iUndoActionName = "Add");

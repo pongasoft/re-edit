@@ -160,7 +160,8 @@ public:
 
   inline Texture const *getTexture() const { RE_EDIT_INTERNAL_ASSERT(fDNZTexture != nullptr); return fDNZTexture.get(); }
   inline Texture::key_t getTextureKey() const { return std::get<Texture::key_t>(fTexture); }
-  void setTextureKey(Texture::key_t const &iTextureKey);
+  void setTextureKey(Texture::key_t const &iTextureKey); // action only
+  void updateTextureKey(Texture::key_t const &iTextureKey); // action with undo
   void initTextureKey(Texture::key_t const &iTextureKey,
                       std::optional<Texture::key_t> const &iOriginalTextureKey,
                       texture::FX const &iEffects);

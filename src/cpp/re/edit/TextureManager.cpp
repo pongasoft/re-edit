@@ -151,10 +151,12 @@ std::optional<FilmStrip::key_t> TextureManager::applyEffects(FilmStrip::key_t co
                                                              texture::FX const &iEffects,
                                                              UserError *oErrors)
 {
-  auto key = fFilmStripMgr->applyEffects(iKey, iEffects, oErrors);
-  if(key)
-    updateTexture(*key);
-  return key;
+  auto [keyFX, needsUpdate] = fFilmStripMgr->applyEffects(iKey, iEffects, oErrors);
+  if(needsUpdate)
+  {
+    updateTexture(keyFX);
+  }
+  return keyFX != iKey ? std::optional<FilmStrip::key_t>{keyFX} : std::nullopt;
 }
 
 //------------------------------------------------------------------------

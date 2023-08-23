@@ -848,6 +848,10 @@ void AppContext::renderMainMenu()
       {
         handleUnusedTextures();
       }
+      if(ImGui::MenuItem(ReGui_Prefix(ICON_FAC_SparklesCircleCheck, "Commit All Effects")))
+      {
+        commitTextureEffects();
+      }
       ImGui::EndMenu();
     }
 
@@ -1030,7 +1034,7 @@ void AppContext::save()
   UserError errors{};
   auto GUI2D = fRoot / "GUI2D";
   importBuiltIns(&errors); // convert built ins into actual images first (so that cmake() can see them)
-  applyEffects(&errors);
+  applyTextureEffects(&errors);
   Application::saveFile(GUI2D / "device_2D.lua", device2D(), &errors);
   Application::saveFile(GUI2D / "hdgui_2D.lua", hdgui2D(), &errors);
   if(fs::exists(fRoot / "CMakeLists.txt"))
@@ -1297,9 +1301,9 @@ void AppContext::importBuiltIns(UserError *oErrors)
 }
 
 //------------------------------------------------------------------------
-// AppContext::applyEffects
+// AppContext::applyTextureEffects
 //------------------------------------------------------------------------
-void AppContext::applyEffects(UserError *oErrors)
+void AppContext::applyTextureEffects(UserError *oErrors)
 {
   std::vector<FilmStripFX> effects{};
   fFrontPanel->fPanel.collectFilmStripEffects(effects);
@@ -1312,6 +1316,22 @@ void AppContext::applyEffects(UserError *oErrors)
 
   if(!effects.empty())
     fTextureManager->applyEffects(effects, oErrors);
+}
+
+//------------------------------------------------------------------------
+// AppContext::commitTextureEffects
+//------------------------------------------------------------------------
+void AppContext::commitTextureEffects()
+{
+  beginUndoTx("Commit image effects");
+  fFrontPanel->fPanel.commitTextureEffects(*this);
+  fBackPanel->fPanel.commitTextureEffects(*this);
+  if(fHasFoldedPanels)
+  {
+    fFoldedFrontPanel->fPanel.commitTextureEffects(*this);
+    fFoldedBackPanel->fPanel.commitTextureEffects(*this);
+  }
+  commitUndoTx();
 }
 
 //------------------------------------------------------------------------

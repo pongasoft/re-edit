@@ -47,7 +47,11 @@ public:
   std::optional<FilmStrip::key_t> importTexture(fs::path const &iTexturePath);
   void importBuiltIns(std::set<FilmStrip::key_t> const &iKeys, UserError *oErrors = nullptr);
   void applyEffects(std::vector<FilmStripFX> const &iEffects, UserError *oErrors = nullptr);
+
+  /**
+   * If no effects or no filmstrip found for `iKey` returns `std::nullopt` otherwise returns the key of the new texture */
   std::optional<FilmStrip::key_t> applyEffects(FilmStrip::key_t const &iKey, texture::FX const &iEffects, UserError *oErrors = nullptr);
+
   bool remove(FilmStrip::key_t const &iKey);
 
 protected:

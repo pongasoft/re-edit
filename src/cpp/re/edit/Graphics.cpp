@@ -304,14 +304,7 @@ void Graphics::editView(AppContext &iCtx)
     if(ImGui::MenuItem(ReGui_Prefix(ReGui_Icon_ResetAllEffects, "Reset All Effects")))
       fParent->setBackgroundEffect("all effects (reset)", texture::kDefaultFX, MergeKey::from(&fEffects));
     if(ImGui::MenuItem(ReGui_Prefix(ICON_FAC_SparklesCircleCheck, "Commit All Effects")))
-    {
-      if(hasTexture())
-      {
-        auto newKey = iCtx.applyTextureEffects(getTextureKey(), fEffects);
-        if(newKey)
-          fParent->setBackgroundKey(*newKey);
-      }
-    }
+      fParent->commitBackgroundEffects(iCtx);
     ImGui::EndDisabled();
 
     ImGui::EndPopup();
@@ -788,13 +781,7 @@ void Graphics::editView(AppContext &iCtx)
 {
   editView(iCtx,
            fFilter,
-           [this](auto &k) {
-             update([this, &k] {
-                      setTextureKey(k);
-                      fFrameNumber = 0;
-                    },
-                    fmt::printf("Change %s graphics", getParent()->getName()));
-           },
+           [this](auto &k) { updateTextureKey(k); },
            [this](auto &s) {
              update([this, &s] {
                       if(hasTexture())
@@ -1055,9 +1042,21 @@ bool Graphics::copyFromAction(Attribute const *iFromAttribute)
 void Graphics::setTextureKey(Texture::key_t const &iTextureKey)
 {
   fTexture = iTextureKey;
+  fFrameNumber = 0;
   fDNZTexture = AppContext::GetCurrent().getTexture(iTextureKey);
   fEffects = texture::kDefaultFX;
   fEdited = true;
+}
+
+//------------------------------------------------------------------------
+// Graphics::updateTextureKey
+//------------------------------------------------------------------------
+void Graphics::updateTextureKey(Texture::key_t const &iTextureKey)
+{
+  update([this, &iTextureKey] {
+           setTextureKey(iTextureKey);
+         },
+         fmt::printf("Change %s graphics", getParent()->getName()));
 }
 
 //------------------------------------------------------------------------

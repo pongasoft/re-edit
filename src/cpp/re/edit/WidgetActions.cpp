@@ -142,7 +142,6 @@ void Widget::setVisibility(widget::Visibility iVisibility)
                                                        MergeKey::from(&fName));
 }
 
-
 //------------------------------------------------------------------------
 // Widget::toggleVisibility
 //------------------------------------------------------------------------
@@ -151,5 +150,20 @@ void Widget::toggleVisibility()
   setVisibility(isHidden() ? widget::Visibility::kManualVisible : widget::Visibility::kManualHidden);
 }
 
+//------------------------------------------------------------------------
+// Widget::commitTextureEffects
+//------------------------------------------------------------------------
+void Widget::commitTextureEffects(AppContext &iCtx)
+{
+  if(fGraphics->hasTexture() && fGraphics->fEffects.hasAny())
+  {
+    auto newKey = iCtx.applyTextureEffects(fGraphics->getTextureKey(), fGraphics->fEffects);
+    if(newKey)
+    {
+      fGraphics->updateTextureKey(*newKey);
+      fEdited = fGraphics->isEdited();
+    }
+  }
+}
 
 }

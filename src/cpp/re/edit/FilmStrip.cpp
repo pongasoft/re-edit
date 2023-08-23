@@ -640,23 +640,23 @@ std::set<FilmStrip::key_t> FilmStripMgr::importBuiltIns(std::set<FilmStrip::key_
 //------------------------------------------------------------------------
 // FilmStripMgr::applyEffects
 //------------------------------------------------------------------------
-std::optional<FilmStrip::key_t> FilmStripMgr::applyEffects(FilmStrip::key_t const &iKey,
-                                                           texture::FX const &iEffects,
-                                                           UserError *oErrors)
+std::pair<FilmStrip::key_t, bool> FilmStripMgr::applyEffects(FilmStrip::key_t const &iKey,
+                                                             texture::FX const &iEffects,
+                                                             UserError *oErrors)
 {
   auto filmStrip = findFilmStrip(iKey);
   if(filmStrip && filmStrip->isValid())
   {
     // no effects => return
     if(!iEffects.hasAny())
-      return std::nullopt;
+      return {iKey, false};
 
     auto keyFX = FilmStrip::computeKey(iKey, filmStrip->numFrames(), iEffects);
 
     // do we already know about this?
     auto filmStripFX = findFilmStrip(keyFX);
     if(filmStripFX && filmStripFX->isValid())
-      return std::nullopt;
+      return {keyFX, false};
     else
     {
       // no we don't so save and add to map
@@ -664,7 +664,7 @@ std::optional<FilmStrip::key_t> FilmStripMgr::applyEffects(FilmStrip::key_t cons
       if(filmStripFX)
       {
         fFilmStrips[keyFX] = filmStripFX;
-        return keyFX;
+        return {keyFX, true};
       }
       else
       {
@@ -674,7 +674,7 @@ std::optional<FilmStrip::key_t> FilmStripMgr::applyEffects(FilmStrip::key_t cons
     }
   }
 
-  return std::nullopt;
+  return {iKey, false};
 }
 
 //------------------------------------------------------------------------
@@ -686,9 +686,9 @@ std::set<FilmStrip::key_t> FilmStripMgr::applyEffects(std::vector<FilmStripFX> c
 
   for(auto const &e: iEffects)
   {
-    auto keyFX = applyEffects(e.fKey, e.fEffects, oErrors);
-    if(keyFX)
-      modifiedKeys.emplace(*keyFX);
+    auto [keyFX, modified] = applyEffects(e.fKey, e.fEffects, oErrors);
+    if(modified)
+      modifiedKeys.emplace(keyFX);
   }
 
   return modifiedKeys;
