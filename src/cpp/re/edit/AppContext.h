@@ -104,7 +104,11 @@ public:
   AppContext(fs::path const &iRoot, std::shared_ptr<TextureManager> iTextureManager);
   ~AppContext();
 
-  static AppContext &GetCurrent() { RE_EDIT_INTERNAL_ASSERT(kCurrent != nullptr); return *kCurrent; }
+  inline static AppContext &GetCurrent() { RE_EDIT_INTERNAL_ASSERT(kCurrent != nullptr); return *kCurrent; }
+
+  /**
+   * @return `true` if and only if `iCtx` is not `nullptr` and the current app context is equal to `iCtx` */
+  static bool IsCurrent(AppContext *iCtx);
 
   ImVec2 getCurrentPanelSize() const;
   bool renderWidgetDefMenuItems(PanelType iPanelType, std::function<void(WidgetDef const &)> const &iAction);
@@ -215,12 +219,8 @@ public: // Undo
   friend class Widget;
   friend class Application;
 
-  inline bool maybeReloadTextures() const { return fMaybeReloadTextures; }
-  inline bool maybeReloadDevice() const { return fMaybeReloadDevice; }
-  inline bool hasNotifications() const { return maybeReloadDevice() || maybeReloadTextures(); }
-
-  void maybeReloadTextures(bool b) { fMaybeReloadTextures = b; }
-  void maybeReloadDevice(bool b) { fMaybeReloadDevice = b; }
+  void onTexturesUpdate();
+  void onDeviceUpdate();
 
   std::string getDeviceName() const;
   constexpr bool hasFoldedPanels() const { return fHasFoldedPanels; }
@@ -246,7 +246,7 @@ public:
 protected:
   void init(config::Device const &iConfig);
   config::Device getConfig() const;
-  void reloadTextures();
+  bool reloadTextures();
   void markEdited();
   bool checkForErrors();
   bool computeErrors();
@@ -256,7 +256,7 @@ protected:
   void renderUndoHistory();
   void initDevice();
   void initGUI2D(Utils::CancellableSPtr const &iCancellable);
-  void reloadDevice();
+  bool reloadDevice();
   void save();
   void importBuiltIns(UserError *oErrors = nullptr);
   void applyTextureEffects(UserError *oErrors = nullptr);
@@ -321,9 +321,7 @@ protected:
   void *fLastUndoAction{};
   bool fRecomputeDimensionsRequested{true};
   bool fReloadTexturesRequested{};
-  std::atomic<bool> fMaybeReloadTextures{};
   bool fReloadDeviceRequested{};
-  std::atomic<bool> fMaybeReloadDevice{};
   std::optional<std::string> fNewLayoutRequested{};
   ImGuiMouseCursor fMouseCursor{ImGuiMouseCursor_None};
 

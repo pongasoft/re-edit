@@ -93,12 +93,6 @@ void Dialog::render()
       needsSameLine = true;
     }
 
-    auto loggingManager = LoggingManager::instance();
-    if(loggingManager->isShowDebug())
-    {
-      loggingManager->debug("dialog.ItemRectMin", "%fx%f", ImGui::GetWindowWidth(), ImGui::GetWindowHeight());
-    }
-
     ImGui::EndPopup();
   }
 }

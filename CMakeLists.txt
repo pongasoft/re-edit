@@ -193,6 +193,8 @@ set(re-edit_BUILD_SOURCES
     "${re-edit_CPP_SRC_DIR}/re/edit/Graphics.cpp"
     "${re-edit_CPP_SRC_DIR}/re/edit/NetworkManager.h"
     "${re-edit_CPP_SRC_DIR}/re/edit/NetworkManager.cpp"
+    "${re-edit_CPP_SRC_DIR}/re/edit/Notification.h"
+    "${re-edit_CPP_SRC_DIR}/re/edit/Notification.cpp"
     "${re-edit_CPP_SRC_DIR}/re/edit/Panel.h"
     "${re-edit_CPP_SRC_DIR}/re/edit/Panel.cpp"
     "${re-edit_CPP_SRC_DIR}/re/edit/PanelActions.cpp"

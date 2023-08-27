@@ -32,6 +32,7 @@
 #include "Dialog.h"
 #include "fs.h"
 #include "Config.h"
+#include "Notification.h"
 #include <version.h>
 #include <future>
 #include <map>
@@ -83,6 +84,7 @@ public:
   ~Application();
 
   static Application &GetCurrent() { RE_EDIT_INTERNAL_ASSERT(kCurrent != nullptr); return *kCurrent; }
+  static bool HasCurrent() { return kCurrent != nullptr; }
 
   static Config parseArgs(NativePreferencesManager const *iPreferencesManager, std::vector<std::string> iArgs);
 
@@ -113,7 +115,7 @@ public:
   void onNativeDropFiles(std::vector<fs::path> const &iPaths);
 //  inline void onNativeWindowPositionChange(int x, int y, float iFontScale, float iFontDpiScale) { fAppContext.onNativeWindowPositionChange(x, y, iFontScale, iFontDpiScale); }
 
-  bool newFrame() noexcept;
+  bool newFrame(std::vector<gui_action_t> const &iFrameActions) noexcept;
   bool render() noexcept;
   void renderMainMenu();
   void maybeExit();
@@ -121,7 +123,10 @@ public:
   void exit();
   ReGui::Dialog &newDialog(std::string iTitle, bool iHighPriority = false);
   void newExceptionDialog(std::string iMessage, bool iSaveButton, std::exception_ptr const &iException);
+  ReGui::Notification &newNotification();
+  ReGui::Notification &newUniqueNotification(ReGui::Notification::Key const &iKey);
   void savePreferences(UserError *oErrors = nullptr) noexcept;
+  AppContext *getAppContext() const { return fAppContext.get(); }
 
   constexpr bool hasException() const { return fState == State::kException; }
 
@@ -164,6 +169,7 @@ private:
   void renderAppContext(); // may throw exception
   void renderLoading(); // may throw exception
   void renderDialog();
+  void renderNotifications(ImVec2 const &iOffset);
   void renderLogoBox(float iPadding = 10.0f);
   void renderApplicationMenuItems();
   void newAboutDialog();
@@ -204,6 +210,7 @@ private:
   std::map<std::string, std::future<gui_action_t>> fAsyncActions{};
   std::vector<gui_action_t> fNewFrameActions{};
   std::vector<std::unique_ptr<ReGui::Dialog>> fDialogs{};
+  std::vector<std::unique_ptr<ReGui::Notification>> fNotifications{};
   std::unique_ptr<ReGui::Dialog> fCurrentDialog{};
   std::unique_ptr<ReGui::Dialog> fWelcomeDialog{};
 

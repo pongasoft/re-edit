@@ -609,6 +609,7 @@ void Application::maybeCloseProject(std::optional<std::string> const &iDialogTit
 void Application::closeProject()
 {
   savePreferences();
+  fNotifications.clear();
   fAppContext = nullptr;
   auto loggingManager = LoggingManager::instance();
   loggingManager->clearAll();
@@ -672,8 +673,6 @@ void Application::onNativeDropFiles(std::vector<fs::path> const &iPaths)
             {
               RE_EDIT_INTERNAL_ASSERT(fAppContext != nullptr);
 
-              bool maybeReloadTextures = fAppContext->maybeReloadTextures();
-
               std::vector<FilmStrip::key_t> textureKeys{};
               textureKeys.reserve(textures.size());
               for(auto const &texture: textures)
@@ -687,14 +686,14 @@ void Application::onNativeDropFiles(std::vector<fs::path> const &iPaths)
               {
                 newDialog("Texture Import")
                   .preContentMessage(fmt::printf("Successfully imported %ld graphics", textureKeys.size()))
-                  .lambda([this, keys = textureKeys]() {
-                    if(fAppContext)
+                  .lambda([ctx = fAppContext.get(), keys = textureKeys]() {
+                    if(AppContext::IsCurrent(ctx))
                     {
                       auto textureSize = ImGui::CalcTextSize("W").y * 2.0f;
 
                       for(auto &key: keys)
                       {
-                        auto texture = fAppContext->findTexture(key);
+                        auto texture = ctx->findTexture(key);
                         if(texture && texture->isValid())
                         {
                           texture->ItemFit({textureSize, textureSize});
@@ -704,11 +703,7 @@ void Application::onNativeDropFiles(std::vector<fs::path> const &iPaths)
                       }
                     }
                   })
-                  .button("Ok", [maybeReloadTextures, this] {
-                    // dismisses the reload textures notification (unless there was one before starting...)
-                    if(fAppContext && !maybeReloadTextures)
-                      fAppContext->maybeReloadTextures(false);
-                  }, true);
+                  .buttonOk("Ok", true);
               }
             }
           });
@@ -778,12 +773,17 @@ void Application::handleFontChangeRequest()
 //------------------------------------------------------------------------
 // Application::newFrame
 //------------------------------------------------------------------------
-bool Application::newFrame() noexcept
+bool Application::newFrame(std::vector<gui_action_t> const &iFrameActions) noexcept
 {
   Utils::StorageRAII<Application> current{&kCurrent, this};
 
   try
   {
+    if(!iFrameActions.empty())
+    {
+      for(auto &action: iFrameActions)
+        action();
+    }
     if(!fNewFrameActions.empty())
       handleNewFrameActions();
 
@@ -850,6 +850,7 @@ bool Application::render() noexcept
       default:
         break;
     }
+    renderNotifications({});
   }
   catch(...)
   {
@@ -1445,6 +1446,30 @@ void Application::newExceptionDialog(std::string iMessage, bool iSaveButton, std
   }
 }
 
+
+//------------------------------------------------------------------------
+// Application::newNotification
+//------------------------------------------------------------------------
+ReGui::Notification &Application::newNotification()
+{
+  fNotifications.emplace_back(std::make_unique<ReGui::Notification>());
+  return *fNotifications[fNotifications.size() - 1];
+}
+
+//------------------------------------------------------------------------
+// Application::newUniqueNotification
+//------------------------------------------------------------------------
+ReGui::Notification &Application::newUniqueNotification(ReGui::Notification::Key const &iKey)
+{
+  auto iter = std::find_if(fNotifications.begin(), fNotifications.end(), [&iKey](auto &n) {
+    return n->key() == iKey;
+  });
+  if(iter != fNotifications.end())
+    (*iter)->dismiss();
+  fNotifications.emplace_back(std::make_unique<ReGui::Notification>(iKey));
+  return *fNotifications[fNotifications.size() - 1];
+}
+
 //------------------------------------------------------------------------
 // Application::renderDialog
 //------------------------------------------------------------------------
@@ -1463,6 +1488,53 @@ void Application::renderDialog()
     fCurrentDialog = nullptr;
 }
 
+//------------------------------------------------------------------------
+// Application::renderNotifications
+//------------------------------------------------------------------------
+void Application::renderNotifications(ImVec2 const &iOffset)
+{
+  static std::pair<ImGuiStyle, ImGuiStyle> kImGuiStyles = []() {
+    ImGuiStyle darkStyle{};
+    ImGui::StyleColorsDark(&darkStyle);
+    ImGuiStyle lightStyle{};
+    ImGui::StyleColorsLight(&lightStyle);
+    return std::pair<ImGuiStyle, ImGuiStyle>{ darkStyle, lightStyle };
+  }();
+
+  if(fNotifications.empty())
+    return;
+
+  auto const notificationSize = ImGui::CalcTextSize("MMMMMMMMMM""MMMMMMMMMM""MMMMMMMMMM""MMMMMMMMMM") * ImVec2{1.0, 5.0};
+  auto const notificationPadding = ImGui::GetStyle().FramePadding;
+  auto mainViewPort = ImGui::GetMainViewport();
+
+  auto &style = fConfig.fStyle == config::Style::kLight ? kImGuiStyles.first : kImGuiStyles.second;
+  ImVec2 pos{mainViewPort->WorkSize.x - notificationSize.x - notificationPadding.x, notificationPadding.y};
+  pos += iOffset;
+
+  ImGui::PushStyleColor(ImGuiCol_Text, style.Colors[ImGuiCol_Text]);
+  ImGui::PushStyleColor(ImGuiCol_WindowBg, style.Colors[ImGuiCol_WindowBg]);
+  ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{4.0, 4.0});
+
+  auto notifications = std::move(fNotifications);
+
+  for(auto &notification: notifications)
+  {
+    ImGui::SetNextWindowPos(pos);
+    ImGui::SetNextWindowSize(notificationSize);
+    if(notification->render())
+      pos.y += notificationSize.y + notificationPadding.x;
+  }
+
+  ImGui::PopStyleVar();
+  ImGui::PopStyleColor(2);
+
+  for(auto &notification: notifications)
+  {
+    if(notification->isActive())
+      fNotifications.emplace_back(std::move(notification));
+  }
+}
 
 //------------------------------------------------------------------------
 // Application::maybeExit

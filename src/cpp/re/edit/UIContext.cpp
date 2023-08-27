@@ -90,17 +90,14 @@ void UIContext::execute(ui_action_t iAction)
   }
 }
 
+
 //------------------------------------------------------------------------
-// UIContext::processUIActions
+// UIContext::collectUIActions
 //------------------------------------------------------------------------
-void UIContext::processUIActions()
+std::vector<UIContext::ui_action_t> UIContext::collectUIActions()
 {
   std::unique_lock<std::mutex> lock(fMutex);
-  auto actions = std::move(fUIActions);
-  lock.unlock();
-
-  for(auto &action: actions)
-    action();
+  return std::move(fUIActions);
 }
 
 //------------------------------------------------------------------------

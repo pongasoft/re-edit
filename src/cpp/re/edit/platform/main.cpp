@@ -112,11 +112,8 @@ int doMain(int argc, char **argv)
 //    float clear_color[4] = {0.55f, 0.55f, 0.55f, 1.00f};
     ClearBackground(Color{127, 127, 127, 255});
 
-    // Execute all actions requiring the ui thread
-    uiContext.processUIActions();
-
     // Before New Frame
-    if(application.newFrame())
+    if(application.newFrame(uiContext.collectUIActions()))
     {
       rlImGuiBegin();
       // Main rendering

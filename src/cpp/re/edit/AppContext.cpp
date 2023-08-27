@@ -24,6 +24,7 @@
 #include "Utils.h"
 #include "stl.h"
 #include "Clipboard.h"
+#include "UIContext.h"
 #include <regex>
 #include <efsw/efsw.hpp>
 #include <nfd.h>
@@ -31,12 +32,15 @@
 
 namespace re::edit {
 
+constexpr auto kShortNotificationDuration = std::chrono::seconds(1);
+constexpr auto kInfoNotificationDuration = std::chrono::seconds(5);
+
 namespace impl {
 
 class UpdateListener : public efsw::FileWatchListener
 {
 public:
-  UpdateListener(AppContext &iCtx, fs::path const &iRoot) :
+  UpdateListener(AppContext *iCtx, fs::path const &iRoot) :
     fCtx{iCtx}, fRoot{fs::canonical(iRoot)}
   {
     // empty
@@ -70,8 +74,13 @@ public:
 
     if(file == fRoot / "motherboard_def.lua" || file == fRoot / "info.lua")
     {
-      // trigger maybe reloadDevice
-      fCtx.maybeReloadDevice(true);
+      if(UIContext::HasCurrent())
+      {
+        UIContext::GetCurrent().execute([ctx = fCtx] {
+          if(AppContext::IsCurrent(ctx))
+            ctx->onDeviceUpdate();
+        });
+      }
     }
     else
     {
@@ -80,15 +89,20 @@ public:
         std::cmatch m;
         if(std::regex_search(file.filename().u8string().c_str(), m, FILENAME_REGEX))
         {
-          // trigger maybe scanDirectory
-          fCtx.maybeReloadTextures(true);
+          if(UIContext::HasCurrent())
+          {
+            UIContext::GetCurrent().execute([ctx = fCtx] {
+              if(AppContext::IsCurrent(ctx))
+                ctx->onTexturesUpdate();
+            });
+          }
         }
       }
     }
   }
 
 private:
-  AppContext &fCtx;
+  AppContext *fCtx;
   fs::path fRoot;
 };
 
@@ -118,6 +132,17 @@ AppContext::AppContext(fs::path const &iRoot, std::shared_ptr<TextureManager> iT
 AppContext::~AppContext()
 {
   disableFileWatcher();
+}
+
+//------------------------------------------------------------------------
+// AppContext::IsCurrent
+//------------------------------------------------------------------------
+bool AppContext::IsCurrent(AppContext *iCtx)
+{
+  if(iCtx && Application::HasCurrent())
+    return Application::GetCurrent().getAppContext() == iCtx;
+  else
+    return false;
 }
 
 //------------------------------------------------------------------------
@@ -261,34 +286,6 @@ void AppContext::render()
     renderTabs();
     renderZoomSelection();
     renderGridSelection();
-
-    if(hasNotifications())
-    {
-      ImGui::SeparatorText("Notifications");
-      if(maybeReloadTextures())
-      {
-        ImGui::AlignTextToFramePadding();
-        ReGui::TipIcon();ImGui::SameLine();ImGui::TextUnformatted("Detected image changes");
-        ImGui::SameLine();
-        if(ImGui::Button(ReGui_Prefix(ReGui_Icon_RescanImages, "Rescan")))
-          fReloadTexturesRequested = true;
-        ImGui::SameLine();
-        if(ImGui::Button(ReGui_Prefix(ReGui_Icon_Reset, "Dismiss")))
-          maybeReloadTextures(false);
-      }
-
-      if(maybeReloadDevice())
-      {
-        ImGui::AlignTextToFramePadding();
-        ReGui::TipIcon();ImGui::SameLine();ImGui::TextUnformatted("Detected device changes");
-        ImGui::SameLine();
-        if(ImGui::Button(ReGui_Prefix(ReGui_Icon_ReloadMotherboard, "Reload")))
-          fReloadDeviceRequested = true;
-        ImGui::SameLine();
-        if(ImGui::Button(ReGui_Prefix(ReGui_Icon_Reset, "Dismiss")))
-          maybeReloadDevice(false);
-      }
-    }
 
     ImGui::SeparatorText("Rendering");
 
@@ -574,10 +571,10 @@ std::string AppContext::getDeviceName() const
 //------------------------------------------------------------------------
 // AppContext::reloadTextures
 //------------------------------------------------------------------------
-void AppContext::reloadTextures()
+bool AppContext::reloadTextures()
 {
   markEdited();
-  checkForErrors();
+  return checkForErrors();
 }
 
 //------------------------------------------------------------------------
@@ -625,10 +622,10 @@ void AppContext::initGUI2D(Utils::CancellableSPtr const &iCancellable)
 //------------------------------------------------------------------------
 // AppContext::reloadDevice
 //------------------------------------------------------------------------
-void AppContext::reloadDevice()
+bool AppContext::reloadDevice()
 {
   initDevice();
-  checkForErrors();
+  return checkForErrors();
 }
 
 //------------------------------------------------------------------------
@@ -819,9 +816,9 @@ void AppContext::renderMainMenu()
       {
         auto numTextures = importTexturesBlocking();
         if(numTextures > 0)
-          Application::GetCurrent().newDialog("Import")
-            .text(fmt::printf("%ld images imported successfully", numTextures))
-            .buttonOk();
+          Application::GetCurrent().newNotification()
+            .text(fmt::printf("%ld image(s) imported successfully", numTextures))
+            .dismissAfter(kInfoNotificationDuration);
             ;
       }
       ImGui::Separator();
@@ -829,19 +826,9 @@ void AppContext::renderMainMenu()
       {
         fReloadTexturesRequested = true;
       }
-      if(fMaybeReloadTextures)
-      {
-        ImGui::SameLine();
-        ImGui::TextUnformatted("\u00b7");
-      }
       if(ImGui::MenuItem(ReGui_Prefix(ReGui_Icon_ReloadMotherboard, "Reload motherboard")))
       {
         fReloadDeviceRequested = true;
-      }
-      if(fMaybeReloadDevice)
-      {
-        ImGui::SameLine();
-        ImGui::TextUnformatted("\u00b7");
       }
       ImGui::Separator();
       if(ImGui::MenuItem("Delete unused images"))
@@ -971,18 +958,36 @@ void AppContext::beforeRenderFrame()
   if(fReloadTexturesRequested)
   {
     fReloadTexturesRequested = false;
-    fMaybeReloadTextures = false;
     fTextureManager->scanDirectory();
-    reloadTextures();
+    if(reloadTextures())
+    {
+      Application::GetCurrent().newNotification()
+        .text("Images reloaded. Some errors detected.");
+    }
+    else
+    {
+      Application::GetCurrent().newNotification()
+        .text("Images reloaded successfully.")
+        .dismissAfter(kShortNotificationDuration);
+    }
   }
 
   if(fReloadDeviceRequested)
   {
     fReloadDeviceRequested = false;
-    fMaybeReloadDevice = false;
     try
     {
-      reloadDevice();
+      if(reloadDevice())
+      {
+        Application::GetCurrent().newNotification()
+          .text("Device reloaded. Some errors detected.");
+      }
+      else
+      {
+        Application::GetCurrent().newNotification()
+          .text("Device reloaded successfully.")
+          .dismissAfter(kShortNotificationDuration);
+      }
     }
     catch(...)
     {
@@ -1041,6 +1046,7 @@ void AppContext::save()
     Application::saveFile(GUI2D / "gui_2D.cmake", cmake(), &errors);
   Application::GetCurrent().savePreferences(&errors);
   if(errors.hasErrors())
+  {
     Application::GetCurrent().newDialog("Error")
       .preContentMessage("There were some errors during the save operation")
       .lambda([errors] {
@@ -1048,6 +1054,13 @@ void AppContext::save()
           ImGui::BulletText("%s", error.c_str());
       })
       .buttonOk();
+  }
+  else
+  {
+    Application::GetCurrent().newNotification()
+      .text("Project saved successfully")
+      .dismissAfter(kShortNotificationDuration);
+  }
 //  fAppContext->fUndoManager->clear();
   fNeedsSaving = false;
   fLastSavedUndoAction = fUndoManager->getLastUndoAction();
@@ -1182,7 +1195,7 @@ void AppContext::enableFileWatcher()
 {
   if(!fRootWatchID)
   {
-    fRootListener = std::make_shared<impl::UpdateListener>(*this, fRoot);
+    fRootListener = std::make_shared<impl::UpdateListener>(this, fRoot);
     fRootWatchID = fRootWatcher->addWatch(fRoot.u8string(), fRootListener.get(), true);
     fRootWatcher->watch();
   }
@@ -1838,6 +1851,52 @@ PanelType AppContext::getPanelType(Action const *iAction)
     return panelAction->getPanelType();
   else
     return PanelType::kUnknown;
+}
+
+//------------------------------------------------------------------------
+// AppContext::onTexturesUpdate
+//------------------------------------------------------------------------
+void AppContext::onTexturesUpdate()
+{
+  Application::GetCurrent()
+    .newUniqueNotification(ReGui::Notification::Key::from(&fReloadTexturesRequested))
+    .lambda([ctx = this]() {
+      if(!AppContext::IsCurrent(ctx))
+      {
+        return false;
+      }
+
+      ImGui::AlignTextToFramePadding();
+      ImGui::TextUnformatted("Detected image changes");
+      if(ImGui::Button(ReGui_Prefix(ReGui_Icon_RescanImages, "Rescan")))
+      {
+        ctx->fReloadTexturesRequested = true;
+      }
+      return !ctx->fReloadTexturesRequested;
+    });
+}
+
+//------------------------------------------------------------------------
+// AppContext::onDeviceUpdate
+//------------------------------------------------------------------------
+void AppContext::onDeviceUpdate()
+{
+  Application::GetCurrent()
+    .newUniqueNotification(ReGui::Notification::Key::from(&fReloadDeviceRequested))
+    .lambda([ctx = this]() {
+      if(!AppContext::IsCurrent(ctx))
+      {
+        return false;
+      }
+
+      ImGui::AlignTextToFramePadding();
+      ImGui::TextUnformatted("Detected device changes");
+      if(ImGui::Button(ReGui_Prefix(ReGui_Icon_ReloadMotherboard, "Reload")))
+      {
+        ctx->fReloadDeviceRequested = true;
+      }
+      return !ctx->fReloadDeviceRequested;
+    });
 }
 
 ////------------------------------------------------------------------------

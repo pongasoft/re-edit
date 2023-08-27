@@ -48,7 +48,8 @@ public:
    * synchronously. Otherwise, the action is enqueued and will be executed on the UI thread in the next frame loop. */
   void execute(ui_action_t iAction);
 
-  void processUIActions();
+  inline bool hasUIActions() const { return !fUIActions.empty(); }
+  std::vector<ui_action_t> collectUIActions();
 
   void beginFXShader(ImVec4 const &iTint, float iBrightness, float iContrast);
   void endFXShader();
