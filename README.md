@@ -93,6 +93,13 @@ pongasoft produces a variety of high quality and free/open source software. If y
 
 Release Notes
 -------------
+* #### 1.6.2 - 2023/08/28
+
+- Added "Commit All Effects", at the widget level as well as at the global level, to be able to remove all `re_edit_*` entries from `device_2D.lua` once the effects are applied (permanent/no more undo)
+- Added concept of notifications to inform the user of important messages 
+- Fixed instances where RE Edit would generate duplicate names
+- Some performance improvements (textures are removed from the GPU when deleted)
+
 * #### 1.6.1 - 2023/08/20
 
 - Use a button (rather than a menu) for resizing the panel
