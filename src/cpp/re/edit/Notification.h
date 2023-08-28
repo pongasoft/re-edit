@@ -23,6 +23,7 @@
 #include <vector>
 #include <string>
 #include <chrono>
+#include <optional>
 
 namespace re::edit::ReGui {
 
