@@ -93,6 +93,10 @@ pongasoft produces a variety of high quality and free/open source software. If y
 
 Release Notes
 -------------
+* #### 1.6.3 - 2024/02/12
+
+- Fixed issue with contrast not being saved
+ 
 * #### 1.6.2 - 2023/08/28
 
 - Added "Commit All Effects", at the widget level as well as at the global level, to be able to remove all `re_edit_*` entries from `device_2D.lua` once the effects are applied (permanent/no more undo)

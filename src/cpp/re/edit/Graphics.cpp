@@ -64,12 +64,13 @@ std::string graphics_device2D_path(Texture const *iTexture, texture::FX const &i
                               stl::roundToInt(iEffects.fSizeOverride->y)) :
         "";
 
-      path = re::mock::fmt::printf(R"(path = "%s"%s, re_edit_path = "%s"%s%s%s%s%s)",
+      path = re::mock::fmt::printf(R"(path = "%s"%s, re_edit_path = "%s"%s%s%s%s%s%s)",
                                    iTexture->computeKey(iEffects),
                                    iTexture->numFrames() > 1 ?  re::mock::fmt::printf(", frames = %d", iTexture->numFrames()) : "",
                                    iTexture->key(),
                                    iEffects.hasTint() ? re::mock::fmt::printf(", re_edit_tint = { %d, %d, %d }", tint.fRed, tint.fGreen, tint.fBlue) : "",
                                    iEffects.hasBrightness() ? re::mock::fmt::printf(", re_edit_brightness = %d", iEffects.fBrightness) : "",
+                                   iEffects.hasContrast() ? re::mock::fmt::printf(", re_edit_contrast = %d", iEffects.fContrast) : "",
                                    iEffects.isFlippedX() ? ", re_edit_flip_x = true" : "",
                                    iEffects.isFlippedY() ? ", re_edit_flip_y = true" : "",
                                    sizeOverride
