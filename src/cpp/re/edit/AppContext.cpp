@@ -68,7 +68,7 @@ public:
     auto file = fs::weakly_canonical(iFile, errorCode);
     if(errorCode)
     {
-      RE_EDIT_LOG_WARNING("Cannot convert %s to canonical form", iFile);
+      RE_EDIT_LOG_WARNING("Cannot convert %s to canonical form", iFile.u8string());
       return;
     }
 

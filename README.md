@@ -93,6 +93,10 @@ pongasoft produces a variety of high quality and free/open source software. If y
 
 Release Notes
 -------------
+* #### 1.6.4 - 2024/06/20
+
+- Added support for `device_categories` which was added as a new requirement to Reason 13
+
 * #### 1.6.3 - 2024/02/12
 
 - Fixed issue with contrast not being saved

@@ -968,7 +968,7 @@ void Application::renderWelcome()
     {
       renderLogoBox();
 
-      ImGui::TextUnformatted("© 2023 pongasoft");
+      ImGui::TextUnformatted("© 2024 pongasoft");
 
       auto textSizeHeight = ImGui::CalcTextSize("R").y;
       auto remainingSizeY = viewport->Size.y - ImGui::GetCursorPosY();
@@ -1567,7 +1567,7 @@ std::optional<std::string> Application::readFile(fs::path const &iFile, UserErro
   catch(...)
   {
     if(oErrors)
-      oErrors->add("Error while reading file %s: %s", iFile, what(std::current_exception()));
+      oErrors->add("Error while reading file %s: %s", iFile.u8string(), what(std::current_exception()));
   }
 
   return std::nullopt;
@@ -1605,7 +1605,7 @@ void Application::saveFile(fs::path const &iFile, std::string const &iContent, U
   catch(...)
   {
     if(oErrors)
-      oErrors->add("Error while saving file %s: %s", iFile, what(std::current_exception()));
+      oErrors->add("Error while saving file %s: %s", iFile.u8string(), what(std::current_exception()));
   }
 }
 
@@ -1650,6 +1650,7 @@ void Application::about() const
     ImGui::Text("manufacturer:                    %s", info.fManufacturer.c_str());
     ImGui::Text("version_number:                  %s", info.fVersionNumber.c_str());
     ImGui::Text("device_type:                     %s", deviceTypeToString(info.fDeviceType));
+    ImGui::Text("device_categories:               %s", re::mock::stl::join_to_string(info.fDeviceCategories).c_str());
     ImGui::Text("supports_patches:                %s", boolToString(info.fSupportPatches));
     ImGui::Text("default_patch:                   %s", info.fDefaultPatch.c_str());
     ImGui::Text("accepts_notes:                   %s", boolToString(info.fAcceptNotes));
