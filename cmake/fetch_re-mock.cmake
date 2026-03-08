@@ -5,10 +5,10 @@ include(cmake/REEditFetchContent.cmake)
 #------------------------------------------------------------------------
 # Git repo/tag for re-mock
 #------------------------------------------------------------------------
-set(re-mock_GIT_REPO "https://github.com/pongasoft/re-mock" CACHE STRING "re-mock git repository url")
-set(re-mock_GIT_TAG "v1.6.0" CACHE STRING "re-mock git tag")
-set(re-mock_DOWNLOAD_URL "${re-mock_GIT_REPO}/archive/refs/tags/${re-mock_GIT_TAG}.zip" CACHE STRING "re-mock download url" FORCE)
-set(re-mock_DOWNLOAD_URL_HASH "SHA256=6879590c88ae318c57ff01e57c322e85ec7f598543cfe4eca99b728600b4b89e" CACHE STRING "re-mock download url hash" FORCE)
+set(re-mock_GIT_REPO "https://codeberg.org/pongasoft/re-mock" CACHE STRING "re-mock git repository url")
+set(re-mock_GIT_TAG "v1.8.1" CACHE STRING "re-mock git tag")
+set(re-mock_DOWNLOAD_URL "${re-mock_GIT_REPO}/archive/${re-mock_GIT_TAG}.zip" CACHE STRING "re-mock download url")
+set(re-mock_DOWNLOAD_URL_HASH "SHA256=929b64f5abbd1c2e80b8fdc2eb31eea12d8d9b6e9019165dee51eaf117ddeda1" CACHE STRING "re-mock download url hash")
 
 re_edit_fetch_content(NAME re-mock)
 

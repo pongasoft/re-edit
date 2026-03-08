@@ -570,7 +570,7 @@ std::optional<FilmStrip::key_t> FilmStripMgr::importTexture(fs::path const &iTex
       std::error_code errorCode;
       if(!fs::copy_file(iTexturePath, *fDirectory / iTexturePath.filename(), fs::copy_options::overwrite_existing, errorCode))
       {
-        RE_EDIT_LOG_ERROR("Error while copying file [%s]: (%d | %s)", iTexturePath, errorCode.value(), errorCode.message());
+        RE_EDIT_LOG_ERROR("Error while copying file [%s]: (%d | %s)", iTexturePath.u8string(), errorCode.value(), errorCode.message());
         return std::nullopt;
       }
     }
