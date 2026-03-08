@@ -118,6 +118,7 @@ add_subdirectory(external/btzy/nativefiledialog-extended EXCLUDE_FROM_ALL)
 
 #######################################################
 # Include efsw (cross platform filesystem watcher)
+# Maybe replace with https://pagghiu.github.io/SaneCppLibraries/libraries.html ???
 #######################################################
 add_subdirectory(external/SpartanJ/efsw EXCLUDE_FROM_ALL)
 
@@ -279,7 +280,7 @@ if(APPLE)
       MACOSX_BUNDLE_BUNDLE_VERSION "${re-edit_VERSION}"
       MACOSX_BUNDLE_SHORT_VERSION_STRING "${re-edit_VERSION}"
       MACOSX_BUNDLE_ICON_NAME "AppIcon"
-      MACOSX_BUNDLE_COPYRIGHT "© 2023 pongasoft"
+      MACOSX_BUNDLE_COPYRIGHT "© 2024 pongasoft"
       MACOSX_BUNDLE_INFO_PLIST "${CMAKE_SOURCE_DIR}/cmake/MacOSXBundleInfo.plist.in"
       )
   target_compile_definitions("${target}_lib" PUBLIC GL_SILENCE_DEPRECATION)

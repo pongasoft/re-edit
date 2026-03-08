@@ -1752,7 +1752,6 @@ void Application::help() const
       ImGui::TableSetColumnIndex(0);
       ImGui::TextUnformatted(std::get<kShortcutIndex>(shortcut));
       ImGui::TableSetColumnIndex(1);
-      auto const &description = std::get<2>(shortcut);
       for(auto const &item: std::get<2>(shortcut))
       {
         ImGui::TextUnformatted(item);
