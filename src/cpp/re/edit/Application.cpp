@@ -1437,7 +1437,7 @@ void Application::newExceptionDialog(std::string iMessage, bool iSaveButton, std
 
     dialog.button("Exit", [this] { exit(); }, true);
 
-    dialog.postContentMessage("Note: If you think this is an error in the tool, please report it at https://github.com/pongasoft/re-edit/issues");
+    dialog.postContentMessage("Note: If you think this is an error in the tool, please report it at https://codeberg.org/pongasoft/re-edit/issues");
   }
   else
   {
@@ -1670,7 +1670,7 @@ void Application::about() const
     {"lubgr/lua-cmake               ", "MIT License", "https://github.com/lubgr/lua-cmake/blob/master/LICENSE"},
     {"nlohmann/json                 ", "MIT License", "https://github.com/nlohmann/json/blob/develop/LICENSE.MIT"},
     {"nothings/stb                  ", "Public Domain", "https://github.com/nothings/stb/blob/master/docs/why_public_domain.md"},
-    {"pongasoft/re-mock             ", "Apache 2.0", "https://github.com/pongasoft/re-mock/blob/master/LICENSE.txt"},
+    {"pongasoft/re-mock             ", "Apache 2.0", "https://codeberg.org/pongasoft/re-edit/src/branch/master/LICENSE.txt"},
     {"raylib                        ", "ZLIB License", "https://github.com/raysan5/raylib/blob/master/LICENSE"},
     {"raylib-extras/rlImGui         ", "ZLIB License", "https://github.com/raylib-extras/rlImGui/blob/main/LICENSE"},
     {"SpartanJ/efsw                 ", "MIT License", "https://github.com/SpartanJ/efsw/blob/master/LICENSE"},

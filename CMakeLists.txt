@@ -348,7 +348,7 @@ elseif(WIN32)
   set(CPACK_WIX_PROPERTY_ARPCOMMENTS      "RE Edit is a free and open source WYSIWYG editor for the UI of a Rack Extension")
   set(CPACK_WIX_PROPERTY_ARPHELPLINK      "https://pongasoft.com/contact.html")
   set(CPACK_WIX_PROPERTY_ARPURLINFOABOUT  "https://pongasoft.com/re-edit")
-  set(CPACK_WIX_PROPERTY_ARPURLUPDATEINFO "https://github.com/pongasoft/re-edit/releases")
+  set(CPACK_WIX_PROPERTY_ARPURLUPDATEINFO "https://codeberg.org/pongasoft/re-edit/releases")
 
   set(RE_EDIT_CPACK_GENERATOR         "WIX")
 endif()

@@ -23,11 +23,9 @@ namespace re::edit {
 
 using json = nlohmann::json;
 
-// using Jamba for now as re-edit is NOT public yet!
-constexpr auto kReEditGithubURL = RE_EDIT_NATIVE_STRING("https://api.github.com/repos/pongasoft/re-edit/releases/latest");
-const std::map<NetworkManager::native_string_t, NetworkManager::native_string_t> kReEditGithubAPIHeaders{
-  {RE_EDIT_NATIVE_STRING("X-GitHub-Api-Version"), RE_EDIT_NATIVE_STRING("2022-11-28")},
-  {RE_EDIT_NATIVE_STRING("Accept"),               RE_EDIT_NATIVE_STRING("application/vnd.github+json")}
+constexpr auto kReEditCodebergURL = RE_EDIT_NATIVE_STRING("https://codeberg.org/api/v1/repos/pongasoft/re-edit/releases/latest");
+const std::map<NetworkManager::native_string_t, NetworkManager::native_string_t> kReEditCodebergAPIHeaders{
+  {RE_EDIT_NATIVE_STRING("Accept"), RE_EDIT_NATIVE_STRING("application/json")}
 };
 
 namespace impl {
@@ -48,7 +46,7 @@ std::optional<std::string> optional(json const &iObject, std::string const &iKey
 //------------------------------------------------------------------------
 std::optional<Release> NetworkManager::getLatestRelease() const
 {
-  auto content = HttpGet(kReEditGithubURL, kReEditGithubAPIHeaders);
+  auto content = HttpGet(kReEditCodebergURL, kReEditCodebergAPIHeaders);
   if(content)
   {
     auto release = json::parse(*content);

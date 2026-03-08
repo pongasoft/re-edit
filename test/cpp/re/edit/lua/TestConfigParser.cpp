@@ -34,7 +34,7 @@ global_config["show_performance"] = false
 global_config["device_history"] = {}
 global_config["device_history"][1] = {
   name = "CVA-7 CV Analyzer",
-  path = [==[/Volumes/Development/github/org.pongasoft/re-cva-7]==],
+  path = [==[/Volumes/Development/remote/pongasoft/re-cva-7]==],
   type = "helper",
   show_properties = false,
   show_panel = true,
@@ -74,7 +74,7 @@ global_config["device_history"][2] = {
   {
     auto const &item = config.fDeviceHistory[0];
     ASSERT_EQ("CVA-7 CV Analyzer", item.fName);
-    ASSERT_EQ("/Volumes/Development/github/org.pongasoft/re-cva-7", item.fPath);
+    ASSERT_EQ("/Volumes/Development/remote/pongasoft/re-cva-7", item.fPath);
     ASSERT_EQ("helper", item.fType);
     ASSERT_FALSE(item.fShowProperties);
     ASSERT_TRUE(item.fShowPanel);

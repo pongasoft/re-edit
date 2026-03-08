@@ -37,10 +37,10 @@ Look & Feel
 -----------
 
 #### Dark Style
-![RE Edit - Dark](https://github.com/pongasoft/re-edit/releases/download/v1.6.0/re-edit-dark.png)
+![RE Edit - Dark](https://codeberg.org/pongasoft/re-edit/releases/download/v1.6.4/re-edit-dark.png)
 
 #### Light Style
-![RE Edit - Light](https://github.com/pongasoft/re-edit/releases/download/v1.6.0/re-edit-light.png)
+![RE Edit - Light](https://codeberg.org/pongasoft/re-edit/releases/download/v1.6.4/re-edit-light.png)
 
 Build
 -----
@@ -215,8 +215,8 @@ Release Notes
 - Added Panel rendering (None / Border / Normal / X-Ray) (for example, to see the rails)
 - Changed zoom to be common to all panels and added Zoom to Fit (now defaults when device opens)
 - Added keyboard shortcuts (Save, Undo/Redo, Zoom In/Out/Fit, Quit)
-- Fixes [#1](https://github.com/pongasoft/re-edit/issues/1): _RE Edit fails to load nested decals_
-- Fixes [#2](https://github.com/pongasoft/re-edit/issues/2): _Decals are not rendered properly_
+- Fixes [GH#1](https://github.com/pongasoft/re-edit/issues/1): _RE Edit fails to load nested decals_
+- Fixes [GH#2](https://github.com/pongasoft/re-edit/issues/2): _Decals are not rendered properly_
 - Some minor performance improvements
 
 * #### 1.0.0 - 2023/01/02
@@ -241,7 +241,7 @@ This project uses the following open source projects (some of them are embedded 
 | [lubgr/lua-cmake](https://github.com/lubgr/lua-cmake)                                                       | [MIT License](https://github.com/lubgr/lua-cmake/blob/master/LICENSE)                              |
 | [nlohmann/json](https://github.com/nlohmann/json)                                                           | [MIT License](https://github.com/nlohmann/json/blob/develop/LICENSE.MIT)                           |
 | [nothings/stb](https://github.com/nothings/stb)                                                             | [Public Domain](https://github.com/nothings/stb/blob/master/docs/why_public_domain.md)             |
-| [pongasoft/re-mock](https://github.com/pongasoft/re-mock)                                                   | [Apache 2.0](https://github.com/pongasoft/re-mock/blob/master/LICENSE.txt)                         |
+| [pongasoft/re-mock](https://codeberg.org/pongasoft/re-mock)                                                 | [Apache 2.0](https://codeberg.org/pongasoft/re-mock/blob/master/LICENSE.txt)                       |
 | [raylib](https://www.raylib.com/)                                                                           | [ZLIB License](https://github.com/raysan5/raylib/blob/master/LICENSE)                              |
 | [raylib-extras/rlImGui](https://github.com/raylib-extras/rlImGui)                                           | [ZLIB License](https://github.com/raylib-extras/rlImGui/blob/main/LICENSE)                         |
 | [SpartanJ/efsw](https://github.com/SpartanJ/efsw)                                                           | [MIT License](https://github.com/SpartanJ/efsw/blob/master/LICENSE)                                |
