@@ -93,6 +93,13 @@ pongasoft produces a variety of high quality and free/open source software. If y
 
 Release Notes
 -------------
+* #### 4.6.0.20260712 - 2026/07/12
+- With the non-backward compatible changes introduced in SDK 5.0.0, introducing a new version scheme reflecting the
+  RE SDK version. The new numbering scheme is `<re_sdk_version>.<year><month><day>`.
+- Note that the name of the program remains `RE Edit` for update purposes.
+  The new version will be called `RE Edit 5.0.0` to be able to have multiple versions installed and to allow re-cmake
+  to pick up the correct version.
+
 * #### 1.6.4 - 2024/06/20
 
 - Added support for `device_categories` which was added as a new requirement to Reason 13

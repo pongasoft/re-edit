@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.24)
 
 set(re-edit_RELEASE_YEAR  "2026")
 set(re-edit_RELEASE_MONTH "07"  )
-set(re-edit_RELEASE_DAY   "13"  )
+set(re-edit_RELEASE_DAY   "12"  )
 
 set(re-edit_RE_SDK_VERSION "4.6.0")
 
