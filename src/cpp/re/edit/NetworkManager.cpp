@@ -55,9 +55,13 @@ std::optional<Release> NetworkManager::getLatestRelease() const
       auto version = impl::optional(release, "tag_name");
       if(version)
       {
-        return Release{*version,
-                       impl::optional(release, "html_url"),
-                       impl::optional(release, "body")};
+        if(const auto v = Version::fromGitTag(*version); v != std::nullopt)
+        {
+          return Release{v.value(),
+                         impl::optional(release, "html_url"),
+                         impl::optional(release, "body")};
+
+        }
       }
     }
   }

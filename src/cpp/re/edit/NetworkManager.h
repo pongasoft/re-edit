@@ -22,13 +22,13 @@
 #include <string>
 #include <optional>
 #include <map>
-#include <memory>
+#include <version.h>
 
 namespace re::edit {
 
 struct Release
 {
-  std::string fVersion{};
+  Version fVersion{};
   std::optional<std::string> fURL{};
   std::optional<std::string> fReleaseNotes{};
 };

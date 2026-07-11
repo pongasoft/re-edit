@@ -20,9 +20,14 @@
 #ifndef RE_EDIT_VERSION_H
 #define RE_EDIT_VERSION_H
 
+#include <string>
+#include <optional>
+
 namespace re::edit {
 
 constexpr auto kFullVersion = "@re-edit_VERSION@";
+constexpr auto kReSDKVersion = "@re-edit_RE_SDK_VERSION@";
+constexpr auto kReleaseDate = @re-edit_RELEASE_DATE_AS_NUMBER@;
 constexpr auto kGitVersion = "@re-edit_GIT_VERSION@";
 constexpr auto kGitTag = "@re-edit_GIT_TAG@";
 constexpr auto kArchiveArchitecture = "@re-edit_ARCHIVE_ARCHITECTURE@";
@@ -31,10 +36,24 @@ constexpr auto kReMockVersion = "@re-mock_GIT_TAG@";
 #define D_RE_EDIT_VERSION_MAJOR_INT @re-edit_VERSION_MAJOR@
 #define D_RE_EDIT_VERSION_MINOR_INT @re-edit_VERSION_MINOR@
 #define D_RE_EDIT_VERSION_PATCH_INT @re-edit_VERSION_PATCH@
+#define D_RE_EDIT_VERSION_TWEAK_INT @re-edit_VERSION_TWEAK@
 #define D_RE_EDIT_VERSION_STR "@re-edit_VERSION@"
 #define D_RE_EDIT_ARCHITECTURE_STR "@re-edit_ARCHIVE_ARCHITECTURE@"
 
 #define D_RE_EDIT_ICON_FILE "@re-edit_ICON_FILE@"
+
+struct Version
+{
+  std::string fFullVersion{};
+  std::string fReSDKVersion{};
+  int fReSDKVersionAsNumber{};
+  int fReleaseDate{};
+
+  static std::optional<Version> fromGitTag(std::string const &iGitTag);
+  static std::optional<Version> fromFullVersion(std::string const &iFullVersion) { return fromGitTag("v" + iFullVersion); }
+};
+
+extern Version kVersion;
 
 }
 

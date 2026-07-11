@@ -27,7 +27,7 @@ BEGIN
             VALUE "FileDescription",  D_RE_EDIT_FILE_DESCRIPTION
             VALUE "FileVersion",      D_RE_EDIT_VERSION_STR "\0"
             VALUE "InternalName",     "re-edit\0"
-            VALUE "LegalCopyright",   "© 2022 pongasoft\0"
+            VALUE "LegalCopyright",   "© 2022-2026 pongasoft\0"
             VALUE "OriginalFilename", "re-edit.exe\0"
             VALUE "ProductName",      D_RE_EDIT_FILE_DESCRIPTION
             VALUE "ProductVersion",   D_RE_EDIT_VERSION_STR "\0"

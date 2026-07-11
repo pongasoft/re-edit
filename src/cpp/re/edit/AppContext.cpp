@@ -1912,4 +1912,48 @@ void AppContext::onDeviceUpdate()
 //  fFontManager->setFontScales(iFontScale, iFontDpiScale);
 //}
 
+//------------------------------------------------------------------------
+// Version::fromGitTag
+//------------------------------------------------------------------------
+std::optional<Version> Version::fromGitTag(std::string const &iGitTag)
+{
+  Version v{};
+
+  // Expected format: v4.6.0.20260711
+  static const std::regex kGIT_TAG_VERSION_REGEX{R"(^v(\d+)\.(\d+)\.(\d+)\.(\d+)$)"};
+
+  std::smatch match;
+  if(!std::regex_match(iGitTag, match, kGIT_TAG_VERSION_REGEX))
+    return std::nullopt;
+
+  auto major = match[1].str();
+  auto minor = match[2].str();
+  auto patch = match[3].str();
+  auto date = match[4].str();
+
+  v.fFullVersion = major + "." + minor + "." + patch + "." + date;
+  v.fReSDKVersion = major + "." + minor + "." + patch;
+
+  // Convert RE SDK version to number: major * 100 + minor * 10 + patch (ex: 460)
+  try
+  {
+    int majorInt = std::stoi(major);
+    int minorInt = std::stoi(minor);
+    int patchInt = std::stoi(patch);
+    v.fReSDKVersionAsNumber = majorInt * 100 + minorInt * 10 + patchInt;
+    v.fReleaseDate = std::stoi(date);
+  }
+  catch(...)
+  {
+    return std::nullopt;
+  }
+
+  return v;
+}
+
+//------------------------------------------------------------------------
+// Version::kVersion
+//------------------------------------------------------------------------
+Version kVersion = Version::fromFullVersion(kFullVersion).value();
+
 }

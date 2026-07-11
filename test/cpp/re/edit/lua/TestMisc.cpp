@@ -18,6 +18,7 @@
 
 #include <gtest/gtest.h>
 #include <re/edit/FilmStrip.h>
+#include <version.h>
 
 namespace re::edit::Test {
 
@@ -47,6 +48,15 @@ TEST(FilmStrip, computeKey) {
     false,
     std::nullopt
   }).c_str());
+}
+
+TEST(Version, fromGitTag) {
+  ASSERT_EQ(std::nullopt, re::edit::Version::fromGitTag("1.2.3.456"));
+  ASSERT_EQ("4.6.0.20260711", re::edit::Version::fromGitTag("v4.6.0.20260711")->fFullVersion);
+  ASSERT_EQ("4.6.0", re::edit::Version::fromGitTag("v4.6.0.20260711")->fReSDKVersion);
+  ASSERT_EQ(460, re::edit::Version::fromGitTag("v4.6.0.20260711")->fReSDKVersionAsNumber);
+  ASSERT_EQ(20260711, re::edit::Version::fromGitTag("v4.6.0.20260711")->fReleaseDate);
+  ASSERT_EQ(std::nullopt, re::edit::Version::fromGitTag("v4.x.0.20260711"));
 }
 
 }

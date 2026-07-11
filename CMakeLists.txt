@@ -1,9 +1,17 @@
 cmake_minimum_required(VERSION 3.24)
 
-set(re-edit_VERSION_MAJOR 1)
-set(re-edit_VERSION_MINOR 6)
-set(re-edit_VERSION_PATCH 4)
-set(re-edit_VERSION "${re-edit_VERSION_MAJOR}.${re-edit_VERSION_MINOR}.${re-edit_VERSION_PATCH}")
+set(re-edit_RELEASE_YEAR  "2026")
+set(re-edit_RELEASE_MONTH "07"  )
+set(re-edit_RELEASE_DAY   "13"  )
+
+set(re-edit_RE_SDK_VERSION "4.6.0")
+
+set(re-edit_RELEASE_DATE "${re-edit_RELEASE_YEAR}-${re-edit_RELEASE_MONTH}-${re-edit_RELEASE_DAY}")
+string(REPLACE "-" "" re-edit_RELEASE_DATE_AS_NUMBER "${re-edit_RELEASE_DATE}")
+set(re-edit_VERSION "${re-edit_RE_SDK_VERSION}.${re-edit_RELEASE_DATE_AS_NUMBER}")
+string(REPLACE "." "" re-edit_VERSION_AS_NUMBER "${re-edit_VERSION}")
+
+set(re-edit_PRODUCT_NAME "RE Edit ${re-edit_RE_SDK_VERSION}")
 
 execute_process(COMMAND git describe --long --dirty --abbrev=10 --tags
     RESULT_VARIABLE result
@@ -280,7 +288,7 @@ if(APPLE)
       MACOSX_BUNDLE_BUNDLE_VERSION "${re-edit_VERSION}"
       MACOSX_BUNDLE_SHORT_VERSION_STRING "${re-edit_VERSION}"
       MACOSX_BUNDLE_ICON_NAME "AppIcon"
-      MACOSX_BUNDLE_COPYRIGHT "© 2024 pongasoft"
+      MACOSX_BUNDLE_COPYRIGHT "© 2024-2026 pongasoft"
       MACOSX_BUNDLE_INFO_PLIST "${CMAKE_SOURCE_DIR}/cmake/MacOSXBundleInfo.plist.in"
       )
   target_compile_definitions("${target}_lib" PUBLIC GL_SILENCE_DEPRECATION)

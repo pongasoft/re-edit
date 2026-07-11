@@ -306,9 +306,10 @@ void Application::asyncCheckForUpdates()
         if(fState == State::kReLoaded)
         {
           auto &dialog = newDialog("Check for Updates");
-          dialog.lambda([this]() { renderLogoBox(); });
-          dialog.text(fmt::printf("Latest Version: %s", latestRelease.fVersion));
-          if(latestRelease.fVersion != std::string(kGitTag))
+          dialog.lambda([this] { renderLogoBox(); });
+          dialog.text(fmt::printf("Latest Version: %s", latestRelease.fVersion.fFullVersion));
+          if(latestRelease.fVersion.fReSDKVersionAsNumber == kVersion.fReSDKVersionAsNumber &&
+             latestRelease.fVersion.fReleaseDate > kVersion.fReleaseDate)
           {
             dialog.text(fmt::printf("There is a new version (you currently have %s).\n"
                                     "Release Notes\n"
@@ -332,6 +333,17 @@ void Application::asyncCheckForUpdates()
     else
       return gui_action_t();
   });
+}
+
+//------------------------------------------------------------------------
+// Application::hasNewVersion
+//------------------------------------------------------------------------
+bool Application::hasNewVersion() const
+{
+  if(fLatestRelease)
+    return fLatestRelease->fVersion.fReSDKVersionAsNumber == kVersion.fReSDKVersionAsNumber &&
+           fLatestRelease->fVersion.fReleaseDate > kVersion.fReleaseDate;
+  return false;
 }
 
 
@@ -921,7 +933,8 @@ void Application::renderLogoBox(float iPadding)
     ImGui::BeginGroup();
     {
       ImGui::TextUnformatted("RE Edit");
-      ImGui::Text("%s%s", kFullVersion, newVersion ? "*" : "");
+      ImGui::Text("%s%s", kVersion.fReSDKVersion.c_str(), newVersion ? "*" : "");
+      ImGui::Text("%ld", kVersion.fReleaseDate);
       ImGui::EndGroup();
     }
   });
@@ -968,7 +981,7 @@ void Application::renderWelcome()
     {
       renderLogoBox();
 
-      ImGui::TextUnformatted("© 2024 pongasoft");
+      ImGui::TextUnformatted("© 2026 pongasoft");
 
       auto textSizeHeight = ImGui::CalcTextSize("R").y;
       auto remainingSizeY = viewport->Size.y - ImGui::GetCursorPosY();
@@ -1011,7 +1024,7 @@ void Application::renderWelcome()
       {
         if(ImGui::TreeNodeEx("New Release"))
         {
-          ImGui::Text("Latest Release: %s", fLatestRelease->fVersion.c_str());
+          ImGui::Text("Latest Release: %s", fLatestRelease->fVersion.fFullVersion.c_str());
           if(fLatestRelease->fReleaseNotes)
             ReGui::MultiLineText(*fLatestRelease->fReleaseNotes);
           if(ImGui::Button("Download"))
@@ -1234,7 +1247,7 @@ void Application::renderApplicationMenuItems()
     bool newVersion = hasNewVersion();
     if(newVersion)
     {
-      if(ImGui::MenuItem(fmt::printf("  Download - %s", fLatestRelease->fVersion).c_str()))
+      if(ImGui::MenuItem(fmt::printf("  Download - %s", fLatestRelease->fVersion.fFullVersion).c_str()))
         downloadLatestVersion();
     }
     else

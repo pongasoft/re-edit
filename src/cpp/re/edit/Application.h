@@ -96,7 +96,8 @@ public:
   void closeProject();
   void maybeCloseProject(std::optional<std::string> const &iDialogTitle = {}, gui_action_t const &iNextAction = {});
   void asyncCheckForUpdates();
-  inline bool hasNewVersion() const { return fLatestRelease && fLatestRelease->fVersion != std::string(kGitTag); }
+  bool hasNewVersion() const;
+
   void downloadLatestVersion() const;
 
   inline float getCurrentFontSize() const { return fFontManager->getCurrentFont().fSize; }
