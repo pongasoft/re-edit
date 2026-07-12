@@ -386,6 +386,7 @@ set(TEST_CASE_SOURCES
     "${re-edit_CPP_TST_DIR}/re/edit/lua/TestDevice2D.cpp"
     "${re-edit_CPP_TST_DIR}/re/edit/lua/TestHDGui2D.cpp"
     "${re-edit_CPP_TST_DIR}/re/edit/lua/TestMisc.cpp"
+    "${re-edit_CPP_TST_DIR}/re/edit/lua/TestVersion.cpp"
     )
 
 add_executable("${target_test}" "${TEST_CASE_SOURCES}")

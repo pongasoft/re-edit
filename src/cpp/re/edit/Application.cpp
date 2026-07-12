@@ -296,7 +296,7 @@ Application::~Application()
 void Application::asyncCheckForUpdates()
 {
   async(kCheckForUpdatesKey, [this]() {
-    auto latestRelease = fNetworkManager->getLatestRelease();
+    auto latestRelease = fNetworkManager->getLatestRelease(kVersion);
 //    std::this_thread::sleep_for(std::chrono::milliseconds(5000));
 //    std::optional<Release> latestRelease = Release{"v0.0.0", "https://github.com/pongasoft/jamba/releases/tag/v6.0.1", "* Fixed gtest crash on Apple M1 platform\r\n"};
 //    std::optional<Release> latestRelease = Release{kGitTag, "https://github.com/pongasoft/jamba/releases/tag/v6.0.1", "* Fixed gtest crash on Apple M1 platform\r\n"};
@@ -1632,6 +1632,9 @@ void Application::newAboutDialog()
       renderLogoBox();
       if(ImGui::Button("pongasoft.com"))
         fContext->openURL("https://www.pongasoft.com");
+      ImGui::SameLine();
+      if(ImGui::Button("RE Edit News"))
+        fContext->openURL("https://pongasoft.com/news/re-edit.html");
     })
     .lambda([this]() { about(); }, true)
     .buttonOk();

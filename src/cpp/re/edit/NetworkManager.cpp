@@ -23,7 +23,7 @@ namespace re::edit {
 
 using json = nlohmann::json;
 
-constexpr auto kReEditCodebergURL = RE_EDIT_NATIVE_STRING("https://codeberg.org/api/v1/repos/pongasoft/re-edit/releases/latest");
+constexpr auto kReEditCodebergURL = RE_EDIT_NATIVE_STRING("https://codeberg.org/api/v1/repos/pongasoft/re-edit/releases/releases");
 const std::map<NetworkManager::native_string_t, NetworkManager::native_string_t> kReEditCodebergAPIHeaders{
   {RE_EDIT_NATIVE_STRING("Accept"), RE_EDIT_NATIVE_STRING("application/json")}
 };
@@ -44,28 +44,50 @@ std::optional<std::string> optional(json const &iObject, std::string const &iKey
 //------------------------------------------------------------------------
 // NetworkManager::getLatestRelease
 //------------------------------------------------------------------------
-std::optional<Release> NetworkManager::getLatestRelease() const
+std::optional<Release> NetworkManager::getLatestRelease(Version const &iCurrentVersion) const
 {
-  auto content = HttpGet(kReEditCodebergURL, kReEditCodebergAPIHeaders);
-  if(content)
-  {
-    auto release = json::parse(*content);
-    if(release.is_object())
-    {
-      auto version = impl::optional(release, "tag_name");
-      if(version)
-      {
-        if(const auto v = Version::fromGitTag(*version); v != std::nullopt)
-        {
-          return Release{v.value(),
-                         impl::optional(release, "html_url"),
-                         impl::optional(release, "body")};
+  if(const auto content = HttpGet(kReEditCodebergURL, kReEditCodebergAPIHeaders); content != std::nullopt)
+    return getLatestRelease(iCurrentVersion, content.value());
+  return std::nullopt;
+}
 
+//------------------------------------------------------------------------
+// NetworkManager::getLatestRelease
+//------------------------------------------------------------------------
+std::optional<Release> NetworkManager::getLatestRelease(Version const &iCurrentVersion, std::string const&iJsonContent)
+{
+  std::optional<Release> latestRelease{};
+
+  auto releases = json::parse(iJsonContent);
+  if(releases.is_array())
+  {
+    for(auto const &release: releases)
+    {
+      if(release.is_object())
+      {
+        auto version = impl::optional(release, "tag_name");
+        if(version)
+        {
+          if(const auto v = Version::fromGitTag(*version); v != std::nullopt)
+          {
+            if(v->fReSDKVersionAsNumber == iCurrentVersion.fReSDKVersionAsNumber &&
+               v->fReleaseDate > iCurrentVersion.fReleaseDate)
+            {
+              if(!latestRelease || v->fReleaseDate > latestRelease->fVersion.fReleaseDate)
+              {
+                latestRelease = Release{
+                  v.value(),
+                  impl::optional(release, "html_url"),
+                  impl::optional(release, "body")
+                };
+              }
+            }
+          }
         }
       }
     }
   }
-  return std::nullopt;
-}
 
+  return latestRelease;
+}
 }

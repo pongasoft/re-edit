@@ -47,7 +47,8 @@ public:
 public:
   virtual ~NetworkManager() = default;
 
-  std::optional<Release> getLatestRelease() const;
+  std::optional<Release> getLatestRelease(Version const &iCurrentVersion) const;
+  static std::optional<Release> getLatestRelease(Version const &iCurrentVersion, std::string const &iJsonContent);
 
 protected:
   virtual std::optional<std::string> HttpGet(native_string_t const &iUrl,

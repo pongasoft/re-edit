@@ -1934,13 +1934,13 @@ std::optional<Version> Version::fromGitTag(std::string const &iGitTag)
   v.fFullVersion = major + "." + minor + "." + patch + "." + date;
   v.fReSDKVersion = major + "." + minor + "." + patch;
 
-  // Convert RE SDK version to number: major * 100 + minor * 10 + patch (ex: 460)
+  // Convert RE SDK version to number: major * 1000 + minor * 100 + patch (ex: 4600)
   try
   {
     int majorInt = std::stoi(major);
     int minorInt = std::stoi(minor);
     int patchInt = std::stoi(patch);
-    v.fReSDKVersionAsNumber = majorInt * 100 + minorInt * 10 + patchInt;
+    v.fReSDKVersionAsNumber = majorInt * 1000 + minorInt * 100 + patchInt;
     v.fReleaseDate = std::stoi(date);
   }
   catch(...)
